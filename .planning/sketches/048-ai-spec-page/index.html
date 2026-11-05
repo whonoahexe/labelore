@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 048 — AI spec page</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 048: the AI spec page (VIEW-11), three page structures, none of them the 041 to 047 frames.
+   Text is the made-up Lendshed AI specs (test/fixtures/lendshed, 10-04) and GSD's own templates/AI-SPEC.md
+   (the source of every template-slot test), embedded verbatim below and parsed in the page. Tokens come from ../themes/default.css; every colour here is a theme token or a
+   colour-mix of tokens. Squared corners, spacing from --space-* tokens, four font sizes counting
+   everything on the page: --fs-display-3 (h1 only), --fs-7 (headings, lead numbers, verdict), --fs-4
+   (body), --fs-2 (labels, chips, links). The sketch bar and the app shell are outside the page. */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --neutral-fill: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+  --read: calc(var(--space-8) * 24);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; padding: 0 var(--space-0-5); background: var(--veil); overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.app-brand span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+@media (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- page atoms ---------- */
+.page { display: grid; gap: var(--space-8); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); min-width: 0; }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.meta { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.micro-label { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h2.sh { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+.btn-xs.icon { padding-inline: 0; width: var(--space-7); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } .btn-xs.icon { width: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; }
+.status-chip.big { font-size: var(--fs-7); letter-spacing: var(--ls-tight); text-transform: none; padding: var(--space-1-5) var(--space-3); font-family: var(--font-sans); }
+.status-chip.big .sq { --sq: var(--space-3); }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--neutral-fill); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); }
+.num { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.prose { max-width: 72ch; }
+.prose + .prose { margin-top: var(--space-2); }
+
+/* plain blocks (what the generic section rendering shows) */
+.blocks { display: grid; gap: var(--space-3); min-width: 0; }
+.bul { display: grid; gap: var(--space-1-5); }
+.bul > li { display: grid; grid-template-columns: var(--space-3) minmax(0, 1fr); gap: var(--space-2); }
+.bul > li::before { content: ''; width: var(--space-1-5); height: var(--space-1-5); margin-top: 0.55em; background: var(--muted-foreground); }
+.chk > li::before { width: var(--sq); height: var(--sq); margin-top: 0.35em; background: transparent; border: 1px dashed var(--muted-foreground); }
+.sub-h { font-weight: var(--fw-semibold); }
+.tbl-scroll { overflow-x: auto; max-width: 100%; border: 1px solid var(--border-faint); }
+.ptable { border-collapse: collapse; width: 100%; }
+.ptable th, .ptable td { padding: var(--space-1-5) var(--space-2); border-bottom: 1px solid var(--border-faint); text-align: left; vertical-align: top; }
+.ptable th { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+
+/* closed section bars + the In the source only strip (shared by all three) */
+.bars { display: grid; border-top: 1px solid var(--border); }
+.bar { border-bottom: 1px solid var(--border); }
+.bar > summary { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding-inline: var(--space-2); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); }
+.bar > summary::-webkit-details-marker { display: none; }
+.bar > summary:hover { background: var(--state-hover); }
+.bar > summary .chev { transition: none; }
+.bar[open] > summary .chev { transform: rotate(90deg); }
+.bar > summary .n { margin-left: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.bar-body { padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--icon) + var(--space-4)); min-width: 0; }
+.only { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); }
+.only a { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; text-decoration: underline; text-underline-offset: var(--space-0-5); text-decoration-color: var(--border); }
+.only a:hover { color: var(--foreground); }
+
+/* the requirement dock (shared) */
+.dock { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.dock-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); }
+.dock-head h3 { font-size: inherit; font-weight: var(--fw-semibold); }
+.dock-head .x { margin-left: auto; }
+.fields { display: grid; gap: var(--space-3); }
+.fields > div { display: grid; grid-template-columns: calc(var(--space-8) * 3) minmax(0, 1fr); gap: var(--space-3); }
+.fields dt { padding-top: var(--space-0-5); }
+@media (max-width: 42rem) { .fields > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); } }
+.dock-empty { padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); color: var(--muted-foreground); }
+
+/* the shared status meter (UI-SPEC section 8: one shared name, drawn once) */
+.status-meter { display: grid; gap: var(--space-1-5); min-width: 0; }
+.status-meter .cells { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.status-meter .cells .sq { --sq: var(--space-3); }
+.status-meter .cap { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); letter-spacing: var(--ls-wider); }
+.status-meter .cap b { color: var(--foreground); }
+.lead-line { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.lead-line b { font-family: var(--font-mono); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.status-chip .v { font-weight: var(--fw-medium); color: var(--muted-foreground); text-transform: none; letter-spacing: 0; }
+.slot-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding-inline: var(--space-2); border-bottom: 1px dashed var(--border); color: var(--muted-foreground); }
+.slot-row .t { font-weight: var(--fw-semibold); }
+.slot-row .text-link { margin-left: auto; }
+pre.code { margin: 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--border-faint); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); line-height: var(--lh-snug); white-space: pre-wrap; overflow-wrap: anywhere; }
+.bars .bar[data-slot='true'] { border-bottom-style: dashed; }
+
+/* =====================================================================
+   A: Reuse — a chip ribbon over a split board: 044 E piles left, the dock right
+   ===================================================================== */
+.ra-ribbon { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2) var(--space-4); align-items: center; padding: var(--space-4); border: 1px solid var(--border); background: var(--card-veil); }
+.ra-ribbon > .micro-label { white-space: nowrap; }
+.ra-lead { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-4) var(--space-8); }
+.split { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--space-6); align-items: start; }
+.board { display: grid; border: 1px solid var(--border); min-width: 0; }
+.board-bar { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--card-veil); }
+.board-body { padding: var(--space-4); min-width: 0; }
+.board-foot { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); padding: var(--space-2) var(--space-4); border-top: 1px solid var(--border); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.board-foot span { display: inline-flex; align-items: center; gap: var(--space-1-5); }
+.piles { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); grid-template-rows: calc(var(--space-8) * 4) auto; gap: var(--space-2) var(--space-2); }
+.pile-col { display: grid; grid-row: span 2; grid-template-rows: subgrid; gap: var(--space-2); min-width: 0; }
+.pile { display: flex; flex-direction: column-reverse; gap: var(--space-1); align-self: end; }
+.mk { display: block; width: 100%; height: var(--space-5); padding: 0; border: 1px solid var(--muted-foreground); background: var(--neutral-fill); cursor: pointer; }
+.mk[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.mk[data-tone='quiet'] { background: transparent; border-style: dashed; }
+.mk:hover { outline: 2px solid var(--border); outline-offset: 1px; }
+.mk[data-on='true'] { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.pile-none { height: var(--space-5); border-bottom: 1px solid var(--border); }
+.pile-lab { display: grid; gap: var(--space-1); align-content: start; justify-items: start; padding: var(--space-1-5) var(--space-1) var(--space-1); border-top: 2px solid var(--foreground); text-align: left; min-width: 0; }
+.pile-lab:hover { background: var(--state-hover); }
+.pile-lab[aria-pressed='true'] { box-shadow: inset 0 0 0 1px var(--foreground); }
+.pile-lab[data-slot='true'] { border-top: 2px dashed var(--muted-foreground); background: var(--hatch); color: var(--muted-foreground); }
+.pile-lab .pl { font-size: var(--fs-2); color: var(--muted-foreground); line-height: 1.25; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pile-lab .pl.slot-w { white-space: normal; font-family: var(--font-mono); }
+.pile-lab .status-chip { white-space: normal; padding: var(--space-0-5) var(--space-1); }
+.split .dock { position: relative; }
+@media (max-width: 62rem) { .split { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 42rem) {
+  .ra-ribbon { grid-template-columns: minmax(0, 1fr); }
+  .piles { grid-template-rows: calc(var(--space-8) * 3) auto; gap: var(--space-2) var(--space-1); }
+  .mk { height: var(--space-3); }
+  .pile-lab .pl, .pile-lab .status-chip { display: none; }
+  .pile-names { display: flex !important; }
+}
+.pile-names { display: none; flex-wrap: wrap; gap: var(--space-1) var(--space-3); margin-top: var(--space-3); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+
+/* =====================================================================
+   B: Contents — a numbered index; each row a bar of written lines against template lines; slots dashed
+   ===================================================================== */
+.rb-head { display: grid; gap: var(--space-4); padding-bottom: var(--space-6); border-bottom: 2px solid var(--foreground); }
+.facts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-6); }
+.fact { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-width: 0; }
+.index { display: grid; }
+.ix { border-bottom: 1px solid var(--border); }
+.ix[data-slot='true'] { border-bottom: 1px dashed var(--muted-foreground); }
+.ix-row { display: grid; grid-template-columns: calc(var(--space-8) * 1.75) minmax(0, 15rem) minmax(0, 1fr) auto; align-items: center; gap: var(--space-4); width: 100%; padding: var(--space-3) var(--space-2); text-align: left; }
+button.ix-row:hover { background: var(--state-hover); }
+.ix[data-slot='true'] .ix-row { color: var(--muted-foreground); }
+.ix-no { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); }
+.ix-h { font-weight: var(--fw-semibold); }
+.fill { display: flex; height: var(--space-4); min-width: 0; }
+.fill .w { background: var(--neutral-fill); border: 1px solid var(--muted-foreground); }
+.fill .p { background: var(--hatch); border: 1px dashed var(--muted-foreground); }
+.fill .w + .p { border-left: 0; }
+.ix-end { display: flex; align-items: center; justify-content: end; gap: var(--space-3); min-width: calc(var(--space-8) * 5); }
+.mini { display: inline-flex; gap: var(--space-0-5); }
+.mini .sq { --sq: var(--space-2); }
+.ix-body { padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--space-8) * 1.75 + var(--space-6)); min-width: 0; }
+.ix-key { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.ix-key span { display: inline-flex; align-items: center; gap: var(--space-1-5); }
+.ix-key i { display: inline-block; width: var(--space-6); height: var(--space-2-5); }
+.ix-key i.w { background: var(--neutral-fill); border: 1px solid var(--muted-foreground); }
+.ix-key i.p { background: var(--hatch); border: 1px dashed var(--muted-foreground); }
+@media (max-width: 42rem) {
+  .ix-row { grid-template-columns: var(--space-10) minmax(0, 1fr); grid-template-areas: 'no h' 'no fill' 'no end'; row-gap: var(--space-1-5); }
+  .ix-no { grid-area: no; align-self: start; } .ix-h { grid-area: h; } .fill { grid-area: fill; } .ix-end { grid-area: end; justify-content: start; min-width: 0; }
+  .ix-body { padding-left: var(--space-2); }
+}
+
+/* =====================================================================
+   C: Datasheet — four big field cells, the evaluation matrix, a section strip, the checklist meter
+   ===================================================================== */
+.sheet { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 2px solid var(--foreground); }
+.cell { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-4); min-width: 0; }
+.cell + .cell { border-left: 1px solid var(--border); }
+.cell .val { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); overflow-wrap: anywhere; }
+.cell .val code { background: none; padding: 0; font-size: var(--fs-7); }
+.cell[data-slot='true'] { background: var(--hatch); }
+@media (max-width: 42rem) { .sheet { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cell:nth-child(3) { border-left: 0; } .cell:nth-child(n+3) { border-top: 1px solid var(--border); } }
+.mtx { display: grid; grid-template-columns: calc(var(--space-8) * 3) repeat(3, minmax(0, 1fr)); border: 1px solid var(--border); min-width: 0; }
+.mtx > * { padding: var(--space-3); border-top: 1px solid var(--border-faint); border-left: 1px solid var(--border-faint); min-width: 0; }
+.mtx > .hd { border-top: 0; background: var(--card-veil); }
+.mtx > :nth-child(4n+1) { border-left: 0; }
+.mtx .mc { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-content: start; min-height: calc(var(--space-8) * 1.75); }
+.mtx button.status-chip { white-space: normal; text-align: left; }
+.mtx button.status-chip:hover { background: var(--state-hover); }
+.mtx button.status-chip[aria-pressed='true'] { border-color: var(--foreground); }
+.mtx-slot { display: grid; place-items: center; min-height: calc(var(--space-8) * 4); border: 1px dashed var(--muted-foreground); background: var(--hatch); }
+@media (max-width: 42rem) { .mtx { grid-template-columns: calc(var(--space-8) * 2.25) repeat(3, minmax(0, 1fr)); } .mtx > * { padding: var(--space-2) var(--space-1-5); } }
+.secstrip { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.secstrip button { display: inline-grid; justify-items: center; gap: var(--space-1); padding: var(--space-1); border: 1px solid transparent; }
+.secstrip button:hover { border-color: var(--border); }
+.secstrip .sq { --sq: calc(var(--space-8) * 1.25); }
+.secstrip .l { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.rc-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+@media (max-width: 42rem) { .rc-row { grid-template-columns: minmax(0, 1fr); } }
+.big-meter .cells .sq { --sq: var(--space-5); }
+@media (max-width: 42rem) { .secstrip { gap: var(--space-0-5); } .secstrip .sq { --sq: var(--space-6); } .big-meter .cells .sq { --sq: var(--space-4); } .big-meter .cells { gap: var(--space-0-5); } }
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">048 ai spec</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Reuse — chips, piles, bars</a>
+    <a data-tab="b" href="#b">B: Contents with fill bars</a>
+    <a data-tab="c" href="#c">C: Datasheet + eval matrix</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="04">04 Half filled</button><button data-state="02">02 Every section a slot</button><button data-state="full">Fully filled</button></span>
+</nav>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+// The made-up Lendshed AI specs and GSD's own templates/AI-SPEC.md, verbatim (injected by the sketch's generator).
+const SRC = /*DATA*/{"04":"<!-- made-up example · derived from gsd-core/templates/AI-SPEC.md · gsd-core 1.19.0 -->\n# AI-SPEC — Phase 4: Bulk Loan Export\n\n> AI design contract generated by `/gsd-ai-integration-phase`. Consumed by `gsd-planner` and `gsd-eval-auditor`.\n> Locks framework selection, implementation guidance, and evaluation strategy before planning begins.\n\n---\n\n## 1. System Classification\n\n**System Type:** Content Generation\n\n**Description:**\nA loan-note drafting assistant writes the short covering note that travels with each monthly export archive. A steward picks a month, the export job builds the archive, and the assistant reads the batch totals (loans, tools, sheds, overdue count) and drafts three or four plain sentences the steward can edit before the archive is fetched. Good means every number in the note matches the batch, the tone is neutral, and nothing about an individual member appears.\n\n**Critical Failure Modes:**\n<!-- The 3-5 behaviors that absolutely cannot go wrong in this system -->\n1. A number in the note that does not match the batch totals.\n2. A member's name or handle appearing in a note that leaves the shed.\n3. A note presented as final when the steward never saw it.\n\n---\n\n## 1b. Domain Context\n\n> Researched by `gsd-domain-researcher`. Grounds the evaluation strategy in domain expert knowledge.\n\n**Industry Vertical:** community tool lending\n\n**User Population:** Volunteer stewards who close the month and send the archive to the neighbourhood association treasurer.\n\n**Stakes Level:** Medium\n\n**Output Consequence:** The note is read by the treasurer beside the archive; a wrong total is trusted until someone re-adds the loans by hand.\n\n### What Domain Experts Evaluate Against\n\n| Dimension | Good (expert accepts) | Bad (expert flags) | Stakes | Source |\n|-----------|-----------------------|--------------------|--------|--------|\n| Totals | Every figure equals the batch total | Any figure rounded, invented or carried from last month | High | Steward lead interview |\n| Privacy | Counts and tool names only | Any member handle or display name | High | Association data rule |\n| Tone | Neutral, short, no praise or blame | A note that scolds late returns | Medium | Treasurer feedback |\n\n### Known Failure Modes in This Domain\n\nA month with zero loans invites an invented summary; a month with a re-issued tool counts the same tool twice if the model adds its own totals.\n\n### Regulatory / Compliance Context\n\nNone identified beyond the association's rule that member names stay inside the shed system.\n\n### Domain Expert Roles for Evaluation\n\n| Role | Responsibility |\n|------|---------------|\n| Steward lead | Rubric calibration and labeling the reference dataset |\n| Association treasurer | Reads sample notes monthly and flags anything unusable |\n\n---\n\n## 2. Framework Decision\n\n**Selected Framework:** Notewright\n\n**Version:** 2.3.1\n\n**Rationale:**\nNotewright is a small TypeScript library that wraps one model call in a typed template and a validator. Lendshed already runs TypeScript on both sides, the note is a single call with no tools, and the validator hook is where the totals check belongs.\n\n**Alternatives Considered:**\n\n| Framework | Ruled Out Because |\n|-----------|------------------|\n| Hand-written fetch to the model host | Retry and validation would be rewritten by hand for one feature |\n| Graphline | Built for multi-step agents; one call does not need a graph |\n\n**Vendor Lock-In Accepted:** Partial — the model host is configurable, the template format is Notewright's own.\n\n---\n\n## 3. Framework Quick Reference\n\n> Fetched from official docs by `gsd-ai-researcher`. Distilled for this specific use case.\n\n### Installation\n```bash\nnpm install notewright@2.3.1\n```\n\n### Core Imports\n```ts\nimport { defineNote, validators } from 'notewright';\n```\n\n### Entry Point Pattern\n```ts\nconst draftNote = defineNote({\n  model: 'larkspur-small',\n  template: 'Write three sentences about this month: {{totals}}',\n  validate: validators.mustContainEach(['loans', 'tools', 'sheds']),\n});\nconst note = await draftNote.run({ totals });\n```\n\n### Key Abstractions\n<!-- Framework-specific concepts the developer must understand before coding -->\n| Concept | What It Is | When You Use It |\n|---------|-----------|-----------------|\n| Note definition | A model name, a template and a validator in one value | Once per kind of note |\n| Validator | A function that rejects a draft and triggers one retry | To compare the draft's numbers with the batch |\n| Run record | The inputs, draft and verdict of one call | When a steward asks why a note says what it says |\n\n### Common Pitfalls\n<!-- Gotchas specific to this framework and system type — from docs, issues, and community reports -->\n1. A validator that throws is treated as a failed draft, not as a crash, so a typo in it silently retries twice.\n2. The template engine does not escape braces inside inserted values.\n3. The run record keeps the full prompt unless told not to.\n\n### Recommended Project Structure\n```\nserver/src/export/\n├── note/\n│   ├── definition.ts\n│   └── validate-totals.ts\n```\n\n---\n\n## 4. Implementation Guidance\n\n**Model Configuration:**\n`larkspur-small` on the association's own model host at `llm.lendshed.example`; temperature 0.2, max 200 output tokens, one retry.\n\n**Core Pattern:**\nThe export job writes the batch totals to the `jobs` row; a second step calls the note definition with those totals only, never with loan rows.\n\n**Tool Use:**\nNone. The assistant has no tools and no network access of its own.\n\n**State Management:**\nThe draft and its run record are stored on the same `jobs` row; the steward's edited text replaces the draft only when they save.\n\n**Context Window Strategy:**\nOnly the totals object goes in, about 80 tokens; there is nothing to trim.\n\n---\n\n## 4b. AI Systems Best Practices\n\n> Written by `gsd-ai-researcher`. Cross-cutting patterns every developer building AI systems needs — independent of framework choice.\n\n### Structured Outputs with Pydantic\n\n<!-- Framework-specific Pydantic integration pattern for this use case -->\n<!-- Include: output model definition, how the framework uses it, retry logic on validation failure -->\n\n```python\n# Pydantic output model for this system type\n```\n\n### Async-First Design\n\n<!-- How async is handled in this framework, the one common mistake, and when to stream vs. await -->\n\n### Prompt Engineering Discipline\n\n<!-- System vs. user prompt separation, few-shot guidance, token budget strategy -->\n\n### Context Window Management\n\n<!-- Strategy specific to this system type: RAG chunking / conversation summarisation / agent compaction -->\n\n### Cost and Latency Budget\n\n<!-- Per-call cost estimate, caching strategy, sub-task model routing -->\n\n---\n\n## 5. Evaluation Strategy\n\n### Dimensions\n\n| Dimension | Rubric (Pass/Fail or 1-5) | Measurement Approach | Priority |\n|-----------|--------------------------|---------------------|----------|\n| Totals match | Pass when every figure equals the batch total | Code | Critical |\n| No member names | Pass when the note holds no handle or display name from the batch | Code | Critical |\n| Neutral tone | 1-5, pass at 4 or more, no praise or blame | LLM Judge | Medium |\n| Usable as sent | Pass when the steward would send it without editing | Human | High |\n\n### Eval Tooling\n\n**Primary Tool:** A plain Vitest suite over saved totals files\n\n**Setup:**\n```bash\nnpm install --save-dev vitest\n```\n\n**CI/CD Integration:**\n```bash\nnpm test -- server/src/export/note\n```\n\n### Reference Dataset\n\n**Size:** 12 examples to start\n\n**Composition:**\nTwelve saved months: three ordinary, three with zero loans, three with a re-issued tool, three with more than 500 loans.\n\n**Labeling:**\nThe steward lead labels each draft pass or fail on the \"usable as sent\" row; the other rows are computed.\n\n---\n\n## 6. Guardrails\n\n### Online (Real-Time)\n\n| Guardrail | Trigger | Intervention |\n|-----------|---------|--------------|\n| | | Block / Escalate / Flag |\n\n### Offline (Flywheel)\n\n| Metric | Sampling Strategy | Action on Degradation |\n|--------|------------------|----------------------|\n| | | |\n\n---\n\n## 7. Production Monitoring\n\n**Tracing Tool:** <!-- e.g., Langfuse self-hosted -->\n\n**Key Metrics to Track:**\n<!-- 3-5 metrics that will be monitored in production -->\n\n**Alert Thresholds:**\n<!-- When to page/alert -->\n\n**Smart Sampling Strategy:**\n<!-- How to select interactions for human review — signal-based filters -->\n\n---\n\n## Checklist\n\n- [x] System type classified\n- [x] Critical failure modes identified (≥ 3)\n- [x] Domain context researched (Section 1b: vertical, stakes, expert criteria, failure modes)\n- [x] Regulatory/compliance context identified or explicitly noted as none\n- [ ] Domain expert roles defined for evaluation involvement\n- [x] Framework selected with rationale documented\n- [x] Alternatives considered and ruled out\n- [ ] Framework quick reference written (install, imports, pattern, pitfalls)\n- [ ] AI systems best practices written (Section 4b: Pydantic, async, prompt discipline, context)\n- [ ] Evaluation dimensions grounded in domain rubric ingredients\n- [ ] Each eval dimension has a concrete rubric (Good/Bad in domain language)\n- [ ] Eval tooling selected — Arize Phoenix default confirmed or override noted\n- [ ] Reference dataset spec written (size ≥ 10, composition + labeling defined)\n- [ ] CI/CD eval integration specified\n- [ ] Online guardrails defined\n- [ ] Production monitoring configured (tracing tool + sampling strategy)\n","02":"<!-- made-up example · derived from gsd-core/templates/AI-SPEC.md · gsd-core 1.19.0 -->\n# AI-SPEC — Phase 2: Roles & Permissions\n\n> AI design contract generated by `/gsd-ai-integration-phase`. Consumed by `gsd-planner` and `gsd-eval-auditor`.\n> Locks framework selection, implementation guidance, and evaluation strategy before planning begins.\n\n---\n\n## 1. System Classification\n\n**System Type:** <!-- RAG | Multi-Agent | Conversational | Extraction | Autonomous Agent | Content Generation | Code Automation | Hybrid -->\n\n**Description:**\n<!-- One-paragraph description of what this AI system does, who uses it, and what \"good\" looks like -->\n\n**Critical Failure Modes:**\n<!-- The 3-5 behaviors that absolutely cannot go wrong in this system -->\n1.\n2.\n3.\n\n---\n\n## 1b. Domain Context\n\n> Researched by `gsd-domain-researcher`. Grounds the evaluation strategy in domain expert knowledge.\n\n**Industry Vertical:** <!-- healthcare | legal | finance | customer service | education | developer tooling | e-commerce | etc. -->\n\n**User Population:** <!-- who uses this system and in what context -->\n\n**Stakes Level:** <!-- Low | Medium | High | Critical -->\n\n**Output Consequence:** <!-- what happens downstream when the AI output is acted on -->\n\n### What Domain Experts Evaluate Against\n\n<!-- Domain-specific rubric ingredients — in practitioner language, not AI jargon -->\n<!-- Format: Dimension / Good (expert accepts) / Bad (expert flags) / Stakes / Source -->\n\n### Known Failure Modes in This Domain\n\n<!-- Domain-specific failure modes from research — not generic hallucination, but how it manifests here -->\n\n### Regulatory / Compliance Context\n\n<!-- Relevant regulations or constraints — or \"None identified\" if genuinely none apply -->\n\n### Domain Expert Roles for Evaluation\n\n| Role | Responsibility |\n|------|---------------|\n| <!-- e.g., Senior practitioner --> | <!-- Dataset labeling / rubric calibration / production sampling --> |\n\n---\n\n## 2. Framework Decision\n\n**Selected Framework:** <!-- e.g., LlamaIndex v0.10.x -->\n\n**Version:** <!-- Pin the version -->\n\n**Rationale:**\n<!-- Why this framework fits this system type, team context, and production requirements -->\n\n**Alternatives Considered:**\n\n| Framework | Ruled Out Because |\n|-----------|------------------|\n| | |\n\n**Vendor Lock-In Accepted:** <!-- Yes / No / Partial — document the trade-off consciously -->\n\n---\n\n## 3. Framework Quick Reference\n\n> Fetched from official docs by `gsd-ai-researcher`. Distilled for this specific use case.\n\n### Installation\n```bash\n# Install command(s)\n```\n\n### Core Imports\n```python\n# Key imports for this use case\n```\n\n### Entry Point Pattern\n```python\n# Minimal working example for this system type\n```\n\n### Key Abstractions\n<!-- Framework-specific concepts the developer must understand before coding -->\n| Concept | What It Is | When You Use It |\n|---------|-----------|-----------------|\n| | | |\n\n### Common Pitfalls\n<!-- Gotchas specific to this framework and system type — from docs, issues, and community reports -->\n1.\n2.\n3.\n\n### Recommended Project Structure\n```\nproject/\n├── # Framework-specific folder layout\n```\n\n---\n\n## 4. Implementation Guidance\n\n**Model Configuration:**\n<!-- Which model(s), temperature, max tokens, and other key parameters -->\n\n**Core Pattern:**\n<!-- The primary implementation pattern for this system type in this framework -->\n\n**Tool Use:**\n<!-- Tools/integrations needed and how to configure them -->\n\n**State Management:**\n<!-- How state is persisted, retrieved, and updated -->\n\n**Context Window Strategy:**\n<!-- How to manage context limits for this system type -->\n\n---\n\n## 4b. AI Systems Best Practices\n\n> Written by `gsd-ai-researcher`. Cross-cutting patterns every developer building AI systems needs — independent of framework choice.\n\n### Structured Outputs with Pydantic\n\n<!-- Framework-specific Pydantic integration pattern for this use case -->\n<!-- Include: output model definition, how the framework uses it, retry logic on validation failure -->\n\n```python\n# Pydantic output model for this system type\n```\n\n### Async-First Design\n\n<!-- How async is handled in this framework, the one common mistake, and when to stream vs. await -->\n\n### Prompt Engineering Discipline\n\n<!-- System vs. user prompt separation, few-shot guidance, token budget strategy -->\n\n### Context Window Management\n\n<!-- Strategy specific to this system type: RAG chunking / conversation summarisation / agent compaction -->\n\n### Cost and Latency Budget\n\n<!-- Per-call cost estimate, caching strategy, sub-task model routing -->\n\n---\n\n## 5. Evaluation Strategy\n\n### Dimensions\n\n| Dimension | Rubric (Pass/Fail or 1-5) | Measurement Approach | Priority |\n|-----------|--------------------------|---------------------|----------|\n| | | Code / LLM Judge / Human | Critical / High / Medium |\n\n### Eval Tooling\n\n**Primary Tool:** <!-- e.g., RAGAS + Langfuse -->\n\n**Setup:**\n```bash\n# Install and configure\n```\n\n**CI/CD Integration:**\n```bash\n# Command to run evals in CI/CD pipeline\n```\n\n### Reference Dataset\n\n**Size:** <!-- e.g., 20 examples to start -->\n\n**Composition:**\n<!-- What scenario types the dataset covers: critical paths, edge cases, failure modes -->\n\n**Labeling:**\n<!-- Who labels examples and how (domain expert, LLM judge with calibration, etc.) -->\n\n---\n\n## 6. Guardrails\n\n### Online (Real-Time)\n\n| Guardrail | Trigger | Intervention |\n|-----------|---------|--------------|\n| | | Block / Escalate / Flag |\n\n### Offline (Flywheel)\n\n| Metric | Sampling Strategy | Action on Degradation |\n|--------|------------------|----------------------|\n| | | |\n\n---\n\n## 7. Production Monitoring\n\n**Tracing Tool:** <!-- e.g., Langfuse self-hosted -->\n\n**Key Metrics to Track:**\n<!-- 3-5 metrics that will be monitored in production -->\n\n**Alert Thresholds:**\n<!-- When to page/alert -->\n\n**Smart Sampling Strategy:**\n<!-- How to select interactions for human review — signal-based filters -->\n\n---\n\n## Checklist\n\n- [ ] System type classified\n- [ ] Critical failure modes identified (≥ 3)\n- [ ] Domain context researched (Section 1b: vertical, stakes, expert criteria, failure modes)\n- [ ] Regulatory/compliance context identified or explicitly noted as none\n- [ ] Domain expert roles defined for evaluation involvement\n- [ ] Framework selected with rationale documented\n- [ ] Alternatives considered and ruled out\n- [ ] Framework quick reference written (install, imports, pattern, pitfalls)\n- [ ] AI systems best practices written (Section 4b: Pydantic, async, prompt discipline, context)\n- [ ] Evaluation dimensions grounded in domain rubric ingredients\n- [ ] Each eval dimension has a concrete rubric (Good/Bad in domain language)\n- [ ] Eval tooling selected — Arize Phoenix default confirmed or override noted\n- [ ] Reference dataset spec written (size ≥ 10, composition + labeling defined)\n- [ ] CI/CD eval integration specified\n- [ ] Online guardrails defined\n- [ ] Production monitoring configured (tracing tool + sampling strategy)\n","template":"# AI-SPEC — Phase {N}: {phase_name}\n\n> AI design contract generated by `/gsd-ai-integration-phase`. Consumed by `gsd-planner` and `gsd-eval-auditor`.\n> Locks framework selection, implementation guidance, and evaluation strategy before planning begins.\n\n---\n\n## 1. System Classification\n\n**System Type:** <!-- RAG | Multi-Agent | Conversational | Extraction | Autonomous Agent | Content Generation | Code Automation | Hybrid -->\n\n**Description:**\n<!-- One-paragraph description of what this AI system does, who uses it, and what \"good\" looks like -->\n\n**Critical Failure Modes:**\n<!-- The 3-5 behaviors that absolutely cannot go wrong in this system -->\n1.\n2.\n3.\n\n---\n\n## 1b. Domain Context\n\n> Researched by `gsd-domain-researcher`. Grounds the evaluation strategy in domain expert knowledge.\n\n**Industry Vertical:** <!-- healthcare | legal | finance | customer service | education | developer tooling | e-commerce | etc. -->\n\n**User Population:** <!-- who uses this system and in what context -->\n\n**Stakes Level:** <!-- Low | Medium | High | Critical -->\n\n**Output Consequence:** <!-- what happens downstream when the AI output is acted on -->\n\n### What Domain Experts Evaluate Against\n\n<!-- Domain-specific rubric ingredients — in practitioner language, not AI jargon -->\n<!-- Format: Dimension / Good (expert accepts) / Bad (expert flags) / Stakes / Source -->\n\n### Known Failure Modes in This Domain\n\n<!-- Domain-specific failure modes from research — not generic hallucination, but how it manifests here -->\n\n### Regulatory / Compliance Context\n\n<!-- Relevant regulations or constraints — or \"None identified\" if genuinely none apply -->\n\n### Domain Expert Roles for Evaluation\n\n| Role | Responsibility |\n|------|---------------|\n| <!-- e.g., Senior practitioner --> | <!-- Dataset labeling / rubric calibration / production sampling --> |\n\n---\n\n## 2. Framework Decision\n\n**Selected Framework:** <!-- e.g., LlamaIndex v0.10.x -->\n\n**Version:** <!-- Pin the version -->\n\n**Rationale:**\n<!-- Why this framework fits this system type, team context, and production requirements -->\n\n**Alternatives Considered:**\n\n| Framework | Ruled Out Because |\n|-----------|------------------|\n| | |\n\n**Vendor Lock-In Accepted:** <!-- Yes / No / Partial — document the trade-off consciously -->\n\n---\n\n## 3. Framework Quick Reference\n\n> Fetched from official docs by `gsd-ai-researcher`. Distilled for this specific use case.\n\n### Installation\n```bash\n# Install command(s)\n```\n\n### Core Imports\n```python\n# Key imports for this use case\n```\n\n### Entry Point Pattern\n```python\n# Minimal working example for this system type\n```\n\n### Key Abstractions\n<!-- Framework-specific concepts the developer must understand before coding -->\n| Concept | What It Is | When You Use It |\n|---------|-----------|-----------------|\n| | | |\n\n### Common Pitfalls\n<!-- Gotchas specific to this framework and system type — from docs, issues, and community reports -->\n1.\n2.\n3.\n\n### Recommended Project Structure\n```\nproject/\n├── # Framework-specific folder layout\n```\n\n---\n\n## 4. Implementation Guidance\n\n**Model Configuration:**\n<!-- Which model(s), temperature, max tokens, and other key parameters -->\n\n**Core Pattern:**\n<!-- The primary implementation pattern for this system type in this framework -->\n\n**Tool Use:**\n<!-- Tools/integrations needed and how to configure them -->\n\n**State Management:**\n<!-- How state is persisted, retrieved, and updated -->\n\n**Context Window Strategy:**\n<!-- How to manage context limits for this system type -->\n\n---\n\n## 4b. AI Systems Best Practices\n\n> Written by `gsd-ai-researcher`. Cross-cutting patterns every developer building AI systems needs — independent of framework choice.\n\n### Structured Outputs with Pydantic\n\n<!-- Framework-specific Pydantic integration pattern for this use case -->\n<!-- Include: output model definition, how the framework uses it, retry logic on validation failure -->\n\n```python\n# Pydantic output model for this system type\n```\n\n### Async-First Design\n\n<!-- How async is handled in this framework, the one common mistake, and when to stream vs. await -->\n\n### Prompt Engineering Discipline\n\n<!-- System vs. user prompt separation, few-shot guidance, token budget strategy -->\n\n### Context Window Management\n\n<!-- Strategy specific to this system type: RAG chunking / conversation summarisation / agent compaction -->\n\n### Cost and Latency Budget\n\n<!-- Per-call cost estimate, caching strategy, sub-task model routing -->\n\n---\n\n## 5. Evaluation Strategy\n\n### Dimensions\n\n| Dimension | Rubric (Pass/Fail or 1-5) | Measurement Approach | Priority |\n|-----------|--------------------------|---------------------|----------|\n| | | Code / LLM Judge / Human | Critical / High / Medium |\n\n### Eval Tooling\n\n**Primary Tool:** <!-- e.g., RAGAS + Langfuse -->\n\n**Setup:**\n```bash\n# Install and configure\n```\n\n**CI/CD Integration:**\n```bash\n# Command to run evals in CI/CD pipeline\n```\n\n### Reference Dataset\n\n**Size:** <!-- e.g., 20 examples to start -->\n\n**Composition:**\n<!-- What scenario types the dataset covers: critical paths, edge cases, failure modes -->\n\n**Labeling:**\n<!-- Who labels examples and how (domain expert, LLM judge with calibration, etc.) -->\n\n---\n\n## 6. Guardrails\n\n### Online (Real-Time)\n\n| Guardrail | Trigger | Intervention |\n|-----------|---------|--------------|\n| | | Block / Escalate / Flag |\n\n### Offline (Flywheel)\n\n| Metric | Sampling Strategy | Action on Degradation |\n|--------|------------------|----------------------|\n| | | |\n\n---\n\n## 7. Production Monitoring\n\n**Tracing Tool:** <!-- e.g., Langfuse self-hosted -->\n\n**Key Metrics to Track:**\n<!-- 3-5 metrics that will be monitored in production -->\n\n**Alert Thresholds:**\n<!-- When to page/alert -->\n\n**Smart Sampling Strategy:**\n<!-- How to select interactions for human review — signal-based filters -->\n\n---\n\n## Checklist\n\n- [ ] System type classified\n- [ ] Critical failure modes identified (≥ 3)\n- [ ] Domain context researched (Section 1b: vertical, stakes, expert criteria, failure modes)\n- [ ] Regulatory/compliance context identified or explicitly noted as none\n- [ ] Domain expert roles defined for evaluation involvement\n- [ ] Framework selected with rationale documented\n- [ ] Alternatives considered and ruled out\n- [ ] Framework quick reference written (install, imports, pattern, pitfalls)\n- [ ] AI systems best practices written (Section 4b: Pydantic, async, prompt discipline, context)\n- [ ] Evaluation dimensions grounded in domain rubric ingredients\n- [ ] Each eval dimension has a concrete rubric (Good/Bad in domain language)\n- [ ] Eval tooling selected — Arize Phoenix default confirmed or override noted\n- [ ] Reference dataset spec written (size ≥ 10, composition + labeling defined)\n- [ ] CI/CD eval integration specified\n- [ ] Online guardrails defined\n- [ ] Production monitoring configured (tracing tool + sampling strategy)\n"}/*END*/;
+
+// ---------- tiny markdown readers ----------
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function inline(s) {
+  return esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+}
+const noComments = (s) => s.replace(/<!--[\s\S]*?-->/g, '');
+function parseTable(lines) {
+  const rows = lines.filter((l) => /^\s*\|/.test(l)).map((l) => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => noComments(c).trim()));
+  if (rows.length < 2) return null;
+  return { head: rows[0], rows: rows.slice(2).filter((r) => r.some((c) => c && !/^(Block \/ Escalate \/ Flag|Code \/ LLM Judge \/ Human|Critical \/ High \/ Medium)$/.test(c))) };
+}
+function blocks(lines) {
+  const out = []; let para = [], list = null, tbl = [], fence = null;
+  const flushP = () => { if (para.length) { out.push({ t: 'p', text: para.join(' ') }); para = []; } };
+  const flushL = () => { if (list) { out.push(list); list = null; } };
+  const flushT = () => { if (tbl.length) { const t = parseTable(tbl); if (t && t.rows.length) out.push({ t: 'table', ...t }); tbl = []; } };
+  for (const raw of noComments(lines.join('\n')).split('\n')) {
+    if (fence) { if (/^```/.test(raw)) { if (fence.body.some((b) => b.trim())) out.push({ t: 'pre', text: fence.body.join('\n') }); fence = null; } else fence.body.push(raw); continue; }
+    if (/^```/.test(raw)) { flushP(); flushL(); flushT(); fence = { body: [] }; continue; }
+    const l = raw;
+    if (/^\s*\|/.test(l)) { flushP(); flushL(); tbl.push(l); continue; } else flushT();
+    if (!l.trim() || /^---+\s*$/.test(l) || /^>/.test(l)) { flushP(); flushL(); continue; }
+    let m;
+    if ((m = l.match(/^\s*-\s+\[( |x)\]\s+(.*)$/))) { flushP(); if (!list || list.t !== 'chk') { flushL(); list = { t: 'chk', items: [] }; } list.items.push({ done: m[1] === 'x', text: m[2] }); continue; }
+    if ((m = l.match(/^\s*(?:[-*]|\d+\.)\s+(.*)$/))) { flushP(); if (!list || list.t !== 'ul') { flushL(); list = { t: 'ul', items: [] }; } list.items.push({ text: m[1] }); continue; }
+    if (/^\s*\d+\.\s*$/.test(l)) continue;
+    if ((m = l.match(/^###\s+(.*)$/))) { flushP(); flushL(); out.push({ t: 'h3', text: m[1] }); continue; }
+    if (/^\*\*[^*]+:\*\*\s*$/.test(l.trim())) { flushP(); flushL(); out.push({ t: 'lbl', text: l.trim() }); continue; }
+    flushL(); para.push(l.trim());
+  }
+  flushP(); flushL(); flushT();
+  // a label or sub-heading with nothing under it before the next one is template residue: drop it
+  return out.filter((b, i) => !((b.t === 'lbl' || b.t === 'h3') && (!out[i + 1] || out[i + 1].t === 'h3' || (b.t === 'lbl' && out[i + 1].t === 'lbl'))));
+}
+function blocksHtml(bs) {
+  return `<div class="blocks">${bs.map((b) => b.t === 'p' ? `<p class="prose">${inline(b.text)}</p>`
+    : b.t === 'h3' ? `<p class="sub-h">${inline(b.text)}</p>`
+    : b.t === 'lbl' ? `<p class="micro-label">${esc(b.text.replace(/\*\*/g, '').replace(/:$/, ''))}</p>`
+    : b.t === 'pre' ? `<pre class="code">${esc(b.text)}</pre>`
+    : b.t === 'ul' ? `<ul class="bul">${b.items.map((i) => `<li><span>${inline(i.text)}</span></li>`).join('')}</ul>`
+    : b.t === 'chk' ? `<ul class="bul chk">${b.items.map((i) => `<li style="--d:${i.done ? 1 : 0}"><span>${i.done ? '<b class="micro-label" style="color:var(--primary)">Done</b> ' : ''}${inline(i.text)}</span></li>`).join('')}</ul>`
+    : b.t === 'table' ? `<div class="tbl-scroll"><table class="ptable"><thead><tr>${b.head.map((h) => `<th>${inline(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '').join('')}</div>`;
+}
+
+// ---------- the AI-SPEC reader ----------
+// A line is template text when it occurs verbatim in GSD's templates/AI-SPEC.md (headings, labels, comments,
+// blockquote notes, empty table rows, fence placeholders, "1." stubs). A numbered section is a template slot
+// when every non-blank line under its heading (sub-headings and rules aside) is template text.
+const TEMPLATE = new Set(SRC.template.split('\n').map((l) => l.trim()).filter(Boolean));
+const isTemplate = (l) => TEMPLATE.has(l.trim()) || /^<!--.*-->$/.test(l.trim());
+// The template's checklist is fixed: item i is about this section (read from the item's words).
+const CHECK_SECTION = ['1', '1', '1b', '1b', '1b', '2', '2', '3', '4b', '5', '5', '5', '5', '5', '6', '7'];
+const SHORT = { '1': 'System', '1b': 'Domain', '2': 'Framework', '3': 'Reference', '4': 'Guidance', '4b': 'Practices', '5': 'Evaluation', '6': 'Guardrails', '7': 'Monitoring' };
+function parseAiSpec(md) {
+  const d = { title: '', sections: [], checklist: [] };
+  let cur = null;
+  for (const line of md.split('\n')) {
+    if (/^<!-- made-up example/.test(line)) continue;
+    let m;
+    if (!cur && (m = line.match(/^# (.*)$/))) { d.title = m[1].trim(); continue; }
+    if ((m = line.match(/^## (.*)$/))) { cur = { h: m[1].trim(), lines: [] }; d.sections.push(cur); continue; }
+    if (cur) cur.lines.push(line);
+  }
+  const tm = d.title.match(/^AI-SPEC\s+[—–-]\s+Phase\s+(\d+(?:\.\d+)*)\s*:\s*(.+)$/);
+  d.phase = tm ? tm[1] : ''; d.name = tm ? tm[2] : d.title;
+  d.numbered = d.sections.filter((s) => /^\d+b?\.\s/.test(s.h)).map((s) => {
+    const no = s.h.match(/^(\d+b?)\./)[1];
+    const body = s.lines.filter((l) => l.trim() && !/^---+\s*$/.test(l.trim()) && !/^#{3,}\s/.test(l));
+    const written = body.filter((l) => !isTemplate(l)).length;
+    return { ...s, no, name: s.h.replace(/^\d+b?\.\s+/, ''), written, tmpl: body.length - written, slot: written === 0 };
+  });
+  const ck = d.sections.find((s) => /^checklist$/i.test(s.h));
+  if (ck) ck.lines.forEach((l) => { const m = l.match(/^\s*-\s+\[( |x)\]\s+(.*)$/); if (m) d.checklist.push({ done: m[1] === 'x', text: m[2], sec: CHECK_SECTION[d.checklist.length] || null }); });
+  d.done = d.checklist.filter((c) => c.done).length;
+  d.slots = d.numbered.filter((s) => s.slot).length;
+  const field = (no, label) => { const s = d.numbered.find((x) => x.no === no); if (!s) return null; const l = s.lines.find((x) => x.startsWith(`**${label}:**`)); if (!l) return null; const v = noComments(l.slice(label.length + 5)).trim(); return v || null; };
+  d.systemType = field('1', 'System Type');
+  d.framework = field('2', 'Selected Framework');
+  d.version = field('2', 'Version');
+  d.stakes = field('1b', 'Stakes Level');
+  d.lockIn = field('2', 'Vendor Lock-In Accepted');
+  const ev = d.numbered.find((x) => x.no === '5');
+  d.dims = [];
+  if (ev) { const k = ev.lines.findIndex((l) => /^###\s+Dimensions/.test(l)); const t = k >= 0 ? parseTable(ev.lines.slice(k + 1, k + 12)) : null; if (t) d.dims = t.rows.filter((r) => r[0]).map((r) => ({ name: r[0], rubric: r[1], how: r[2], pri: r[3] })); }
+  return d;
+}
+// The "Fully filled" state: 04-AI-SPEC with sections 4b, 6 and 7 written in the sketch (made-up Lendshed words)
+// and every checklist box ticked. No fixture is fully filled; this state exists to show the page with no lead line.
+function fullyFilled(md) {
+  const s4b = `## 4b. AI Systems Best Practices
+
+> Written by \`gsd-ai-researcher\`. Cross-cutting patterns every developer building AI systems needs — independent of framework choice.
+
+### Structured Outputs with Pydantic
+
+Lendshed has no Python. The Notewright note definition is the typed output, and the totals validator rejects a draft and triggers the one retry.
+
+### Async-First Design
+
+The note step runs inside the export job after the archive is written; the steward's page waits on the job row, never on the model call.
+
+### Prompt Engineering Discipline
+
+One system line fixes the tone and forbids names; the totals go in the user message; no few-shot examples.
+
+### Context Window Management
+
+Nothing to manage: about 80 tokens of totals go in and at most 200 come out.
+
+### Cost and Latency Budget
+
+One call per shed per month on the association's own host, so no per-call fee; under two seconds.
+
+---
+
+`;
+  const s6 = `## 6. Guardrails
+
+### Online (Real-Time)
+
+| Guardrail | Trigger | Intervention |
+|-----------|---------|--------------|
+| Totals validator | A figure in the draft differs from the batch | Block |
+| Name filter | A handle or display name from the batch appears | Block |
+
+### Offline (Flywheel)
+
+| Metric | Sampling Strategy | Action on Degradation |
+|--------|------------------|----------------------|
+| Notes edited before sending | Every note | Review the template when more than half are edited |
+
+---
+
+`;
+  const s7 = `## 7. Production Monitoring
+
+**Tracing Tool:** Notewright run records on the \`jobs\` row
+
+**Key Metrics to Track:**
+Drafts rejected by the validator, and notes edited before sending.
+
+**Alert Thresholds:**
+None paged; a steward sees "Draft rejected twice" on the export page.
+
+**Smart Sampling Strategy:**
+The treasurer reads every note; there are twelve a year.
+
+---
+
+`;
+  return md.replace(/## 4b\.[\s\S]*?(?=## 5\.)/, s4b).replace(/## 6\.[\s\S]*?(?=## 7\.)/, s6).replace(/## 7\.[\s\S]*?(?=## Checklist)/, s7).replace(/- \[ \]/g, '- [x]');
+}
+
+// ---------- state ----------
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+const S = { state: params.get('state') || '04', sel: null, open: new Set() };
+const doc = () => parseAiSpec(S.state === 'full' ? fullyFilled(SRC['04']) : SRC[S.state]);
+const ACTS = {};
+const VIEWS = {};
+
+// ---------- shared atoms ----------
+const ICON = { copy: '<rect x="9" y="9" width="13" height="13"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>', chevr: '<path d="m9 18 6-6-6-6"/>' };
+const svg = (k, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`;
+const sq = (tone, label) => `<span class="sq" data-tone="${tone}"${label ? ` role="img" aria-label="${esc(label)}"` : ' aria-hidden="true"'}></span>`;
+const chip = (tone, text) => `<span class="status-chip" data-tone="${tone}">${tone !== 'none' ? sq(tone) : ''}${text}</span>`;
+const slotChip = () => chip('quiet', 'Template slot');
+const valChip = (v) => v ? `<span class="status-chip">${inline(v)}</span>` : slotChip();
+const fwChip = (d) => d.framework ? `<span class="status-chip">${inline(d.framework)}${d.version ? ` <span class="v"><code>${esc(d.version)}</code></span>` : ''}</span>` : slotChip();
+const dimChips = (d) => d.dims.length ? d.dims.map((x) => `<span class="status-chip">${inline(x.name)}</span>`).join('') : slotChip();
+const leadLine = (d) => d.slots ? `<p class="lead-line"><b>${d.slots} of ${d.numbered.length}</b> sections are still template slots</p>` : '';
+const meter = (d, cls = '') => `<div class="status-meter ${cls}" role="img" aria-label="${d.done} of ${d.checklist.length} checklist items done"><span class="cap"><b>${d.done} of ${d.checklist.length}</b> checklist items done</span><span class="cells" aria-hidden="true">${d.checklist.map((c) => `<span class="sq" data-tone="${c.done ? 'complete' : 'quiet'}" title="${esc(c.text)}"></span>`).join('')}</span></div>`;
+const appHead = () => `<header class="app-head"><span class="app-brand"><i></i>Labelore <span>/ Lendshed</span></span><nav class="app-nav" aria-label="Project"><a href="#" data-act="noop">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Search</a></nav></header>`;
+function header(d) {
+  return `<nav class="crumbs" aria-label="Breadcrumb"><span>Lendshed</span><span aria-hidden="true">/</span><span>Phase ${esc(d.phase)}</span><span aria-hidden="true">/</span><span aria-current="page">AI spec</span></nav>
+  <header class="heading-block"><p class="eyebrow">Phase ${esc(d.phase)} · AI spec</p><h1>${esc(d.name)}</h1>
+  <div class="meta-row"><button class="btn-xs icon" type="button" data-act="noop" aria-label="Copy path" title="Copy path">${svg('copy')}</button><div class="seg" role="group" aria-label="Show"><button class="btn-xs" type="button" aria-pressed="true">View</button><button class="btn-xs" type="button" aria-pressed="false" data-act="noop">Source</button></div></div></header>`;
+}
+const page = (d, inner) => `${appHead()}<main class="page">${header(d)}${inner}</main>`;
+// Sections as bars: a written section opens to its text; a slot is a closed row with its heading and the chip only.
+function bars(d, withChecklist = true) {
+  const rows = d.numbered.map((s) => s.slot
+    ? `<div class="slot-row" id="sec-${s.no}">${sq('quiet')}<span class="t">${esc(s.h)}</span>${slotChip()}<a class="text-link" href="#" data-act="noop">Source</a></div>`
+    : `<details class="bar" id="sec-${s.no}"${S.open.has(s.no) ? ' open' : ''}><summary>${svg('chevr', 'i chev')}${sq('neutral')}<span>${esc(s.h)}</span><span class="n">${s.written} lines</span></summary><div class="bar-body">${blocksHtml(blocks(s.lines))}</div></details>`).join('');
+  const ck = withChecklist ? `<details class="bar" id="sec-ck"${S.open.has('ck') ? ' open' : ''}><summary>${svg('chevr', 'i chev')}<span>Checklist</span><span class="n">${d.done} of ${d.checklist.length}</span></summary><div class="bar-body">${blocksHtml([{ t: 'chk', items: d.checklist }])}</div></details>` : '';
+  return `<div class="bars">${rows}${ck}</div>`;
+}
+function secDock(d, no) {
+  const s = d.numbered.find((x) => x.no === no);
+  const items = d.checklist.filter((c) => c.sec === no);
+  const its = items.length ? `<div style="display:grid;gap:var(--space-1-5)"><p class="micro-label">Checklist</p>${items.map((c) => `<p style="display:flex;gap:var(--space-2);align-items:baseline">${sq(c.done ? 'complete' : 'quiet', c.done ? 'Done' : 'Not done')}<span>${inline(c.text)}</span></p>`).join('')}</div>` : '';
+  return `<div class="dock"><div class="dock-head"><span class="micro-label">Section ${esc(no)}</span><h3>${esc(s.name)}</h3>${s.slot ? slotChip() : ''}<button class="text-link x" type="button" data-act="close">Close</button></div>${s.slot ? '' : `<span class="meta">${s.written} written lines · ${s.tmpl} template lines left in place</span>`}${its}${s.slot ? '' : `<button class="text-link" type="button" data-act="read" data-no="${esc(no)}">Read the section</button>`}</div>`;
+}
+
+// =====================================================================================
+// A: Reuse. 045 C's chips for the system, 044 E's piles for the checklist (a column per section),
+// the dock beside the board, 044 E's closed bars below.
+// =====================================================================================
+VIEWS.a = function () {
+  const d = doc();
+  const ribbon = `<section class="ra-ribbon" aria-label="System"><span class="micro-label">System type</span><span class="chips">${valChip(d.systemType)}</span><span class="micro-label">Framework</span><span class="chips">${fwChip(d)}</span><span class="micro-label">Evaluation dimensions</span><span class="chips">${dimChips(d)}</span></section>`;
+  const lead = `<div class="ra-lead">${leadLine(d) || '<span></span>'}${meter(d)}</div>`;
+  const cols = d.numbered.map((s) => {
+    const items = d.checklist.map((c, i) => ({ c, i })).filter((x) => x.c.sec === s.no);
+    return `<div class="pile-col"><div class="pile">${items.length ? items.map(({ c, i }) => `<button class="mk" type="button" data-act="item" data-i="${i}" data-tone="${c.done ? 'complete' : 'quiet'}"${S.sel === `i${i}` ? ' data-on="true"' : ''} title="${esc(c.text)}" aria-label="${esc(c.text)}: ${c.done ? 'done' : 'not done'}"></button>`).join('') : '<span class="pile-none" title="No checklist item is about this section"></span>'}</div><button class="pile-lab" type="button" data-act="sec" data-no="${esc(s.no)}" data-slot="${s.slot}" aria-pressed="${S.sel === `s${s.no}`}" title="${esc(s.h)}${s.slot ? ' · Template slot' : ''}"><span class="num">${esc(s.no)}</span><span class="pl">${esc(SHORT[s.no] || s.name)}</span>${s.slot ? '<span class="pl slot-w">Template slot</span>' : ''}</button></div>`;
+  }).join('');
+  const names = `<p class="pile-names" aria-hidden="true">${d.numbered.map((s) => `<span>${esc(s.no)} ${esc(SHORT[s.no] || s.name)}${s.slot ? ' · Template slot' : ''}</span>`).join('')}</p>`;
+  let dock = `<div class="dock-empty">Select a segment to read that checklist item, or a section number to see the section.</div>`;
+  if (S.sel && S.sel[0] === 's') dock = secDock(d, S.sel.slice(1));
+  if (S.sel && S.sel[0] === 'i') { const c = d.checklist[Number(S.sel.slice(1))]; const s = d.numbered.find((x) => x.no === c.sec); dock = `<div class="dock"><div class="dock-head"><span class="micro-label">Checklist item</span>${chip(c.done ? 'complete' : 'quiet', c.done ? 'Done' : 'Not done')}<button class="text-link x" type="button" data-act="close">Close</button></div><p>${inline(c.text)}</p><p class="meta">About section ${esc(s.no)}, ${esc(s.name)}${s.slot ? ' · still a template slot' : ''}</p></div>`; }
+  const board = `<div class="split"><figure class="board"><div class="board-bar"><span class="micro-label">The checklist by section · one segment per item</span></div><div class="board-body"><div class="piles" style="--cols:${d.numbered.length}">${cols}</div>${names}</div><div class="board-foot"><span>${sq('complete')}done</span><span>${sq('quiet')}not done</span><span><span class="sq" style="background:var(--hatch);border:1px dashed var(--muted-foreground)" aria-hidden="true"></span>section still a template slot</span></div></figure>${dock}</div>`;
+  return page(d, `${ribbon}${lead}${board}${bars(d)}`);
+};
+
+// =====================================================================================
+// B: Contents. The page is the document's numbered index; each row's bar is written lines against the
+// template lines still in place; a slot row is dashed, hollow, closed.
+// =====================================================================================
+VIEWS.b = function () {
+  const d = doc();
+  const head = `<section class="rb-head" aria-label="System"><div class="facts"><span class="fact"><span class="micro-label">System type</span>${valChip(d.systemType)}</span><span class="fact"><span class="micro-label">Framework</span>${fwChip(d)}</span><span class="fact"><span class="micro-label">Evaluation dimensions</span><span class="chips">${dimChips(d)}</span></span></div>${leadLine(d)}${meter(d)}</section>`;
+  const max = Math.max(...d.numbered.map((s) => s.written + s.tmpl), 1);
+  const rows = d.numbered.map((s) => {
+    const items = d.checklist.filter((c) => c.sec === s.no);
+    const open = S.open.has(s.no);
+    const bar = `<span class="fill" aria-hidden="true">${s.written ? `<span class="w" style="width:${s.written / max * 100}%"></span>` : ''}${s.tmpl ? `<span class="p" style="width:${s.tmpl / max * 100}%"></span>` : ''}</span>`;
+    const end = `<span class="ix-end">${items.length ? `<span class="mini" title="${items.filter((c) => c.done).length} of ${items.length} checklist items done">${items.map((c) => sq(c.done ? 'complete' : 'quiet')).join('')}</span>` : ''}${s.slot ? slotChip() : `<span class="meta">${s.written} written</span>`}</span>`;
+    const inner = `<span class="ix-no">${esc(s.no)}</span><span class="ix-h">${esc(s.name)}</span>${bar}${end}`;
+    return s.slot ? `<div class="ix" data-slot="true" id="sec-${s.no}"><div class="ix-row">${inner}</div></div>`
+      : `<div class="ix" id="sec-${s.no}"><button class="ix-row" type="button" data-act="ix" data-no="${esc(s.no)}" aria-expanded="${open}">${inner}</button>${open ? `<div class="ix-body">${blocksHtml(blocks(s.lines))}</div>` : ''}</div>`;
+  }).join('');
+  const ckOpen = S.open.has('ck');
+  const ck = `<div class="ix" id="sec-ck"><button class="ix-row" type="button" data-act="ix" data-no="ck" aria-expanded="${ckOpen}"><span class="ix-no">✓</span><span class="ix-h">Checklist</span><span class="fill" aria-hidden="true"></span><span class="ix-end"><span class="meta">${d.done} of ${d.checklist.length}</span></span></button>${ckOpen ? `<div class="ix-body">${blocksHtml([{ t: 'chk', items: d.checklist }])}</div>` : ''}</div>`;
+  const index = `<section aria-labelledby="b-ix" style="display:grid;gap:var(--space-3)"><div class="meta-row"><h2 class="sh" id="b-ix">Contents</h2><span class="ix-key"><span><i class="w"></i>written lines</span><span><i class="p"></i>the template's lines still in place</span><span>${sq('complete')}${sq('quiet')}its checklist items</span></span></div><div class="index" style="border-top:1px solid var(--border)">${rows}${ck}</div></section>`;
+  return page(d, `${head}${index}`);
+};
+
+// =====================================================================================
+// C: Datasheet. Four big field cells, the evaluation dimensions placed by measurement × priority,
+// the nine sections as a square strip beside the lead, the checklist meter, then the bars.
+// =====================================================================================
+VIEWS.c = function () {
+  const d = doc();
+  const cell = (label, v, extra = '') => `<div class="cell" data-slot="${!v}"><span class="micro-label">${label}</span>${v ? `<span class="val">${v}</span>${extra}` : slotChip()}</div>`;
+  const lock = d.lockIn ? d.lockIn.split(/\s+[—–-]\s+/) : null;
+  const sheet = `<section class="sheet" aria-label="System">${cell('System type', d.systemType && inline(d.systemType))}${cell('Framework', d.framework && inline(d.framework), d.version ? `<span class="meta">Version <code>${esc(d.version)}</code></span>` : '')}${cell('Stakes level', d.stakes && inline(d.stakes))}${cell('Vendor lock-in', lock && inline(lock[0]), lock && lock[1] ? `<span class="source-note">${inline(lock[1])}</span>` : '')}</section>`;
+  const HOW = ['Code', 'LLM Judge', 'Human'], PRI = ['Critical', 'High', 'Medium'];
+  const sel = S.sel && S.sel[0] === 'd' ? Number(S.sel.slice(1)) : null;
+  const mtx = d.dims.length ? `<div class="mtx" role="table" aria-label="Evaluation dimensions by measurement and priority"><span class="hd micro-label">Priority</span>${HOW.map((h) => `<span class="hd micro-label">${h}</span>`).join('')}${PRI.map((p) => `<span class="micro-label">${p}</span>${HOW.map((h) => `<span class="mc">${d.dims.map((x, i) => ({ x, i })).filter(({ x }) => x.pri === p && x.how === h).map(({ x, i }) => `<button class="status-chip" type="button" data-act="dim" data-i="${i}" aria-pressed="${sel === i}">${inline(x.name)}</button>`).join('')}</span>`).join('')}`).join('')}</div>` : `<div class="mtx-slot">${slotChip()}</div>`;
+  const dimDock = sel != null ? `<div class="dock"><div class="dock-head"><span class="micro-label">Evaluation dimension</span><h3>${inline(d.dims[sel].name)}</h3><button class="text-link x" type="button" data-act="close">Close</button></div><dl class="fields"><div><dt class="micro-label">Rubric</dt><dd>${inline(d.dims[sel].rubric)}</dd></div><div><dt class="micro-label">Measurement</dt><dd>${inline(d.dims[sel].how)}</dd></div><div><dt class="micro-label">Priority</dt><dd>${inline(d.dims[sel].pri)}</dd></div></dl></div>` : '';
+  const evalSec = `<section aria-labelledby="c-ev" style="display:grid;gap:var(--space-3)"><div class="meta-row"><h2 class="sh" id="c-ev">Evaluation dimensions</h2>${d.dims.length ? `<span class="meta">${d.dims.length} · placed by measurement and priority</span>` : ''}</div>${mtx}${dimDock}</section>`;
+  const strip = `<div class="secstrip" role="group" aria-label="Sections">${d.numbered.map((s) => `<button type="button" data-act="jump" data-no="${esc(s.no)}" title="${esc(s.h)}${s.slot ? ' · Template slot' : ''}">${sq(s.slot ? 'quiet' : 'neutral')}<span class="l">${esc(s.no)}</span></button>`).join('')}</div>`;
+  const row = `<section class="rc-row" aria-label="Sections and checklist"><div style="display:grid;gap:var(--space-3)">${leadLine(d) || `<p class="micro-label">Sections</p>`}${strip}<span class="meta">${sq('neutral')} written · ${sq('quiet')} Template slot</span></div><div style="display:grid;gap:var(--space-3)"><p class="micro-label">Checklist</p>${meter(d, 'big-meter')}</div></section>`;
+  return page(d, `${sheet}${row}${evalSec}${bars(d)}`);
+};
+
+ACTS.item = (el) => { const k = `i${el.dataset.i}`; S.sel = S.sel === k ? null : k; render(); };
+ACTS.sec = (el) => { const k = `s${el.dataset.no}`; S.sel = S.sel === k ? null : k; render(); };
+ACTS.dim = (el) => { const k = `d${el.dataset.i}`; S.sel = S.sel === k ? null : k; render(); };
+ACTS.close = () => { S.sel = null; render(); };
+ACTS.read = (el) => { S.open.add(el.dataset.no); render(); const t = document.getElementById(`sec-${el.dataset.no}`); if (t) t.scrollIntoView({ block: 'start' }); };
+ACTS.ix = (el) => { const k = el.dataset.no; if (S.open.has(k)) S.open.delete(k); else S.open.add(k); render(); };
+ACTS.jump = (el) => { const no = el.dataset.no; S.open.add(no); render(); const t = document.getElementById(`sec-${no}`); if (t) t.scrollIntoView({ block: 'center' }); };
+document.addEventListener('toggle', (e) => { const el = e.target; if (el.matches && el.matches('details.bar') && el.id) { const k = el.id.replace('sec-', ''); if (el.open) S.open.add(k); else S.open.delete(k); } }, true);
+
+// ---------- render orchestration ----------
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY;
+  const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  window.scrollTo(0, y);
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; S.sel = null; S.open = new Set(); return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+window.addEventListener('hashchange', render);
+render();
+</script>
+</body>
+</html>
