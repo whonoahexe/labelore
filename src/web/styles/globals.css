@@ -29584,6 +29584,24 @@ button.view-codebase-mark:hover {
   font-size: var(--fs-2);
   overflow-wrap: anywhere;
 }
+/* The Testing panel's commands size to their text, as the sketch draws them (the head's command fills its row). */
+.view-codebase-cmds .copy-command-text {
+  flex: 0 1 auto;
+}
+
+/* The Conventions panel keeps its section chips at every width (sketch 046 B); the Concerns panel shows them at 390px only. */
+.view-codebase-conventions-panel .view-codebase-legend {
+  display: flex;
+}
+/* A chip set in a row of sets keeps its chips at their own height: the grid stretches the set, never the chips. */
+.view-codebase-group-sets .view-codebase-chip-set {
+  align-content: start;
+}
+
+.view-codebase-group-sets .view-codebase-chips {
+  align-content: flex-start;
+}
+
 /* phase-10-codebase:end */
 
 /* copy-command (10-10, shared): a command as selectable mono text that wraps, outside its Copy command button. The
