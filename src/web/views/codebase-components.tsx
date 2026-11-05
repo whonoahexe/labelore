@@ -11,13 +11,19 @@
 // in (its one server-sanitised document renderer), never a new raw-HTML site here. No href is built from
 // document text. Colour comes only from the tone a composed model carries and the theme tokens; nothing here is
 // drawn missing or in a parse-degradation tone.
+import { useMemo } from 'react';
 import { Link } from '../nav.tsx';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
+import { classifyFence } from '../../rendering/figure-detect.ts';
 import { CopyCommand } from '../components/copy-command.tsx';
-import { ResearchInline } from '../pages/research-atoms.tsx';
+import { FigureFor } from '../components/fenced-figure.tsx';
+import { FigureFrame } from '../components/figure-frame.tsx';
+import { PlainDiagram } from '../components/lifted-diagram.tsx';
+import { ResearchInline, SwapRows } from '../pages/research-atoms.tsx';
 import { stripLeadingHeading } from './document-sections.ts';
 import { NOT_MAPPED } from './codebase-page.ts';
 import type {
+  ComposedArchitecture,
   ComposedCodebase,
   ComposedCodebaseHead,
   ComposedCodebaseLifted,
@@ -193,7 +199,40 @@ function Head({ head }: { head: ComposedCodebaseHead }): React.JSX.Element {
   );
 }
 
+/** A fenced block in the shipped figure frame: the lane diagram or the clean tree when the shared detector says so
+ * (the same decision every document makes), else the author's text as drawn, in the same frame. */
+function FenceFigure({ fence, title }: { fence: { info: string; text: string }; title: string }): React.JSX.Element {
+  const kind = useMemo(() => classifyFence(fence.info, fence.text), [fence.info, fence.text]);
+  if (kind !== null) return <FigureFor kind={kind} text={fence.text} title={title} />;
+  return <FigureFrame title={title}>{() => <PlainDiagram text={fence.text} />}</FigureFrame>;
+}
+
+/** The Architecture panel's designed parts (10-12; sketch 043 reuses the Research figures): the System Overview as
+ * the shipped lane diagram figure (its "Shown as drawn" fallback included), then the Anti-Patterns as the
+ * shipped swap rows. Every other section stays a plain section below. */
+function ArchitecturePanel({ lifted }: { lifted: ComposedArchitecture }): React.JSX.Element {
+  return (
+    <div className="view-codebase-lifted view-codebase-architecture">
+      {lifted.diagram !== null ? (
+        <section className="view-codebase-figure">
+          <FenceFigure fence={lifted.diagram} title="System overview" />
+        </section>
+      ) : null}
+      {lifted.swaps.length > 0 ? (
+        <section className="view-codebase-swaps">
+          <h3 className="view-codebase-group-head">
+            <span>Anti-patterns</span>
+            <span className="view-codebase-tally">{lifted.swaps.length} to avoid</span>
+          </h3>
+          <SwapRows items={lifted.swaps} />
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
 function Lifted({ lifted }: { lifted: ComposedCodebaseLifted }): React.JSX.Element {
+  if (lifted.kind === 'architecture') return <ArchitecturePanel lifted={lifted} />;
   if (lifted.kind === 'stack') {
     return (
       <div className="view-codebase-lifted">

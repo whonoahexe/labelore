@@ -24491,7 +24491,7 @@ button.research-pf-chip:hover {
 
 .research-swap-why p:not(.research-label) {
   color: var(--muted-foreground);
-  font-size: var(--fs-3);
+  font-size: var(--research-swap-why-size, var(--fs-3));
   line-height: var(--lh-relaxed);
 }
 
@@ -28833,6 +28833,40 @@ a.view-codebase-entry:hover {
   .view-codebase-head {
     padding: var(--space-4);
   }
+}
+
+/* The Architecture panel's designed parts (10-12; sketch 043 reuses the Research figures): the System Overview in the
+   shipped figure frame, then the Anti-Patterns as the shipped swap rows. The shipped classes carry their own look;
+   only the sizes outside this page's four are taken inside them here. */
+.view-codebase-architecture {
+  gap: var(--space-8);
+}
+
+.view-codebase-figure,
+.view-codebase-swaps {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+}
+
+/* The shipped swap rows size their opened text --fs-3 for the Research page; this page renders four sizes only, so
+   inside its swaps that text takes Body (the rows read this custom property). */
+.view-codebase-swaps {
+  --research-swap-why-size: var(--fs-4);
+}
+
+.view-codebase-group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-4);
+}
+
+.view-codebase-tally {
+  color: var(--muted-foreground);
+  letter-spacing: var(--ls-wider);
 }
 /* phase-10-codebase:end */
 

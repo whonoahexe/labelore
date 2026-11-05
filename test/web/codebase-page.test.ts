@@ -31,7 +31,20 @@ function groupsOf(markdown: string): DocumentSectionGroup[] {
   const body = markdown.replace(/^---\n[\s\S]*?\n---\n/, '');
   const groups: DocumentSectionGroup[] = [];
   let lead = '';
-  for (const chunk of body.split(/^(?=## )/m)) {
+  // Cut at every `## ` line outside a fence (a diagram's `## label` line is not a heading).
+  const chunks: string[] = [];
+  let fenced = false;
+  let current = '';
+  for (const line of body.split('\n')) {
+    if (line.startsWith('```')) fenced = !fenced;
+    if (!fenced && line.startsWith('## ') && current !== '') {
+      chunks.push(current);
+      current = '';
+    }
+    current += `${line}\n`;
+  }
+  chunks.push(current);
+  for (const chunk of chunks) {
     if (chunk.startsWith('## ')) {
       const heading = chunk.slice(3, chunk.indexOf('\n')).trim();
       groups.push({ id: heading.toLowerCase().replace(/[^a-z0-9]+/g, '-'), heading, html: `<h2>${heading}</h2><p>${heading} text</p>` });
@@ -209,7 +222,96 @@ describe('composeCodebase - the lifted part', () => {
   });
 
   it('lifts nothing for a panel with no designed form yet', async () => {
-    expect(composeCodebase(await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE'))?.active.lifted).toBeNull();
+    expect(composeCodebase(await inputFor(TIDEMARK_ROOT, 'CONVENTIONS'))?.active.lifted).toBeNull();
+  });
+});
+
+describe('composeCodebase - the Architecture panel (10-12)', () => {
+  it('lifts the Tidemark diagram for the shipped figure and the two anti-patterns as swap rows', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE'));
+    const lifted = model?.active.lifted;
+    expect(lifted?.kind).toBe('architecture');
+    if (lifted?.kind !== 'architecture') return;
+    expect(lifted.diagram?.info).toBe('text');
+    expect(lifted.diagram?.text).toContain('Berth board (browser)');
+    expect(lifted.diagram?.text.split('\n').pop()).toBe('## the three route groups above share one process');
+    expect(lifted.swaps).toHaveLength(2);
+    expect(lifted.swaps[0]).toEqual({
+      bad: 'Reading the database from a route',
+      good: 'Ask the slot store for the clash check (`server/store/clash.ts`).',
+      details: [
+        { label: 'What happens', text: 'The office confirm route opens the database file directly to check a clash.' },
+        { label: "Why it's wrong", text: 'Two modules now know the table layout, and the clash rule exists twice.' },
+      ],
+    });
+    expect(model?.active.keyPhrase).toBe('5 components');
+  });
+
+  it('keeps every other section plain, API Architecture among them, and drops only the two it draws', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE'));
+    const headings = model?.active.plainSections ?? [];
+    expect(headings).not.toContain('System Overview');
+    expect(headings).not.toContain('Anti-Patterns');
+    expect(headings).toEqual([
+      'Component Responsibilities',
+      'Pattern Overview',
+      'API Architecture',
+      'Data Flow',
+      'Key Abstractions',
+      'Entry Points',
+      'Error Handling',
+    ]);
+  });
+
+  it('leaves a System Overview that holds prose with its fence among the plain sections, drawn once', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE');
+    const codebase = input.structured.codebase as { architecture: Record<string, unknown> };
+    const model = composeCodebase({
+      ...input,
+      structured: { codebase: { ...codebase, architecture: { ...codebase.architecture, diagram: null } } },
+    });
+    expect(model?.active.plainSections).toContain('System Overview');
+    expect(model?.active.lifted?.kind === 'architecture' ? model.active.lifted.diagram : 'x').toBeNull();
+  });
+
+  it('pairs the drawn sections to their groups by position, then by heading when the counts differ', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE');
+    const renamed = input.groups.map((group) =>
+      group.heading === 'Anti-Patterns' ? { ...group, heading: 'Anti patterns (renderer text)' } : group,
+    );
+    expect(composeCodebase({ ...input, groups: renamed })?.active.plainSections).not.toContain('Anti patterns (renderer text)');
+    const extra = [{ id: 'x', heading: 'Added later', html: '<h2>Added later</h2><p>x</p>' }, ...renamed];
+    const byHeading = composeCodebase({ ...input, groups: extra })?.active.plainSections ?? [];
+    expect(byHeading).toContain('Anti patterns (renderer text)');
+    expect(byHeading).not.toContain('System Overview');
+  });
+
+  it('counts layers in words when the lift counted layers', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE');
+    const codebase = input.structured.codebase as Record<string, unknown>;
+    const withLayers = (count: number) =>
+      composeCodebase({
+        ...input,
+        structured: { codebase: { ...codebase, keyUnit: 'layer' } },
+        codebaseContext: input.codebaseContext
+          ? {
+              ...input.codebaseContext,
+              panels: input.codebaseContext.panels.map((panel) =>
+                panel.key === 'architecture' ? { ...panel, keyNumber: count } : panel,
+              ),
+            }
+          : null,
+      })?.active.keyPhrase;
+    expect(withLayers(3)).toBe('3 layers');
+    expect(withLayers(1)).toBe('1 layer');
+  });
+
+  it('tolerates a lift of any shape', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE');
+    for (const architecture of [null, 7, 'x', { diagram: 4, antiPatterns: 'no' }, { diagram: { text: 3 }, antiPatterns: [null, { name: 4 }] }]) {
+      const model = composeCodebase({ ...input, structured: { codebase: { doc: 'architecture', architecture } } });
+      expect(model?.active.lifted ?? null).toBeNull();
+    }
   });
 });
 

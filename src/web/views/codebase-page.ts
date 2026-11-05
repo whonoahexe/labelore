@@ -23,6 +23,7 @@ import type {
   ConcernEntry,
   MapReadiness,
 } from '../../presentation/codebase-map.ts';
+import type { SwapItem } from '../../presentation/project-research-panels.ts';
 import type { ViewInput } from './manifest.ts';
 
 /** The three tones this page writes: nothing on it is a failed read. */
@@ -112,8 +113,17 @@ export interface ComposedCodebaseHead {
   next: { command: string; reason: string; note: string };
 }
 
+/** The Architecture panel's lifted parts (10-12, sketch 043 reuse): the System Overview fence for the shipped
+ * figure, and the Anti-Patterns as the shipped swap rows (what happens and why it is wrong open under each). */
+export interface ComposedArchitecture {
+  kind: 'architecture';
+  diagram: { info: string; text: string } | null;
+  swaps: SwapItem[];
+}
+
 export type ComposedCodebaseLifted =
   | { kind: 'stack'; groups: ComposedStackGroup[] }
+  | ComposedArchitecture
   | { kind: 'concerns'; total: number; noun: 'concern' | 'concerns'; totalText: string; counts: ComposedConcernRow[] };
 
 export interface ComposedCodebasePlain {
@@ -200,7 +210,10 @@ const UNITS: ReadonlyMap<string, readonly [string, string]> = new Map([
   ['concerns', ['concern', 'concerns']],
 ]);
 
-function keyPhrase(key: string, count: number): string {
+/** The number's words: the panel's usual unit, or a layer when the lift counted layers (Architecture without a
+ * component table). */
+function keyPhrase(key: string, count: number, keyUnit?: unknown): string {
+  if (key === 'architecture' && keyUnit === 'layer') return `${count} ${count === 1 ? 'layer' : 'layers'}`;
   const unit = UNITS.get(key);
   if (unit === undefined) return String(count);
   return `${count} ${count === 1 ? unit[0] : unit[1]}`;
@@ -376,10 +389,74 @@ function composeHead(head: CodebaseHead | null | undefined): ComposedCodebaseHea
   };
 }
 
+// --- the Architecture lift (10-12) -----------------------------------------------------------------------
+
+function liftArchitecture(codebase: Record<string, unknown>): ComposedArchitecture | null {
+  const architecture = isRecord(codebase.architecture) ? codebase.architecture : null;
+  if (architecture === null) return null;
+  const fence = isRecord(architecture.diagram) ? architecture.diagram : null;
+  const text = fence === null ? null : textOrNull(fence.text);
+  const diagram = fence !== null && text !== null ? { info: typeof fence.info === 'string' ? fence.info : '', text: String(fence.text) } : null;
+  const swaps = recordsOf(architecture.antiPatterns).flatMap((entry): SwapItem[] => {
+    const name = textOrNull(entry.name);
+    const instead = textOrNull(entry.doInstead);
+    if (name === null || instead === null) return [];
+    const details: SwapItem['details'] = [];
+    const happens = textOrNull(entry.whatHappens);
+    const wrong = textOrNull(entry.whyWrong);
+    if (happens !== null) details.push({ label: 'What happens', text: happens });
+    if (wrong !== null) details.push({ label: "Why it's wrong", text: wrong });
+    for (const part of recordsOf(entry.more)) {
+      const label = textOrNull(part.label);
+      const more = textOrNull(part.text);
+      if (label !== null && more !== null) details.push({ label, text: more });
+    }
+    return [{ bad: name, good: instead, details }];
+  });
+  return diagram === null && swaps.length === 0 ? null : { kind: 'architecture', diagram, swaps };
+}
+
 function liftOf(key: string, codebase: Record<string, unknown>): ComposedCodebaseLifted | null {
   if (key === 'stack') return liftStack(codebase);
+  if (key === 'architecture') return liftArchitecture(codebase);
   if (key === 'concerns') return liftConcerns(codebase);
   return null;
+}
+
+/** The keys of the sections a lifted part already draws, so the plain list does not show them twice. */
+function consumedKeys(lifted: ComposedCodebaseLifted | null): ReadonlySet<string> {
+  const keys = new Set<string>();
+  if (lifted?.kind === 'architecture') {
+    if (lifted.diagram !== null) keys.add('system-overview');
+    if (lifted.swaps.length > 0) keys.add('anti-patterns');
+  }
+  return keys;
+}
+
+/**
+ * The indexes of the section groups whose section a lifted part draws. The page cuts the rendered document into
+ * one group per `##` heading, and the lift lists the `##` sections in the same order, so the two pair by
+ * position when their counts agree (a heading the renderer rewrote still pairs); when they do not, a group is
+ * consumed only on an exact (case-insensitive) heading match.
+ */
+function consumedGroups(
+  groups: readonly { heading: string | null }[],
+  codebase: Record<string, unknown>,
+  keys: ReadonlySet<string>,
+): Set<number> {
+  const consumed = new Set<number>();
+  if (keys.size === 0) return consumed;
+  const sections = recordsOf(codebase.sections).filter((section) => section.level === 2);
+  const headed = groups.flatMap((group, index) => (group.heading === null ? [] : [index]));
+  headed.forEach((groupIndex, position) => {
+    const section = headed.length === sections.length ? sections[position] : undefined;
+    const byHeading =
+      section === undefined
+        ? sections.find((candidate) => textOrNull(candidate.heading)?.toLowerCase() === groups[groupIndex].heading?.trim().toLowerCase())
+        : section;
+    if (byHeading !== undefined && typeof byHeading.key === 'string' && keys.has(byHeading.key)) consumed.add(groupIndex);
+  });
+  return consumed;
 }
 
 export function composeCodebase(input: ViewInput): ComposedCodebase | null {
@@ -400,8 +477,10 @@ export function composeCodebase(input: ViewInput): ComposedCodebase | null {
     keyText: panel.mapped && typeof panel.keyNumber === 'number' ? String(panel.keyNumber) : null,
   }));
 
+  const lifted = liftOf(current.key, codebase);
+  const drawn = consumedGroups(input.groups, codebase, consumedKeys(lifted));
   const plain: ComposedCodebasePlain[] = input.groups
-    .filter((group) => group.html.trim() !== '')
+    .filter((group, index) => group.html.trim() !== '' && !drawn.has(index))
     .map((group) => ({ id: group.id, heading: group.heading, html: group.html }));
 
   return {
@@ -416,8 +495,9 @@ export function composeCodebase(input: ViewInput): ComposedCodebase | null {
       key: current.key,
       label: current.label,
       no: panels[currentIndex].no,
-      keyPhrase: typeof current.keyNumber === 'number' ? keyPhrase(current.key, current.keyNumber) : null,
-      lifted: liftOf(current.key, codebase),
+      keyPhrase:
+        typeof current.keyNumber === 'number' ? keyPhrase(current.key, current.keyNumber, codebase.keyUnit) : null,
+      lifted,
       plain,
       plainSections: plain.flatMap((section) => (section.heading === null ? [] : [section.heading])),
     },

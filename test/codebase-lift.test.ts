@@ -4,7 +4,13 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
-import { extractCodebase, matchKey, normaliseHeading } from '../src/planning-repo/handlers/codebase-lift.ts';
+import {
+  FIGURE_LINES_CAP,
+  FIGURE_TEXT_CAP,
+  extractCodebase,
+  matchKey,
+  normaliseHeading,
+} from '../src/planning-repo/handlers/codebase-lift.ts';
 
 const TIDEMARK = new URL('./fixtures/tidemark/.planning/codebase/', import.meta.url);
 
@@ -335,5 +341,91 @@ describe('the Concerns lift', () => {
     const result = lift('concerns', '# Codebase Concerns\n\nNothing yet.\n');
     expect(result.keyNumber).toBe(0);
     expect(result.concerns?.missing).toHaveLength(9);
+  });
+});
+
+describe('the Architecture lift (10-12)', () => {
+  const arch = (body: string) => lift('architecture', `# Architecture\n\n${body}`);
+  const lifted = lift('architecture').architecture!;
+
+  it('lifts the Tidemark System Overview fence whole, a line starting with two hashes staying inside it', () => {
+    expect(lifted.diagram?.info).toBe('text');
+    expect(lifted.diagram?.text).toContain('Berth board (browser)');
+    expect(lifted.diagram?.text.split('\n').pop()).toBe('## the three route groups above share one process');
+    expect(lifted.diagram?.text).not.toContain('```');
+    expect(lift('architecture').sections.map((s) => s.heading)).not.toContain('the three route groups above share one process');
+  });
+
+  it('counts the five Tidemark components, gives them as the key number and leaves API Architecture plain', () => {
+    expect(lifted.components).toBe(5);
+    const body = lift('architecture');
+    expect(body.keyNumber).toBe(5);
+    expect(body.keyUnit).toBeUndefined();
+    expect(body.sections.find((s) => s.heading === 'API Architecture')?.key).toBeNull();
+  });
+
+  it('lifts the two Tidemark anti-patterns with their three parts', () => {
+    expect(lifted.antiPatterns.map((a) => a.name)).toEqual(['Reading the database from a route', 'Hard-coded depth in the board']);
+    expect(lifted.antiPatterns[0]).toEqual({
+      name: 'Reading the database from a route',
+      whatHappens: 'The office confirm route opens the database file directly to check a clash.',
+      whyWrong: 'Two modules now know the table layout, and the clash rule exists twice.',
+      doInstead: 'Ask the slot store for the clash check (`server/store/clash.ts`).',
+      more: [],
+    });
+  });
+
+  it('gives the Layers count as the key number, in layers, when there is no component table', () => {
+    const body = arch('## Layers\n\n### One\n\nx\n\n### Two\n\ny\n');
+    expect(body.keyNumber).toBe(2);
+    expect(body.keyUnit).toBe('layer');
+    const labelled = arch('## Layers\n\n**Port:**\n- a\n\n**Core:**\n- b\n\n**Edge:**\n- c\n');
+    expect(labelled.keyNumber).toBe(3);
+    expect(labelled.keyUnit).toBe('layer');
+    expect(arch('## Layers\n\nJust prose.\n').keyNumber).toBeNull();
+  });
+
+  it('lifts the diagram only when the System Overview holds that one fence and nothing else', () => {
+    const fence = '```text\n┌──┐\n│ a│\n└──┘\n```';
+    expect(arch(`## System Overview\n\n${fence}\n`).architecture?.diagram?.text).toContain('│ a│');
+    expect(arch(`## System Overview\n\nSome prose first.\n\n${fence}\n`).architecture?.diagram).toBeNull();
+    expect(arch(`## System Overview\n\n${fence}\n\nAnd a note after.\n`).architecture?.diagram).toBeNull();
+    expect(arch(`## System Overview\n\n${fence}\n\n${fence}\n`).architecture?.diagram).toBeNull();
+    expect(arch('## System Overview\n\n```mermaid\ngraph TD; A-->B\n```\n').architecture?.diagram).toBeNull();
+    expect(arch('## System Overview\n\n```ts\nconst a = 1;\n```\n').architecture?.diagram).toBeNull();
+  });
+
+  it('leaves a figure over the caps to the plain section, whole', () => {
+    expect(arch(`## System Overview\n\n\`\`\`text\n${'x'.repeat(FIGURE_TEXT_CAP + 10)}\n\`\`\`\n`).architecture?.diagram).toBeNull();
+    const tall = Array.from({ length: FIGURE_LINES_CAP + 5 }, (_, i) => `line ${i}`).join('\n');
+    expect(arch(`## System Overview\n\n\`\`\`text\n${tall}\n\`\`\`\n`).architecture?.diagram).toBeNull();
+  });
+
+  it('lifts anti-patterns all or nothing', () => {
+    const entry = (name: string, instead = true) =>
+      `### ${name}\n\n**What happens:** a\n**Why it's wrong:** b\n${instead ? '**Do this instead:** c\n' : ''}\n`;
+    expect(arch(`## Anti-Patterns\n\n${entry('One')}${entry('Two')}`).architecture?.antiPatterns).toHaveLength(2);
+    expect(arch(`## Anti-Patterns\n\n${entry('One')}${entry('Two', false)}`).architecture?.antiPatterns).toEqual([]);
+    expect(arch(`## Anti-Patterns\n\nWe avoid these.\n\n${entry('One')}`).architecture?.antiPatterns).toEqual([]);
+    expect(arch('## Anti-Patterns\n\nNone yet.\n').architecture?.antiPatterns).toEqual([]);
+    expect(
+      arch('## Anti-Patterns\n\n### One\n\n**What happens:** a\n```\ncode\n```\n**Do this instead:** c\n').architecture?.antiPatterns,
+    ).toEqual([]);
+  });
+
+  it('keeps a part it has no slot for and the text of a continuation line', () => {
+    const body = arch(
+      '## Anti-Patterns\n\n### One\n\nA lead line.\n**Cost**: high\n**What happens:** first\ncontinues here\n**Do this instead:** c\n',
+    );
+    expect(body.architecture?.antiPatterns[0]).toEqual({
+      name: 'One',
+      whatHappens: 'first continues here',
+      whyWrong: null,
+      doInstead: 'c',
+      more: [
+        { label: 'Note', text: 'A lead line.' },
+        { label: 'Cost', text: 'high' },
+      ],
+    });
   });
 });

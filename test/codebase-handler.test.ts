@@ -302,6 +302,21 @@ describe('growth', () => {
     ['a 200k run of capitals', 'concerns', (n) => `## Tech Debt\n\n${'A'.repeat(n)}\n`],
     ['a 200k run of capitals in a heading', 'stack', (n) => `## ${'A'.repeat(n)}\n`],
     [
+      'a 200k-character fenced System Overview',
+      'architecture',
+      (n) => `## System Overview\n\n\`\`\`text\n${'x'.repeat(n)}\n\`\`\`\n`,
+    ],
+    [
+      'a Component Responsibilities table of rows',
+      'architecture',
+      (n) => `## Component Responsibilities\n\n| A | B |\n|---|---|\n${'| 1 | 2 |\n'.repeat(Math.ceil(n / 10))}`,
+    ],
+    [
+      'many anti-pattern entries',
+      'architecture',
+      (n) => `## Anti-Patterns\n\n${'### E\n\n**What happens:** a\n**Do this instead:** b\n\n'.repeat(Math.ceil(n / 45))}`,
+    ],
+    [
       'a table of rows',
       'concerns',
       (n) => `## Scaling Limits\n\n| A | B |\n|---|---|\n${'| 1 | 2 |\n'.repeat(Math.ceil(n / 10))}`,
