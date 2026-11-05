@@ -33,6 +33,7 @@ is always to add the missing name to this document, never to edit the reference 
 | `status-meter-cap` | The meter's caption above the squares (Label size, mono; hidden from assistive technology because the label already says it) | globals.css — status-meter block |
 | `status-meter-cells` | The wrapping row of squares inside a `.status-meter` | globals.css — status-meter block |
 | `status-meter-sq` | One square of a `.status-meter`: sets `--status-square-size` (a step up for `data-size="large"`) on the shared `status-square` | globals.css — status-meter block |
+| `value-not-shown` | The shared quiet dashed "Value not shown" mark (Phase 10, 10-14, promoted in 10-19): drawn where a document wrote a value beside a variable's name; the value itself never reaches a page. Built once in `components/value-not-shown.tsx` (the Codebase page's Integrations tags and the User setup page draw it), plain text with no title or aria-label | globals.css — value-not-shown block |
 | `empty-note` | Absence copy — quiet inline paragraph | globals.css:1723 |
 | `empty-flow` | Absence copy — icon + message block | globals.css:1369–1392, 1730 |
 | `quiet-state` | Icon + muted message row, `--primary`-tinted icon | globals.css:1369–1392 |

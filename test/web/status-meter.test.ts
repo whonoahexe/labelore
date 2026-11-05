@@ -62,6 +62,20 @@ describe('StatusMeter', () => {
     ]);
   });
 
+  it('draws an item that names its own tone in that tone (done, pending and not stated in one meter)', () => {
+    const out = markup({
+      filled: 1,
+      total: 3,
+      items: ['complete', 'in-flight', 'quiet'],
+      label: '1 of 3 steps done',
+    });
+    expect(out.match(/data-tone="[a-z-]+"/g)).toEqual([
+      'data-tone="complete"',
+      'data-tone="in-flight"',
+      'data-tone="quiet"',
+    ]);
+  });
+
   it('ignores an items list that does not match the total', () => {
     const out = markup({ filled: 1, total: 3, items: [false], label: '1 of 3 done' });
     expect(out.match(/data-tone="[a-z-]+"/g)).toEqual([

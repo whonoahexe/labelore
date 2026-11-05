@@ -24,6 +24,7 @@ import { composeMilestoneAudit } from './milestone-audit.ts';
 import { composeCoverage } from './coverage-matrix.ts';
 import { composeSpec } from './spec-page.ts';
 import { composeAiSpec } from './ai-spec-page.ts';
+import { composeUserSetup } from './user-setup-page.ts';
 import { composeCodebase } from './codebase-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
@@ -440,8 +441,9 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     lead: 'Which setup steps a person still has to do for this phase, and where each variable goes.',
     promote: [{ type: 'section', heading: /\S/, all: true }],
     // T-10-49: a USER-SETUP file can hold a pasted value, so its text never reaches View mode through the
-    // generic fallback until 10-19's page composes a model that withholds values.
+    // generic fallback: the User setup page composes only from the handler's masked projection (10-19, D-11).
     withholdDocumentInView: true,
+    userSetupPage: composeUserSetup,
   },
   'eval-review': {
     kind: 'eval-review',
