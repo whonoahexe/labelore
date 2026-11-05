@@ -23,6 +23,8 @@ import { FIXTURE_ROOT, SHAPES_FIXTURE_ROOT, resolveFixtureRoot } from './test/e2
 const fixtureRoot = resolveFixtureRoot(FIXTURE_ROOT);
 const shapesRoot = resolveFixtureRoot(SHAPES_FIXTURE_ROOT);
 
+const chromeExecutable = process.env.LABELORE_E2E_CHROME ?? '';
+
 const settingsDirs: string[] = [];
 if (process.env.TEST_WORKER_INDEX === undefined) {
   process.on('exit', () => {
@@ -58,7 +60,12 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        // A machine without Playwright's bundled browser points this at a system Chrome; unset or empty,
+        // nothing changes and Playwright launches its own chromium.
+        ...(chromeExecutable === '' ? {} : { launchOptions: { executablePath: chromeExecutable } }),
+      },
     },
   ],
   webServer: [
