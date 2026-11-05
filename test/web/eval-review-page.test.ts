@@ -126,6 +126,8 @@ describe('composeEvalReview - 04-EVAL-REVIEW, needs work', () => {
       { key: 'AI-SPEC present', value: 'Yes' },
     ]);
     expect(model.auditDate).toBe('2026-04-14');
+    expect(model.infrastructureScore).toBe('70/100');
+    expect(markup(model)).toContain('Infrastructure audit · 70/100');
   });
 });
 
