@@ -26,6 +26,7 @@ import { composeSpec } from './spec-page.ts';
 import { composeAiSpec } from './ai-spec-page.ts';
 import { composeUserSetup } from './user-setup-page.ts';
 import { composeEvalReview } from './eval-review-page.ts';
+import { composeDomVerify } from './dom-verify-page.ts';
 import { composeCodebase } from './codebase-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
@@ -458,6 +459,9 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     kind: 'dom-verify',
     lead: 'What a browser check of this phase found: whether it could look, and what passed, failed or needs a person.',
     promote: [{ type: 'section', heading: /\S/, all: true }],
+    // The Browser check page is the View-mode render path; `promote` above is the silent fallback when it composes
+    // nothing (Phase 10, 10-21, RESEARCH C1).
+    domVerifyPage: composeDomVerify,
   },
   reviews: {
     kind: 'reviews',
