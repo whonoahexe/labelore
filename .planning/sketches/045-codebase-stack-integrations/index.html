@@ -1,0 +1,927 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 045 — Stack and Integrations panels</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 045: the Stack and Integrations panels (a cross-read pair, D-01) inside the 042 A frame
+   (Rail + column), which is identical in every variant. Text comes from Labelore's own public map
+   (.planning/codebase/) and from the made-up Tidemark fixture. A value written beside a variable name is
+   withheld before the text reaches this file, so the page can only show the name and "Value not shown";
+   the one private line 10-03 flags in Labelore's INTEGRATIONS (a home path) is left out. Tokens come from
+   ../themes/default.css; every colour is a theme token, a colour-mix of tokens, an opacity step or a hatch.
+   Squared corners, spacing from --space-* tokens, four font sizes (display h1, --fs-7, --fs-4, --fs-2). */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+  --rail: calc(var(--space-8) * 9);
+  --fill-1: color-mix(in oklch, var(--foreground) 4%, transparent);
+  --fill-2: color-mix(in oklch, var(--foreground) 8%, transparent);
+  --fill-3: color-mix(in oklch, var(--foreground) 13%, transparent);
+  --fill-4: color-mix(in oklch, var(--foreground) 19%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px 6px);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+h3, h4 { font-size: inherit; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.app-brand span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.app-nav a[aria-current] { color: var(--foreground); box-shadow: inset 0 -2px 0 var(--primary); }
+@media (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- page atoms (four sizes: display h1, heading fs-7, body fs-4, label fs-2) ---------- */
+.page { display: grid; gap: var(--space-6); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.micro-label, .grp-h { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+.btn-xs.icon { padding-inline: 0; width: var(--space-7); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } .btn-xs.icon { width: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; }
+.status-chip.mono { text-transform: none; letter-spacing: var(--ls-wider); }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--muted); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); font-size: var(--fs-4); overflow-wrap: anywhere; }
+.facts { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); min-width: 0; }
+.facts-count { font-weight: var(--fw-semibold); }
+.facts-date { color: var(--muted-foreground); }
+/* the quiet "Value not shown" mark: a withheld value is never in the page */
+.vns { display: inline-flex; align-items: center; gap: var(--space-1); margin-left: var(--space-1); padding: 0 var(--space-1-5); border: 1px dashed var(--muted-foreground); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; vertical-align: baseline; line-height: var(--lh-snug); }
+
+/* ---------- the 042 A frame: rail + reading column ---------- */
+.a-grid { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); gap: var(--space-fluid-9); align-items: start; }
+.a-rail { position: sticky; top: calc(var(--space-10) + var(--space-4)); display: grid; gap: var(--space-4); min-width: 0; max-height: calc(100vh - var(--space-28)); overflow-y: auto; }
+.a-main { display: grid; gap: var(--space-8); min-width: 0; }
+.list ol { display: grid; }
+.entry { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); align-items: center; min-width: 0; padding: var(--space-2-5) var(--space-3); border: 1px solid var(--border); }
+a.entry:hover { background: var(--state-hover); }
+.entry-li + .entry-li .entry { border-top-color: var(--border-faint); }
+.entry-no { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); color: var(--muted-foreground); }
+.entry-name { min-width: 0; font-weight: var(--fw-semibold); }
+.entry-key { font-family: var(--font-mono); font-weight: var(--fw-semibold); }
+.entry[aria-current='page'] { border-color: var(--primary-border); background: var(--primary-tint); }
+.entry[aria-current='page'] .entry-no { color: var(--primary); }
+@media (max-width: 62rem) { .a-grid { grid-template-columns: minmax(0, 1fr); } .a-rail { position: static; max-height: none; overflow: visible; } }
+
+/* ---------- the panel ---------- */
+.panel { display: grid; gap: var(--space-6); min-width: 0; align-content: start; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+.panel-no { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); color: var(--primary); }
+.panel-head h2 { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.panel-key { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); color: var(--muted-foreground); text-transform: uppercase; }
+.panel-stamp { flex-basis: 100%; color: var(--muted-foreground); }
+.lifted { display: grid; gap: var(--space-6); min-width: 0; }
+
+/* plain form (the generic document rendering of a section) */
+.prose { max-width: 72ch; overflow-wrap: anywhere; }
+.prose code, .bul code, .ptable code, .dock code, .steps code { padding: 0 var(--space-0-5); background: var(--muted); }
+.bul { display: grid; gap: var(--space-1-5); max-width: 78ch; }
+.bul > li { display: grid; grid-template-columns: var(--space-2-5) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; overflow-wrap: anywhere; }
+.bul > li::before { content: ''; width: var(--space-1-5); height: var(--space-1-5); background: var(--muted-foreground); transform: translateY(-0.1em); justify-self: center; }
+.bul ul { grid-column: 2; margin-top: var(--space-1); color: var(--muted-foreground); display: grid; gap: var(--space-1); }
+.steps { display: grid; gap: var(--space-1-5); max-width: 78ch; padding-left: var(--space-5); list-style: decimal; }
+.g { display: grid; gap: var(--space-1-5); min-width: 0; }
+.g-label { font-weight: var(--fw-semibold); }
+.g-label .v { font-weight: var(--fw-medium); }
+.ptable { width: 100%; border-collapse: collapse; }
+.ptable th { text-align: left; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; padding: var(--space-1-5) var(--space-3) var(--space-1-5) 0; border-bottom: 1px solid var(--border); }
+.ptable td { vertical-align: top; padding: var(--space-2) var(--space-3) var(--space-2) 0; border-bottom: 1px solid var(--border-faint); overflow-wrap: anywhere; }
+.tbl-scroll { overflow-x: auto; }
+pre.plain-pre { margin: 0; padding: var(--space-3); border: 1px solid var(--border); background: var(--muted); font-family: var(--font-mono); font-size: var(--fs-2); line-height: var(--lh-snug); overflow-x: auto; max-width: 100%; }
+.foot-line { color: var(--muted-foreground); font-style: italic; }
+
+/* the picture frame, dock and the closed section bars */
+.pic { border: 1px solid var(--border); min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); }
+.pic-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); background: var(--veil); }
+.ff-title { margin-right: auto; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.counts-line { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); color: var(--muted-foreground); text-transform: uppercase; }
+.pic-body { overflow: auto; padding: var(--space-4); min-width: 0; max-width: 100%; }
+.pic-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--border); color: var(--muted-foreground); font-size: var(--fs-2); }
+.pic-foot .key { display: inline-flex; align-items: center; gap: var(--space-1-5); }
+.pan-note { display: none; }
+@media (max-width: 42rem) { .pan-note { display: inline; } }
+.dock { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--primary-border); background: var(--primary-tint); min-width: 0; }
+.dock-empty { padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); color: var(--muted-foreground); }
+.dock-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); }
+.dock-head h4 { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.dock .d-x { margin-left: auto; }
+.dock .xref { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; padding-top: var(--space-2); border-top: 1px solid var(--primary-border); }
+.acc-list { display: grid; }
+.acc { border-top: 1px solid var(--border); }
+.acc:last-child { border-bottom: 1px solid var(--border); }
+.acc > summary { display: flex; align-items: center; gap: var(--space-3); min-height: var(--space-10); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); }
+.acc > summary::-webkit-details-marker { display: none; }
+.acc > summary:hover { background: var(--state-hover); }
+.acc > summary .n { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); text-transform: uppercase; letter-spacing: var(--ls-wider); }
+.acc > summary svg { color: var(--muted-foreground); }
+.acc[open] > summary svg { transform: rotate(90deg); }
+.acc > .acc-body { display: grid; gap: var(--space-4); padding: 0 0 var(--space-5) var(--space-7); min-width: 0; }
+@media (max-width: 42rem) { .acc > .acc-body { padding-left: 0; } }
+.sec-legend { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.sec-chip { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--background); font-size: var(--fs-2); }
+.sec-chip b { font-family: var(--font-mono); font-weight: var(--fw-semibold); }
+.sec-chip:hover { background: var(--state-hover); }
+.sec-chip[aria-pressed='true'] { border-color: var(--primary-border); background: var(--primary-tint); }
+/* the shipped copy-command row (10-10): selectable mono command, then the button; Copied in the button */
+.copy-command { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); min-width: 0; }
+.copy-command-text { padding: var(--space-1-5) var(--space-2-5); background: var(--muted); font-family: var(--font-mono); font-size: var(--fs-4); font-weight: var(--fw-semibold); overflow-wrap: anywhere; user-select: all; min-width: 0; max-width: 100%; }
+.copy-command-button[data-copied='true'] { color: var(--primary); }
+.copy-command-button svg { width: var(--space-3-5); height: var(--space-3-5); }
+
+/* ---------- 045: stack chips (untoned, version in mono) ---------- */
+.tchip { display: inline-flex; align-items: baseline; gap: var(--space-1-5); max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--background); font-size: var(--fs-2); font-weight: var(--fw-semibold); text-align: left; min-width: 0; }
+.tchip .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tchip .ver { font-family: var(--font-mono); font-weight: var(--fw-medium); color: var(--muted-foreground); white-space: nowrap; }
+.tchip .xr { font-family: var(--font-mono); color: var(--muted-foreground); }
+.tchip:hover { background: var(--state-hover); }
+.tchip[data-prim='true'] { background: var(--fill-3); border-color: var(--muted-foreground); }
+.tchip[data-opt='true'] { border-style: dashed; color: var(--muted-foreground); }
+.tchip[data-ghost='true'] { border-style: dashed; background: var(--hatch); color: var(--muted-foreground); cursor: default; }
+.tchip[aria-pressed='true'], .el[aria-pressed='true'], .grow[aria-pressed='true'], .vtag[aria-pressed='true'], .ftile[aria-pressed='true'], .ln-node[aria-pressed='true'] { outline: 2px solid var(--primary); outline-offset: 1px; }
+.vtag { display: inline-flex; align-items: center; gap: var(--space-1); max-width: 100%; padding: 0 var(--space-1-5); border: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); text-align: left; overflow-wrap: anywhere; }
+.vtag:hover { background: var(--state-hover); }
+.vtag[data-kind='optional'] { border-style: dashed; }
+.vtag .vns { margin-left: 0; }
+.tags { display: flex; flex-wrap: wrap; gap: var(--space-1); min-width: 0; }
+
+/* ---------- A: the tower (strata) with a tooling scaffold and the platform as ground ---------- */
+.tower-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 13rem); gap: var(--space-4); align-items: end; }
+.tower { display: grid; gap: var(--space-1); justify-items: center; min-width: 0; }
+.stratum { width: max(var(--minw, 34%), var(--w)); display: grid; gap: var(--space-1-5); padding: var(--space-2) var(--space-2-5); border: 1px solid var(--border); background: var(--fill-1); min-width: 0; }
+.stratum[data-step='2'] { background: var(--fill-2); } .stratum[data-step='3'] { background: var(--fill-3); } .stratum[data-step='4'] { background: var(--fill-4); }
+.stratum[data-ghost='true'] { background: var(--hatch); border-style: dashed; }
+.stratum-h { display: flex; align-items: baseline; gap: var(--space-2); }
+.stratum-h b { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: 1; }
+.stratum .sub { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1); min-width: 0; }
+.stratum .sub + .sub { padding-top: var(--space-1-5); border-top: 1px solid var(--border-faint); }
+.stratum .sub .micro-label { flex-basis: 100%; }
+.notes-btn { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); padding: var(--space-1) var(--space-1-5); border: 1px dashed var(--border); }
+.notes-btn:hover { color: var(--foreground); }
+.scaffold { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-2-5); border: 1px dashed var(--muted-foreground); background: repeating-linear-gradient(90deg, var(--border-faint) 0 1px, transparent 1px var(--space-6)); min-width: 0; }
+.scaffold .sub { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.ground { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-top: 3px solid var(--foreground); }
+.ground > div { display: grid; gap: var(--space-1-5); align-content: start; padding: var(--space-2-5) var(--space-2-5) 0; min-width: 0; }
+.ground > div + div { border-left: 1px solid var(--border); }
+.peg { max-width: 100%; }
+.peg .nm { max-width: 26ch; }
+@media (max-width: 42rem) {
+  .tower-wrap { grid-template-columns: minmax(0, 1fr); }
+  .stratum { --minw: 62%; }
+  .ground { grid-template-columns: minmax(0, 1fr); }
+  .ground > div + div { border-left: 0; border-top: 1px solid var(--border); padding-top: var(--space-2-5); }
+}
+
+/* ---------- A: the hub (the app in the middle, every section around it) ---------- */
+.hub-board { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-8) var(--space-6); min-width: 46rem; }
+.hub-wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.hub-wires line { stroke: var(--muted-foreground); stroke-width: 1.5; }
+.hub-wires line[data-none='true'] { stroke-dasharray: 3 4; stroke: var(--border); }
+.hub-wires line[data-hot='true'] { stroke: var(--primary); stroke-width: 2.5; }
+.hcard { position: relative; z-index: 1; display: grid; gap: var(--space-2); align-content: start; padding: var(--space-2-5) var(--space-3); border: 1px solid var(--border); background: var(--background); min-width: 0; }
+.hcard[data-empty='true'] { background: linear-gradient(var(--background), var(--background)) padding-box; }
+.hcard[data-empty='true']::after { content: ''; position: absolute; inset: 0; background: var(--hatch); opacity: 0.6; pointer-events: none; }
+.hcard[data-missing='true'] { border-style: dashed; color: var(--muted-foreground); }
+.hcard-h { display: flex; align-items: center; gap: var(--space-2); }
+.hcard-h .micro-label { margin-right: auto; color: var(--foreground); }
+.hcard-h .cnt { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); white-space: nowrap; }
+.grow { position: relative; z-index: 2; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-0-5) var(--space-2); align-items: baseline; padding: var(--space-1) var(--space-1-5); margin-inline: calc(var(--space-1-5) * -1); text-align: left; }
+.grow:hover { background: var(--state-hover); }
+.grow .sq { transform: translateY(0.1em); }
+.grow .gl { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.grow[data-absent='true'] .gl { font-weight: var(--fw-medium); color: var(--muted-foreground); }
+.grow .tags { grid-column: 2; }
+.hub { position: relative; z-index: 1; display: grid; gap: var(--space-2); align-content: center; padding: var(--space-3); border: 2px solid var(--foreground); background: var(--background); min-width: 0; }
+.hub-name { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); overflow-wrap: anywhere; }
+.hub .micro-label { display: flex; gap: var(--space-1-5); align-items: center; }
+.hub-extra { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+
+/* ---------- B: the element board (every package one tile) ---------- */
+.board { display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-5); align-items: flex-start; }
+.block { display: grid; gap: var(--space-1-5); min-width: 0; }
+.block .micro-label b { color: var(--foreground); }
+.tiles { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.el { position: relative; display: grid; grid-template-rows: auto 1fr auto; gap: var(--space-0-5); width: 7.25rem; height: 5.75rem; padding: var(--space-1-5) var(--space-2); border: 1px solid var(--border); background: var(--background); text-align: left; min-width: 0; }
+.el:hover { background: var(--state-hover); }
+.el[data-fam='lang'] { background: var(--fill-4); } .el[data-fam='run'] { background: var(--fill-3); } .el[data-fam='core'] { background: var(--fill-2); } .el[data-fam='tool'] { background: var(--fill-1); }
+.el[data-fam='types'] { border-style: dashed; }
+.el[data-ghost='true'] { background: var(--hatch); border-style: dashed; color: var(--muted-foreground); cursor: default; }
+.el-maj { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: 1; }
+.el-maj[data-none='true'] { color: var(--muted-foreground); }
+.el-nm { align-self: end; font-size: var(--fs-2); font-weight: var(--fw-semibold); line-height: var(--lh-snug); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.el-ver { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.el-xr { position: absolute; top: var(--space-1); right: var(--space-1-5); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.under { display: grid; gap: var(--space-2); margin-top: var(--space-5); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.under-row { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr); gap: var(--space-2) var(--space-3); align-items: baseline; }
+@media (max-width: 42rem) { .el { width: calc((100% - var(--space-1) * 3) / 4); min-width: 4.5rem; height: 5.25rem; padding: var(--space-1); } .tiles { width: 100%; } .block { width: 100%; } .under-row { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- B: the floor plan (a room per section, shared walls, empty rooms hatched) ---------- */
+.plan { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-flow: row dense; border: 2px solid var(--foreground); background: var(--hatch); }
+.room { grid-column: span var(--span, 2); display: grid; gap: var(--space-2); align-content: start; padding: var(--space-2-5) var(--space-3); border: 1px solid var(--border); background: var(--background); min-width: 0; }
+.room[data-empty='true'] { background: linear-gradient(var(--background), var(--background)); }
+.room[data-empty='true'] .ftiles { background: var(--hatch); padding: var(--space-1-5); }
+.room[data-missing='true'] { background: var(--hatch); border-style: dashed; color: var(--muted-foreground); }
+.room-h { display: flex; align-items: center; gap: var(--space-2); }
+.room-h .micro-label { margin-right: auto; color: var(--foreground); }
+.room-h .cnt { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); white-space: nowrap; }
+.ftiles { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.ftile { flex: 1 1 9rem; display: grid; gap: var(--space-0-5); align-content: start; padding: var(--space-1-5) var(--space-2); border: 1px solid var(--muted-foreground); background: var(--fill-2); text-align: left; min-width: 0; }
+.ftile:hover { background: var(--state-hover); }
+.ftile b { font-size: var(--fs-2); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.ftile span { font-size: var(--fs-2); color: var(--muted-foreground); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.ftile[data-absent='true'] { border-style: dashed; border-color: var(--border); background: var(--background); }
+.ftile[data-absent='true'] b { font-weight: var(--fw-medium); color: var(--muted-foreground); }
+.plugs { display: grid; gap: var(--space-1-5); }
+.plugs .row { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
+@media (max-width: 42rem) { .plan { grid-template-columns: minmax(0, 1fr); } .room { grid-column: auto; } }
+
+/* ---------- C: the shipped chip groups (10-08) ---------- */
+.cg { display: grid; gap: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border); min-width: 0; }
+.cg:first-child { border-top: 0; padding-top: 0; }
+.cg-h { font-weight: var(--fw-semibold); }
+.cg-sets { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--space-3) var(--space-5); }
+.cg-set { display: grid; gap: var(--space-1-5); align-content: start; min-width: 0; }
+
+/* ---------- C: the shipped lane diagram (012 B), fed a graph built from the groups ---------- */
+.ln-stage { position: relative; }
+.ln-lane { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--border-faint); }
+.ln-lane[data-shade='true'] { background: var(--fill-1); }
+.ln-head { position: absolute; top: var(--space-2); left: var(--space-2); right: var(--space-2); display: flex; align-items: center; gap: var(--space-1-5); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; }
+.ln-head svg { width: var(--space-3-5); height: var(--space-3-5); }
+.ln-wires { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.ln-wires path { fill: none; stroke: var(--muted-foreground); stroke-width: 1.5; }
+.ln-wires path[data-hot='true'] { stroke: var(--primary); stroke-width: 2.5; }
+.ln-wlab { position: absolute; max-width: 7.5rem; font-size: var(--fs-2); font-style: italic; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--background); padding: 0 var(--space-0-5); line-height: var(--lh-snug); }
+.ln-node { position: absolute; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-0-5) var(--space-1-5); align-content: center; padding: var(--space-1-5); border: 1px solid var(--border); background: var(--background); text-align: left; }
+.ln-node:hover { border-color: var(--muted-foreground); }
+.ln-icon { grid-row: span 2; display: grid; place-items: center; width: var(--space-6); height: var(--space-6); background: var(--muted); color: var(--muted-foreground); }
+.ln-icon svg { width: var(--space-3-5); height: var(--space-3-5); }
+.ln-node[data-kind='service'] .ln-icon { background: var(--primary-tint); color: var(--primary); }
+.ln-lab { font-size: var(--fs-2); font-weight: var(--fw-semibold); line-height: var(--lh-snug); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.ln-sub { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: var(--lh-snug); }
+.ln-more { position: absolute; top: calc(var(--space-2) * -1); right: var(--space-1); padding: 0 var(--space-1); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); line-height: var(--lh-snug); }
+.notused { display: grid; gap: var(--space-1-5); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px dashed var(--border); }
+
+/* ---------- review fixes ---------- */
+.scaffold .sub .micro-label { flex-basis: 100%; }
+.grow[data-absent='false'] .sq, .keysq { background: var(--muted-foreground); border-color: var(--muted-foreground); }
+.hub .vtag, .hcard .vtag { word-break: break-all; text-align: left; }
+.hub .text-link { white-space: normal; text-align: left; }
+.ftile.keysw { flex: none; display: inline-flex; padding: 0 var(--space-2); }
+.pic-foot .key { flex-wrap: wrap; min-width: 0; }
+.el { width: 5.75rem; height: 5.25rem; }
+.board { gap: var(--space-4); }
+@media (max-width: 42rem) { .el { width: calc((100% - var(--space-1) * 3) / 4); min-width: 0; } }
+
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">045 stack + integrations</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Tower + hub</a>
+    <a data-tab="b" href="#b">B: Element board + floor plan</a>
+    <a data-tab="c" href="#c">C: Reuse — shipped chips + lanes</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="labelore">Labelore</button><button data-state="tidemark">Tidemark (Languages & Runtimes)</button><button data-state="deps30">30 dependencies</button>
+    <span class="name">Panel</span><button data-act="panel" data-panel="stack">Stack</button><button data-act="panel" data-panel="integrations">Integrations</button></span>
+</nav>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+<div id="toast" role="status"></div>
+<script>
+const DOCS = {"stack":{"labelore":{"front":{"last_mapped_commit":"717c8d7db3d75717948b08690df3a087fc01684d","last_mapped_at":"2026-11-04"},"comment":null,"title":"Technology Stack","date":"2026-11-04","intro":[],"sections":[{"h":"Languages","blocks":[{"t":"label","text":"Primary","value":""},{"t":"ul","items":[{"text":"TypeScript 5.9.3 (devDependency `typescript`, `package.json`) - all server code (`src/server/`, `src/cli/`, `src/planning-repo/`, `src/planning-fs/`, `src/domain/`, `src/presentation/`, `src/rendering/`) and client code (`src/web/`, `.tsx`)","sub":[]},{"text":"Module system: ESM only (`\"type\": \"module\"` in `package.json`); `module`/`moduleResolution` are `nodenext` in `tsconfig.json`; relative imports carry `.ts` extensions (`allowImportingTsExtensions`, `verbatimModuleSyntax`)","sub":[]}]},{"t":"label","text":"Secondary","value":""},{"t":"ul","items":[{"text":"CSS (Tailwind v4 CSS-first config with oklch tokens) - `src/web/styles/globals.css`","sub":[]},{"text":"JavaScript - ESLint flat config `eslint.config.js`, `.prettierrc`","sub":[]},{"text":"Markdown - `docs/design-language.md`, `fixtures/**/.planning/*.md` (test fixtures that the app reads)","sub":[]},{"text":"JSON - `components.json` (shadcn config), `fixtures/**/.planning/config.json`","sub":[]}]}]},{"h":"Runtime","blocks":[{"t":"label","text":"Environment","value":""},{"t":"ul","items":[{"text":"Node.js `>=22.18.0` (`engines` in `package.json`)","sub":[]},{"text":"TypeScript sources execute directly via Node's native type stripping: `npm run dev` runs `node src/server/index.ts`, `npm start` sets `NODE_ENV`\u0001 and runs `node src/server/index.ts`, `npm run snapshot` runs `node src/cli/snapshot.ts`","sub":[]},{"text":"Vite 8 handles the client bundle and (in dev) serves the UI through the Node server","sub":[]}]},{"t":"label","text":"Package Manager","value":""},{"t":"ul","items":[{"text":"npm (lockfile present: `package-lock.json`, lockfileVersion as committed)","sub":[]},{"text":"`.npmrc` sets `loglevel`\u0001","sub":[]}]}]},{"h":"Frameworks","blocks":[{"t":"label","text":"Core","value":""},{"t":"ul","items":[{"text":"React 19.2.8 (`react`, `react-dom`) - client UI; entry `src/web/main.tsx`, routing shell `src/web/app-router.tsx`","sub":[]},{"text":"react-router 8.3.0 - client routing in library/data mode; imports from `react-router` and `react-router/dom`. The package `react-router-dom` is not installed.","sub":[]},{"text":"Hono 4.13.4 - HTTP API and static serving; `src/server/index.ts`, `src/server/registry-api.ts`, `src/server/project-api.ts`, `src/server/request-guard.ts`","sub":[]},{"text":"`@hono/node-server` 2.1.1 - Node adapter (`createAdaptorServer`, `getRequestListener`) and `serve-static` (`@hono/node-server/serve-static`); `hono/body-limit` for request size limits","sub":[]},{"text":"TanStack React Query 5.102.3 (`@tanstack/react-query`) - client server-state cache; keys in `src/web/query-keys.ts`, fetch layer in `src/web/api.ts`","sub":[]},{"text":"@base-ui/react 1.7.0 - headless primitives (dialog, popover, input, field, tooltip, toast, preview-card, combobox, checkbox, button) in `src/web/components/`","sub":[]},{"text":"shadcn 4.19.0 (devDependency) with style `base-sera`, `rsc: false`, icon library lucide; config `components.json`","sub":[]}]},{"t":"label","text":"Testing","value":""},{"t":"ul","items":[{"text":"Vitest 4.1.11 - unit and server tests; config `vitest.config.ts` (`include: test/**/*.test.ts`, setup `test/helpers/config-dir-setup.ts`). Test tree under `test/`.","sub":[]},{"text":"Playwright 1.63.0 (`@playwright/test`) - e2e; config `playwright.config.ts`, specs under `test/e2e/`. Screenshot helper `test/helpers/shoot-pages.ts` uses a system Chrome via `LABELORE_E2E_CHROME` (default `/usr/bin/google-chrome`).","sub":[]}]},{"t":"label","text":"Build/Dev","value":""},{"t":"ul","items":[{"text":"Vite 8.2.2 - bundler and dev server; config `vite.config.ts` (`chunkSizeWarningLimit: 680`, alias `@` to `src/web`)","sub":[]},{"text":"`@vitejs/plugin-react` 6.1.0 - React transform (Babel-based)","sub":[]},{"text":"`@tailwindcss/vite` 4.3.3 and `tailwindcss` 4.3.3 - Tailwind v4 via Vite plugin","sub":[]},{"text":"`tw-animate-css` 1.4.0 - animation utilities imported from `src/web/styles/globals.css`","sub":[]},{"text":"ESLint 10.8.1 with `@eslint/js` 10.0.1, `typescript-eslint` 8.67.0, `eslint-plugin-react-hooks` 7.1.1, `globals` 17.11.0 - config `eslint.config.js` (flat config)","sub":[]},{"text":"Prettier 3.9.6 - config `.prettierrc`; script `npm run format`","sub":[]},{"text":"TypeScript 5.9.3 - `typecheck` script runs `tsc --noEmit` against `tsconfig.server.json` and `tsconfig.web.json`; base `tsconfig.json` has `\"files\": []`","sub":[]}]}]},{"h":"Key Dependencies","blocks":[{"t":"label","text":"Critical (rendering pipeline, `src/rendering/markdown.ts`)","value":""},{"t":"ul","items":[{"text":"unified 11.0.5 - processor core","sub":[]},{"text":"remark-parse 11.0.0, remark-gfm 4.0.1, remark-rehype 11.1.2","sub":[]},{"text":"rehype-raw 7.0.0, rehype-sanitize 6.0.0 (sanitize runs right after raw, `.use(rehypeSanitize, schema)` before `rehype-slug`), rehype-slug 6.0.0, rehype-stringify 10.0.1","sub":[]},{"text":"hast-util-sanitize 5.0.2 - custom sanitize schema","sub":[]},{"text":"shiki 4.4.3 - `createHighlighter()` with themes `vitesse-light` and `vitesse-dark` and a fixed language list (bash, css, html, javascript, json, jsx, markdown, tsx, typescript, xml, yaml, ...)","sub":[]},{"text":"mermaid 11.17.1 - diagrams rendered client-side only; `src/web/pages/artifact-page.tsx` looks for `[data-mermaid-pending=\"true\"]`, theme mapping in `src/web/pages/mermaid-theme.ts`","sub":[]},{"text":"gray-matter 4.0.3 - YAML frontmatter parsing (`src/planning-repo/frontmatter.ts`)","sub":[]},{"text":"minisearch 7.2.0 - in-memory full-text index (`src/server/search-index.ts`)","sub":[]}]},{"t":"label","text":"Critical (UI)","value":""},{"t":"ul","items":[{"text":"lucide-react 1.34.0 - icons","sub":[]},{"text":"class-variance-authority 0.7.1, clsx 2.1.1, tailwind-merge 3.6.0 - class composition helpers (`cn` in `src/web/lib/` or equivalent)","sub":[]}]},{"t":"label","text":"Infrastructure (types only in dev)","value":""},{"t":"ul","items":[{"text":"`@types/node` 22.20.1, `@types/react` 19.2.18, `@types/react-dom` 19.2.5","sub":[]}]},{"t":"label","text":"Not present","value":"No database driver, ORM, auth library, queue, or cloud SDK is installed."}]},{"h":"Configuration","blocks":[{"t":"label","text":"Environment variables read by the code","value":""},{"t":"ul","items":[{"text":"`NODE_ENV` - selects production mode (`startServer` in `src/server/index.ts`; `createApp` default). `npm start` sets it.","sub":[]},{"text":"`LABELORE_CONFIG_DIR` - directory holding `settings.json` (remembered project list). Required when `VITEST` is set (`src/server/settings-store.ts`).","sub":[]},{"text":"`XDG_CONFIG_HOME` - used for the settings directory when absolute; otherwise settings go to `~/.config/labelore`.","sub":[]},{"text":"`LABELORE_ALLOWED_HOSTS` - extra `Host` header values accepted by the request guard (`src/server/request-guard.ts`, `parseAllowedHosts`).","sub":[]},{"text":"`LABELORE_E2E_CHROME` - path to Chrome for the screenshot helper (`test/helpers/shoot-pages.ts`).","sub":[]},{"text":"`LABELORE_USAGE_PAUSE_AT`, `LABELORE_PAUSE_BRANCH`, `LABELORE_USAGE_GUARD` - used only by the cloud-session hooks in `.claude/cloud/` (not by the app).","sub":[]},{"text":"No `.env` loader (no dotenv) is installed; configuration is through the process environment and CLI arguments.","sub":[]}]},{"t":"label","text":"CLI arguments","value":""},{"t":"ul","items":[{"text":"Positional project paths (local path, `sftp://`, `ssh://`, or `[user@]host:/path`); parsed in `src/cli/target-path.ts` and `src/cli/remote-target.ts`","sub":[]},{"text":"`--port`, `--smoke`, and related flags in `src/server/index.ts` (default port 4173, auto-port tries 4173 through 4182 when the default is taken)","sub":[]},{"text":"Argument parsing is hand-written; no CLI library is used.","sub":[]}]},{"t":"label","text":"Build","value":""},{"t":"ul","items":[{"text":"`vite.config.ts` - React and Tailwind plugins, `@` alias, chunk warning limit","sub":[]},{"text":"`tsconfig.json`, `tsconfig.server.json`, `tsconfig.web.json` - split server and web typechecks","sub":[]},{"text":"`components.json` - shadcn registry config (`src/web/styles/globals.css` is the CSS entry)","sub":[]},{"text":"`playwright.config.ts`, `vitest.config.ts`, `eslint.config.js`, `.prettierrc`","sub":[]},{"text":"Output: `dist/` (gitignored), served in production from `./dist` by `src/server/index.ts`","sub":[]}]},{"t":"label","text":"Fonts and static assets","value":""},{"t":"ul","items":[{"text":"Self-hosted WOFF2 under `public/fonts/`: `space-grotesk-latin.woff2`, `jetbrains-mono-latin.woff2`, declared via `@font-face` in `src/web/styles/globals.css`. No CDN font loading.","sub":[]},{"text":"`public/favicon.svg`","sub":[]}]}]},{"h":"Platform Requirements","blocks":[{"t":"label","text":"Development","value":""},{"t":"ul","items":[{"text":"Node.js 22.18 or newer","sub":[]},{"text":"`npm install` from the lockfile","sub":[]},{"text":"Optional: system Chrome for Playwright screenshots (`/usr/bin/google-chrome` by default)","sub":[]},{"text":"Optional: system `ssh` and `tar` binaries for remote project targets (`src/server/remote-source.ts` spawns them with argument arrays, no shell)","sub":[]},{"text":"Optional: `git` on PATH for file dates and commit times (`src/server/file-dates.ts`, `src/server/commit-times.ts`); missing git is tolerated","sub":[]}]},{"t":"label","text":"Production","value":""},{"t":"ul","items":[{"text":"Local, single-user tool bound to `127.0.0.1` (`HOSTNAME` in `src/server/index.ts`)","sub":[]},{"text":"Run as `npm run build` followed by `npm start`; the repo's `.labelore-server.log` shows the development-mode warning that recommends this path","sub":[]},{"text":"Not deployed to a hosted platform. No Dockerfile, no CI config, and no cloud deploy config is in the repository.","sub":[]}]}]}],"footer":"Stack analysis: 2026-11-04"},"tidemark":{"front":{"last_mapped_commit":"c4e91ab7d03f58a2b6e1790d4c35fa80be127d69","last_mapped_at":"2026-10-28","made_up_example":"true","derived_from":"gsd-core/templates/codebase/stack.md","gsd_core_version":"1.19.0"},"comment":null,"title":"Technology Stack","date":"2026-10-28","intro":[],"sections":[{"h":"Languages & Runtimes","blocks":[{"t":"label","text":"Primary","value":""},{"t":"ul","items":[{"text":"TypeScript 5.6 - all server code in `server/` and all board code in `board/`","sub":[]}]},{"t":"label","text":"Secondary","value":""},{"t":"ul","items":[{"text":"SQL - the migration scripts in `server/store/migrations/`","sub":[]},{"text":"Shell - the harbour-office tide import in `scripts/`","sub":[]}]},{"t":"label","text":"Runtime","value":""},{"t":"ul","items":[{"text":"Node.js 22 - the only runtime, server and scripts alike","sub":[]}]},{"t":"label","text":"Package Manager","value":""},{"t":"ul","items":[{"text":"npm 10","sub":[]},{"text":"Lockfile: present","sub":[]}]}]},{"h":"Frameworks","blocks":[{"t":"label","text":"Core","value":""},{"t":"ul","items":[{"text":"Express 5.1 - the berth API and the static host for the built board","sub":[]},{"text":"React 19 - the berth board in `board/`","sub":[]}]},{"t":"label","text":"Testing","value":""},{"t":"ul","items":[{"text":"Vitest 3.2 - unit and route tests","sub":[]},{"text":"Playwright 1.50 - the request-a-berth flow","sub":[]}]},{"t":"label","text":"Build/Dev","value":""},{"t":"ul","items":[{"text":"Vite 6 - board bundler and dev server","sub":[]},{"text":"tsx 4 - runs the server and scripts without a build step","sub":[]}]}]},{"h":"Key Dependencies","blocks":[{"t":"label","text":"Critical","value":""},{"t":"ul","items":[{"text":"better-sqlite3 11 - the berth and booking store, opened once per process","sub":[]},{"text":"zod 3.24 - every request body and every tide feed row is parsed with it","sub":[]}]},{"t":"label","text":"Infrastructure","value":""},{"t":"ul","items":[{"text":"pino 9 - structured logs from the server","sub":[]},{"text":"node-cron 3 - the tide window refresh","sub":[]}]}]},{"h":"Configuration","blocks":[{"t":"label","text":"Environment","value":""},{"t":"ul","items":[{"text":"Read once at start in `server/config.ts`","sub":[]},{"text":"Three variables are required, listed in the integrations document","sub":[]}]},{"t":"label","text":"Build","value":""},{"t":"ul","items":[{"text":"`vite.config.ts`","sub":[]},{"text":"`tsconfig.json` with two project references","sub":[]}]}]},{"h":"Platform Requirements","blocks":[{"t":"label","text":"Development","value":""},{"t":"ul","items":[{"text":"Node.js 22 and npm 10 on any desktop","sub":[]}]},{"t":"label","text":"Production","value":""},{"t":"ul","items":[{"text":"One small virtual machine at the harbour office, behind a reverse proxy","sub":[]}]}]}],"footer":"Stack analysis: 2026-10-28"}},"integrations":{"labelore":{"front":{"last_mapped_commit":"717c8d7db3d75717948b08690df3a087fc01684d","last_mapped_at":"2026-11-04"},"comment":null,"title":"External Integrations","date":"2026-11-04","intro":[{"t":"p","text":"Labelore is a local, read-only dashboard over a GSD `.planning/` directory. It has no hosted backend, no database, and no third-party API clients. The integrations below are the local tools and filesystem sources it touches."}],"sections":[{"h":"APIs & External Services","blocks":[{"t":"label","text":"Language-model or SaaS APIs","value":""},{"t":"ul","items":[{"text":"Not detected. No AI SDK, HTTP client to an external API, or SDK import appears in `src/` or `package.json`.","sub":[]}]},{"t":"label","text":"Remote project source over SSH (optional, read-only)","value":""},{"t":"ul","items":[{"text":"The target `.planning/` can live on a remote host. Accepted forms: `sftp://`, `ssh://`, and `[user@]host:/path` (`src/cli/remote-target.ts`).","sub":["Client: system `ssh` binary spawned by `spawnMirrorRunner` in `src/server/remote-source.ts` (argument arrays, no shell)","Remote commands are fixed: path existence and directory checks, `cd`, and `exec tar -cf - .planning`, with the path value single-quoted (`buildMirrorCommands`)","Local side: `tar` extracts into a fresh temp directory (`src/planning-fs/local-fs.ts` provides the temp-dir primitives)","Auth: whatever the system `ssh` client uses (keys, agent, `~/.ssh/config`). The app does not store SSH credentials. Passwords typed in a target string are masked to `***` in `rawPath`.","Timeout and failure mapping are in `remote-source.ts` and `remote-target.ts`"]}]},{"t":"label","text":"Git (optional, local)","value":""},{"t":"ul","items":[{"text":"`git` is run via `execFile` with argument arrays for file dates and commit history:","sub":["`src/server/file-dates.ts` (cached, never throws)","`src/server/commit-times.ts` (commit log for the `CommitLog` seam)"]},{"text":"Git's absence or failure degrades the dates to unknown rather than failing the page.","sub":[]}]}]},{"h":"Data Storage","blocks":[{"t":"label","text":"Databases","value":""},{"t":"ul","items":[{"text":"None. No database client, ORM, or SQL driver is in use.","sub":[]}]},{"t":"label","text":"Project data (read-only)","value":""},{"t":"ul","items":[{"text":"Source of truth is the filesystem `.planning/` directory of each registered project. The app reads it through the `planning-fs` abstraction:","sub":["`src/planning-fs/local-fs.ts` - local filesystem","`src/planning-fs/in-memory-fs.ts` - in-memory implementation for tests","`src/planning-fs/types.ts` - interface boundary"]},{"text":"Discovery and snapshot assembly: `src/planning-repo/discovery.ts`, `src/planning-repo/assemble.ts`, `src/planning-repo/snapshot.ts`","sub":[]},{"text":"Writes are not performed against project files. The one write path is the app's own settings file (below).","sub":[]}]},{"t":"label","text":"App settings (the only file the app writes)","value":""},{"t":"ul","items":[{"text":"`settings.json` in the settings directory, resolved by `defaultSettingsDir()` in `src/server/settings-store.ts`:","sub":["`LABELORE_CONFIG_DIR` when set","`$XDG_CONFIG_HOME/labelore` when `XDG_CONFIG_HOME` is absolute","`~/.config/labelore`"]},{"text":"Stores the remembered project list. Implementation: `FileSettingsStore`. Tests use `MemorySettingsStore`.","sub":[]},{"text":"Project identity uses `identityOfTarget` (`src/server/project-registry.ts`).","sub":[]}]},{"t":"label","text":"File Storage","value":""},{"t":"ul","items":[{"text":"Local filesystem only. Static client assets are served from `./dist` in production. The sketch files are served from project directories through `src/server/sketch-files.ts`.","sub":[]},{"text":"Byte serving for file downloads: `src/server/file-bytes.ts`","sub":[]}]},{"t":"label","text":"Caching","value":""},{"t":"ul","items":[{"text":"In-memory only. Search index: `src/server/search-index.ts` (MiniSearch, rebuilt on load). Project runtime cache: `src/server/project-runtime.ts`. Shiki highlighter is created once per process in `src/rendering/markdown.ts`.","sub":[]},{"text":"No Redis, memcached, or external cache.","sub":[]}]}]},{"h":"Authentication & Identity","blocks":[{"t":"label","text":"Auth Provider","value":""},{"t":"ul","items":[{"text":"None. The server listens on `127.0.0.1` only.","sub":[]},{"text":"Request protection is a Host and Origin guard, not authentication:","sub":["`src/server/request-guard.ts` checks the `Host` header on every request (defends against DNS rebinding)","Origin is compared only against an allowed Host","Extra allowed hosts come from `LABELORE_ALLOWED_HOSTS` (`parseAllowedHosts`)","`createHostPolicy` learns the real bound port once the socket is listening"]},{"text":"A token guard exists for write-style handlers (`test/token-guard.test.ts`); the app is otherwise read-only.","sub":[]}]},{"t":"label","text":"Secrets handling","value":""},{"t":"ul","items":[{"text":"Project files are scanned for secrets, and matches are masked by `src/planning-repo/secret-mask.ts` before they reach the UI.","sub":[]},{"text":"No secrets are required by the app itself.","sub":[]}]}]},{"h":"Monitoring & Observability","blocks":[{"t":"label","text":"Error Tracking","value":""},{"t":"ul","items":[{"text":"None. No Sentry or similar client is installed.","sub":[]}]},{"t":"label","text":"Logs","value":""},{"t":"ul","items":[{"text":"Console output from the Node process. Startup prints the project path, mode, and URL (`src/server/index.ts`).","sub":[]},{"text":"Runtime log file `.labelore-server.log` in the repo root is gitignored (`*.log`).","sub":[]}]},{"t":"label","text":"Analytics","value":""},{"t":"ul","items":[{"text":"None.","sub":[]}]}]},{"h":"CI/CD & Deployment","blocks":[{"t":"label","text":"Hosting","value":""},{"t":"ul","items":[{"text":"Not hosted. Clone-and-run locally: `npm start` after `npm run build`, serving `http://127.0.0.1:4173`.","sub":[]},{"text":"Per-user service setup (systemd user unit) is referenced by the operator's own notes, not by a file in the repository.","sub":[]}]},{"t":"label","text":"CI Pipeline","value":""},{"t":"ul","items":[{"text":"None in the repository (no `.github/workflows`, no CI config files tracked by git).","sub":[]},{"text":"Local gates: `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:gate` (`test/helpers/vitest-gate.mjs`), `npm run test:e2e`.","sub":[]}]},{"t":"label","text":"Cloud-session hooks (developer tooling, not app runtime)","value":""},{"t":"ul","items":[{"text":"`.claude/settings.json` wires scripts in `.claude/cloud/` (`setup.sh`, `ensure-gsd.sh`, `usage-guard.mjs`, `save-at-limit.sh`, `statusline.mjs`, `usage-state.mjs`).","sub":[]},{"text":"They install GSD and manage pause-and-push handoffs. They are not part of the application's runtime integrations.","sub":[]},{"text":"Settings read there: `LABELORE_USAGE_PAUSE_AT`, `LABELORE_PAUSE_BRANCH`, `LABELORE_USAGE_GUARD`.","sub":[]}]}]},{"h":"Environment Configuration","blocks":[{"t":"label","text":"Required env vars","value":""},{"t":"ul","items":[{"text":"None required for normal operation.","sub":[]},{"text":"Conditionally required: `LABELORE_CONFIG_DIR` when running under Vitest (`src/server/settings-store.ts`).","sub":[]}]},{"t":"label","text":"Optional env vars","value":""},{"t":"ul","items":[{"text":"`LABELORE_ALLOWED_HOSTS` - extra Host values accepted by the guard","sub":[]},{"text":"`LABELORE_CONFIG_DIR`, `XDG_CONFIG_HOME` - settings location","sub":[]},{"text":"`LABELORE_E2E_CHROME` - Chrome binary for screenshots","sub":[]},{"text":"`NODE_ENV` - production switch","sub":[]}]},{"t":"label","text":"Secrets location","value":""},{"t":"ul","items":[{"text":"No secrets are stored by the app. The `.env*` files are not read by any code (no dotenv dependency). `.npmrc` contains only `loglevel`\u0001.","sub":[]}]}]},{"h":"Webhooks & Callbacks","blocks":[{"t":"label","text":"Incoming","value":""},{"t":"ul","items":[{"text":"None. The Hono routes in `src/server/project-api.ts` and `src/server/registry-api.ts` are read endpoints for the local UI. No webhook receiver exists.","sub":[]}]},{"t":"label","text":"Outgoing","value":""},{"t":"ul","items":[{"text":"None. The app makes no outbound network calls except the SSH transport used for remote targets.","sub":[]}]}]},{"h":"File Watching","blocks":[{"t":"ul","items":[{"text":"Not implemented in v1. No `chokidar` or `fs.watch` usage was found. Refresh happens on request and through the project runtime.","sub":[]}]}]}],"footer":"Integration audit: 2026-11-04"},"tidemark":{"front":{"last_mapped_commit":"c4e91ab7d03f58a2b6e1790d4c35fa80be127d69","last_mapped_at":"2026-10-28","made_up_example":"true","derived_from":"agents/gsd-codebase-mapper.md","gsd_core_version":"1.19.0"},"comment":null,"title":"External Integrations","date":"2026-10-28","intro":[],"sections":[{"h":"APIs & External Services","blocks":[{"t":"label","text":"Tide data","value":""},{"t":"ul","items":[{"text":"Coastal tide feed - hourly water heights for the harbour mouth","sub":["SDK/Client: none, plain `fetch` in `server/tides/feed.ts`","Auth: `TIDEMARK_TIDE_FEED_KEY`"]}]},{"t":"label","text":"Messaging","value":""},{"t":"ul","items":[{"text":"Mail relay - emailed sign-in codes and confirmation notes","sub":["SDK/Client: `nodemailer` 6","Auth: `TIDEMARK_MAIL_TOKEN`"]}]}]},{"h":"Data Storage","blocks":[{"t":"label","text":"Databases","value":""},{"t":"ul","items":[{"text":"SQLite file `data/tidemark.db`","sub":["Connection: `TIDEMARK_DB_PATH`","Client: `better-sqlite3`"]}]},{"t":"label","text":"File Storage","value":""},{"t":"ul","items":[{"text":"Local filesystem only","sub":[]}]},{"t":"label","text":"Caching","value":""},{"t":"ul","items":[{"text":"None","sub":[]}]}]},{"h":"Environment Configuration","blocks":[{"t":"label","text":"Required env vars","value":""},{"t":"ul","items":[{"text":"`TIDEMARK_TIDE_FEED_KEY`\u0001","sub":[]},{"text":"`TIDEMARK_MAIL_TOKEN`","sub":[]},{"text":"`TIDEMARK_DB_PATH`","sub":[]}]},{"t":"label","text":"Secrets location","value":""},{"t":"ul","items":[{"text":"A `.env` file on the harbour office machine, outside the repository","sub":[]}]}]},{"h":"Webhooks & Callbacks","blocks":[{"t":"label","text":"Incoming","value":""},{"t":"ul","items":[{"text":"None","sub":[]}]},{"t":"label","text":"Outgoing","value":""},{"t":"ul","items":[{"text":"Confirmation mail to the owner when the office confirms a request","sub":[]}]}]}],"footer":"Integration audit: 2026-10-28"}}};
+// ---------- icons (lucide paths, 24px grid) ----------
+const ICON = {
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  chevr: '<path d="m9 6 6 6-6 6"/>',
+  arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>',
+  server: '<rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/>',
+  db: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+  radio: '<path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/>',
+  cog: '<path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M12 2v2"/><path d="M12 22v-2"/><path d="m17 20.66-1-1.73"/><path d="M11 10.27 7 3.34"/><path d="m20.66 17-1.73-1"/><path d="m3.34 7 1.73 1"/><path d="M14 12h8"/><path d="M2 12h2"/><path d="m20.66 7-1.73 1"/><path d="m3.34 17 1.73-1"/><path d="m17 3.34-1 1.73"/><path d="m11 13.73-4 6.93"/>',
+  plug: '<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/>',
+  eye: '<path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/>',
+};
+const svg = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const MARK = '\u0001';
+const VNS = '<span class="vns">Value not shown</span>';
+// inline markdown: `code`, **bold**, *italic*; the withheld-value marker becomes the quiet mark.
+const inline = (s) => {
+  const codes = [];
+  let t = String(s).replace(/`([^`]+)`/g, (_, c) => { codes.push(c); return `\u0000${codes.length - 1}\u0000`; });
+  t = esc(t).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<i>$2</i>');
+  return t.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${esc(codes[Number(i)])}</code>`).split(MARK).join(VNS);
+};
+const plainText = (s) => String(s).replace(/`/g, '').replace(/\*\*/g, '').split(MARK).join(' (value not shown)');
+const sq = (tone) => `<span class="sq" data-tone="${tone}" aria-hidden="true"></span>`;
+const chip = (tone, text, title) => `<span class="status-chip" data-tone="${tone}"${title ? ` title="${esc(title)}"` : ''}>${sq(tone)}${esc(text)}</span>`;
+const fmtDate = (iso) => { const m = String(iso || '').match(/(\d{4})-(\d{2})-(\d{2})/); if (!m) return null; const mon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(m[2]) - 1]; return `${mon} ${Number(m[3])}, ${m[1]}`; };
+
+// ---------- the seven documents (the 042 A frame's panel list) ----------
+const ALL = ['stack', 'architecture', 'structure', 'conventions', 'testing', 'integrations', 'concerns'];
+const DOC = { stack: 'Stack', architecture: 'Architecture', structure: 'Structure', conventions: 'Conventions', testing: 'Testing', integrations: 'Integrations', concerns: 'Concerns' };
+const PROJ = {
+  labelore: { name: 'labelore', date: 'Nov 4, 2026', commit: '717c8d7', keys: { stack: '22', architecture: '24', structure: '11', conventions: '8', testing: 'Vitest', integrations: '3', concerns: '30' } },
+  tidemark: { name: 'tidemark', date: 'Oct 30, 2026', commit: 'c4e91ab', keys: { stack: '9', architecture: '5', structure: '3', conventions: '8', testing: 'Vitest', integrations: '2', concerns: '14' } },
+};
+
+// ---------- state ----------
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+const ACTS = {};
+const VIEWS = {};
+const S = { state: null, panel: null, sel: null, filter: null };
+
+// ---------- the 042 A frame, drawn identically in every variant ----------
+const crumbs = () => `<nav class="crumbs" aria-label="Breadcrumb"><span>Labelore</span><span aria-hidden="true">/</span><span aria-current="page">Codebase</span></nav>`;
+const copyPath = () => `<button class="btn-xs icon" type="button" data-act="noop" aria-label="Copy path" title="Copy path">${svg('copy')}</button>`;
+const viewSource = () => `<div class="seg" role="group" aria-label="Show"><button class="btn-xs" type="button" aria-pressed="true">View</button><button class="btn-xs" type="button" aria-pressed="false" data-act="noop">Source</button></div>`;
+const appHead = (pname) => `<header class="app-head" data-shell><span class="app-brand"><i></i>Labelore <span>/ ${esc(pname)}</span></span>
+  <nav class="app-nav" aria-label="Project"><a href="#" data-act="noop" aria-current="page">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Search</a></nav></header>`;
+function factsHtml(p) {
+  return `<div class="facts"><span class="facts-count">7 of 7 documents mapped</span>${chip('complete', 'Complete map')}<span class="facts-date">Mapped ${p.date}</span><span class="status-chip mono" data-tone="quiet" title="Commit the map was made at">Commit ${p.commit}</span></div>`;
+}
+function listHtml(p, cur, mine) {
+  return `<nav class="list" aria-label="Codebase map"><ol>${ALL.map((k, i) => {
+    const on = k === cur;
+    const act = mine.includes(k) ? `data-act="panel" data-panel="${k}"` : 'data-act="other"';
+    return `<li class="entry-li"><a class="entry" href="#" ${act}${on ? ' aria-current="page"' : ''}><span class="entry-no">${String(i + 1).padStart(2, '0')}</span><span class="entry-name">${DOC[k]}</span><span class="entry-key">${esc(p.keys[k])}</span></a></li>`;
+  }).join('')}</ol></nav>`;
+}
+function pageHtml(p, cur, mine, main) {
+  return `${appHead(p.name)}<main class="page">${crumbs()}
+    <header class="heading-block"><p class="eyebrow">Codebase</p><h1>Codebase</h1><div class="meta-row">${copyPath()}${viewSource()}</div></header>
+    <div class="a-grid"><aside class="a-rail">${factsHtml(p)}${listHtml(p, cur, mine)}</aside><div class="a-main">${main}</div></div></main>`;
+}
+// The document's own date: frontmatter stamp, else Analysis Date (the older form), with the source named.
+function stampOf(doc) {
+  if (doc.front.last_mapped_at) return `Mapped ${fmtDate(doc.front.last_mapped_at)} · commit ${String(doc.front.last_mapped_commit || '').slice(0, 7)}`;
+  const foot = doc.footer && /last updated/i.test(doc.footer) ? ` · footer "${doc.footer}"` : '';
+  return doc.date ? `Dated ${fmtDate(doc.date)} from its Analysis Date line (no map stamp, no commit)${foot}` : '';
+}
+const panelHead = (k, key, unit, doc) => `<header class="panel-head"><span class="panel-no">${String(ALL.indexOf(k) + 1).padStart(2, '0')}</span><h2 id="panel-h">${DOC[k]}</h2><span class="panel-key">${esc(key)} ${esc(unit)}</span>${doc ? `<span class="panel-stamp">${esc(stampOf(doc))}</span>` : ''}</header>`;
+
+// ---------- the document as blocks, and the plain form every section keeps ----------
+const norm = (h) => h.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const findSec = (doc, re) => doc.sections.find((s) => re.test(norm(s.h)));
+// A section's groups: a bold label (with an optional inline value) and the lists, fences and lines under it.
+function groupsOf(sec) {
+  const out = [];
+  let g = null;
+  for (const b of sec ? sec.blocks : []) {
+    if (b.t === 'label') { g = { label: b.text, value: b.value, items: [], blocks: [] }; out.push(g); continue; }
+    if (!g) { g = { label: '', value: '', items: [], blocks: [] }; out.push(g); }
+    g.blocks.push(b);
+    if (b.t === 'ul' || b.t === 'ol') g.items.push(...b.items);
+  }
+  return out;
+}
+const NONE_RE = /^(none|not detected|not applicable|not implemented|not hosted|no\b)/i;
+const firstValue = (g) => (g.value || (g.items[0] ? g.items[0].text : '') || '').replace(/`/g, '');
+const isAbsent = (g) => NONE_RE.test(firstValue(g).trim());
+const tokens = (t) => [...String(t).matchAll(/`([^`]+)`/g)].map((m) => m[1]);
+const VAR_RE = /^[A-Z][A-Z0-9]*_[A-Z0-9_]+$|^NODE_ENV$|^VITEST$/;
+function ulHtml(items) {
+  return `<ul class="bul">${items.map((it) => `<li><span>${inline(it.text)}${it.sub.length ? `<ul>${it.sub.map((s) => `<li>${inline(s)}</li>`).join('')}</ul>` : ''}</span></li>`).join('')}</ul>`;
+}
+function blocksHtml(blocks) {
+  return blocks.map((b) => b.t === 'label' ? `<p class="g-label">${esc(b.text)}${b.value ? `: <span class="v">${inline(b.value)}</span>` : ''}</p>`
+    : b.t === 'p' ? `<p class="prose">${inline(b.text)}</p>`
+    : b.t === 'ul' ? ulHtml(b.items)
+    : b.t === 'ol' ? `<ol class="steps">${b.items.map((it) => `<li>${inline(it.text)}</li>`).join('')}</ol>`
+    : b.t === 'table' ? `<div class="tbl-scroll"><table class="ptable"><thead><tr>${b.head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`
+    : b.t === 'fence' ? `<pre class="plain-pre">${esc(b.text)}</pre>` : '').join('');
+}
+// Every section of the document stays reachable as a closed bar under the picture: nothing is dropped.
+function sectionBars(doc) {
+  const intro = doc.intro.length ? `<p class="source-note">${doc.intro.map((b) => inline(b.text || '')).join(' ')}</p>` : '';
+  const last = doc.sections.length - 1;
+  return `${intro}<div class="acc-list">${doc.sections.map((s, i) => `<details class="acc"><summary>${svg('chevr')}<span>${esc(s.h)}</span><span class="n">${groupsOf(s).filter((g) => g.label).length || ''} ${groupsOf(s).filter((g) => g.label).length ? 'groups' : ''}</span></summary><div class="acc-body">${blocksHtml(s.blocks)}${i === last && doc.footer ? `<p class="foot-line">${esc(doc.footer)}</p>` : ''}</div></details>`).join('')}</div>`;
+}
+const pic = (title, tools, body, foot, extra = '') => `<figure class="pic"${extra}><div class="pic-bar"><span class="ff-title">${esc(title)}</span>${tools}</div><div class="pic-body">${body}</div>${foot ? `<div class="pic-foot">${foot}</div>` : ''}</figure>`;
+const art = (k, key, unit, doc, inner) => `<article class="panel" aria-labelledby="panel-h">${panelHead(k, key, unit, doc)}<div class="lifted">${inner}</div></article>`;
+
+// The shipped copy-command row: the command as selectable text outside the button; "Copied" inside it.
+const copyRow = (cmd, id) => `<div class="copy-command"><code class="copy-command-text">${esc(cmd)}</code><button class="btn-xs copy-command-button" type="button" data-act="copycmd" data-id="${id}" aria-label="Copy command: ${esc(cmd)}"${S.copied === id ? ' data-copied="true"' : ''}>${S.copied === id ? `${svg('check')}Copied` : `${svg('copy')}Copy command`}</button></div>`;
+ACTS.copycmd = (el) => { S.copied = el.dataset.id; render(); clearTimeout(ACTS._ct); ACTS._ct = setTimeout(() => { S.copied = null; render(); }, 1500); };
+
+// ---------- render orchestration ----------
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY;
+  const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  document.querySelectorAll('#sketch-bar [data-panel]').forEach((b) => b.classList.toggle('on', b.dataset.panel === S.panel));
+  if (typeof afterRender === 'function') afterRender(v);
+  window.scrollTo(0, y);
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; S.sel = null; S.filter = null; return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (act === 'other') { e.preventDefault(); toast('That panel is drawn in its own sketch'); return; }
+  if (act === 'panel') { e.preventDefault(); S.panel = el.dataset.panel; S.sel = null; S.filter = null; return render(); }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.sel != null) { S.sel = null; render(); } });
+window.addEventListener('hashchange', () => { S.sel = null; S.filter = null; render(); });
+ACTS.sel = (el) => { S.sel = S.sel === el.dataset.id ? null : el.dataset.id; render(); };
+ACTS.close = () => { S.sel = null; render(); };
+ACTS.filter = (el) => { S.filter = S.filter === el.dataset.f ? null : el.dataset.f; render(); };
+
+// =====================================================================================
+// 045: Stack and Integrations, the cross-read pair (D-01). Both panels in every variant; the rail
+// entries 01 Stack and 06 Integrations switch between them (?panel=stack|integrations).
+// Every mark is computed from the documents' own sections, labels, bullets and backticked names.
+// =====================================================================================
+const MINE = ['stack', 'integrations'];
+const STATES = {
+  labelore: { proj: 'labelore', label: 'Labelore' },
+  tidemark: { proj: 'tidemark', label: 'Tidemark' },
+  deps30: { proj: 'labelore', label: '30 dependencies' },
+};
+S.state = STATES[params.get('state')] ? params.get('state') : 'labelore';
+S.panel = MINE.includes(params.get('panel')) ? params.get('panel') : 'stack';
+const proj = () => STATES[S.state].proj;
+
+// The 30-dependency stack: Labelore's own 20 key dependencies plus ten of its real devDependencies
+// (versions from package.json), written as one more labelled group in the document's own form.
+const EXTRA_DEPS = [
+  { t: 'label', text: 'Tooling (devDependencies in package.json)', value: '' },
+  { t: 'ul', items: [
+    { text: '`@eslint/js` 10.0.1, `eslint-plugin-react-hooks` 7.1.1, `globals` 17.11.0, `typescript-eslint` 8.67.0 - lint rule sets for `eslint.config.js`', sub: [] },
+    { text: '`@vitejs/plugin-react` 6.1.0, `@tailwindcss/vite` 4.3.3, `tailwindcss` 4.3.3 - Vite plugins for React and Tailwind', sub: [] },
+    { text: '`@playwright/test` 1.63.0 - the e2e runner', sub: [] },
+    { text: 'shadcn 4.19.0, prettier 3.9.6 - component registry CLI and formatting', sub: [] },
+  ] },
+];
+function stackDoc() {
+  const d = DOCS.stack[proj()];
+  if (S.state !== 'deps30') return d;
+  const c = JSON.parse(JSON.stringify(d));
+  const kd = c.sections.find((s) => /^key dep/.test(norm(s.h)));
+  const at = kd.blocks.findIndex((b) => b.t === 'label' && /^not present/i.test(b.text));
+  kd.blocks.splice(at >= 0 ? at : kd.blocks.length, 0, ...EXTRA_DEPS);
+  return c;
+}
+const intDoc = () => DOCS.integrations[proj()];
+
+// ---------- the Stack lift (10-05's chip rule, plus a split at top-level commas for Key Dependencies) ----------
+function splitTop(s) {
+  const parts = []; let depth = 0; let tick = false; let cur = '';
+  for (const ch of s) {
+    if (ch === '`') tick = !tick;
+    if (!tick) { if (ch === '(') depth++; if (ch === ')') depth--; }
+    if (ch === ',' && depth === 0 && !tick) { parts.push(cur); cur = ''; } else cur += ch;
+  }
+  parts.push(cur);
+  return parts.map((p) => p.trim()).filter(Boolean);
+}
+const leftOf = (t) => { const m = t.match(/\s[-–]\s/); return m ? [t.slice(0, m.index), t.slice(m.index + m[0].length)] : [t, '']; };
+function chipOf(text) {
+  const [left, purpose] = leftOf(text.split(MARK).join(''));
+  let masked = ''; let depth = 0;
+  for (const ch of left) { if (ch === '(') depth++; masked += depth ? ' ' : ch; if (ch === ')') depth = Math.max(0, depth - 1); }
+  const words = [...masked.matchAll(/\S+/g)];
+  let vi = -1;
+  for (let k = 1; k < words.length; k++) { if (/^(>=|<=|\^|~)?\d[\w.]*$/.test(words[k][0].replace(/`/g, ''))) { vi = k; break; } }
+  let name; let version = null;
+  if (vi > 0) { name = left.slice(0, words[vi].index); version = words[vi][0].replace(/`/g, ''); }
+  else { const p = left.search(/\s\(/); name = p >= 0 ? left.slice(0, p) : left; }
+  name = name.replace(/`/g, '').trim().replace(/[;,.:]$/, '');
+  return { name, version, purpose };
+}
+let UID = 0;
+function liftStack(doc) {
+  UID = 0;
+  const L = { lang: [], run: [], core: [], testing: [], build: [], deps: [], notes: {}, vars: [], config: [], dev: [], prod: [], absent: [], heading: {} };
+  const add = (list, item, group, prim) => {
+    const c = chipOf(item.text);
+    const rec = { id: `c${UID++}`, ...c, src: item, group, prim: !!prim };
+    if (c.name.length > 32) { (L.notes[list] ||= []).push(rec); return; }
+    L[list].push(rec);
+  };
+  for (const sec of doc.sections) {
+    const h = norm(sec.h);
+    for (const g of groupsOf(sec)) {
+      const lab = norm(g.label);
+      if (/^languages/.test(h)) {
+        if (/runtime/.test(lab) || /package manager/.test(lab)) { L.heading.run = sec.h; g.items.forEach((it) => add('run', it, `${sec.h} · ${g.label}`)); }
+        else { L.heading.lang = sec.h; g.items.forEach((it) => add('lang', it, `${sec.h} · ${g.label}`, /primary/.test(lab))); }
+      } else if (/^runtime/.test(h)) { L.heading.run = sec.h; g.items.forEach((it) => add('run', it, `${sec.h} · ${g.label}`)); }
+      else if (/^framework/.test(h)) {
+        const k = /test/.test(lab) ? 'testing' : /build|dev/.test(lab) ? 'build' : 'core';
+        g.items.forEach((it) => add(k, it, `${sec.h} · ${g.label}`));
+      } else if (/^key dep/.test(h)) {
+        if (/^not present/.test(lab)) {
+          const v = (g.value || '').replace(/^No /, '').replace(/ is installed\.?$/, '').replace(/,? or /g, ', ');
+          v.split(/,\s*/).filter(Boolean).forEach((n) => L.absent.push({ id: `c${UID++}`, name: n.trim(), version: null, src: { text: `**${g.label}:** ${g.value}`, sub: [] }, group: `${sec.h} · ${g.label}` }));
+          continue;
+        }
+        const set = { label: plainText(g.label || sec.h), chips: [] };
+        g.items.forEach((it) => {
+          const [left, purpose] = leftOf(it.text);
+          splitTop(left).forEach((part) => {
+            const c = chipOf(purpose ? `${part} - ${purpose}` : part);
+            set.chips.push({ id: `c${UID++}`, ...c, src: it, group: `${sec.h} · ${set.label}` });
+          });
+        });
+        L.deps.push(set);
+      } else if (/^configuration/.test(h)) {
+        if (/environment/.test(lab)) {
+          g.items.forEach((it) => tokens(leftOf(it.text)[0]).filter((t) => VAR_RE.test(t)).forEach((n) => L.vars.push({ name: n, src: it, value: it.text.includes(`\`${n}\`${MARK}`) })));
+          if (!g.items.length && g.value) L.config.push({ label: g.label, items: [{ text: g.value, sub: [] }] });
+        } else L.config.push({ label: g.label, items: g.items.length ? g.items : [{ text: g.value, sub: [] }] });
+      } else if (/^platform/.test(h)) {
+        const k = /prod/.test(lab) ? 'prod' : 'dev';
+        g.items.forEach((it) => {
+          const opt = /^optional:\s*/i.test(it.text);
+          const t = it.text.replace(/^optional:\s*/i, '');
+          const p = t.search(/\s\(/);
+          L[k].push({ id: `c${UID++}`, name: plainText(p >= 0 ? t.slice(0, p) : t).replace(/[;.]$/, ''), version: null, opt, src: it, group: `${sec.h} · ${g.label}` });
+        });
+      }
+    }
+  }
+  L.depCount = L.deps.reduce((n, s) => n + s.chips.length, 0);
+  L.lfCount = L.lang.length + L.core.length + L.testing.length + L.build.length;
+  return L;
+}
+
+// ---------- the Integrations lift: seven known sections, their groups, the variable names ----------
+const KNOWN = [
+  { key: 'api', re: /^apis? and external/, title: 'APIs & External Services', short: 'External services', icon: 'globe', kind: 'external' },
+  { key: 'data', re: /^data storage/, title: 'Data Storage', short: 'Data storage', icon: 'db', kind: 'data' },
+  { key: 'auth', re: /^authentication/, title: 'Authentication & Identity', short: 'Authentication', icon: 'shield', kind: 'edge' },
+  { key: 'mon', re: /^monitoring/, title: 'Monitoring & Observability', short: 'Monitoring', icon: 'eye', kind: 'channel' },
+  { key: 'ci', re: /^ci cd|^ci and/, title: 'CI/CD & Deployment', short: 'CI/CD', icon: 'cog', kind: 'worker' },
+  { key: 'env', re: /^environment config/, title: 'Environment Configuration', short: 'Environment', icon: 'plug', kind: 'env' },
+  { key: 'hook', re: /^webhooks/, title: 'Webhooks & Callbacks', short: 'Webhooks', icon: 'radio', kind: 'channel' },
+];
+const textOf = (g) => [g.value, ...g.items.flatMap((it) => [it.text, ...it.sub])].join(' ');
+// Text for the cross-read: path-like code spans (a folder or a file name) are left out, so a file called markdown.ts is not a mention of Markdown.
+const xrText = (t) => String(t).replace(/`[^`]*\/[^`]*`|`[^`]*\.[a-z]{1,5}`/gi, ' ').replace(/`/g, ' ');
+function liftInt(doc) {
+  const used = new Set();
+  const secs = KNOWN.map((k) => {
+    const sec = doc.sections.find((s) => k.re.test(norm(s.h)));
+    if (sec) used.add(sec);
+    return { ...k, sec, groups: sec ? groupsOf(sec).map((g, gi) => ({ id: `${k.key}:${gi}`, sk: k.key, label: g.label || plainText(firstValue(g)).slice(0, 40), g, absent: isAbsent(g), vars: [...new Set(tokens(textOf(g)).filter((t) => VAR_RE.test(t)))] })) : [] };
+  });
+  const extras = doc.sections.filter((s) => !used.has(s)).map((s, i) => ({ key: `x${i}`, title: s.h, short: s.h, icon: 'file', kind: 'service', sec: s, extra: true, groups: groupsOf(s).map((g, gi) => ({ id: `x${i}:${gi}`, sk: `x${i}`, label: g.label || s.h, g, absent: isAbsent(g), vars: [...new Set(tokens(textOf(g)).filter((t) => VAR_RE.test(t)))] })) }));
+  const env = secs.find((s) => s.key === 'env');
+  const vars = new Map();
+  const envNotes = [];
+  env.groups.forEach((gr) => {
+    const lab = gr.g.label;
+    const kind = /optional/i.test(lab) ? 'optional' : /required/i.test(lab) ? 'required' : 'other';
+    gr.g.items.forEach((it) => {
+      const names = tokens(leftOf(it.text)[0]).filter((t) => VAR_RE.test(t));
+      if (!names.length || kind === 'other') { envNotes.push({ label: lab, item: it }); return; }
+      names.forEach((n) => {
+        const v = vars.get(n) || { name: n, kinds: [], value: false, src: [], mentions: [] };
+        const k = /conditional/i.test(it.text) ? 'conditionally required' : kind;
+        if (!v.kinds.includes(k)) v.kinds.push(k);
+        if (it.text.includes(`\`${n}\`${MARK}`)) v.value = true;
+        v.src.push({ label: lab, item: it });
+        vars.set(n, v);
+      });
+    });
+  });
+  [...secs, ...extras].filter((s) => s.key !== 'env').forEach((s) => s.groups.forEach((gr) => gr.vars.forEach((n) => {
+    const v = vars.get(n) || { name: n, kinds: ['named only'], value: false, src: [], mentions: [] };
+    v.mentions.push(gr); vars.set(n, v);
+    if (textOf(gr.g).includes(`\`${n}\`${MARK}`)) v.value = true;
+  })));
+  return { secs, extras, vars: [...vars.values()], envNotes, live: (s) => s.groups.filter((g) => !g.absent) };
+}
+const varKind = (v) => (v.kinds.includes('required') ? 'required' : v.kinds.includes('optional') ? 'optional' : v.kinds[0]);
+const vtag = (v) => `<button class="vtag" type="button" data-act="sel" data-id="v:${esc(v.name)}" data-kind="${esc(varKind(v))}"${S.sel === `v:${v.name}` ? ' aria-pressed="true"' : ''} title="${esc(v.kinds.join(', '))}">${esc(v.name)}${v.value ? VNS : ''}</button>`;
+
+// ---------- the cross-read: a name in one panel found in the other ----------
+function intMentions(name) {
+  const n = name.toLowerCase().replace(/^@/, '');
+  if (n.length < 3) return [];
+  const re = new RegExp(`(^|[^a-z0-9-])${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^a-z0-9-])`, 'i');
+  const I = liftInt(intDoc());
+  return [...I.secs, ...I.extras].flatMap((s) => s.groups.filter((gr) => re.test(xrText(textOf(gr.g)))).map((gr) => ({ s, gr })));
+}
+function stackMentions(gr) {
+  const L = liftStack(stackDoc());
+  const t = xrText(textOf(gr.g));
+  const all = [...L.lang, ...L.run, ...L.core, ...L.testing, ...L.build, ...L.deps.flatMap((d) => d.chips), ...L.dev, ...L.prod];
+  return all.filter((c) => { const n = c.name.toLowerCase().replace(/^@/, ''); return n.length >= 3 && !/\s/.test(n) && new RegExp(`(^|[^a-z0-9-])${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^a-z0-9-])`, 'i').test(t); });
+}
+
+// ---------- the dock: the selected mark's own words, in full ----------
+function stackChips(L) { return [...L.lang, ...L.run, ...L.core, ...L.testing, ...L.build, ...L.deps.flatMap((d) => d.chips), ...L.dev, ...L.prod, ...L.absent, ...Object.values(L.notes).flat()]; }
+function dockStack(L) {
+  if (!S.sel) return `<div class="dock-empty">Select a chip to read its line in the document.</div>`;
+  if (S.sel.startsWith('notes:')) {
+    const k = S.sel.slice(6);
+    return `<div class="dock"><div class="dock-head"><h4>Notes in this layer</h4><button class="text-link d-x" type="button" data-act="close">Close</button></div>${ulHtml((L.notes[k] || []).map((n) => n.src))}</div>`;
+  }
+  if (S.sel.startsWith('v:')) { const v = L.vars.find((x) => `v:${x.name}` === S.sel); return v ? `<div class="dock"><div class="dock-head"><h4><code>${esc(v.name)}</code>${v.value ? VNS : ''}</h4><span class="source-note">Configuration · read by the code</span><button class="text-link d-x" type="button" data-act="close">Close</button></div>${ulHtml([v.src])}${xrefInt(v.name)}</div>` : ''; }
+  const c = stackChips(L).find((x) => x.id === S.sel);
+  if (!c) return '';
+  return `<div class="dock"><div class="dock-head"><h4>${esc(c.name)}${c.version ? ` <code>${esc(c.version)}</code>` : ''}</h4><span class="source-note">${esc(c.group)}</span><button class="text-link d-x" type="button" data-act="close">Close</button></div>${ulHtml([c.src])}${xrefInt(c.name)}</div>`;
+}
+function xrefInt(name) {
+  const hits = intMentions(name);
+  return hits.length ? `<div class="xref"><span class="micro-label">Also in Integrations</span>${hits.map(({ s, gr }) => `<button class="text-link" type="button" data-act="goint" data-id="${gr.id}">${esc(s.short)} · ${esc(gr.label)} ${svg('arrow')}</button>`).join('')}</div>` : '';
+}
+ACTS.goint = (el) => { S.panel = 'integrations'; S.sel = el.dataset.id; render(); };
+ACTS.gostack = (el) => { S.panel = 'stack'; S.sel = el.dataset.id; render(); };
+function dockInt(I) {
+  if (!S.sel) return `<div class="dock-empty">Select a group or a variable to read it in full.</div>`;
+  if (S.sel.startsWith('v:')) {
+    const v = I.vars.find((x) => `v:${x.name}` === S.sel);
+    if (!v) return '';
+    return `<div class="dock"><div class="dock-head"><h4><code>${esc(v.name)}</code>${v.value ? VNS : ''}</h4><span class="source-note">${esc(v.kinds.join(', '))}</span><button class="text-link d-x" type="button" data-act="close">Close</button></div>${v.src.length ? ulHtml(v.src.map((s) => s.item)) : ''}${v.mentions.length ? `<div class="xref"><span class="micro-label">Named in</span>${v.mentions.map((gr) => `<button class="text-link" type="button" data-act="sel" data-id="${gr.id}">${esc(gr.label)}</button>`).join('')}</div>` : ''}${v.value ? '<p class="source-note">The document writes a value beside this name. Labelore shows the name only.</p>' : ''}</div>`;
+  }
+  const gr = [...I.secs, ...I.extras].flatMap((s) => s.groups).find((g) => g.id === S.sel);
+  if (!gr) return '';
+  const s = [...I.secs, ...I.extras].find((x) => x.key === gr.sk);
+  const st = stackMentions(gr);
+  return `<div class="dock"><div class="dock-head"><h4>${esc(gr.label)}</h4><span class="source-note">${esc(s.title)}${gr.absent ? ' · none' : ''}</span><button class="text-link d-x" type="button" data-act="close">Close</button></div>${gr.g.value ? `<p class="prose">${inline(gr.g.value)}</p>` : ''}${blocksHtml(gr.g.blocks)}${st.length ? `<div class="xref"><span class="micro-label">Also in Stack</span>${st.map((c) => `<button class="text-link" type="button" data-act="gostack" data-id="${c.id}">${esc(c.name)}${c.version ? ` ${esc(c.version)}` : ''} ${svg('arrow')}</button>`).join('')}</div>` : ''}</div>`;
+}
+
+// ---------- shared marks ----------
+const tchip = (c, extra = '') => `<button class="tchip" type="button" data-act="sel" data-id="${c.id}"${c.prim ? ' data-prim="true"' : ''}${c.opt ? ' data-opt="true"' : ''}${S.sel === c.id ? ' aria-pressed="true"' : ''} title="${esc(plainText(c.src.text))}"${extra}><span class="nm">${esc(c.name)}</span>${c.version ? `<span class="ver">${esc(c.version)}</span>` : ''}${c.src.text.includes(MARK) && /=|sets/.test(c.name) ? VNS : ''}${intMentions(c.name).length ? '<span class="xr" aria-label="also in Integrations">↔</span>' : ''}</button>`;
+const ghostChip = (c) => `<span class="tchip" data-ghost="true" title="${esc(plainText(c.src.text))}"><span class="nm">${esc(c.name)}</span></span>`;
+const notesBtn = (L, k) => (L.notes[k] && L.notes[k].length ? `<button class="notes-btn" type="button" data-act="sel" data-id="notes:${k}">+${L.notes[k].length} note${L.notes[k].length > 1 ? 's' : ''}</button>` : '');
+const stackKey = (L) => `${L.lfCount} languages and frameworks`;
+const stackHead = (L, inner) => art('stack', PROJ[proj()].keys.stack, 'languages and frameworks', stackDoc(), inner);
+const intHead = (I, inner) => art('integrations', PROJ[proj()].keys.integrations, 'services', intDoc(), inner);
+const keyStack = `<span class="key"><span class="tchip" data-prim="true"><span class="nm">Primary</span></span> primary language</span><span class="key"><span class="tchip" data-opt="true"><span class="nm">Optional</span></span> optional requirement</span><span class="key"><span class="tchip"><span class="nm">↔</span></span> also named in Integrations</span>`;
+
+// =====================================================================================
+// A: Tower + hub
+// =====================================================================================
+function stratum(label, count, step, w, body, extra = '') {
+  return `<section class="stratum" data-step="${step}" style="--w:${w}%"${extra}><div class="stratum-h"><b>${count}</b><span class="micro-label">${esc(label)}</span></div>${body}</section>`;
+}
+function stackA() {
+  const L = liftStack(stackDoc());
+  const max = Math.max(1, L.depCount, L.core.length, L.lang.length, L.run.length);
+  const pct = (n) => Math.round(Math.sqrt(n / max) * 100);
+  const deps = L.deps.map((d) => `<div class="sub"><span class="micro-label">${esc(d.label)} · ${d.chips.length}</span>${d.chips.map((c) => tchip(c)).join('')}</div>`).join('');
+  const strata = [
+    L.absent.length ? `<section class="stratum" data-ghost="true" style="--w:${pct(L.depCount)}%"><div class="stratum-h"><span class="micro-label">Not present</span></div><div class="sub">${L.absent.map(ghostChip).join('')}</div></section>` : '',
+    stratum('Key dependencies', L.depCount, 1, pct(L.depCount), deps),
+    stratum(`Frameworks · core`, L.core.length, 2, pct(L.core.length), `<div class="sub">${L.core.map((c) => tchip(c)).join('')}${notesBtn(L, 'core')}</div>`),
+    stratum(L.heading.lang || 'Languages', L.lang.length, 3, pct(L.lang.length), `<div class="sub">${L.lang.map((c) => tchip(c)).join('')}${notesBtn(L, 'lang')}</div>`),
+    stratum('Runtime', L.run.length, 4, pct(L.run.length), `<div class="sub">${L.run.map((c) => tchip(c)).join('')}${notesBtn(L, 'run')}</div>`),
+  ].join('');
+  const scaffold = `<aside class="scaffold" aria-label="Tooling"><span class="micro-label">Tooling beside the building · ${L.testing.length + L.build.length}</span><div class="sub"><span class="micro-label">Testing</span>${L.testing.map((c) => tchip(c)).join('')}</div><div class="sub"><span class="micro-label">Build / dev</span>${L.build.map((c) => tchip(c)).join('')}${notesBtn(L, 'build')}</div>${L.vars.length ? `<div class="sub"><span class="micro-label">Read from the environment · ${L.vars.length}</span>${L.vars.map((v) => `<button class="vtag" type="button" data-act="sel" data-id="v:${esc(v.name)}"${S.sel === `v:${v.name}` ? ' aria-pressed="true"' : ''}>${esc(v.name)}${v.value ? VNS : ''}</button>`).join('')}</div>` : ''}</aside>`;
+  const ground = `<div class="ground"><div><span class="micro-label">Platform · development · ${L.dev.length}</span><div class="tags">${L.dev.map((c) => tchip(c, ' data-peg="1"').replace('class="tchip"', 'class="tchip peg"')).join('')}</div></div><div><span class="micro-label">Platform · production · ${L.prod.length}</span><div class="tags">${L.prod.map((c) => tchip(c).replace('class="tchip"', 'class="tchip peg"')).join('')}</div></div></div>`;
+  const body = `<div class="tower-wrap"><div class="tower">${strata}</div>${scaffold}${ground}</div>`;
+  const foot = `${keyStack}<span>Layers stack from the platform up; a layer's width grows with its count (square root), so a wide top on a narrow base shows how much rests on the runtime.</span>`;
+  return stackHead(L, `${pic('What the stack stands on', `<span class="counts-line">${L.lfCount} languages and frameworks · ${L.depCount} key dependencies</span>`, body, foot)}${dockStack(L)}${sectionBars(stackDoc())}`);
+}
+function hcard(s, I) {
+  if (!s) return '<div></div>';
+  if (!s.sec) return `<section class="hcard" data-missing="true" data-sk="${s.key}"><div class="hcard-h">${svg(s.icon)}<span class="micro-label">${esc(s.short)}</span></div><p class="source-note">Not in this document</p></section>`;
+  const live = I.live(s);
+  const rows = s.groups.map((gr) => `<button class="grow" type="button" data-act="sel" data-id="${gr.id}" data-absent="${gr.absent}"${S.sel === gr.id ? ' aria-pressed="true"' : ''}>${sq(gr.absent ? 'quiet' : 'neutral')}<span class="gl">${esc(gr.label)}</span>${gr.vars.length ? `<span class="tags">${gr.vars.map((n) => `<code class="vtag" data-kind="named">${esc(n)}</code>`).join('')}</span>` : ''}</button>`).join('');
+  return `<section class="hcard" data-sk="${s.key}"${live.length ? '' : ' data-empty="true"'}><div class="hcard-h">${svg(s.icon)}<span class="micro-label">${esc(s.short)}</span><span class="cnt">${live.length} of ${s.groups.length} in use</span></div>${rows}</section>`;
+}
+function intA() {
+  const I = liftInt(intDoc());
+  const by = (k) => I.secs.find((s) => s.key === k);
+  const env = by('env');
+  const hub = `<section class="hub" data-hub><span class="micro-label">${svg('server')}The app</span><span class="hub-name">${esc(PROJ[proj()].name)}</span><span class="micro-label">${svg('plug')}${esc(env.sec ? env.sec.h : 'Environment Configuration')} · ${I.vars.filter((v) => v.src.length).length} names</span><div class="tags">${I.vars.filter((v) => v.src.length).map(vtag).join('') || '<span class="source-note">No variable names listed</span>'}</div>${I.envNotes.length ? `<button class="text-link" type="button" data-act="sel" data-id="${env.groups.find((g) => !g.vars.length || /secret/i.test(g.g.label))?.id || ''}">${I.envNotes.length} more line${I.envNotes.length > 1 ? 's' : ''}: ${esc([...new Set(I.envNotes.map((n) => n.label))].join(', '))}</button>` : ''}</section>`;
+  const cells = [by('api'), by('data'), by('auth'), by('hook'), 'HUB', by('mon'), I.extras[0], by('ci'), I.extras[1]];
+  const grid = cells.map((c) => (c === 'HUB' ? hub : hcard(c, I))).join('');
+  const more = I.extras.slice(2);
+  const body = `<div class="hub-board" id="hub-board"><svg class="hub-wires" aria-hidden="true"></svg>${grid}</div>${more.length ? `<div class="hub-extra">${more.map((s) => hcard(s, I)).join('')}</div>` : ''}`;
+  const foot = `<span class="key"><span class="sq keysq" aria-hidden="true"></span> a group in use</span><span class="key">${sq('quiet')} a group whose first line says None or Not detected</span><span class="key"><code class="vtag">NAME</code> a variable name, never its value</span><span>A dashed spoke reaches a section with nothing in use.</span><span class="pan-note">The board pans inside its frame.</span>`;
+  return intHead(I, `${pic('What it talks to', `<span class="counts-line">${I.secs.filter((s) => s.sec).length + I.extras.length} sections · ${I.vars.length} variable names</span>`, body, foot)}${dockInt(I)}${sectionBars(intDoc())}`);
+}
+function wireHub() {
+  const board = document.getElementById('hub-board');
+  if (!board) return;
+  const svgEl = board.querySelector('.hub-wires');
+  const hub = board.querySelector('[data-hub]');
+  const br = board.getBoundingClientRect();
+  const hr = hub.getBoundingClientRect();
+  const cx = hr.left + hr.width / 2 - br.left; const cy = hr.top + hr.height / 2 - br.top;
+  const I = liftInt(intDoc());
+  const selSk = S.sel && !S.sel.startsWith('v:') ? S.sel.split(':')[0] : null;
+  const varSks = S.sel && S.sel.startsWith('v:') ? (I.vars.find((v) => `v:${v.name}` === S.sel)?.mentions || []).map((g) => g.sk) : [];
+  svgEl.innerHTML = [...board.querySelectorAll('.hcard')].map((c) => {
+    const r = c.getBoundingClientRect();
+    const x = r.left + r.width / 2 - br.left; const y = r.top + r.height / 2 - br.top;
+    const sk = c.dataset.sk;
+    const none = c.dataset.empty === 'true' || c.dataset.missing === 'true';
+    const hot = sk === selSk || varSks.includes(sk);
+    return `<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"${none ? ' data-none="true"' : ''}${hot ? ' data-hot="true"' : ''}/>`;
+  }).join('');
+}
+
+// =====================================================================================
+// B: Element board + floor plan
+// =====================================================================================
+const major = (v) => { const m = String(v || '').match(/\d+/); return m ? m[0] : null; };
+function el(c, fam) {
+  const mj = major(c.version);
+  return `<button class="el" type="button" data-act="sel" data-id="${c.id}" data-fam="${fam}"${S.sel === c.id ? ' aria-pressed="true"' : ''} title="${esc(plainText(c.src.text))}"><span class="el-maj"${mj ? '' : ' data-none="true"'}>${mj || '–'}</span>${intMentions(c.name).length ? '<span class="el-xr" aria-label="also in Integrations">↔</span>' : ''}<span class="el-nm">${esc(c.name)}</span><span class="el-ver">${c.version ? esc(c.version) : 'no version'}</span></button>`;
+}
+function block(label, chips, fam) {
+  if (!chips.length) return '';
+  return `<section class="block"><span class="micro-label">${esc(label)} <b>${chips.length}</b></span><div class="tiles">${chips.map((c) => el(c, typeof fam === 'function' ? fam(c) : fam)).join('')}</div></section>`;
+}
+function stackB() {
+  const L = liftStack(stackDoc());
+  const blocks = [
+    block(L.heading.lang || 'Languages', L.lang, 'lang'),
+    block('Runtime', L.run, 'run'),
+    block('Frameworks · core', L.core, 'core'),
+    block('Frameworks · testing', L.testing, 'tool'),
+    block('Frameworks · build / dev', L.build, 'tool'),
+    ...L.deps.map((d) => block(d.label, d.chips, /types/i.test(d.label) ? 'types' : 'dep')),
+    L.absent.length ? `<section class="block"><span class="micro-label">Not present <b>${L.absent.length}</b></span><div class="tiles">${L.absent.map((c) => `<span class="el" data-ghost="true" title="${esc(plainText(c.src.text))}"><span class="el-maj" data-none="true">0</span><span class="el-nm">${esc(c.name)}</span><span class="el-ver">not installed</span></span>`).join('')}</div></section>` : '',
+  ].join('');
+  const notes = Object.entries(L.notes).filter(([, v]) => v.length).map(([k]) => notesBtn(L, k)).join('');
+  const under = `<div class="under">${L.vars.length ? `<div class="under-row"><span class="micro-label">Read from the environment · ${L.vars.length}</span><div class="tags">${L.vars.map((v) => `<button class="vtag" type="button" data-act="sel" data-id="v:${esc(v.name)}"${S.sel === `v:${v.name}` ? ' aria-pressed="true"' : ''}>${esc(v.name)}${v.value ? VNS : ''}</button>`).join('')}</div></div>` : ''}<div class="under-row"><span class="micro-label">Platform · ${L.dev.length + L.prod.length}</span><div class="tags">${[...L.dev, ...L.prod].map((c) => tchip(c)).join('')}</div></div>${notes ? `<div class="under-row"><span class="micro-label">Lines that are not chips</span><div class="tags">${notes}</div></div>` : ''}</div>`;
+  const foot = `<span class="key"><span class="el-maj">19</span> the major version, large</span><span class="key">tile shade: languages darkest, then runtime, core frameworks, tooling; key dependencies plain, types-only dashed</span><span class="key">↔ also named in Integrations</span>`;
+  return stackHead(L, `${pic('Every piece, one tile each', `<span class="counts-line">${L.lfCount + L.run.length + L.depCount} tiles</span>`, `<div class="board">${blocks}</div>${under}`, foot)}${dockStack(L)}${sectionBars(stackDoc())}`);
+}
+function room(s, I) {
+  if (!s.sec) return `<section class="room" data-missing="true" style="--span:2"><div class="room-h">${svg(s.icon)}<span class="micro-label">${esc(s.short)}</span></div><p class="source-note">Not in this document</p></section>`;
+  const live = I.live(s);
+  const span = s.groups.length >= 4 ? 3 : 2;
+  if (s.key === 'env') {
+    const noneReq = s.groups.filter((gr) => /required/i.test(gr.g.label) && !/optional/i.test(gr.g.label) && gr.absent).map((gr) => `<div class="row"><span class="micro-label">${esc(gr.g.label)}</span><span class="status-chip" data-tone="quiet">${sq('quiet')}${esc(gist(gr).split('.')[0])}</span></div>`).join('');
+    const groups = noneReq + ['required', 'conditionally required', 'optional'].map((k) => { const vs = I.vars.filter((v) => v.src.length && v.kinds.includes(k)); return vs.length ? `<div class="row"><span class="micro-label">${esc(k)}</span>${vs.map(vtag).join('')}</div>` : ''; }).join('');
+    return `<section class="room" style="--span:${span}"><div class="room-h">${svg(s.icon)}<span class="micro-label">${esc(s.short)}</span><span class="cnt">${I.vars.filter((v) => v.src.length).length} names</span></div><div class="plugs">${groups}</div><div class="ftiles">${s.groups.filter((gr) => !gr.vars.length || /secret/i.test(gr.g.label)).map((gr) => ftile(gr)).join('')}</div></section>`;
+  }
+  return `<section class="room" style="--span:${span}"${live.length ? '' : ' data-empty="true"'}><div class="room-h">${svg(s.icon)}<span class="micro-label">${esc(s.short)}</span><span class="cnt">${live.length} of ${s.groups.length} in use</span></div><div class="ftiles">${s.groups.map((gr) => ftile(gr)).join('')}</div></section>`;
+}
+const gist = (gr) => plainText(firstValue(gr.g)).replace(/\s+/g, ' ').trim();
+const ftile = (gr) => `<button class="ftile" type="button" data-act="sel" data-id="${gr.id}" data-absent="${gr.absent}"${S.sel === gr.id ? ' aria-pressed="true"' : ''}><b>${esc(gr.label)}</b><span>${esc(gr.absent ? gist(gr).split(/[.;(]/)[0] : gist(gr))}</span></button>`;
+function intB() {
+  const I = liftInt(intDoc());
+  const rooms = [...I.secs, ...I.extras].map((s) => room(s, I)).join('');
+  const foot = `<span class="key"><span class="ftile keysw"><b>In use</b></span> a group in use</span><span class="key"><span class="ftile keysw" data-absent="true"><b>None</b></span> a group whose first line says None</span><span>A hatched room holds nothing in use; the hatch between rooms is empty floor.</span>`;
+  return intHead(I, `${pic('A room for each kind of integration', `<span class="counts-line">${I.secs.filter((s) => s.sec).length + I.extras.length} rooms · ${[...I.secs, ...I.extras].reduce((n, s) => n + I.live(s).length, 0)} in use</span>`, `<div class="plan">${rooms}</div>`, foot)}${dockInt(I)}${sectionBars(intDoc())}`);
+}
+
+// =====================================================================================
+// C: Reuse. Stack: the shipped chip groups (10-08). Integrations: the shipped lane diagram (012 B).
+// =====================================================================================
+function stackC() {
+  const L = liftStack(stackDoc());
+  const set = (label, chips) => (chips.length ? `<div class="cg-set"><p class="micro-label">${esc(label)}</p><div class="tags">${chips.map((c) => tchip(c)).join('')}</div></div>` : '');
+  const groups = [
+    `<section class="cg"><h3 class="cg-h">${esc(L.heading.lang || 'Languages')}</h3><div class="cg-sets">${set('Primary', L.lang.filter((c) => c.prim))}${set('Secondary', L.lang.filter((c) => !c.prim))}</div></section>`,
+    `<section class="cg"><h3 class="cg-h">Runtime</h3><div class="cg-sets">${set('Runtime', L.run)}</div></section>`,
+    `<section class="cg"><h3 class="cg-h">Frameworks</h3><div class="cg-sets">${set('Core', L.core)}${set('Testing', L.testing)}${set('Build / dev', L.build)}</div></section>`,
+    `<section class="cg"><h3 class="cg-h">Key Dependencies</h3><div class="cg-sets">${L.deps.map((d) => set(d.label, d.chips)).join('')}${L.absent.length ? `<div class="cg-set"><p class="micro-label">Not present</p><div class="tags">${L.absent.map(ghostChip).join('')}</div></div>` : ''}</div></section>`,
+  ].join('');
+  const foot = `${keyStack}<span>The chip groups as the Codebase page draws them today (10-08); Key Dependencies use the same chip set.</span>`;
+  return stackHead(L, `${pic('Stack chips, as shipped', `<span class="counts-line">${L.lfCount} languages and frameworks · ${L.depCount} key dependencies</span>`, groups, foot)}${dockStack(L)}${sectionBars(stackDoc())}`);
+}
+const LANES = ['edge', 'service', 'worker', 'channel', 'data', 'external'];
+const LANE_NAME = { edge: 'Edge', service: 'Service', worker: 'Worker', channel: 'Channel', data: 'Data', external: 'External' };
+const LANE_ICON = { edge: 'shield', service: 'server', worker: 'cog', channel: 'radio', data: 'db', external: 'globe' };
+function wireLabel(gr) {
+  const f = gr.g.items.flatMap((it) => it.sub).find((s) => /^(sdk\/client|client|connection):/i.test(s));
+  if (!f) return '';
+  const t = tokens(f).find((x) => !VAR_RE.test(x));
+  return t || plainText(f.replace(/^[^:]+:\s*/, '')).split(/[,(]/)[0];
+}
+function intC() {
+  const I = liftInt(intDoc());
+  const nodes = [];
+  [...I.secs, ...I.extras].filter((s) => s.key !== 'env').forEach((s) => I.live(s).forEach((gr) => nodes.push({ gr, kind: s.kind, sec: s })));
+  const present = LANES.filter((k) => k === 'service' || nodes.some((n) => n.kind === k));
+  const W = Math.max(present.length * 128, S.lnW || 780);
+  const lw = Math.floor(W / present.length);
+  const NH = 58; const GAP = 14; const TOP = 44;
+  const col = {};
+  present.forEach((k) => { col[k] = nodes.filter((n) => n.kind === k); });
+  const rows = Math.max(1, ...present.map((k) => col[k].length));
+  const H = TOP + rows * (NH + GAP) + 8;
+  const nw = lw - 16;
+  const app = { x: present.indexOf('service') * lw + 8, y: TOP + ((rows - 1) * (NH + GAP)) / 2 };
+  const lanes = present.map((k, i) => `<div class="ln-lane" style="left:${i * lw}px;width:${lw}px"${i % 2 ? ' data-shade="true"' : ''}><span class="ln-head">${svg(LANE_ICON[k])}${LANE_NAME[k]}</span></div>`).join('');
+  let wires = ''; let labs = ''; let html = '';
+  html += `<div class="ln-node" data-kind="service" style="left:${app.x}px;top:${app.y}px;width:${nw}px;height:${NH}px"><span class="ln-icon">${svg('server')}</span><span class="ln-lab">${esc(PROJ[proj()].name)}</span><span class="ln-sub">the app</span></div>`;
+  present.forEach((k, li) => col[k].forEach((n, ri) => {
+    const off = k === 'service' ? (ri >= Math.floor((rows - 1) / 2) ? ri + 1 : ri) : ri;
+    const x = li * lw + 8; const y = TOP + off * (NH + GAP);
+    const sub = tokens(textOf(n.gr.g)).find((t) => !VAR_RE.test(t)) || n.sec.short;
+    const more = Math.max(0, n.gr.g.items.length - 1);
+    const hot = S.sel === n.gr.id;
+    html += `<button class="ln-node" type="button" data-act="sel" data-id="${n.gr.id}" data-kind="${k}"${hot ? ' aria-pressed="true"' : ''} style="left:${x}px;top:${y}px;width:${nw}px;height:${NH}px" title="${esc(n.gr.label)}"><span class="ln-icon">${svg(n.sec.icon)}</span><span class="ln-lab">${esc(n.gr.label.replace(/\s*\(.*\)\s*$/, ''))}</span><span class="ln-sub">${esc(sub)}</span>${more ? `<span class="ln-more">+${more}</span>` : ''}</button>`;
+    const ax = li > present.indexOf('service') ? app.x + nw : app.x; const ay = app.y + NH / 2;
+    const bx = li > present.indexOf('service') ? x : x + nw; const by = y + NH / 2;
+    const mx = li > present.indexOf('service') ? bx - 10 : bx + 10;
+    if (k !== 'service') {
+      wires += `<path d="M${ax} ${ay} H${mx} V${by} H${bx}"${hot ? ' data-hot="true"' : ''}/>`;
+      const wl = wireLabel(n.gr);
+      if (wl) labs += `<span class="ln-wlab" style="left:${li > present.indexOf('service') ? x : x}px;top:${y + NH + 1}px" title="${esc(wl)}">${esc(wl)}</span>`;
+    }
+  }));
+  const unused = [...I.secs, ...I.extras].filter((s) => s.key !== 'env').flatMap((s) => (s.sec ? s.groups.filter((g) => g.absent).map((g) => `<button class="status-chip" type="button" data-tone="quiet" data-act="sel" data-id="${g.id}">${sq('quiet')}${esc(s.short)} · ${esc(g.label)}</button>`) : [`<span class="status-chip" data-tone="quiet">${sq('quiet')}${esc(s.short)} · not in this document</span>`])).join('');
+  const varsRow = `<div class="notused"><span class="micro-label">${svg('plug')} Environment · ${I.vars.length} names</span><div class="tags">${I.vars.map(vtag).join('')}</div></div>`;
+  const body = `<div class="ln-stage" id="ln-stage" style="width:${W}px;height:${H}px">${lanes}<svg class="ln-wires" width="${W}" height="${H}" aria-hidden="true">${wires}</svg>${html}${labs}</div><div class="notused"><span class="micro-label">Not used · ${(unused.match(/status-chip/g) || []).length}</span><div class="tags">${unused}</div></div>${varsRow}`;
+  const foot = `<span>Lanes by kind, as the Research page draws them (012 B). One node per group in use; a wire's label is the group's Client line. Groups that say None sit under the lanes.</span><span class="pan-note">The lanes pan inside their frame.</span>`;
+  return intHead(I, `${pic('Lanes by kind, as shipped', `<span class="counts-line">${nodes.length} in use · ${(unused.match(/status-chip/g) || []).length} not used</span>`, body, foot, ' id="ln-fig"')}${dockInt(I)}${sectionBars(intDoc())}`);
+}
+
+// ---------- wiring ----------
+const VARIANT = { a: { stack: stackA, integrations: intA }, b: { stack: stackB, integrations: intB }, c: { stack: stackC, integrations: intC } };
+['a', 'b', 'c'].forEach((v) => { VIEWS[v] = () => pageHtml(PROJ[proj()], S.panel, MINE, VARIANT[v][S.panel]()); });
+function afterRender(v) {
+  if (v === 'a' && S.panel === 'integrations') wireHub();
+  const fig = document.getElementById('ln-fig');
+  if (fig && !S.busy) {
+    const w = Math.floor(fig.querySelector('.pic-body').clientWidth - 32);
+    if (w > 0 && Math.abs(w - (S.lnW || 0)) > 3) { S.lnW = w; S.busy = true; render(); S.busy = false; }
+  }
+}
+window.addEventListener('resize', () => { S.lnW = 0; render(); });
+render();
+
+</script>
+</body>
+</html>
