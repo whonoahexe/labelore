@@ -32115,3 +32115,491 @@ button.view-codebase-mark:hover {
   font-size: var(--fs-2);
 }
 /* phase-10-eval-review:end */
+
+/* phase-10-dom-verify:start */
+/* Phase 10 (10-21): the Browser check page, sketch 051 winner A (Browser window). The page renders four font sizes: the h1
+   as ArtifactHeader draws it (--fs-display-3), the outcome chip and the count numerals (--fs-7), Body (--fs-4) and Label
+   (--fs-2). Where a shared class sets a size outside that set, the page takes it inside with a page-scoped rule below, so
+   no shared class is edited. Every colour is a theme token: a failed criterion is the `missing` tone, never destructive;
+   Could not look is `in-flight` and Nothing to report `quiet`, neither ever `complete`. */
+.view-dom-verify-page {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-dom-verify-page > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-dom-verify-page) .status-chip,
+.artifact-page:has(.view-dom-verify-page) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.artifact-page:has(.view-dom-verify-page) .source-note,
+.artifact-page:has(.view-dom-verify-page) .empty-note {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-dom-verify-page code {
+  font-size: inherit;
+}
+
+.view-dom-verify-meta {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-dom-verify-key {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-dom-verify-sq {
+  --status-square-size: var(--space-2-5);
+}
+
+.view-dom-verify-mono {
+  font-family: var(--font-mono);
+}
+
+.view-dom-verify-prose {
+  margin: 0;
+  max-width: 72ch;
+  overflow-wrap: anywhere;
+}
+
+/* The window: the check drawn as the browser it looked through. */
+.view-dom-verify-window {
+  container-type: inline-size;
+  display: grid;
+  margin: 0;
+  border: 1px solid var(--foreground);
+  background: var(--card);
+  min-width: 0;
+}
+
+.view-dom-verify-chrome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2-5) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--card-veil);
+  min-width: 0;
+}
+
+.view-dom-verify-dots {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.view-dom-verify-dots i {
+  width: var(--space-2);
+  height: var(--space-2);
+  border: 1px solid var(--muted-foreground);
+}
+
+/* The outcome chip is large and its shape differs per outcome: Verified solid and tinted (the shared complete chip),
+   Could not look a 2px solid frame, Nothing to report and Outcome not stated dashed. */
+.artifact-page:has(.view-dom-verify-page) .view-dom-verify-outcome.status-chip {
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--fs-7);
+  letter-spacing: var(--ls-tight);
+  text-transform: none;
+  white-space: normal;
+}
+
+.view-dom-verify-outcome .view-dom-verify-icon {
+  flex: none;
+  width: 1em;
+  height: 1em;
+}
+
+.view-dom-verify-outcome[data-tone='in-flight'] {
+  border-width: 2px;
+  background: transparent;
+}
+
+.view-dom-verify-outcome[data-tone='quiet'] {
+  border-style: dashed;
+  border-color: var(--muted-foreground);
+  background: transparent;
+}
+
+.view-dom-verify-addr {
+  display: flex;
+  flex: 1 1 14rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  min-height: var(--space-8);
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
+.view-dom-verify-addr[data-empty='true'] {
+  border-style: dashed;
+}
+
+.view-dom-verify-path {
+  display: inline-block;
+  max-width: 100%;
+  padding: var(--space-0-5) var(--space-2);
+  overflow: hidden;
+  background: var(--code-veil);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.view-dom-verify-view {
+  min-height: calc(var(--space-8) * 7);
+  padding: var(--space-5);
+  min-width: 0;
+}
+
+@container (max-width: 34rem) {
+  .view-dom-verify-view {
+    min-height: calc(var(--space-8) * 6);
+    padding: var(--space-3);
+  }
+}
+
+.view-dom-verify-groups {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.view-dom-verify-group {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-dom-verify-ghead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.view-dom-verify-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--space-8) * 7)), 1fr));
+  gap: var(--space-2);
+}
+
+.view-dom-verify-tile {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--border);
+  background: var(--background);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.view-dom-verify-tile[data-tone='missing'] {
+  border-color: var(--missing-border);
+  border-top: 3px double var(--missing-fill);
+}
+
+.view-dom-verify-tile[data-tone='in-flight'] {
+  border-top-color: var(--in-flight-fill);
+}
+
+.view-dom-verify-tile[data-tone='complete'] {
+  border-top-color: var(--primary);
+}
+
+.view-dom-verify-tile:hover {
+  background: var(--state-hover);
+}
+
+.view-dom-verify-tile[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 1px var(--foreground);
+}
+
+.view-dom-verify-el {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.view-dom-verify-el[data-text='true'] {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.view-dom-verify-box {
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--muted-foreground);
+  background: var(--background);
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.view-dom-verify-asks {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  overflow-wrap: anywhere;
+}
+
+/* Could not look is a shut window (hatched, the eye-off icon, the reason); Nothing to report a blank one (a dashed inner
+   frame, the minus-circle icon, the reason). Neither is a pass: no accent colour sits on either. */
+.view-dom-verify-view[data-view='shut'],
+.view-dom-verify-view[data-view='blank'] {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+
+.view-dom-verify-view[data-view='shut'] {
+  background: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+}
+
+.view-dom-verify-view[data-view='blank'] {
+  outline: 1px dashed var(--border);
+  outline-offset: calc(var(--space-3) * -1);
+}
+
+.view-dom-verify-bigicon {
+  width: var(--space-10);
+  height: var(--space-10);
+  stroke-width: 1.5;
+  color: var(--muted-foreground);
+}
+
+.view-dom-verify-view[data-view='shut'] .view-dom-verify-bigicon {
+  color: var(--in-flight-fill);
+}
+
+.view-dom-verify-why {
+  display: grid;
+  gap: var(--space-1-5);
+  align-content: start;
+  justify-items: center;
+  max-width: 52ch;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--background);
+  min-width: 0;
+}
+
+.view-dom-verify-why-sentence {
+  margin: 0;
+  max-width: 60ch;
+  overflow-wrap: anywhere;
+}
+
+.view-dom-verify-raw {
+  width: fit-content;
+  max-width: 100%;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+/* The status bar: the three counts and "{n} checked", or "No criteria were checked.". */
+.view-dom-verify-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.view-dom-verify-counts-wrap {
+  display: grid;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+
+.view-dom-verify-counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-6);
+}
+
+.view-dom-verify-cnt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.view-dom-verify-cnt .view-dom-verify-sq {
+  --status-square-size: var(--space-3);
+}
+
+.view-dom-verify-cnt .view-dom-verify-key {
+  color: var(--foreground);
+}
+
+.view-dom-verify-num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+}
+
+.view-dom-verify-note {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-dom-verify-na {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+.view-dom-verify-view[data-view='blank'] .view-dom-verify-na {
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--border);
+  background: var(--background);
+}
+
+/* The dock under the window: the full observation of the selected criterion. */
+.view-dom-verify-dock {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+  min-width: 0;
+}
+
+.view-dom-verify-dock-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.view-dom-verify-close {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-transform: uppercase;
+  text-underline-offset: var(--space-0-5);
+  cursor: pointer;
+}
+
+.view-dom-verify-close:hover {
+  color: var(--foreground);
+}
+
+/* "What the check wrote": a closed bar holding the body's own paragraphs. */
+.view-dom-verify-bars {
+  display: grid;
+  border-top: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-dom-verify-wrote {
+  border-bottom: 1px solid var(--border);
+}
+
+.view-dom-verify-wrote-sum {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-10);
+  padding-inline: var(--space-2);
+  font-weight: var(--fw-semibold);
+  list-style: none;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.view-dom-verify-wrote-sum::-webkit-details-marker {
+  display: none;
+}
+
+.view-dom-verify-wrote-sum:hover {
+  background: var(--state-hover);
+}
+
+.view-dom-verify-chev {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--muted-foreground);
+}
+
+.view-dom-verify-wrote[open] .view-dom-verify-chev {
+  transform: rotate(90deg);
+}
+
+.view-dom-verify-wrote-count {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.view-dom-verify-wrote-body {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--space-4) + var(--space-4));
+  min-width: 0;
+}
+
+@media (max-width: 42rem) {
+  .view-dom-verify-wrote-body {
+    padding-left: var(--space-2);
+  }
+}
+/* phase-10-dom-verify:end */

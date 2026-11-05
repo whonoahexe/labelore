@@ -74,6 +74,8 @@ import type { ComposedAiSpec } from './ai-spec-page.ts';
 import type { ComposedUserSetup } from './user-setup-page.ts';
 // Type-only import - same reason as `specPage` above (Phase 10, 10-20, sketch-050 winner B, the Eval review page).
 import type { ComposedEvalReview } from './eval-review-page.ts';
+// Type-only import - same reason as `specPage` above (Phase 10, 10-21, sketch-051 winner A, the Browser check page).
+import type { ComposedDomVerify } from './dom-verify-page.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -185,6 +187,11 @@ export interface ViewManifest {
    * score, known verdict, dimension, component or step), and the page falls back to the promoted-section view, which
    * the manifest keeps as `promote`, with no notice (RESEARCH C1). */
   evalReviewPage?: (input: ViewInput) => ComposedEvalReview | null;
+  /** Phase 10 (10-21, sketch-051 winner A): the Browser check page a manifest opts into in View mode - currently only
+   * `dom-verify`. Returns `null` when the input can't compose one (no `structured.domVerify`, or a file with no outcome,
+   * count or criterion), and the page falls back to the promoted-section view, which the manifest keeps as `promote`,
+   * with no notice (RESEARCH C1). */
+  domVerifyPage?: (input: ViewInput) => ComposedDomVerify | null;
   /** Phase 10 (10-08): true for a kind whose document text must never reach View mode through the generic
    * fallback (promoted sections or the whole document) - `user-setup`, whose file can hold a pasted value
    * (CONTEXT D-11). The Source toggle stays the way to the text. See `documentHtmlAllowedInView`. */
@@ -264,6 +271,9 @@ export interface ViewInput {
    * generically by path — `null`/absent when the artifact isn't phase-scoped or the phase carries
    * none. Feeds the CONTEXT brief intro's "Covers …" note. */
   phaseRequirementIds?: string[] | null;
+  /** Phase 10 (10-21): the phase's own name from the roadmap, matched generically by `phaseIdentity` - `null`/absent when
+   * the artifact isn't phase-scoped. The Browser check page's `h1`: the file's own title gives only "Phase N, wave W". */
+  phaseName?: string | null;
   /** quick-260929-3x3: the rendered document's own headings (`{id, text, depth}`), passed
    * generically — lets a composer resolve a source-only entry to the `###` heading it names. */
   headings?: { id: string; text: string; depth: number }[];
