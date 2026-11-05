@@ -251,6 +251,12 @@ function composePlan(
   raw: Record<string, unknown>,
   targets: ComposedEvalTarget[],
 ): { groups: ComposedEvalGroup[]; steps: ComposedEvalStep[] } {
+  // One pass over the targets: the first row (a dimension before a component) wins a name two rows share.
+  const byName = new Map<string, number>();
+  for (const candidate of targets) {
+    const key = baseName(candidate.name);
+    if (!byName.has(key)) byName.set(key, candidate.id);
+  }
   const groups: ComposedEvalGroup[] = [];
   const steps: ComposedEvalStep[] = [];
   for (const item of listOf(raw.remediation)) {
@@ -264,15 +270,7 @@ function composePlan(
       if (text === null) continue;
       no += 1;
       const lead = leadName(text);
-      let target: number | null = null;
-      if (lead !== null) {
-        for (const candidate of targets) {
-          if (baseName(candidate.name) === lead) {
-            target = candidate.id;
-            break;
-          }
-        }
-      }
+      const target = lead === null ? null : (byName.get(lead) ?? null);
       const index = steps.length;
       steps.push({ index, group: groupIndex, no, text, target, ref: `${firstWord(heading)} ${no}` });
       group.steps.push(index);
