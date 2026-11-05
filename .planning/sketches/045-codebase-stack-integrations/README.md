@@ -2,7 +2,7 @@
 sketch: 045
 name: codebase-stack-integrations
 question: "Inside 042 A's Rail + column frame, how should the Stack and Integrations panels (a cross-read pair) show the languages, runtime, frameworks and dependencies with their versions, and the outside services, storage, auth, monitoring, CI/CD and webhooks, with variable names and never their values?"
-winner: null
+winner: "C"
 tags: [codebase, stack, integrations, env-vars]
 ---
 
@@ -164,3 +164,21 @@ warning or missing tone anywhere. No colour literal in the file.
 
 All content is Labelore's own public map, the made-up Tidemark fixture, or real `package.json` entries; no other
 repository's map is drawn from. The repository is public.
+
+## Winner
+**C: Reuse: shipped chips + lanes**, chosen by the user at the 10-11 checkpoint ("C for 45"), no synthesis. The tab
+is marked "★ Selected"; A and B stay in this folder as the record and are not built.
+
+Build C as drawn, from shipped parts inside 042 A's frame:
+
+| Part of the panel | Build against | Sketch it came from |
+|-------------------|---------------|---------------------|
+| Stack: Languages (Primary, Secondary), Runtime, Frameworks (Core, Testing, Build / dev) | the chip groups the Codebase page draws today: `ChipGroup` / `ChipSet` in `src/web/views/codebase-components.tsx` (file-local), fed `ComposedStackGroup` / `ComposedStackSet` from `src/web/views/codebase-page.ts`, from the Stack lift in `src/planning-repo/handlers/codebase-lift.ts` | 10-08 |
+| Stack: Key Dependencies and the "Not present" ghosts | the same `ChipSet`, one set per Key Dependencies label; "Not present" items as dashed ghost chips | this sketch (C) |
+| Integrations: every group in use | `LaneDiagram({ graph, fit, label })` in `src/web/components/lane-diagram.tsx`, handed a `DiagramGraph` (`src/rendering/ascii-graph.ts`) built from the groups, laid out by `layoutLanes` in `src/rendering/lane-layout.ts` | 012 B |
+| Integrations: groups that say None, sections the document lacks | quiet `status-chip`s under the lanes | this sketch (C) |
+| Integrations: variable names | a strip of name tags under the lanes; a stated value shows only the quiet "Value not shown" mark | this sketch (C), UI-SPEC Safety rule |
+
+The cross-read between the two panels stays as drawn: a chip's name found in an Integrations group (paths left out)
+carries the ↔ mark and an "Also in Integrations" link, and the reverse. Stack's Configuration and Platform
+Requirements stay as the closed section bars. Open items are in 10-11-SUMMARY.md (the lane kinds above all).
