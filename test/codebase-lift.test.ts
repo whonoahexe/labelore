@@ -429,3 +429,41 @@ describe('the Architecture lift (10-12)', () => {
     });
   });
 });
+
+describe('the Structure lift (10-12)', () => {
+  const structure = (body: string) => lift('structure', `# Codebase Structure\n\n${body}`);
+  const lifted = lift('structure').structure!;
+
+  it('lifts the Tidemark Directory Layout fence and counts its directories as the key number', () => {
+    expect(lifted.tree?.text.split('\n')[0]).toBe('tidemark/');
+    expect(lifted.tree?.text).toContain('BerthCard/');
+    expect(lifted.tree?.text).not.toContain('```');
+    expect(lifted.directories).toBe(11);
+    expect(lift('structure').keyNumber).toBe(11);
+  });
+
+  it('keeps Where to Add New Code and the other sections as plain keyed sections, lifting nothing from them', () => {
+    const body = lift('structure');
+    expect(body.sections.find((s) => s.heading === 'Where to Add New Code')?.key).toBe('where-to-add-new-code');
+    expect(Object.keys(body.structure!).sort()).toEqual(['directories', 'tree']);
+  });
+
+  it('gives tree null, no key number and every section plain when there is no Directory Layout', () => {
+    const body = structure('## Directory Purposes\n\n**src/:**\n- Purpose: code\n');
+    expect(body.structure).toEqual({ tree: null, directories: 0 });
+    expect(body.keyNumber).toBeNull();
+  });
+
+  it('lifts the tree only when the Directory Layout holds that one fence and nothing else', () => {
+    const fence = '```\nroot/\n├── a/\n└── b.ts\n```';
+    expect(structure(`## Directory Layout\n\n${fence}\n`).structure?.directories).toBe(2);
+    expect(structure(`## Directory Layout\n\nHow it is laid out.\n\n${fence}\n`).structure?.tree).toBeNull();
+    expect(structure(`## Directory Layout\n\n${fence}\n\n${fence}\n`).structure?.tree).toBeNull();
+    expect(structure('## Directory Layout\n\n```ts\nroot/\n```\n').structure?.tree).toBeNull();
+  });
+
+  it('leaves a tree over the caps to the plain section, whole', () => {
+    const tall = Array.from({ length: FIGURE_LINES_CAP + 5 }, (_, i) => `├── d${i}/`).join('\n');
+    expect(structure(`## Directory Layout\n\n\`\`\`\nroot/\n${tall}\n\`\`\`\n`).structure?.tree).toBeNull();
+  });
+});
