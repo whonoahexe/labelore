@@ -28850,6 +28850,17 @@ a.view-codebase-entry:hover {
   min-width: 0;
 }
 
+/* The shipped figures set their own small sizes (10.24px and 12.16px); this page renders four, so inside its figure
+   frames they take Label, as the plain sections' figure islands do. */
+.view-codebase-figure .figure-frame .figure-frame-body *,
+.view-codebase-figure .figure-frame .figure-frame-bar * {
+  font-size: var(--fs-2);
+}
+
+.view-codebase-swaps [aria-hidden='true'] {
+  font-size: var(--fs-4);
+}
+
 /* The shipped swap rows size their opened text --fs-3 for the Research page; this page renders four sizes only, so
    inside its swaps that text takes Body (the rows read this custom property). */
 .view-codebase-swaps {
@@ -28883,6 +28894,449 @@ a.view-codebase-entry:hover {
 
 .view-codebase-xref code {
   background: none;
+}
+/* The Concerns panel (10-12, sketch 044 winner E, "Risk piles"): one picture first - nine columns, a segment per concern,
+   Security first - then the dock a selected mark opens into, then the sections as closed bars. Colour is the page's
+   tokens only: the in-flight fill for Security, muted-foreground at opacity steps for every other mark and for
+   Priority, the border for the frame; no concern or section is ever drawn missing, destructive or warning. */
+.view-codebase-concerns-panel {
+  gap: var(--space-5);
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-codebase-concerns-panel :not(pre) > code,
+.view-codebase-swaps :not(pre) > code {
+  font-size: var(--fs-4);
+}
+
+.view-codebase-concerns-intro {
+  color: var(--muted-foreground);
+  max-width: 78ch;
+}
+
+.view-codebase-pic {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--border);
+}
+
+.view-codebase-pic-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--code-veil);
+}
+
+.view-codebase-pic-title {
+  margin-right: auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
+}
+
+.view-codebase-pic-count {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-codebase-pic-body {
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--space-4);
+  overflow: auto;
+}
+
+.view-codebase-pic-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.view-codebase-key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+/* A mark is one concern. Security is the in-flight fill, every other section muted-foreground; the opacity follows the
+   Priority the concern states; the most dangerous carries an accent ring. */
+.view-codebase-mark {
+  display: inline-block;
+  flex: none;
+  width: 11px;
+  height: 11px;
+  padding: 0;
+  border: 1px solid var(--muted-foreground);
+  background: var(--muted-foreground);
+  opacity: 0.75;
+}
+
+button.view-codebase-mark {
+  cursor: pointer;
+}
+
+.view-codebase-mark[data-security='true'] {
+  border-color: var(--in-flight-fill);
+  background: var(--in-flight-fill);
+}
+
+.view-codebase-mark[data-pri='high'] {
+  opacity: 1;
+}
+
+.view-codebase-mark[data-pri='med'] {
+  opacity: 0.6;
+}
+
+.view-codebase-mark[data-pri='low'] {
+  opacity: 0.38;
+}
+
+.view-codebase-mark[data-security='true'][data-pri=''] {
+  opacity: 1;
+}
+
+button.view-codebase-mark:hover {
+  outline: 2px solid var(--primary-border);
+  outline-offset: 1px;
+}
+
+.view-codebase-mark[data-on='true'] {
+  outline: 2px solid var(--foreground);
+  outline-offset: 1px;
+}
+
+.view-codebase-mark[data-top='true'] {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.view-codebase-mark[data-dim='true'] {
+  opacity: 0.14;
+}
+
+.view-codebase-piles {
+  display: grid;
+  grid-template-columns: repeat(var(--view-codebase-pile-cols, 9), minmax(0, 1fr));
+  align-items: end;
+  gap: var(--space-1-5);
+}
+
+.view-codebase-pile-col {
+  display: grid;
+  align-content: end;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-codebase-pile-col[data-dim='true'] {
+  opacity: 0.35;
+}
+
+.view-codebase-pile {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-0-5);
+}
+
+.view-codebase-pile .view-codebase-mark {
+  width: 100%;
+  height: 13px;
+}
+
+.view-codebase-pile-zero {
+  display: grid;
+  place-items: center;
+  height: 13px;
+  border: 1px dashed var(--muted-foreground);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.view-codebase-pile-lab {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1);
+  padding: var(--space-1-5) 0 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.view-codebase-pile-lab b {
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+.view-codebase-pile-lab[aria-pressed='true'] b {
+  color: var(--primary);
+}
+
+.view-codebase-pile-name {
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  line-height: var(--lh-snug);
+  overflow-wrap: break-word;
+}
+
+/* The section chips: under the picture on a narrow screen, where the column labels give way to them. */
+.view-codebase-legend {
+  display: none;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.view-codebase-sec-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  background: var(--background);
+  font-size: var(--fs-2);
+}
+
+.view-codebase-sec-chip b {
+  font-family: var(--font-mono);
+  font-weight: var(--fw-semibold);
+}
+
+.view-codebase-sec-chip:hover {
+  background: var(--state-hover);
+}
+
+.view-codebase-sec-chip[aria-pressed='true'] {
+  border-color: var(--primary-border);
+  background: var(--primary-tint);
+}
+
+/* The dock: the selected concern under the picture. */
+.view-codebase-dock {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--primary-border);
+  background: var(--primary-tint);
+}
+
+.view-codebase-dock h4 {
+  margin: 0;
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+}
+
+.view-codebase-dock-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+}
+
+.view-codebase-dock-head .view-codebase-text-link {
+  margin-left: auto;
+}
+
+.view-codebase-dock-empty {
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+}
+
+.view-codebase-text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.view-codebase-text-link:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: var(--space-0-5);
+}
+
+/* The sections as closed bars, each holding its concerns. */
+.view-codebase-acc-list {
+  display: grid;
+}
+
+.view-codebase-acc {
+  border-top: 1px solid var(--border);
+}
+
+.view-codebase-acc:last-child {
+  border-bottom: 1px solid var(--border);
+}
+
+.view-codebase-acc-sum {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--space-10);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-weight: var(--fw-semibold);
+  text-align: left;
+  cursor: pointer;
+}
+
+.view-codebase-acc-sum:hover {
+  background: var(--state-hover);
+}
+
+.view-codebase-acc-chev {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--muted-foreground);
+}
+
+.view-codebase-acc[data-open='true'] .view-codebase-acc-chev {
+  transform: rotate(90deg);
+}
+
+.view-codebase-acc-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-codebase-acc-n {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+}
+
+.view-codebase-acc-body {
+  display: grid;
+  gap: var(--space-4);
+  padding: 0 0 var(--space-5) var(--space-7);
+  min-width: 0;
+}
+
+.view-codebase-concern-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-codebase-concern {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1-5);
+  min-width: 0;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-faint);
+}
+
+.view-codebase-concern:last-child {
+  border-bottom: 0;
+}
+
+.view-codebase-concern-title {
+  max-width: 78ch;
+  margin: 0;
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-codebase-concern-gist {
+  max-width: 78ch;
+  margin: 0;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.view-codebase-concern-gist[data-clamp='true'] {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.view-codebase-fields {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 78ch;
+  margin: 0;
+}
+
+.view-codebase-fields > div {
+  display: grid;
+  gap: var(--space-0-5);
+}
+
+.view-codebase-fields dt {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
+}
+
+.view-codebase-fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-codebase-none {
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--border);
+}
+
+@media (min-width: 42rem) {
+  .view-codebase-fields > div {
+    grid-template-columns: minmax(0, 9rem) minmax(0, 1fr);
+    gap: var(--space-4);
+    align-items: baseline;
+  }
+}
+
+@media (max-width: 42rem) {
+  .view-codebase-pile-name {
+    display: none;
+  }
+
+  .view-codebase-legend {
+    display: flex;
+  }
 }
 /* phase-10-codebase:end */
 

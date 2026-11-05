@@ -14,7 +14,7 @@
 // below are frozen constants): two codebase pages composed alternately each compose only from their own
 // input. Returns `null` when the context or the projection is missing, so the page keeps the promoted-section
 // view without any notice (RESEARCH C1).
-import { SECURITY_KEY, concernEntries } from '../../presentation/codebase-map.ts';
+import { SECURITY_KEY, concernEntries, concernSections } from '../../presentation/codebase-map.ts';
 import type {
   CodebaseHead,
   CodebaseHeadChip,
@@ -24,6 +24,7 @@ import type {
   MapReadiness,
 } from '../../presentation/codebase-map.ts';
 import type { SwapItem } from '../../presentation/project-research-panels.ts';
+import { stripLeadingHeading } from './document-sections.ts';
 import type { ViewInput } from './manifest.ts';
 
 /** The three tones this page writes: nothing on it is a failed read. */
@@ -127,11 +128,53 @@ export interface ComposedStructure {
   tree: { info: string; text: string };
 }
 
+/** One concern for the risk piles (10-12, sketch 044 E): a mark in its section's pile, and, opened, its title over its
+ * fields. `priority` tints the mark when the concern states High, Medium or Low. */
+export interface ComposedConcern {
+  /** "{section}:{item}", the position in the panel's order, which the mark and the dock share. */
+  id: string;
+  title: string;
+  fields: { label: string | null; text: string }[];
+  /** The first field's text, the line shown before "Read more"; null for a concern with no field. */
+  gist: string | null;
+  priority: 'high' | 'med' | 'low' | '';
+}
+
+export interface ComposedConcernSection {
+  key: string | null;
+  /** The short label under the pile ("Tech debt"); the document's own heading when the template does not know it. */
+  label: string;
+  heading: string;
+  count: number;
+  /** Security `in-flight` above zero and `complete` at zero; every other section untoned, a zero `quiet`. */
+  tone: 'in-flight' | 'complete' | 'quiet' | null;
+  items: ComposedConcern[];
+  /** How many concerns the section counts that the lift did not keep (its per-section cap). */
+  omitted: number;
+  /** The section's own rendered text when it counts zero but says something ("None identified."), else null. */
+  fallbackHtml: string | null;
+}
+
+export interface ComposedConcerns {
+  kind: 'concerns';
+  total: number;
+  noun: 'concern' | 'concerns';
+  totalText: string;
+  /** The per-section counts the head also reads. */
+  counts: ComposedConcernRow[];
+  /** The text before the first heading, as rendered html, or null. */
+  intro: string | null;
+  /** Security first, the rest in document order, each known section the document lacks as a zero. */
+  sections: ComposedConcernSection[];
+  /** The id of the first Security concern, else the first Tech Debt concern: the mark that carries the ring. */
+  top: string | null;
+}
+
 export type ComposedCodebaseLifted =
   | { kind: 'stack'; groups: ComposedStackGroup[] }
   | ComposedArchitecture
   | ComposedStructure
-  | { kind: 'concerns'; total: number; noun: 'concern' | 'concerns'; totalText: string; counts: ComposedConcernRow[] };
+  | ComposedConcerns;
 
 export interface ComposedCodebasePlain {
   /** The section's `id`, so an in-document anchor keeps working. */
@@ -273,16 +316,132 @@ function concernTone(entry: ConcernEntry): ComposedConcernRow['tone'] {
   return entry.key === SECURITY_KEY ? 'in-flight' : null;
 }
 
-function liftConcerns(codebase: Record<string, unknown>): ComposedCodebaseLifted | null {
+// --- the Concerns panel's concerns (10-12) ---------------------------------------------------------------
+
+const FIELD_LABEL_MAX = 40;
+const FIELD_LABEL_WORDS = 5;
+
+function isBulletLine(text: string): boolean {
+  return (text[0] === '-' || text[0] === '*' || text[0] === '+') && text[1] === ' ';
+}
+
+function stripStars(text: string): string {
+  let from = 0;
+  while (from < text.length && (text[from] === '*' || text[from] === ' ')) from += 1;
+  return text.slice(from);
+}
+
+/** `Label: value` (a bold label and backticks tolerated), or null when the text does not start with a short label. */
+function splitField(text: string): { label: string; text: string } | null {
+  const colon = text.indexOf(':');
+  if (colon < 1 || colon > FIELD_LABEL_MAX) return null;
+  const label = text.slice(0, colon).replaceAll('*', '').replaceAll('`', '').trim();
+  if (label === '' || label.split(' ').length > FIELD_LABEL_WORDS) return null;
+  return { label, text: stripStars(text.slice(colon + 1)).trim() };
+}
+
+/** A concern's lines as fields: each top-level `- Label: value` line (or `Label: value` row line) starts one, an
+ * indented line or a line with no label continues the one before it. A character scan over capped lines. */
+function fieldsOf(lines: readonly string[]): ComposedConcern['fields'] {
+  const fields: ComposedConcern['fields'] = [];
+  for (const raw of lines) {
+    if (raw.trim() === '') continue;
+    const indented = raw[0] === ' ' || raw[0] === '\t';
+    const bullet = !indented && isBulletLine(raw);
+    const text = (bullet ? raw.slice(2) : raw).trim();
+    const last = fields[fields.length - 1];
+    if (indented && last !== undefined) {
+      last.text = `${last.text} ${isBulletLine(text) ? text.slice(2).trim() : text}`.trim();
+      continue;
+    }
+    const field = splitField(text);
+    if (field !== null) fields.push(field);
+    else if (last !== undefined && !bullet) last.text = `${last.text} ${text}`.trim();
+    else fields.push({ label: null, text });
+  }
+  return fields;
+}
+
+function priorityOf(fields: ComposedConcern['fields']): ComposedConcern['priority'] {
+  const field = fields.find((candidate) => candidate.label?.toLowerCase() === 'priority');
+  const value = field?.text.toLowerCase() ?? '';
+  if (value.startsWith('high')) return 'high';
+  if (value.startsWith('medium')) return 'med';
+  if (value.startsWith('low')) return 'low';
+  return '';
+}
+
+function concernOf(id: string, raw: unknown): ComposedConcern | null {
+  if (!isRecord(raw)) return null;
+  const lines = Array.isArray(raw.lines) ? raw.lines.filter((line): line is string => typeof line === 'string') : [];
+  const label = textOrNull(raw.label);
+  const title = label ?? textOrNull(lines[0]?.trim());
+  if (title === null) return null;
+  const fields = fieldsOf(label === null ? lines.slice(1) : lines);
+  return { id, title, fields, gist: fields[0]?.text || null, priority: priorityOf(fields) };
+}
+
+/** A heading as the page compares it to a rendered group's text: lower-cased, backticks and stars out, spaces collapsed. */
+function headingForm(text: string | null): string {
+  return (text ?? '').replaceAll('`', '').replaceAll('*', '').split(' ').filter((word) => word !== '').join(' ').toLowerCase();
+}
+
+function pileTone(entry: { key: string | null; count: number }): ComposedConcernSection['tone'] {
+  if (entry.key === SECURITY_KEY) return entry.count > 0 ? 'in-flight' : 'complete';
+  return entry.count === 0 ? 'quiet' : null;
+}
+
+function liftConcerns(
+  codebase: Record<string, unknown>,
+  groups: readonly { heading: string | null; html: string }[],
+  drawn: Set<number>,
+): ComposedCodebaseLifted | null {
   const found = concernEntries(codebase.concerns);
-  if (found === null) return null;
+  const detailed = concernSections(codebase.concerns);
+  if (found === null || detailed === null) return null;
   const { total } = found;
+
+  // Each section takes the first unused group with its heading; the text before the first heading is the intro.
+  const byHeading = new Map<string, number[]>();
+  groups.forEach((group, index) => {
+    if (group.heading === null) return;
+    const form = headingForm(group.heading);
+    byHeading.set(form, [...(byHeading.get(form) ?? []), index]);
+  });
+  const sections: ComposedConcernSection[] = detailed.entries.map((entry, at) => {
+    const items = entry.items.flatMap((raw, index) => {
+      const concern = concernOf(`${at}:${index}`, raw);
+      return concern === null ? [] : [concern];
+    });
+    const queue = byHeading.get(headingForm(entry.heading));
+    const groupIndex = queue?.shift();
+    if (groupIndex !== undefined) drawn.add(groupIndex);
+    const html = groupIndex === undefined ? '' : groups[groupIndex].html;
+    return {
+      key: entry.key,
+      label: (entry.key === null ? undefined : HEAD_CONCERN_LABELS.get(entry.key)) ?? entry.heading,
+      heading: entry.heading,
+      count: entry.count,
+      tone: pileTone(entry),
+      items,
+      omitted: Math.max(0, entry.count - items.length),
+      fallbackHtml: items.length === 0 && stripLeadingHeading(html).trim() !== '' ? html : null,
+    };
+  });
+  const lead = groups.findIndex((group) => group.heading === null && group.html.trim() !== '');
+  if (lead >= 0) drawn.add(lead);
+
+  const security = sections.find((section) => section.key === SECURITY_KEY && section.items.length > 0);
+  const debt = sections.find((section) => section.key === 'tech-debt' && section.items.length > 0);
   return {
     kind: 'concerns',
     total,
     noun: total === 1 ? 'concern' : 'concerns',
     totalText: `${total} ${total === 1 ? 'concern' : 'concerns'}`,
     counts: found.entries.map((entry) => ({ label: entry.heading, count: entry.count, tone: concernTone(entry) })),
+    intro: lead >= 0 ? groups[lead].html : null,
+    sections,
+    top: (security ?? debt)?.items[0]?.id ?? null,
   };
 }
 
@@ -430,11 +589,16 @@ function liftStructure(codebase: Record<string, unknown>): ComposedStructure | n
   return { kind: 'structure', tree: { info: typeof tree.info === 'string' ? tree.info : '', text: String(tree.text) } };
 }
 
-function liftOf(key: string, codebase: Record<string, unknown>): ComposedCodebaseLifted | null {
+function liftOf(
+  key: string,
+  codebase: Record<string, unknown>,
+  groups: readonly { heading: string | null; html: string }[],
+  drawn: Set<number>,
+): ComposedCodebaseLifted | null {
   if (key === 'stack') return liftStack(codebase);
   if (key === 'architecture') return liftArchitecture(codebase);
   if (key === 'structure') return liftStructure(codebase);
-  if (key === 'concerns') return liftConcerns(codebase);
+  if (key === 'concerns') return liftConcerns(codebase, groups, drawn);
   return null;
 }
 
@@ -565,8 +729,10 @@ export function composeCodebase(input: ViewInput): ComposedCodebase | null {
     keyText: panel.mapped && typeof panel.keyNumber === 'number' ? String(panel.keyNumber) : null,
   }));
 
-  const lifted = liftOf(current.key, codebase);
-  const drawn = consumedGroups(input.groups, codebase, consumedKeys(lifted));
+  // A lifted part that draws whole sections (Concerns) adds the groups it used to `drawn` itself.
+  const drawn = new Set<number>();
+  const lifted = liftOf(current.key, codebase, input.groups, drawn);
+  for (const index of consumedGroups(input.groups, codebase, consumedKeys(lifted))) drawn.add(index);
   const plain: ComposedCodebasePlain[] = input.groups
     .filter((group, index) => group.html.trim() !== '' && !drawn.has(index))
     .map((group) => ({ id: group.id, heading: group.heading, html: group.html }));

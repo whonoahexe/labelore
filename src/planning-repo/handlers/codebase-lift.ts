@@ -501,11 +501,27 @@ export function liftStack(sections: readonly KeyedSection[], lines: readonly str
 // The Concerns lift
 // ---------------------------------------------------------------------------------------------------------
 
+/** One concern, as the document wrote it: a bold label, a `###` heading or a table row's first cell as its
+ * label (null for a plain bullet, whose text is the first line), then its own lines (field bullets and
+ * continuations) so the panel can show it in full. Blank lines are left out. */
+export interface ConcernItem {
+  label: string | null;
+  lines: string[];
+}
+
+/** The most concerns kept per section; the count stays true when a section holds more. */
+export const CONCERN_ITEM_CAP = 500;
+/** The most lines kept per concern, and the most characters kept per line. */
+export const CONCERN_LINES_CAP = 60;
+export const CONCERN_LINE_CHARS = 2000;
+
 export interface ConcernCount {
   /** The known key, or null for a section the template does not have. */
   key: string | null;
   heading: string;
   count: number;
+  /** The concerns counted, in document order (at most CONCERN_ITEM_CAP); `items.length === count` below the cap. */
+  items: ConcernItem[];
 }
 
 export interface ConcernsLift {
@@ -604,22 +620,38 @@ function isTableSeparator(trimmed: string): boolean {
   return true;
 }
 
-/** The first non-empty cell of a table row. */
-function firstCell(trimmed: string): string {
-  const cells = (trimmed.length > LINE_CAP ? trimmed.slice(0, LINE_CAP) : trimmed).split('|');
-  for (const cell of cells) {
-    if (cell.trim().length > 0) return cell.trim();
-  }
-  return '';
+/** The non-blank lines of [from, to) outside fences, each capped, at most CONCERN_LINES_CAP of them. Fenced code
+ * in a concern stays in the Source view, as it stays out of the count. */
+function unitLines(lines: readonly string[], from: number, to: number): string[] {
+  const out: string[] = [];
+  eachLineOutsideFences(lines, from, to, (line) => {
+    if (out.length >= CONCERN_LINES_CAP || line.length === 0 || line.trim().length === 0) return;
+    out.push(line.length > CONCERN_LINE_CHARS ? line.slice(0, CONCERN_LINE_CHARS) : line.trimEnd());
+  });
+  return out;
+}
+
+/** The cells of one table row, outer pipes dropped, each trimmed and capped. */
+function rowCells(trimmed: string): string[] {
+  const cells = (trimmed.length > LINE_CAP ? trimmed.slice(0, LINE_CAP) : trimmed).split('|').map((cell) => cell.trim());
+  if (cells[0] === '') cells.shift();
+  if (cells.length > 0 && cells[cells.length - 1] === '') cells.pop();
+  return cells;
+}
+
+interface CountedUnits {
+  count: number;
+  items: ConcernItem[];
 }
 
 /**
- * The concern count of one `##` section, by the rule 10-03-SUMMARY.md records (RESEARCH C3, adjusted):
- * try `###` subsections, then bold-label lines (one or more), then top-level bullets that do not begin with
- * a field label, then table rows, and use the first that yields a unit; a unit whose first field value is
- * None, Not detected or Not applicable counts 0. A section with no unit counts 0 whatever prose it holds.
+ * The concerns of one `##` section, by the rule 10-03-SUMMARY.md records (RESEARCH C3, adjusted): try `###`
+ * subsections, then bold-label lines (one or more), then top-level bullets that do not begin with a field
+ * label, then table rows, and use the first that yields a unit; a unit whose first field value is None, Not
+ * detected or Not applicable counts 0. A section with no unit counts 0 whatever prose it holds. The count and
+ * the items come from the same pass, so the items listed are exactly the ones counted (to the item cap).
  */
-function countSection(lines: readonly string[], sections: readonly KeyedSection[], at: number): number {
+function sectionUnits(lines: readonly string[], sections: readonly KeyedSection[], at: number): CountedUnits {
   const section = sections[at];
   const from = section.startLine + 1;
   const to = section.endLine;
@@ -629,7 +661,8 @@ function countSection(lines: readonly string[], sections: readonly KeyedSection[
   }
   const labels: number[] = [];
   const bullets: BulletAt[] = [];
-  const rows: string[] = [];
+  const rows: { index: number; trimmed: string; header: string }[] = [];
+  let header = '';
   let previousWasRow = false;
   eachLineOutsideFences(lines, from, to, (line, index) => {
     const label = boldLabel(line);
@@ -648,7 +681,8 @@ function countSection(lines: readonly string[], sections: readonly KeyedSection[
     if (trimmed.charCodeAt(0) === 124) {
       // The first row of a block is the header; separator rows are never data.
       const head = trimmed.length > LINE_CAP ? trimmed.slice(0, LINE_CAP) : trimmed;
-      if (previousWasRow && !isTableSeparator(head)) rows.push(firstCell(head));
+      if (!previousWasRow) header = head;
+      else if (!isTableSeparator(head)) rows.push({ index, trimmed: head, header });
       previousWasRow = true;
       return;
     }
@@ -660,20 +694,54 @@ function countSection(lines: readonly string[], sections: readonly KeyedSection[
     return first !== null && isEmptyMarker(firstFieldValue(first.text));
   };
 
+  const items: ConcernItem[] = [];
+  let count = 0;
+  const keep = (make: () => ConcernItem): void => {
+    count += 1;
+    if (items.length < CONCERN_ITEM_CAP) items.push(make());
+  };
+
   if (subsections.length > 0) {
-    return subsections.filter((s) => !zeroOf(s.startLine + 1, s.endLine)).length;
+    for (const sub of subsections) {
+      if (zeroOf(sub.startLine + 1, sub.endLine)) continue;
+      keep(() => ({ label: sub.heading, lines: unitLines(lines, sub.startLine + 1, sub.endLine) }));
+    }
+    return { count, items };
   }
   if (labels.length > 0) {
-    let count = 0;
     for (let k = 0; k < labels.length; k += 1) {
       const end = k + 1 < labels.length ? labels[k + 1] : to;
-      if (!zeroOf(labels[k] + 1, end)) count += 1;
+      if (zeroOf(labels[k] + 1, end)) continue;
+      keep(() => ({ label: boldLabel(lines[labels[k]]), lines: unitLines(lines, labels[k] + 1, end) }));
     }
-    return count;
+    return { count, items };
   }
   const concernBullets = bullets.filter((b) => !isFieldBullet(b.text));
-  if (concernBullets.length > 0) return concernBullets.filter((b) => !isEmptyMarker(b.text)).length;
-  return rows.filter((cell) => !isEmptyMarker(cell)).length;
+  if (concernBullets.length > 0) {
+    for (let k = 0; k < concernBullets.length; k += 1) {
+      const bullet = concernBullets[k];
+      if (isEmptyMarker(bullet.text)) continue;
+      const end = k + 1 < concernBullets.length ? concernBullets[k + 1].index : to;
+      keep(() => ({ label: null, lines: [bullet.text.slice(0, CONCERN_LINE_CHARS), ...unitLines(lines, bullet.index + 1, end)] }));
+    }
+    return { count, items };
+  }
+  for (const row of rows) {
+    const cells = rowCells(row.trimmed);
+    if (isEmptyMarker(cells.find((cell) => cell.length > 0) ?? '')) continue;
+    keep(() => {
+      const names = rowCells(row.header);
+      const first = cells.findIndex((cell) => cell.length > 0);
+      const rest: string[] = [];
+      for (let c = 0; c < cells.length && rest.length < CONCERN_LINES_CAP; c += 1) {
+        if (c === first || cells[c].length === 0) continue;
+        const name = names[c] ?? '';
+        rest.push(name.length > 0 ? `${name}: ${cells[c]}` : cells[c]);
+      }
+      return { label: cells[first] ?? null, lines: rest };
+    });
+  }
+  return { count, items };
 }
 
 /** The ids of the nine known concern sections, in template order. */
@@ -687,7 +755,8 @@ export function countConcerns(sections: readonly KeyedSection[], lines: readonly
   for (let i = 0; i < sections.length; i += 1) {
     const section = sections[i];
     if (section.level !== 2) continue;
-    const entry: ConcernCount = { key: section.key, heading: section.heading, count: countSection(lines, sections, i) };
+    const { count, items } = sectionUnits(lines, sections, i);
+    const entry: ConcernCount = { key: section.key, heading: section.heading, count, items };
     (section.key === null ? extra : known).push(entry);
   }
   const present = new Set(known.map((k) => k.key));
@@ -700,7 +769,7 @@ export function countConcerns(sections: readonly KeyedSection[], lines: readonly
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// The Architecture lift (10-12)
+// The Architecture and Structure lifts (10-12)
 // ---------------------------------------------------------------------------------------------------------
 
 /** A figure over this many characters or lines stays a plain section: the page renders it in full from the
@@ -737,6 +806,12 @@ export interface ArchitectureLift {
   antiPatterns: AntiPatternLift[];
 }
 
+export interface StructureLift {
+  /** The Directory Layout's fenced block, when that section holds nothing else; else null. */
+  tree: FigureFence | null;
+  /** Directories in that tree. */
+  directories: number;
+}
 
 function infoOf(line: string): string {
   const marker = fenceMarker(line);
@@ -900,13 +975,6 @@ export function liftArchitecture(sections: readonly KeyedSection[], lines: reado
     } else if (section.key === 'anti-patterns') lift.antiPatterns = liftAntiPatterns(lines, sections, at);
   });
   return lift;
-}
-
-export interface StructureLift {
-  /** The Directory Layout's fenced block, when that section holds nothing else; else null. */
-  tree: FigureFence | null;
-  /** Directories in that tree. */
-  directories: number;
 }
 
 /** The Directory Layout tree and how many directories it names. */
