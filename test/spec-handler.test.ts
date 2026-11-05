@@ -8,6 +8,7 @@ import type { SpecBody } from '../src/planning-repo/handlers/spec.ts';
 import { HANDLERS } from '../src/planning-repo/handlers/index.ts';
 import { GenericMarkdownHandler } from '../src/planning-repo/handlers/generic.ts';
 import { fxRead } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 
 const PATH = '.planning/phases/01-member-sign-in-sessions/01-SPEC.md';
 
@@ -198,5 +199,191 @@ describe('extractSpec - requirements', () => {
   it('caps one field at 2,000 characters', () => {
     const spec = extractSpec(body(`1. **A**: s\n   - Current: ${'x'.repeat(5000)}\n`));
     expect(spec.requirements[0].current?.length).toBe(2000);
+  });
+});
+
+const NOT_LOCKED = fxRead('phases/02-roles-and-permissions/02-SPEC.md');
+const NINE = fxRead('phases/03-account-admin-and-sessions/03-SPEC.md');
+
+describe('extractSpec - 02-SPEC (above the gate)', () => {
+  const spec = extractSpec(NOT_LOCKED);
+
+  it('reads the score 0.31 and the gate 0.20 from the two-character ASCII form', () => {
+    expect(spec.ambiguity).toEqual({ score: 0.31, scoreText: '0.31', gate: 0.2, gateText: '0.20', gateStated: true });
+    expect(spec.lockedCount).toBe(4);
+  });
+
+  it('marks Constraint Clarity below its minimum', () => {
+    const below = spec.dimensions.filter((d) => d.status === 'below');
+    expect(below.map((d) => d.name)).toEqual(['Constraint Clarity']);
+    expect(below[0].score).toBe(0.46);
+    expect(below[0].min).toBe(0.65);
+    expect(below[0].notes).toBe('Below minimum — planner must treat as assumption');
+  });
+
+  it('reads the Edge Coverage rows with the requirement each names and the status without its emoji', () => {
+    expect(spec.edges?.map((e) => [e.requirements, e.kind, e.statusText])).toEqual([
+      [[1], 'covered', 'covered'],
+      [[3], 'unresolved', 'UNRESOLVED'],
+      [[1], 'dismissed', 'dismissed'],
+      [[3], 'backstop', 'backstop'],
+    ]);
+    expect(spec.edges?.[1].label).toBe('last steward demotes themself');
+    expect(spec.edges?.[2].reason).toBe('Sheds are never closed in this product; closure is not a supported event');
+  });
+
+  it('reads the Prohibitions rows, one resolved and one unresolved', () => {
+    expect(spec.prohibitions?.map((p) => [p.requirements, p.kind])).toEqual([
+      [[2], 'resolved'],
+      [[2], 'unresolved'],
+    ]);
+    expect(spec.prohibitions?.[0].label).toBe('MUST NOT reveal which shed caused a refusal on a transfer');
+  });
+
+  it('reads In scope and Out of scope, splitting each out-of-scope item at the first spaced em dash', () => {
+    expect(spec.inScope).toHaveLength(3);
+    expect(spec.outOfScope).toEqual([
+      { item: 'Creating, disabling or deleting accounts', reason: 'that is Phase 3' },
+      { item: 'A live notice to an open page when its grants change', reason: 'left to discussion, may land later' },
+      { item: 'Per-tool permissions', reason: 'not asked for by any steward' },
+    ]);
+  });
+
+  it('claims Goal, Requirements and Boundaries and leaves the rest, in file order', () => {
+    expect(spec.sections.filter((s) => s.claimed).map((s) => s.heading)).toEqual(['Goal', 'Requirements', 'Boundaries']);
+    expect(spec.sections.filter((s) => !s.claimed).map((s) => s.heading)).toEqual([
+      'Background',
+      'Constraints',
+      'Acceptance Criteria',
+      'Edge Coverage',
+      'Prohibitions (must-NOT)',
+      'Ambiguity Report',
+      'Interview Log',
+    ]);
+  });
+});
+
+describe('extractSpec - 03-SPEC (nine requirements, no gate)', () => {
+  const spec = extractSpec(NINE);
+
+  it("uses GSD's gate of 0.20 and says it was not stated", () => {
+    expect(spec.ambiguity).toEqual({ score: 0.18, scoreText: '0.18', gate: 0.2, gateText: '0.20', gateStated: false });
+  });
+
+  it('reads nine requirements, the sixth with no Acceptance', () => {
+    expect(spec.requirements).toHaveLength(9);
+    expect(spec.lockedCount).toBe(9);
+    expect(spec.requirements[5].label).toBe('Live session list');
+    expect(spec.requirements[5].acceptance).toBeNull();
+    expect(spec.requirements[5].current).not.toBeNull();
+    expect(spec.requirements.filter((r) => r.acceptance === null).map((r) => r.n)).toEqual([6]);
+  });
+
+  it('has neither coverage table', () => {
+    expect(spec.edges).toBeNull();
+    expect(spec.prohibitions).toBeNull();
+  });
+});
+
+describe('extractSpec - the gate and the count as written', () => {
+  const score = (line: string) => extractSpec(`# S\n\n${line}\n`).ambiguity;
+
+  it.each([
+    ['**Ambiguity score:** 0.12 (gate: ≤ 0.20)', 0.2],
+    ['**Ambiguity score:** 0.12 (gate: <= 0.25)', 0.25],
+    ['**Ambiguity score:** 0.12 (gate: < 0.15)', 0.15],
+    ['**Ambiguity score:** 0.12 (gate: &le; 0.30)', 0.3],
+    ['**Ambiguity score:** 0.12 (gate &lt;= 0.35)', 0.35],
+  ])('reads the gate from %s', (line, gate) => {
+    const a = score(line);
+    expect(a.score).toBe(0.12);
+    expect(a.gate).toBe(gate);
+    expect(a.gateStated).toBe(true);
+  });
+
+  it('uses 0.20 when a score has no gate', () => {
+    expect(score('**Ambiguity score:** 0.12')).toMatchObject({ score: 0.12, gate: 0.2, gateStated: false });
+  });
+
+  it("shows the file's own count when it disagrees with the numbered items (5 locked, seven items)", () => {
+    const items = Array.from({ length: 7 }, (_, i) => `${i + 1}. **R${i + 1}**: s`).join('\n');
+    const spec = extractSpec(`# S\n\n**Requirements:** 5 locked\n\n## Requirements\n\n${items}\n`);
+    expect(spec.lockedCount).toBe(5);
+    expect(spec.requirements).toHaveLength(7);
+  });
+
+  it('leaves a spec with no Boundaries section with empty scope lists', () => {
+    const spec = extractSpec('# S\n\n## Goal\n\nA goal.\n');
+    expect(spec.inScope).toEqual([]);
+    expect(spec.outOfScope).toEqual([]);
+    expect(spec.sections).toEqual([{ heading: 'Goal', claimed: true }]);
+  });
+
+  it('reads an out-of-scope item with no reason and keeps a later dash in the reason', () => {
+    const spec = extractSpec(
+      '# S\n\n## Boundaries\n\n**Out of scope:**\n- Plain item\n- Item — first — second\n- Hyphen-ated item\n',
+    );
+    expect(spec.outOfScope).toEqual([
+      { item: 'Plain item', reason: null },
+      { item: 'Item', reason: 'first — second' },
+      { item: 'Hyphen-ated item', reason: null },
+    ]);
+  });
+
+  it('finds R references in a cell naming several requirements and ignores other words', () => {
+    const spec = extractSpec(
+      '# S\n\n## Edge Coverage\n\n| Category | Requirement | Status | Reason |\n|---|---|---|---|\n| a | R1, R12 and PR7 | ✅ covered | fine |\n',
+    );
+    expect(spec.edges?.[0].requirements).toEqual([1, 12]);
+  });
+});
+
+describe('extractSpec - stays linear (T-10-28)', () => {
+  it('in numbered requirements, past the 200 it keeps', () => {
+    const growth = measureGrowth({
+      make: (n) => `# S\n\n## Requirements\n\n${'1. **R**: statement\n   - Current: c\n'.repeat(n)}`,
+      run: (input) => {
+        extractSpec(input);
+      },
+      startSize: 500,
+      maxSize: 10_000,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('in one long line of characters', () => {
+    const growth = measureGrowth({
+      make: (n) => `# S\n\n## Goal\n\n${'word '.repeat(Math.ceil(n / 5))}\n`,
+      run: (input) => {
+        extractSpec(input);
+      },
+      maxSize: 200_000,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('in headings, past the section cap', () => {
+    const growth = measureGrowth({
+      make: (n) => `# S\n\n${'## Heading\n\ntext\n\n'.repeat(n)}`,
+      run: (input) => {
+        extractSpec(input);
+      },
+      startSize: 200,
+      maxSize: 2_000,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('in table rows', () => {
+    const growth = measureGrowth({
+      make: (n) =>
+        `# S\n\n## Edge Coverage\n\n| Category | Requirement | Status | Reason |\n|---|---|---|---|\n${'| a | R1 | covered | r |\n'.repeat(n)}`,
+      run: (input) => {
+        extractSpec(input);
+      },
+      startSize: 4,
+      maxSize: 1_600,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
   });
 });
