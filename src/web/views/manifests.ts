@@ -27,6 +27,7 @@ import { composeAiSpec } from './ai-spec-page.ts';
 import { composeUserSetup } from './user-setup-page.ts';
 import { composeEvalReview } from './eval-review-page.ts';
 import { composeDomVerify } from './dom-verify-page.ts';
+import { composeReviews } from './reviews-page.ts';
 import { composeCodebase } from './codebase-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
@@ -467,6 +468,9 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     kind: 'reviews',
     lead: "What each AI reviewer said about this phase's plans, where they agreed and where they disagreed.",
     promote: [{ type: 'section', heading: /\S/, all: true }],
+    // The Cross-AI reviews page is the View-mode render path; `promote` above is the silent fallback when it composes
+    // nothing (Phase 10, 10-22, RESEARCH C1).
+    reviewsPage: composeReviews,
   },
 });
 
