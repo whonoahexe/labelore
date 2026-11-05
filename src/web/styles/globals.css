@@ -32603,3 +32603,642 @@ button.view-codebase-mark:hover {
   }
 }
 /* phase-10-dom-verify:end */
+
+/* phase-10-reviews:start */
+/* Phase 10 (10-22): the Cross-AI reviews page, sketch 052 winner A (Overlap). The page renders four font sizes: the h1 as
+   ArtifactHeader draws it (--fs-display-3), the group headings (--fs-7), Body (--fs-4) and Label (--fs-2). Where a shared class
+   sets a size outside that set, the page takes it inside with a page-scoped rule below, so no shared class is edited. Every
+   colour is a theme token: HIGH is the `missing` tone (an outline square), MEDIUM `in-flight` (a filled square) and LOW `quiet`
+   (a dashed square), so they differ by shape and word as well as hue and stay apart in the dark theme; document content never
+   takes destructive or warning, and nothing here is `complete`. */
+.view-reviews-page {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-reviews-page > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-reviews-page) .status-chip,
+.artifact-page:has(.view-reviews-page) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.artifact-page:has(.view-reviews-page) .source-note,
+.artifact-page:has(.view-reviews-page) .empty-note {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-reviews-page code {
+  font-size: inherit;
+}
+
+.view-reviews-meta {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-reviews-key {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-reviews-h {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+}
+
+.view-reviews-sq {
+  --status-square-size: var(--space-2-5);
+}
+
+.view-reviews-sq[data-done='true'] {
+  border-color: var(--muted-foreground);
+  background: var(--muted-foreground);
+}
+
+.view-reviews-prose {
+  margin: 0;
+  max-width: 72ch;
+  overflow-wrap: anywhere;
+}
+
+.view-reviews-strong {
+  font-weight: var(--fw-semibold);
+}
+
+.view-reviews-name {
+  font-family: var(--font-mono);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+/* The figure and the list beside it: 7fr and 5fr, one column under 52rem. */
+.view-reviews-row {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--space-6) var(--space-8);
+  align-items: start;
+  min-width: 0;
+}
+
+.view-reviews-row[data-layout='roster'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 52rem) {
+  .view-reviews-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-reviews-fig {
+  display: grid;
+  margin: 0;
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-reviews-draw {
+  padding: var(--space-3);
+  min-width: 0;
+}
+
+.view-reviews-draw-in {
+  min-width: 0;
+}
+
+.view-reviews-draw svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.view-reviews-circle {
+  fill: var(--muted-foreground);
+  fill-opacity: 0.09;
+  stroke: var(--foreground);
+  stroke-width: 1.5;
+}
+
+.view-reviews-circle[data-absent='true'] {
+  fill: none;
+  stroke: var(--muted-foreground);
+  stroke-dasharray: 4 4;
+}
+
+.view-reviews-circle-name {
+  fill: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+}
+
+.view-reviews-circle-name[data-small='true'] {
+  fill: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-medium);
+}
+
+.view-reviews-no {
+  fill: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+}
+
+/* A concern is a square: HIGH an outline, MEDIUM filled, LOW dashed. */
+.view-reviews-mark {
+  cursor: pointer;
+}
+
+.view-reviews-mark rect {
+  fill: var(--muted);
+  stroke: var(--muted-foreground);
+  stroke-width: 1;
+}
+
+.view-reviews-mark rect[data-tone='in-flight'] {
+  fill: var(--in-flight-fill);
+  stroke: var(--in-flight-fill);
+}
+
+.view-reviews-mark rect[data-tone='missing'] {
+  fill: var(--background);
+  stroke: var(--missing-fill);
+  stroke-width: 2;
+}
+
+.view-reviews-mark rect[data-tone='quiet'] {
+  fill: var(--background);
+  stroke: var(--muted-foreground);
+  stroke-dasharray: 3 2;
+}
+
+.view-reviews-mark:hover rect,
+.view-reviews-mark:focus-visible rect {
+  stroke-width: 3;
+}
+
+.view-reviews-mark:focus-visible {
+  outline: none;
+}
+
+.view-reviews-mark[data-on='true'] rect {
+  stroke: var(--foreground);
+  stroke-width: 3;
+}
+
+/* The key under the circles is the reviewer roster: one untoned card per reviewer. */
+.view-reviews-key-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 5)), 1fr));
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-reviews-fig .view-reviews-key-cards {
+  padding: var(--space-3);
+  border-top: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.view-reviews-card {
+  display: grid;
+  gap: var(--space-1-5);
+  align-content: start;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  background: var(--card);
+  min-width: 0;
+}
+
+.view-reviews-card[data-failed='true'] {
+  border-style: dashed;
+  background: transparent;
+}
+
+.view-reviews-card-name {
+  margin: 0;
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-reviews-model {
+  width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.view-reviews-page .view-reviews-model {
+  font-size: var(--fs-2);
+}
+
+.view-reviews-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.view-reviews-chips .status-chip {
+  white-space: normal;
+}
+
+.view-reviews-cov {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-reviews-cov span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.view-reviews-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-reviews-foot span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+/* With four or more reviewers there are no circles: the roster stands alone under one quiet line. */
+.view-reviews-roster {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-reviews-note {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+}
+
+/* "Agreed" (or "Concerns") beside the figure. */
+.view-reviews-side {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-reviews-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-reviews-ag {
+  display: grid;
+  grid-template-columns: var(--space-8) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-3);
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.view-reviews-ag:hover {
+  background: var(--state-hover);
+}
+
+.view-reviews-ag[aria-pressed='true'] {
+  border-color: var(--foreground);
+}
+
+.view-reviews-ag-no {
+  display: inline-flex;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-weight: var(--fw-semibold);
+}
+
+.view-reviews-ag-t {
+  min-width: 0;
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-reviews-ag-m {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+
+.view-reviews-zero {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+.view-reviews-num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+/* The dock under the row: an agreed concern sets each reviewer's own words side by side. */
+.view-reviews-dock {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+  min-width: 0;
+}
+
+.view-reviews-dock-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.view-reviews-close {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-transform: uppercase;
+  text-underline-offset: var(--space-0-5);
+  cursor: pointer;
+}
+
+.view-reviews-close:hover {
+  color: var(--foreground);
+}
+
+.view-reviews-side-by-side {
+  display: grid;
+  grid-template-columns: repeat(var(--view-reviews-n, 1), minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+@media (max-width: 42rem) {
+  .view-reviews-side-by-side {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-reviews-said {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-3);
+  border-top: 2px solid var(--foreground);
+  background: var(--card-veil);
+  min-width: 0;
+}
+
+.view-reviews-said-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The Disagreements: a dashed quiet block per stance, the stances side by side, never merged. */
+.view-reviews-group {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-reviews-dis {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px dashed var(--muted-foreground);
+  min-width: 0;
+}
+
+.view-reviews-dis-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.view-reviews-dis-title {
+  margin: 0;
+  font-size: inherit;
+  font-weight: var(--fw-semibold);
+}
+
+.view-reviews-dis-row {
+  display: grid;
+  grid-template-columns: repeat(var(--view-reviews-n, 1), minmax(0, 1fr));
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-reviews-stance {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-3);
+  border-left: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-reviews-stance:first-child {
+  border-left: 0;
+}
+
+.view-reviews-stance[data-out='true'] {
+  background: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+}
+
+.view-reviews-out {
+  width: fit-content;
+  padding: 0 var(--space-1);
+  background: var(--background);
+}
+
+.artifact-page:has(.view-reviews-page) .view-reviews-stance .status-chip {
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--fs-7);
+  letter-spacing: var(--ls-tight);
+  text-transform: none;
+  white-space: normal;
+}
+
+@media (max-width: 42rem) {
+  .view-reviews-dis-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .view-reviews-stance {
+    border-top: 1px solid var(--border);
+  }
+
+  .view-reviews-stance:nth-child(-n + 2) {
+    border-top: 0;
+  }
+
+  .view-reviews-stance:nth-child(odd) {
+    border-left: 0;
+  }
+}
+
+/* Each review as written: one closed bar per reviewer, any section the page does not claim, then the file's consensus. */
+.view-reviews-bars {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-reviews-bar-list {
+  display: grid;
+  border-top: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-reviews-bar {
+  border-bottom: 1px solid var(--border);
+}
+
+.view-reviews-bar-sum {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-10);
+  padding-inline: var(--space-2);
+  font-weight: var(--fw-semibold);
+  list-style: none;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.view-reviews-bar-sum::-webkit-details-marker {
+  display: none;
+}
+
+.view-reviews-bar-sum:hover {
+  background: var(--state-hover);
+}
+
+.view-reviews-chev {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--muted-foreground);
+}
+
+.view-reviews-bar[open] .view-reviews-chev {
+  transform: rotate(90deg);
+}
+
+.view-reviews-bar-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-reviews-bar-count {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.view-reviews-bar-body {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--space-4) + var(--space-4));
+  min-width: 0;
+}
+
+@media (max-width: 42rem) {
+  .view-reviews-bar-body {
+    padding-left: var(--space-2);
+  }
+}
+
+.view-reviews-plan-h {
+  margin: 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-faint);
+  font-weight: var(--fw-semibold);
+}
+
+.view-reviews-bul {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding-left: var(--space-4);
+  list-style: square;
+  overflow-wrap: anywhere;
+}
+
+.view-reviews-code {
+  margin: 0;
+  padding: var(--space-3);
+  overflow-x: auto;
+  background: var(--code-veil);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* phase-10-reviews:end */
