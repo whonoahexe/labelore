@@ -76,6 +76,8 @@ import type { ComposedCoverage } from '../views/coverage-matrix.ts';
 import { CoverageView, coverageHeaderProps } from '../views/coverage-matrix-components.tsx';
 import type { ComposedCodebase } from '../views/codebase-page.ts';
 import { CodebaseView, codebaseHeaderProps } from '../views/codebase-components.tsx';
+import type { ComposedSpec } from '../views/spec-page.ts';
+import { SpecView, specHeaderProps } from '../views/spec-page-components.tsx';
 import type { ComposedPlanNavigator } from '../views/plan-navigator.ts';
 import { PlanIntroMeta, PlanNavigatorView } from '../views/plan-navigator-components.tsx';
 import { findPlanContext } from '../views/plan-context.ts';
@@ -918,6 +920,14 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.codebasePage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // Phase 10 (10-16, sketch 047 B): the Spec page, when the resolved manifest opts into one - `null` for every other
+  // kind and for a SPEC the page cannot shape (no `structured.spec`, or no score, requirement, dimension, goal or
+  // scope), where the promoted-section view renders with no notice. The composer is pure, so two spec pages open at
+  // once each compose from their own response.
+  const specPage = useMemo<ComposedSpec | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.specPage?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // "In the source only" entries switch to Source mode, then scroll to the named heading once the
   // source document has mounted. The pending id lives in a ref and is cleared only when the frame
   // callback fires, so a re-run of the effect (StrictMode) still lands on it.
@@ -976,6 +986,7 @@ export function ArtifactPage({
     milestoneAudit !== null ||
     coverage !== null ||
     codebase !== null ||
+    specPage !== null ||
     !documentHtmlAllowedInView(manifest) ||
     (composed !== null && composed.blocks.length > 0);
 
@@ -1285,6 +1296,9 @@ export function ArtifactPage({
   // The Codebase page's header override (eyebrow and h1 "Codebase", its own crumbs) rides the same spread; the facts
   // line carries the stamp the metadata disclosure would repeat, so View mode hides the disclosure for it.
   const codebaseCover = codebase && mode === 'view' ? codebase : null;
+  // The Spec page's header override ("Phase N · Spec", the phase name as the h1, created date and requirement count
+  // as meta) rides the same spread; the page's strip carries what the metadata disclosure would repeat.
+  const specPageCover = specPage && mode === 'view' ? specPage : null;
   // T-10-49: a manifest that sets withholdDocumentInView (user-setup) shows no document HTML in View mode - neither its
   // promoted sections nor the whole document - unless a composed model above has taken the page over.
   const documentWithheld = mode === 'view' && !documentHtmlAllowedInView(manifest);
@@ -1297,6 +1311,7 @@ export function ArtifactPage({
     (auditCover ? auditHeaderProps(auditCover, artifact.title) : null) ??
     (coverageCover ? coverageHeaderProps(coverageCover) : null) ??
     (codebaseCover ? codebaseHeaderProps(codebaseCover) : null) ??
+    (specPageCover ? specHeaderProps(specPageCover, artifact.title) : null) ??
     (fixCover ? ledgerHeaderProps(fixCover, artifact.title) : null);
   return (
     <main className="artifact-page page-stack">
@@ -1379,7 +1394,14 @@ export function ArtifactPage({
         // Winner lists the frontmatter as source-only — View mode hides the disclosure (Source
         // mode keeps it). The UAT page's cover carries its facts and its "In the source only"
         // strip names the frontmatter, so it hides the disclosure the same way.
-        specCover || uatCover || windowsCover || auditCover || coverageCover || codebaseCover || fixCover ? null : (
+        specCover ||
+        uatCover ||
+        windowsCover ||
+        auditCover ||
+        coverageCover ||
+        codebaseCover ||
+        specPageCover ||
+        fixCover ? null : (
           <details className="artifact-metadata">
             <summary>
               Document metadata <span>{panels.length} sections</span>
@@ -1486,6 +1508,8 @@ export function ArtifactPage({
         <CoverageView key={artifact.path} model={coverageCover} />
       ) : codebaseCover ? (
         <CodebaseView key={artifact.path} model={codebaseCover} renderHtml={renderHtml} />
+      ) : specPageCover ? (
+        <SpecView key={artifact.path} model={specPageCover} renderHtml={renderHtml} onShowSource={showSource} />
       ) : fixCover ? (
         <LedgerTabView key={artifact.path} model={fixCover} />
       ) : documentWithheld ? (

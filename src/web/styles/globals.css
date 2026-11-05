@@ -29604,6 +29604,758 @@ button.view-codebase-mark:hover {
 
 /* phase-10-codebase:end */
 
+/* phase-10-spec:start */
+/* Phase 10 (10-16): the Spec page, sketch 047 winner B (Lock matrix). The page renders four font sizes: the h1 as
+   ArtifactHeader draws it (--fs-display-3), the section headings, the goal, the lead numbers, the dimension values
+   and the requirement numbers (--fs-7), Body (--fs-4) and Label (--fs-2). Where a shared class sets a size outside
+   that set, the page takes it inside with a page-scoped rule below, so no shared class is edited. */
+.view-spec-page {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-spec-page > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-spec-page) .status-chip,
+.artifact-page:has(.view-spec-page) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.artifact-page:has(.view-spec-page) .source-note,
+.artifact-page:has(.view-spec-page) .empty-note {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+/* The shared outline reads at the Label step on this page (UI-SPEC Typography); the page itself draws none. */
+.artifact-page:has(.view-spec-page)
+  :is(.document-outline a, .document-outline li[data-overflow='true'], .document-outline > p) {
+  font-size: var(--fs-2);
+}
+
+.view-spec-page code {
+  font-size: inherit;
+}
+
+/* The header's meta row: the created date and the requirement count in Label mono. */
+.view-spec-meta {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-spec-key {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+/* The score strip: the verdict cell (twice as wide) and one column gauge per dimension, in one bordered strip. */
+.view-spec-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(var(--view-spec-dims, 4), minmax(0, 1fr));
+  border: 1px solid var(--border);
+}
+
+.view-spec-cell {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  min-width: 0;
+}
+
+.view-spec-cell + .view-spec-cell {
+  border-left: 1px solid var(--border);
+}
+
+.view-spec-lead {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto 1fr;
+  column-gap: var(--space-4);
+  background: var(--card-veil);
+}
+
+.view-spec-lead > :not(.view-spec-col) {
+  grid-column: 1;
+}
+
+.view-spec-lead > .view-spec-col {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  width: calc(var(--space-8) * 1.5);
+}
+
+.view-spec-lead-foot {
+  display: grid;
+  gap: var(--space-1-5);
+  align-content: end;
+}
+
+/* The verdict chip is drawn as the sketch draws it in this variant: the shared chip at Label size, allowed to wrap. */
+.view-spec-verdict {
+  max-width: 100%;
+  white-space: normal;
+}
+
+.view-spec-numbers {
+  margin: 0;
+  font-weight: var(--fw-semibold);
+}
+
+.view-spec-numbers b {
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+}
+
+.view-spec-numbers-none {
+  font-weight: var(--fw-medium);
+}
+
+/* A column gauge: a bordered well, a fill from the foot, and a line (the gate, or a dimension's minimum). The
+   ambiguity column is hatched up to the gate. */
+.view-spec-col {
+  position: relative;
+  height: calc(var(--space-8) * 3.5);
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
+.view-spec-col-fill {
+  position: absolute;
+  right: 20%;
+  bottom: 0;
+  left: 20%;
+  background: var(--muted-foreground);
+  opacity: 0.7;
+}
+
+.view-spec-col-fill[data-tone='in-flight'] {
+  background: var(--in-flight-fill);
+  opacity: 1;
+}
+
+.view-spec-col-fill[data-tone='complete'] {
+  background: var(--primary);
+  opacity: 1;
+}
+
+.view-spec-col-zone {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+}
+
+.view-spec-col-line {
+  position: absolute;
+  right: calc(var(--space-1) * -1);
+  left: calc(var(--space-1) * -1);
+  height: 0;
+  border-top: 2px solid var(--foreground);
+}
+
+.view-spec-col-empty {
+  position: absolute;
+  inset: 0;
+  border: 1px dashed var(--muted-foreground);
+}
+
+.view-spec-val {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+}
+
+.view-spec-val .view-spec-meta {
+  white-space: nowrap;
+}
+
+.view-spec-num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+.view-spec-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-spec-status[data-tone='in-flight'] {
+  color: var(--in-flight-fill);
+}
+
+.view-spec-sq-s {
+  --status-square-size: var(--space-2-5);
+}
+
+@media (max-width: 42rem) {
+  .view-spec-strip {
+    grid-template-columns: repeat(min(var(--view-spec-dims, 4), 4), minmax(0, 1fr));
+  }
+
+  .view-spec-cell {
+    padding: var(--space-2);
+  }
+
+  .view-spec-lead {
+    grid-column: 1 / -1;
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .view-spec-cell:nth-child(2) {
+    border-left: 0;
+  }
+
+  .view-spec-col {
+    height: calc(var(--space-8) * 2.5);
+  }
+
+  .view-spec-status > span {
+    display: none;
+  }
+}
+
+.view-spec-goal {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 72ch;
+}
+
+.view-spec-goal-text {
+  margin: 0;
+  font-size: var(--fs-7);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+.view-spec-block {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-spec-block-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+}
+
+.view-spec-h {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+/* The requirements matrix: a row per requirement, the three fields as squares, and a row opens in place. */
+.view-spec-matrix {
+  display: grid;
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-spec-matrix-head,
+.view-spec-row {
+  display: grid;
+  grid-template-columns: var(--space-8) minmax(0, 1fr) repeat(2, calc(var(--space-8) * 2.5)) calc(var(--space-8) * 4);
+  align-items: center;
+  gap: 0 var(--space-3);
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+}
+
+.view-spec-matrix-head {
+  background: var(--card-veil);
+}
+
+.view-spec-items {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-spec-item {
+  border-top: 1px solid var(--border-faint);
+}
+
+.view-spec-item:first-child {
+  border-top: 0;
+}
+
+.view-spec-row {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.view-spec-row:hover,
+.view-spec-row[aria-expanded='true'] {
+  background: var(--state-hover);
+}
+
+.view-spec-no {
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+}
+
+.view-spec-label {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: var(--fw-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.view-spec-field-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.view-spec-sq-l {
+  --status-square-size: var(--space-4);
+}
+
+.view-spec-field-cell .status-chip {
+  white-space: normal;
+}
+
+/* A stated field is a neutral square: filled, not toned. */
+.view-spec-square:not([data-tone]) {
+  border-color: var(--muted-foreground);
+  background: var(--muted-foreground);
+  opacity: 0.7;
+}
+
+.view-spec-matrix-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-spec-matrix-key > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.view-spec-open {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-4) calc(var(--space-8) + var(--space-6));
+  border-top: 1px solid var(--border-faint);
+  background: var(--card);
+  min-width: 0;
+}
+
+.view-spec-fields {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.view-spec-fields > div {
+  display: grid;
+  grid-template-columns: calc(var(--space-8) * 3) minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.view-spec-fields dt {
+  padding-top: var(--space-0-5);
+}
+
+.view-spec-fields dd {
+  margin: 0;
+  min-width: 0;
+}
+
+.view-spec-extras {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding-left: var(--space-4);
+}
+
+.view-spec-text {
+  max-width: 72ch;
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+}
+
+.view-spec-text[data-clamped='true'] {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.view-spec-more {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-decoration-thickness: 1px;
+  text-underline-offset: var(--space-0-5);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.view-spec-more:hover {
+  color: var(--foreground);
+}
+
+@media (max-width: 42rem) {
+  .view-spec-matrix-head {
+    display: none;
+  }
+
+  .view-spec-row {
+    grid-template-columns: var(--space-6) repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      'no lab lab lab'
+      '. c t a';
+    row-gap: var(--space-2);
+  }
+
+  .view-spec-no {
+    grid-area: no;
+    font-size: var(--fs-4);
+  }
+
+  .view-spec-label {
+    grid-area: lab;
+    white-space: normal;
+  }
+
+  .view-spec-row > :nth-child(3) {
+    grid-area: c;
+  }
+
+  .view-spec-row > :nth-child(4) {
+    grid-area: t;
+  }
+
+  .view-spec-row > :nth-child(5) {
+    grid-area: a;
+  }
+
+  .view-spec-field-cell::before {
+    content: attr(data-label);
+    width: 100%;
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: var(--fs-2);
+    letter-spacing: var(--ls-wider);
+    text-transform: uppercase;
+  }
+
+  .view-spec-open {
+    padding-left: var(--space-3);
+  }
+
+  .view-spec-fields > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+}
+/* The Edges and Must-not columns exist only when the file has an Edge Coverage or Prohibitions table; a mark is a
+   status-square toned by the row's status (covered, backstop and resolved complete, unresolved in-flight,
+   dismissed quiet). */
+.view-spec-matrix[data-coverage='true'] :is(.view-spec-matrix-head, .view-spec-row) {
+  grid-template-columns:
+    var(--space-8) minmax(0, 1fr) repeat(2, calc(var(--space-8) * 2.5)) calc(var(--space-8) * 4) calc(var(--space-8) * 4)
+    calc(var(--space-8) * 3);
+}
+
+.view-spec-field-cell .view-spec-meta {
+  white-space: nowrap;
+}
+
+@media (max-width: 42rem) {
+  .view-spec-matrix[data-coverage='true'] .view-spec-row {
+    grid-template-columns: var(--space-6) repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      'no lab lab lab'
+      '. c t a'
+      '. e e p';
+  }
+
+  .view-spec-row > :nth-child(6) {
+    grid-area: e;
+  }
+
+  .view-spec-row > :nth-child(7) {
+    grid-area: p;
+  }
+}
+
+/* The scope fence: In scope as tiles inside a hard-ruled box, Out of scope outside it with each reason muted. */
+.view-spec-fence {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: start;
+  gap: var(--space-6);
+}
+
+.view-spec-fence:has(> :only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.view-spec-fence-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.view-spec-fence-in {
+  position: relative;
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4) var(--space-4);
+  border: 2px solid var(--foreground);
+  min-width: 0;
+}
+
+.view-spec-fence-in > .view-spec-fence-label {
+  position: absolute;
+  top: 0;
+  left: var(--space-3);
+  padding-inline: var(--space-2);
+  background: var(--background);
+  color: var(--foreground);
+  transform: translateY(-50%);
+}
+
+.view-spec-fence-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-spec-fence-tile {
+  max-width: 100%;
+  padding: var(--space-1-5) var(--space-2-5);
+  border: 1px solid var(--border);
+  background: var(--card);
+  overflow-wrap: anywhere;
+}
+
+.view-spec-fence-out {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  min-width: 0;
+}
+
+.view-spec-fence-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-spec-fence-list > li {
+  display: grid;
+  grid-template-columns: var(--space-4) minmax(0, 1fr);
+  gap: var(--space-1) var(--space-2);
+  overflow-wrap: anywhere;
+}
+
+.view-spec-fence-list > li > .view-spec-sq-s {
+  margin-top: var(--space-1);
+}
+
+.view-spec-why {
+  grid-column: 2;
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 42rem) {
+  .view-spec-fence {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The sections the page does not draw: closed native bars, in file order, holding the section as written. */
+.view-spec-bars {
+  display: grid;
+  border-top: 1px solid var(--border);
+}
+
+.view-spec-bar {
+  border-bottom: 1px solid var(--border);
+}
+
+.view-spec-bar-sum {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-10);
+  padding-inline: var(--space-2);
+  font-weight: var(--fw-semibold);
+  list-style: none;
+  cursor: pointer;
+}
+
+.view-spec-bar-sum::-webkit-details-marker {
+  display: none;
+}
+
+.view-spec-bar-sum:hover {
+  background: var(--state-hover);
+}
+
+.view-spec-bar-chev {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--muted-foreground);
+}
+
+.view-spec-bar[open] .view-spec-bar-chev {
+  transform: rotate(90deg);
+}
+
+.view-spec-bar-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-spec-bar-body {
+  padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--space-4) + var(--space-4));
+  min-width: 0;
+}
+
+/* The plain sections render the shared document markup, whose own sizes are fluid and larger than this page's
+   scale. They are taken inside the four sizes here (Body for prose, lists, cells and code, Label for table heads,
+   figure text and the heading copy marks), so no shared document class is edited. */
+.view-spec-plain-section .artifact-document {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-spec-plain-section .artifact-document > :first-child {
+  margin-top: 0;
+}
+
+.view-spec-plain-section .artifact-document :is(h3, h4, h5, h6) {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+.view-spec-plain-section .artifact-document :is(h3, h4, h5, h6) .heading-copy {
+  font-size: var(--fs-2);
+}
+
+.view-spec-plain-section .artifact-document table,
+.view-spec-plain-section .artifact-document pre:not([data-figure-island] *) {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-spec-plain-section .artifact-document :not(pre) > code {
+  font-size: var(--fs-4);
+}
+
+.view-spec-plain-section .artifact-document [data-figure-island] * {
+  font-size: var(--fs-2);
+}
+
+/* The "In the source only" strip: a dashed frame of links into Source mode, at the heading. */
+.view-spec-source-only {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--border);
+}
+
+.view-spec-source-only ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-spec-source-only button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: var(--space-0-5);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.view-spec-source-only button:hover {
+  color: var(--foreground);
+}
+/* phase-10-spec:end */
+
 /* copy-command (10-10, shared): a command as selectable mono text that wraps, outside its Copy command button. The
    confirmation is the button reading "Copied", never a toast. Used by the Codebase head, the Testing panel's run
    commands and, in Phase 11, the onboarding page. */

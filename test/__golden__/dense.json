@@ -5623,7 +5623,133 @@
                 "bodyHash": "d382426457f69d94d2df66bedf6ee724b9630a3aae2633d6ddd03a3e8d3a7b32",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "spec": {
+                    "created": "2026-06-04",
+                    "goal": "Every unfamiliar and invented artifact type the dense fixture needs is present under `phases/01-identity-slice/` and loads through the parser.",
+                    "ambiguity": {
+                      "score": 0.1,
+                      "scoreText": "0.10",
+                      "gate": 0.2,
+                      "gateText": "0.20",
+                      "gateStated": true
+                    },
+                    "lockedCount": 3,
+                    "requirements": [
+                      {
+                        "n": 1,
+                        "label": "Unfamiliar types render",
+                        "statement": "`01-SPEC.md`, `01-AI-SPEC.md` are present and parse.",
+                        "current": "Neither exists in `~/studio-portal`'s corpus",
+                        "target": "Both exist here, authored from `gsd-core/templates/spec.md` and `AI-SPEC.md`",
+                        "acceptance": "Both files appear in the snapshot with non-empty bodies",
+                        "extras": []
+                      },
+                      {
+                        "n": 2,
+                        "label": "Invented type falls back to generic markdown",
+                        "statement": "`01-COST-MODEL.md` matches no known artifact type.",
+                        "current": "No template or code path names `COST-MODEL`",
+                        "target": "The file appears in the snapshot with `kind: \"unknown\"`",
+                        "acceptance": "Snapshot JSON contains an entry for `01-COST-MODEL.md` with `kind: \"unknown\"`",
+                        "extras": []
+                      },
+                      {
+                        "n": 3,
+                        "label": "Frontmatter-free artifact types dispatch by filename",
+                        "statement": "`01-AI-SPEC.md` has no YAML frontmatter.",
+                        "current": "N/A — fixture requirement",
+                        "target": "The parser dispatches on filename, not frontmatter shape",
+                        "acceptance": "`head -1 01-AI-SPEC.md` does not begin with `---`",
+                        "extras": []
+                      }
+                    ],
+                    "requirementsOmitted": 0,
+                    "inScope": [
+                      "Fixture artifact authorship for `phases/01-identity-slice/`"
+                    ],
+                    "outOfScope": [
+                      {
+                        "item": "Any real implementation",
+                        "reason": "this is a fixture-only specification"
+                      }
+                    ],
+                    "dimensions": [
+                      {
+                        "name": "Goal Clarity",
+                        "score": 0.9,
+                        "scoreText": "0.90",
+                        "min": 0.75,
+                        "minText": "0.75",
+                        "status": "met",
+                        "notes": null
+                      },
+                      {
+                        "name": "Boundary Clarity",
+                        "score": 0.9,
+                        "scoreText": "0.90",
+                        "min": 0.7,
+                        "minText": "0.70",
+                        "status": "met",
+                        "notes": null
+                      },
+                      {
+                        "name": "Constraint Clarity",
+                        "score": 0.8,
+                        "scoreText": "0.80",
+                        "min": 0.65,
+                        "minText": "0.65",
+                        "status": "met",
+                        "notes": null
+                      },
+                      {
+                        "name": "Acceptance Criteria",
+                        "score": 0.85,
+                        "scoreText": "0.85",
+                        "min": 0.7,
+                        "minText": "0.70",
+                        "status": "met",
+                        "notes": null
+                      }
+                    ],
+                    "edges": null,
+                    "prohibitions": null,
+                    "sections": [
+                      {
+                        "heading": "Goal",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Background",
+                        "claimed": false
+                      },
+                      {
+                        "heading": "Requirements",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Boundaries",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Constraints",
+                        "claimed": false
+                      },
+                      {
+                        "heading": "Acceptance Criteria",
+                        "claimed": false
+                      },
+                      {
+                        "heading": "Ambiguity Report",
+                        "claimed": false
+                      },
+                      {
+                        "heading": "Interview Log",
+                        "claimed": false
+                      }
+                    ]
+                  }
+                }
               },
               ".planning/phases/01-identity-slice/01-UAT.md": {
                 "id": ".planning/phases/01-identity-slice/01-UAT.md",
@@ -10910,7 +11036,133 @@
             "bodyHash": "d382426457f69d94d2df66bedf6ee724b9630a3aae2633d6ddd03a3e8d3a7b32",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "spec": {
+                "created": "2026-06-04",
+                "goal": "Every unfamiliar and invented artifact type the dense fixture needs is present under `phases/01-identity-slice/` and loads through the parser.",
+                "ambiguity": {
+                  "score": 0.1,
+                  "scoreText": "0.10",
+                  "gate": 0.2,
+                  "gateText": "0.20",
+                  "gateStated": true
+                },
+                "lockedCount": 3,
+                "requirements": [
+                  {
+                    "n": 1,
+                    "label": "Unfamiliar types render",
+                    "statement": "`01-SPEC.md`, `01-AI-SPEC.md` are present and parse.",
+                    "current": "Neither exists in `~/studio-portal`'s corpus",
+                    "target": "Both exist here, authored from `gsd-core/templates/spec.md` and `AI-SPEC.md`",
+                    "acceptance": "Both files appear in the snapshot with non-empty bodies",
+                    "extras": []
+                  },
+                  {
+                    "n": 2,
+                    "label": "Invented type falls back to generic markdown",
+                    "statement": "`01-COST-MODEL.md` matches no known artifact type.",
+                    "current": "No template or code path names `COST-MODEL`",
+                    "target": "The file appears in the snapshot with `kind: \"unknown\"`",
+                    "acceptance": "Snapshot JSON contains an entry for `01-COST-MODEL.md` with `kind: \"unknown\"`",
+                    "extras": []
+                  },
+                  {
+                    "n": 3,
+                    "label": "Frontmatter-free artifact types dispatch by filename",
+                    "statement": "`01-AI-SPEC.md` has no YAML frontmatter.",
+                    "current": "N/A — fixture requirement",
+                    "target": "The parser dispatches on filename, not frontmatter shape",
+                    "acceptance": "`head -1 01-AI-SPEC.md` does not begin with `---`",
+                    "extras": []
+                  }
+                ],
+                "requirementsOmitted": 0,
+                "inScope": [
+                  "Fixture artifact authorship for `phases/01-identity-slice/`"
+                ],
+                "outOfScope": [
+                  {
+                    "item": "Any real implementation",
+                    "reason": "this is a fixture-only specification"
+                  }
+                ],
+                "dimensions": [
+                  {
+                    "name": "Goal Clarity",
+                    "score": 0.9,
+                    "scoreText": "0.90",
+                    "min": 0.75,
+                    "minText": "0.75",
+                    "status": "met",
+                    "notes": null
+                  },
+                  {
+                    "name": "Boundary Clarity",
+                    "score": 0.9,
+                    "scoreText": "0.90",
+                    "min": 0.7,
+                    "minText": "0.70",
+                    "status": "met",
+                    "notes": null
+                  },
+                  {
+                    "name": "Constraint Clarity",
+                    "score": 0.8,
+                    "scoreText": "0.80",
+                    "min": 0.65,
+                    "minText": "0.65",
+                    "status": "met",
+                    "notes": null
+                  },
+                  {
+                    "name": "Acceptance Criteria",
+                    "score": 0.85,
+                    "scoreText": "0.85",
+                    "min": 0.7,
+                    "minText": "0.70",
+                    "status": "met",
+                    "notes": null
+                  }
+                ],
+                "edges": null,
+                "prohibitions": null,
+                "sections": [
+                  {
+                    "heading": "Goal",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Background",
+                    "claimed": false
+                  },
+                  {
+                    "heading": "Requirements",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Boundaries",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Constraints",
+                    "claimed": false
+                  },
+                  {
+                    "heading": "Acceptance Criteria",
+                    "claimed": false
+                  },
+                  {
+                    "heading": "Ambiguity Report",
+                    "claimed": false
+                  },
+                  {
+                    "heading": "Interview Log",
+                    "claimed": false
+                  }
+                ]
+              }
+            }
           },
           ".planning/phases/01-identity-slice/01-UAT.md": {
             "id": ".planning/phases/01-identity-slice/01-UAT.md",
@@ -14782,7 +15034,133 @@
                   "bodyHash": "d382426457f69d94d2df66bedf6ee724b9630a3aae2633d6ddd03a3e8d3a7b32",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "spec": {
+                      "created": "2026-06-04",
+                      "goal": "Every unfamiliar and invented artifact type the dense fixture needs is present under `phases/01-identity-slice/` and loads through the parser.",
+                      "ambiguity": {
+                        "score": 0.1,
+                        "scoreText": "0.10",
+                        "gate": 0.2,
+                        "gateText": "0.20",
+                        "gateStated": true
+                      },
+                      "lockedCount": 3,
+                      "requirements": [
+                        {
+                          "n": 1,
+                          "label": "Unfamiliar types render",
+                          "statement": "`01-SPEC.md`, `01-AI-SPEC.md` are present and parse.",
+                          "current": "Neither exists in `~/studio-portal`'s corpus",
+                          "target": "Both exist here, authored from `gsd-core/templates/spec.md` and `AI-SPEC.md`",
+                          "acceptance": "Both files appear in the snapshot with non-empty bodies",
+                          "extras": []
+                        },
+                        {
+                          "n": 2,
+                          "label": "Invented type falls back to generic markdown",
+                          "statement": "`01-COST-MODEL.md` matches no known artifact type.",
+                          "current": "No template or code path names `COST-MODEL`",
+                          "target": "The file appears in the snapshot with `kind: \"unknown\"`",
+                          "acceptance": "Snapshot JSON contains an entry for `01-COST-MODEL.md` with `kind: \"unknown\"`",
+                          "extras": []
+                        },
+                        {
+                          "n": 3,
+                          "label": "Frontmatter-free artifact types dispatch by filename",
+                          "statement": "`01-AI-SPEC.md` has no YAML frontmatter.",
+                          "current": "N/A — fixture requirement",
+                          "target": "The parser dispatches on filename, not frontmatter shape",
+                          "acceptance": "`head -1 01-AI-SPEC.md` does not begin with `---`",
+                          "extras": []
+                        }
+                      ],
+                      "requirementsOmitted": 0,
+                      "inScope": [
+                        "Fixture artifact authorship for `phases/01-identity-slice/`"
+                      ],
+                      "outOfScope": [
+                        {
+                          "item": "Any real implementation",
+                          "reason": "this is a fixture-only specification"
+                        }
+                      ],
+                      "dimensions": [
+                        {
+                          "name": "Goal Clarity",
+                          "score": 0.9,
+                          "scoreText": "0.90",
+                          "min": 0.75,
+                          "minText": "0.75",
+                          "status": "met",
+                          "notes": null
+                        },
+                        {
+                          "name": "Boundary Clarity",
+                          "score": 0.9,
+                          "scoreText": "0.90",
+                          "min": 0.7,
+                          "minText": "0.70",
+                          "status": "met",
+                          "notes": null
+                        },
+                        {
+                          "name": "Constraint Clarity",
+                          "score": 0.8,
+                          "scoreText": "0.80",
+                          "min": 0.65,
+                          "minText": "0.65",
+                          "status": "met",
+                          "notes": null
+                        },
+                        {
+                          "name": "Acceptance Criteria",
+                          "score": 0.85,
+                          "scoreText": "0.85",
+                          "min": 0.7,
+                          "minText": "0.70",
+                          "status": "met",
+                          "notes": null
+                        }
+                      ],
+                      "edges": null,
+                      "prohibitions": null,
+                      "sections": [
+                        {
+                          "heading": "Goal",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Background",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "Requirements",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Boundaries",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Constraints",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "Acceptance Criteria",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "Ambiguity Report",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "Interview Log",
+                          "claimed": false
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-UAT.md": {
                   "id": ".planning/phases/01-identity-slice/01-UAT.md",
@@ -17834,7 +18212,133 @@
                   "bodyHash": "d382426457f69d94d2df66bedf6ee724b9630a3aae2633d6ddd03a3e8d3a7b32",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "spec": {
+                      "created": "2026-06-04",
+                      "goal": "Every unfamiliar and invented artifact type the dense fixture needs is present under `phases/01-identity-slice/` and loads through the parser.",
+                      "ambiguity": {
+                        "score": 0.1,
+                        "scoreText": "0.10",
+                        "gate": 0.2,
+                        "gateText": "0.20",
+                        "gateStated": true
+                      },
+                      "lockedCount": 3,
+                      "requirements": [
+                        {
+                          "n": 1,
+                          "label": "Unfamiliar types render",
+                          "statement": "`01-SPEC.md`, `01-AI-SPEC.md` are present and parse.",
+                          "current": "Neither exists in `~/studio-portal`'s corpus",
+                          "target": "Both exist here, authored from `gsd-core/templates/spec.md` and `AI-SPEC.md`",
+                          "acceptance": "Both files appear in the snapshot with non-empty bodies",
+                          "extras": []
+                        },
+                        {
+                          "n": 2,
+                          "label": "Invented type falls back to generic markdown",
+                          "statement": "`01-COST-MODEL.md` matches no known artifact type.",
+                          "current": "No template or code path names `COST-MODEL`",
+                          "target": "The file appears in the snapshot with `kind: \"unknown\"`",
+                          "acceptance": "Snapshot JSON contains an entry for `01-COST-MODEL.md` with `kind: \"unknown\"`",
+                          "extras": []
+                        },
+                        {
+                          "n": 3,
+                          "label": "Frontmatter-free artifact types dispatch by filename",
+                          "statement": "`01-AI-SPEC.md` has no YAML frontmatter.",
+                          "current": "N/A — fixture requirement",
+                          "target": "The parser dispatches on filename, not frontmatter shape",
+                          "acceptance": "`head -1 01-AI-SPEC.md` does not begin with `---`",
+                          "extras": []
+                        }
+                      ],
+                      "requirementsOmitted": 0,
+                      "inScope": [
+                        "Fixture artifact authorship for `phases/01-identity-slice/`"
+                      ],
+                      "outOfScope": [
+                        {
+                          "item": "Any real implementation",
+                          "reason": "this is a fixture-only specification"
+                        }
+                      ],
+                      "dimensions": [
+                        {
+                          "name": "Goal Clarity",
+                          "score": 0.9,
+                          "scoreText": "0.90",
+                          "min": 0.75,
+                          "minText": "0.75",
+                          "status": "met",
+                          "notes": null
+                        },
+                        {
+                          "name": "Boundary Clarity",
+                          "score": 0.9,
+                          "scoreText": "0.90",
+                          "min": 0.7,
+                          "minText": "0.70",
+                          "status": "met",
+                          "notes": null
+                        },
+                        {
+                          "name": "Constraint Clarity",
+                          "score": 0.8,
+                          "scoreText": "0.80",
+                          "min": 0.65,
+                          "minText": "0.65",
+                          "status": "met",
+                          "notes": null
+                        },
+                        {
+                          "name": "Acceptance Criteria",
+                          "score": 0.85,
+                          "scoreText": "0.85",
+                          "min": 0.7,
+                          "minText": "0.70",
+                          "status": "met",
+                          "notes": null
+                        }
+                      ],
+                      "edges": null,
+                      "prohibitions": null,
+                      "sections": [
+                        {
+                          "heading": "Goal",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Background",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "Requirements",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Boundaries",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Constraints",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "Acceptance Criteria",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "Ambiguity Report",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "Interview Log",
+                          "claimed": false
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-UAT.md": {
                   "id": ".planning/phases/01-identity-slice/01-UAT.md",
@@ -20886,7 +21390,133 @@
                   "bodyHash": "d382426457f69d94d2df66bedf6ee724b9630a3aae2633d6ddd03a3e8d3a7b32",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "spec": {
+                      "created": "2026-06-04",
+                      "goal": "Every unfamiliar and invented artifact type the dense fixture needs is present under `phases/01-identity-slice/` and loads through the parser.",
+                      "ambiguity": {
+                        "score": 0.1,
+                        "scoreText": "0.10",
+                        "gate": 0.2,
+                        "gateText": "0.20",
+                        "gateStated": true
+                      },
+                      "lockedCount": 3,
+                      "requirements": [
+                        {
+                          "n": 1,
+                          "label": "Unfamiliar types render",
+                          "statement": "`01-SPEC.md`, `01-AI-SPEC.md` are present and parse.",
+                          "current": "Neither exists in `~/studio-portal`'s corpus",
+                          "target": "Both exist here, authored from `gsd-core/templates/spec.md` and `AI-SPEC.md`",
+                          "acceptance": "Both files appear in the snapshot with non-empty bodies",
+                          "extras": []
+                        },
+                        {
+                          "n": 2,
+                          "label": "Invented type falls back to generic markdown",
+                          "statement": "`01-COST-MODEL.md` matches no known artifact type.",
+                          "current": "No template or code path names `COST-MODEL`",
+                          "target": "The file appears in the snapshot with `kind: \"unknown\"`",
+                          "acceptance": "Snapshot JSON contains an entry for `01-COST-MODEL.md` with `kind: \"unknown\"`",
+                          "extras": []
+                        },
+                        {
+                          "n": 3,
+                          "label": "Frontmatter-free artifact types dispatch by filename",
+                          "statement": "`01-AI-SPEC.md` has no YAML frontmatter.",
+                          "current": "N/A — fixture requirement",
+                          "target": "The parser dispatches on filename, not frontmatter shape",
+                          "acceptance": "`head -1 01-AI-SPEC.md` does not begin with `---`",
+                          "extras": []
+                        }
+                      ],
+                      "requirementsOmitted": 0,
+                      "inScope": [
+                        "Fixture artifact authorship for `phases/01-identity-slice/`"
+                      ],
+                      "outOfScope": [
+                        {
+                          "item": "Any real implementation",
+                          "reason": "this is a fixture-only specification"
+                        }
+                      ],
+                      "dimensions": [
+                        {
+                          "name": "Goal Clarity",
+                          "score": 0.9,
+                          "scoreText": "0.90",
+                          "min": 0.75,
+                          "minText": "0.75",
+                          "status": "met",
+                          "notes": null
+                        },
+                        {
+                          "name": "Boundary Clarity",
+                          "score": 0.9,
+                          "scoreText": "0.90",
+                          "min": 0.7,
+                          "minText": "0.70",
+                          "status": "met",
+                          "notes": null
+                        },
+                        {
+                          "name": "Constraint Clarity",
+                          "score": 0.8,
+                          "scoreText": "0.80",
+                          "min": 0.65,
+                          "minText": "0.65",
+                          "status": "met",
+                          "notes": null
+                        },
+                        {
+                          "name": "Acceptance Criteria",
+                          "score": 0.85,
+                          "scoreText": "0.85",
+                          "min": 0.7,
+                          "minText": "0.70",
+                          "status": "met",
+                          "notes": null
+                        }
+                      ],
+                      "edges": null,
+                      "prohibitions": null,
+                      "sections": [
+                        {
+                          "heading": "Goal",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Background",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "Requirements",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Boundaries",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Constraints",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "Acceptance Criteria",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "Ambiguity Report",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "Interview Log",
+                          "claimed": false
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-UAT.md": {
                   "id": ".planning/phases/01-identity-slice/01-UAT.md",
