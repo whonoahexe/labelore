@@ -96,7 +96,15 @@ describe('composeAiSpec - 04-AI-SPEC, half filled', () => {
   });
 
   it('says "6 of 16 checklist items done" as the meter sentence', () => {
-    expect(model.progress).toEqual({ label: '6 of 16 checklist items done', done: 6, total: 16 });
+    expect(model.progress).toMatchObject({ label: '6 of 16 checklist items done', done: 6, total: 16 });
+  });
+
+  it("carries each checklist item's own state so the meter squares sit where the ticks are", () => {
+    expect(model.progress!.items![4]).toBe(false);
+    expect(model.progress!.items![5]).toBe(true);
+    const out = markup(model);
+    const cells = out.match(/status-meter-sq" data-tone="[a-z-]+"/g)!;
+    expect(cells.map((c) => (c.includes('complete') ? 'x' : '.')).join('')).toBe('xxxx.xx.........');
   });
 
   it('places the four dimensions in the measurement by priority grid', () => {
@@ -218,7 +226,7 @@ describe('composeAiSpec - 02-AI-SPEC, the template body', () => {
     expect(model.cells.every((c) => c.value === null)).toBe(true);
     expect(model.dimensions).toEqual([]);
     expect(model.matrix).toBeNull();
-    expect(model.progress).toEqual({ label: '0 of 16 checklist items done', done: 0, total: 16 });
+    expect(model.progress).toMatchObject({ label: '0 of 16 checklist items done', done: 0, total: 16 });
   });
 });
 

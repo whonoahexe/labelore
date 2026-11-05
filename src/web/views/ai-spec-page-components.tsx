@@ -140,7 +140,7 @@ function SectionStrip({
         ))}
       </div>
       <span className="view-ai-spec-meta view-ai-spec-legend">
-        <i className="status-square view-ai-spec-sq-s" aria-hidden="true" /> written
+        <i className="status-square view-ai-spec-sq-s" aria-hidden="true" /> written{' · '}
         <i className="status-square view-ai-spec-sq-s" data-tone="quiet" aria-hidden="true" />{' '}
         {TEMPLATE_SLOT_LABEL}
       </span>
@@ -159,6 +159,7 @@ function ProgressRow({ model, onJump }: { model: ComposedAiSpec; onJump: (target
           <StatusMeter
             filled={progress.done}
             total={progress.total}
+            items={progress.items ?? undefined}
             label={progress.label}
             size="large"
             caption={

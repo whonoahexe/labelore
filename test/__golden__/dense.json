@@ -4889,26 +4889,34 @@
                     "dimensions": [],
                     "checklist": {
                       "done": 3,
-                      "total": 6
+                      "total": 6,
+                      "items": [
+                        true,
+                        false,
+                        true,
+                        true,
+                        false,
+                        false
+                      ]
                     },
                     "sections": [
                       {
                         "number": "1",
                         "heading": "1. System Classification",
                         "slot": false,
-                        "written": 0
+                        "written": 5
                       },
                       {
                         "number": "1b",
                         "heading": "1b. Domain Context",
                         "slot": false,
-                        "written": 0
+                        "written": 8
                       },
                       {
                         "number": "2",
                         "heading": "2. Framework Decision",
                         "slot": false,
-                        "written": 0
+                        "written": 5
                       }
                     ]
                   }
@@ -10335,26 +10343,34 @@
                 "dimensions": [],
                 "checklist": {
                   "done": 3,
-                  "total": 6
+                  "total": 6,
+                  "items": [
+                    true,
+                    false,
+                    true,
+                    true,
+                    false,
+                    false
+                  ]
                 },
                 "sections": [
                   {
                     "number": "1",
                     "heading": "1. System Classification",
                     "slot": false,
-                    "written": 0
+                    "written": 5
                   },
                   {
                     "number": "1b",
                     "heading": "1b. Domain Context",
                     "slot": false,
-                    "written": 0
+                    "written": 8
                   },
                   {
                     "number": "2",
                     "heading": "2. Framework Decision",
                     "slot": false,
-                    "written": 0
+                    "written": 5
                   }
                 ]
               }
@@ -14366,26 +14382,34 @@
                       "dimensions": [],
                       "checklist": {
                         "done": 3,
-                        "total": 6
+                        "total": 6,
+                        "items": [
+                          true,
+                          false,
+                          true,
+                          true,
+                          false,
+                          false
+                        ]
                       },
                       "sections": [
                         {
                           "number": "1",
                           "heading": "1. System Classification",
                           "slot": false,
-                          "written": 0
+                          "written": 5
                         },
                         {
                           "number": "1b",
                           "heading": "1b. Domain Context",
                           "slot": false,
-                          "written": 0
+                          "written": 8
                         },
                         {
                           "number": "2",
                           "heading": "2. Framework Decision",
                           "slot": false,
-                          "written": 0
+                          "written": 5
                         }
                       ]
                     }
@@ -17577,26 +17601,34 @@
                       "dimensions": [],
                       "checklist": {
                         "done": 3,
-                        "total": 6
+                        "total": 6,
+                        "items": [
+                          true,
+                          false,
+                          true,
+                          true,
+                          false,
+                          false
+                        ]
                       },
                       "sections": [
                         {
                           "number": "1",
                           "heading": "1. System Classification",
                           "slot": false,
-                          "written": 0
+                          "written": 5
                         },
                         {
                           "number": "1b",
                           "heading": "1b. Domain Context",
                           "slot": false,
-                          "written": 0
+                          "written": 8
                         },
                         {
                           "number": "2",
                           "heading": "2. Framework Decision",
                           "slot": false,
-                          "written": 0
+                          "written": 5
                         }
                       ]
                     }
@@ -20788,26 +20820,34 @@
                       "dimensions": [],
                       "checklist": {
                         "done": 3,
-                        "total": 6
+                        "total": 6,
+                        "items": [
+                          true,
+                          false,
+                          true,
+                          true,
+                          false,
+                          false
+                        ]
                       },
                       "sections": [
                         {
                           "number": "1",
                           "heading": "1. System Classification",
                           "slot": false,
-                          "written": 0
+                          "written": 5
                         },
                         {
                           "number": "1b",
                           "heading": "1b. Domain Context",
                           "slot": false,
-                          "written": 0
+                          "written": 8
                         },
                         {
                           "number": "2",
                           "heading": "2. Framework Decision",
                           "slot": false,
-                          "written": 0
+                          "written": 5
                         }
                       ]
                     }

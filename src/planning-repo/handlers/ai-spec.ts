@@ -53,7 +53,8 @@ export interface AiSpecBody {
   stakes: string | null;
   vendorLockIn: string | null;
   dimensions: AiSpecDimension[];
-  checklist: { done: number; total: number };
+  /** `items` is each item's own state in file order (the squares of a meter follow it, not the count). */
+  checklist: { done: number; total: number; items: boolean[] };
   sections: AiSpecSection[];
 }
 
@@ -136,12 +137,7 @@ const TEMPLATE_LINES: ReadonlySet<string> = new Set([
 ]);
 
 function squash(text: string): string {
-  let out = '';
-  for (let i = 0; i < text.length; i += 1) {
-    const c = text.charCodeAt(i);
-    if (c !== 32 && c !== 9) out += text.charAt(i);
-  }
-  return out;
+  return text.split(' ').join('').split('\t').join('');
 }
 
 function cap(text: string): string {
@@ -171,6 +167,79 @@ function isSeparatorRow(text: string): boolean {
     if (dashes === 0) return false;
   }
   return true;
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// The unfilled-slot rule. A numbered section is a template slot when nothing in it is the author's. The scan is one
+// pass over the section's lines with HTML comments already removed (an unterminated one ends with the section), and
+// a line is scaffolding - not the author's - when it is:
+//   - blank, or a horizontal rule;
+//   - a blockquote line (the template's "Researched by ..." notes);
+//   - a heading of level three or deeper (a sub-heading alone says nothing);
+//   - a bold label with nothing after it (`**Description:**`);
+//   - only a list number and a dot, or a bare list marker (the template's `1.` stubs);
+//   - a table header row (the row a separator row follows), a separator row, a row whose cells are all empty, or one
+//     of the template's own option rows (TEMPLATE_LINES);
+//   - inside a fenced block: blank, a hash or double-slash comment, or one of the template's own placeholder lines.
+// Every other line is written. The Checklist is progress, never a slot, because it is not a numbered section.
+// ---------------------------------------------------------------------------------------------------------------
+
+function isRule(t: string): boolean {
+  if (t.length < 3) return false;
+  const first = t.charCodeAt(0);
+  if (first !== 45 && first !== 42 && first !== 95) return false;
+  for (let i = 1; i < t.length; i += 1) if (t.charCodeAt(i) !== first) return false;
+  return true;
+}
+
+function isDeepHeading(t: string): boolean {
+  let hashes = 0;
+  while (hashes < t.length && t.charCodeAt(hashes) === 35) hashes += 1;
+  return hashes >= 3 && hashes <= 6 && (hashes === t.length || t.charCodeAt(hashes) === 32);
+}
+
+/** `**Label:**` with nothing after it, the colon inside or outside the bold. */
+function isBareLabel(t: string): boolean {
+  if (!t.startsWith('**')) return false;
+  const close = t.indexOf('**', 2);
+  if (close === -1) return false;
+  const inner = t.slice(2, close).trim();
+  const rest = t.slice(close + 2).trim();
+  return inner !== '' && ((rest === '' && inner.endsWith(':')) || rest === ':');
+}
+
+/** `1.`, `2)`, `-`, `*` or `+` and nothing else. */
+function isListStub(t: string): boolean {
+  if (t.length === 1) return t === '-' || t === '*' || t === '+';
+  let i = 0;
+  while (i < t.length && t.charCodeAt(i) >= 48 && t.charCodeAt(i) <= 57) i += 1;
+  return i > 0 && i === t.length - 1 && (t.charAt(i) === '.' || t.charAt(i) === ')');
+}
+
+function isScaffoldLine(text: string, lines: readonly string[], index: number): boolean {
+  const t = text.trim();
+  if (t === '' || isRule(t) || t.charCodeAt(0) === 62 || isDeepHeading(t)) return true;
+  if (isBareLabel(t) || isListStub(t)) return true;
+  if (t.charCodeAt(0) === 124) {
+    if (isSeparatorRow(t) || TEMPLATE_LINES.has(squash(t))) return true;
+    if (splitCells(t).every((cell) => cell === '')) return true;
+    return index + 1 < lines.length && isSeparatorRow(lines[index + 1]);
+  }
+  return TEMPLATE_LINES.has(squash(t));
+}
+
+function isScaffoldFenceLine(text: string): boolean {
+  const t = text.trim();
+  return t === '' || t.charCodeAt(0) === 35 || t.startsWith('//') || TEMPLATE_LINES.has(squash(t));
+}
+
+/** How many lines of [from, to) are the author's. Zero means the section is a template slot. */
+function writtenIn(lines: readonly string[], from: number, to: number): number {
+  let written = 0;
+  scanLines(lines, from, to, (text, index, inFence) => {
+    if (inFence ? !isScaffoldFenceLine(text) : !isScaffoldLine(text, lines, index)) written += 1;
+  });
+  return written;
 }
 
 function sectionNumberOf(heading: string): string | null {
@@ -247,8 +316,11 @@ function dimensionsIn(lines: readonly string[], range: SectionRange | undefined)
   return dimensions;
 }
 
-function checklistIn(lines: readonly string[], range: SectionRange | undefined): { done: number; total: number } {
-  const out = { done: 0, total: 0 };
+function checklistIn(
+  lines: readonly string[],
+  range: SectionRange | undefined,
+): { done: number; total: number; items: boolean[] } {
+  const out: { done: number; total: number; items: boolean[] } = { done: 0, total: 0, items: [] };
   if (range === undefined) return out;
   scanLines(lines, range.from, range.to, (text, _index, inFence) => {
     if (inFence || out.total >= AI_SPEC_CHECKLIST_CAP) return;
@@ -258,6 +330,7 @@ function checklistIn(lines: readonly string[], range: SectionRange | undefined):
     const mark = t.charCodeAt(3);
     if (t.charCodeAt(4) !== 93 || (mark !== 32 && mark !== 120 && mark !== 88)) return;
     out.total += 1;
+    out.items.push(mark !== 32);
     if (mark !== 32) out.done += 1;
   });
   return out;
@@ -281,7 +354,8 @@ export function extractAiSpec(body: string): AiSpecBody {
   const sections: AiSpecSection[] = [];
   for (const range of ranges) {
     if (range.number === null || sections.length >= AI_SPEC_SECTION_CAP) continue;
-    sections.push({ number: range.number, heading: range.heading, slot: false, written: 0 });
+    const written = writtenIn(lines, range.from, range.to);
+    sections.push({ number: range.number, heading: range.heading, slot: written === 0, written });
   }
   return {
     systemType: fieldIn(lines, byNumber('1'), 'System Type'),

@@ -30591,10 +30591,6 @@ button.view-codebase-mark:hover {
   gap: var(--space-1-5);
 }
 
-.view-ai-spec-legend > i + i {
-  margin-left: var(--space-3);
-}
-
 @media (max-width: 42rem) {
   .view-ai-spec-progress-row {
     grid-template-columns: minmax(0, 1fr);
@@ -30749,8 +30745,6 @@ button.view-codebase-mark:hover {
   font-family: var(--font-mono);
   font-size: var(--fs-2);
   letter-spacing: var(--ls-wider);
-  text-decoration: underline;
-  text-decoration-color: var(--border);
   text-underline-offset: var(--space-0-5);
   text-transform: uppercase;
   cursor: pointer;
@@ -30763,6 +30757,7 @@ button.view-codebase-mark:hover {
 .view-ai-spec-close:hover,
 .view-ai-spec-source:hover {
   color: var(--foreground);
+  text-decoration: underline;
 }
 
 .view-ai-spec-fields {
