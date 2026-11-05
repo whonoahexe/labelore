@@ -13,7 +13,7 @@
 import { useState } from 'react';
 import { ChevronRight, CircleCheck, CircleMinus, CircleQuestionMark, EyeOff } from 'lucide-react';
 import { ResearchInline } from '../pages/research-atoms.tsx';
-import { NO_CRITERIA_LABEL } from './dom-verify-page.ts';
+import { NO_CRITERIA_IN_FILE_LABEL, NO_CRITERIA_LABEL } from './dom-verify-page.ts';
 import type { SpecHeaderProps } from './spec-page-components.tsx';
 import type {
   ComposedDomCount,
@@ -64,16 +64,16 @@ function Square({ tone }: { tone: DomVerifyTone }): React.JSX.Element {
   return <i className="status-square view-dom-verify-sq" data-tone={tone} aria-hidden="true" />;
 }
 
-function OutcomeIcon({ icon }: { icon: DomVerifyIcon }): React.JSX.Element {
+function OutcomeIcon({ icon, className }: { icon: DomVerifyIcon; className: string }): React.JSX.Element {
   switch (icon) {
     case 'check':
-      return <CircleCheck className="view-dom-verify-icon" aria-hidden="true" />;
+      return <CircleCheck className={className} aria-hidden="true" />;
     case 'minus':
-      return <CircleMinus className="view-dom-verify-icon" aria-hidden="true" />;
+      return <CircleMinus className={className} aria-hidden="true" />;
     case 'eye-off':
-      return <EyeOff className="view-dom-verify-icon" aria-hidden="true" />;
+      return <EyeOff className={className} aria-hidden="true" />;
     default:
-      return <CircleQuestionMark className="view-dom-verify-icon" aria-hidden="true" />;
+      return <CircleQuestionMark className={className} aria-hidden="true" />;
   }
 }
 
@@ -88,7 +88,7 @@ function OutcomeChip({ outcome }: { outcome: ComposedDomOutcome }): React.JSX.El
       role="img"
       aria-label={outcome.ariaLabel}
     >
-      <OutcomeIcon icon={outcome.icon} />
+      <OutcomeIcon icon={outcome.icon} className="view-dom-verify-icon" />
       <span className={outcome.mono ? 'view-dom-verify-mono' : undefined}>{outcome.word}</span>
     </span>
   );
@@ -201,6 +201,34 @@ function Counts({ counts, rowCounts }: { counts: readonly ComposedDomCount[]; ro
   );
 }
 
+/** The reason card: the copy table's sentence (when the reason has one) and the raw value in mono. */
+function Why({ reason }: { reason: NonNullable<ComposedDomVerify['reason']> }): React.JSX.Element {
+  return (
+    <div className="view-dom-verify-why">
+      {reason.sentence !== null ? <p className="view-dom-verify-why-sentence">{reason.sentence}</p> : null}
+      <code className="view-dom-verify-raw">reason: {reason.raw}</code>
+    </div>
+  );
+}
+
+/** What stands in the window when there is nothing to list: Could not look is shut (hatched, eye-off), anything else is
+ * blank (a dashed frame). Either way the reason sits on a card, and neither ever takes a pass tone. */
+function Empty({ model }: { model: ComposedDomVerify }): React.JSX.Element {
+  return (
+    <div className="view-dom-verify-view" data-view={model.view}>
+      <OutcomeIcon icon={model.outcome.icon} className="view-dom-verify-bigicon" />
+      {model.reason !== null ? (
+        <Why reason={model.reason} />
+      ) : model.noCriteria ? null : (
+        <p className="view-dom-verify-na">
+          <Square tone="quiet" />
+          <span>{NO_CRITERIA_IN_FILE_LABEL}</span>
+        </p>
+      )}
+    </div>
+  );
+}
+
 function Tiles({
   model,
   selection,
@@ -258,7 +286,7 @@ function Window({
         <OutcomeChip outcome={model.outcome} />
         <Address targets={model.targets} />
       </div>
-      {model.view === 'tiles' ? <Tiles model={model} selection={selection} onSelect={onSelect} /> : <div className="view-dom-verify-view" />}
+      {model.view === 'tiles' ? <Tiles model={model} selection={selection} onSelect={onSelect} /> : <Empty model={model} />}
       {hasStatus ? (
         <div className="view-dom-verify-status">
           {model.noCriteria ? (
