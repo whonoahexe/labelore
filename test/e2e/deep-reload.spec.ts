@@ -7,13 +7,21 @@
 // reloads it hard, and asserts the same page and the same address both times with no page error and no
 // failed script or stylesheet. Every address is built from what the served project reports (projectUrl and
 // artifactUrl), so the spec follows the server's URL grammar instead of pinning one.
-import { readFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { legacyArtifactUrl } from '../helpers/legacy-urls.ts';
 import { artifactUrl, exactUrl, projectApiUrl, projectUrl } from './app-url.ts';
-import { SHAPES_BASE_URL, SHAPES_BUILT_BASE_URL, SHAPES_FIXTURE_ROOT } from './fixture-root.ts';
+import {
+  FIXTURE_BASE_URL,
+  SHAPES_BASE_URL,
+  SHAPES_BUILT_BASE_URL,
+  SHAPES_FIXTURE_ROOT,
+  TIDEMARK_FIXTURE_ROOT,
+} from './fixture-root.ts';
+import { startProjectsServer, type ProjectsServer } from './projects-server.ts';
 
 interface ServerMode {
   name: string;
@@ -247,7 +255,16 @@ const URL_CLASSES: UrlClass[] = [
   documentClass('a note with a percent sign', '.planning/notes/kiln % notes.md'),
   documentClass('a note with a hash sign', '.planning/notes/glaze #2.md'),
   documentClass('a note with unicode', '.planning/notes/über-glaze.md'),
-  documentClass('a codebase document', '.planning/codebase/ARCHITECTURE.md'),
+  {
+    // Phase 10 (10-08): a map document is a panel of the Codebase page, whose h1 is "Codebase" and whose panel
+    // heading names the document.
+    name: 'a codebase document',
+    open: { artifact: '.planning/codebase/ARCHITECTURE.md' },
+    check: async ({ page }) => {
+      await expect(page.locator('h1')).toHaveText('Codebase');
+      await expect(page.locator('#view-codebase-panel-title')).toHaveText('Architecture');
+    },
+  },
   documentClass('the settings page', '.planning/config.json'),
   namedPageClass('a phase page', '/v1.1/phase-2.1', phaseNamed),
   namedPageClass('a phase page with a trailing slash', '/v1.1/phase-2.1/', phaseNamed),
@@ -299,25 +316,31 @@ const URL_CLASSES: UrlClass[] = [
   missClass('an internal file is not found', '/file/state.json'),
 ];
 
+/** Opens an address, reloads it hard, and asserts the same landing page and address both times, served by the
+ * mode's app, with no page error and no failed script or stylesheet. */
+async function openAndReload(page: Page, server: ServerMode, urlClass: UrlClass): Promise<void> {
+  const seen = watch(page);
+  const target = await addressOf(server, urlClass.open);
+  const landed = urlClass.lands === undefined ? target : await addressOf(server, urlClass.lands);
+
+  await page.goto(target);
+  await expectMode(page, server);
+  await expect(page).toHaveURL(exactUrl(landed));
+  await urlClass.check({ page, server });
+
+  await page.reload();
+  await expectMode(page, server);
+  await expect(page).toHaveURL(exactUrl(landed));
+  await urlClass.check({ page, server });
+
+  expectQuiet(seen);
+}
+
 for (const server of SERVERS) {
   test.describe(server.name, () => {
     for (const urlClass of URL_CLASSES) {
       test(urlClass.name, async ({ page }) => {
-        const seen = watch(page);
-        const target = await addressOf(server, urlClass.open);
-        const landed = urlClass.lands === undefined ? target : await addressOf(server, urlClass.lands);
-
-        await page.goto(target);
-        await expectMode(page, server);
-        await expect(page).toHaveURL(exactUrl(landed));
-        await urlClass.check({ page, server });
-
-        await page.reload();
-        await expectMode(page, server);
-        await expect(page).toHaveURL(exactUrl(landed));
-        await urlClass.check({ page, server });
-
-        expectQuiet(seen);
+        await openAndReload(page, server, urlClass);
       });
     }
 
@@ -340,3 +363,108 @@ for (const server of SERVERS) {
     });
   });
 }
+
+// Phase 10 (10-23): the addresses the codebase map and the six specification and check pages add, each
+// hard-reloaded in the development server on its own made-up project: Lendshed (port 4198: a project with no
+// map, and the six type pages), Shapes (port 4197: a map with three documents next to a roadmap) and a copy
+// of Tidemark (a map-only project, on a server of its own). A page's own marker is the class its view puts on
+// its root; the h1 is exactly one on every address.
+const DEV_SERVER = { entryPrefix: '/src/', neverPrefixes: ['/assets/'] } as const;
+const LENDSHED: ServerMode = { name: 'Lendshed, development server', baseUrl: FIXTURE_BASE_URL, ...DEV_SERVER };
+const SHAPES_DEV: ServerMode = { name: 'Shapes, development server', baseUrl: SHAPES_BASE_URL, ...DEV_SERVER };
+
+/** A type page: the view's own page class is on screen and the page has exactly one h1. */
+function typePageClass(name: string, page: string, marker: string): UrlClass {
+  return {
+    name,
+    open: { page },
+    check: async ({ page: browserPage }) => {
+      await expect(browserPage.locator('h1')).toHaveCount(1);
+      await expect(browserPage.locator(`main .${marker}`).first()).toBeVisible();
+    },
+  };
+}
+
+const PHASE_10_LENDSHED: UrlClass[] = [
+  missClass('a project with no map keeps /codebase not found', '/codebase'),
+  typePageClass('a phase specification', '/v1.1/phase-1/spec', 'view-spec-page'),
+  typePageClass('an AI specification', '/v1.1/phase-2/ai-spec', 'view-ai-spec-page'),
+  typePageClass('a user setup', '/v1.1/phase-2/user-setup', 'view-user-setup-page'),
+  typePageClass('an eval review', '/v1.1/phase-3/eval-review', 'view-eval-review-page'),
+  typePageClass('a browser check', '/v1.1/phase-1/dom-verify', 'view-dom-verify-page'),
+  typePageClass('a cross-AI reviews page', '/v1.1/phase-1/reviews', 'view-reviews-page'),
+];
+
+const PHASE_10_SHAPES: UrlClass[] = [
+  {
+    name: 'the bare /codebase redirects to its first mapped document',
+    open: { page: '/codebase' },
+    lands: { artifact: '.planning/codebase/STACK.md' },
+    check: async ({ page }) => {
+      await expect(page.locator('h1')).toHaveCount(1);
+      await expect(page.locator('h1')).toHaveText('Codebase');
+      await expect(page.locator('main .view-codebase-page')).toBeVisible();
+    },
+  },
+];
+
+/** The Codebase page of a map-only project: its head over the panel the address names. */
+function tidemarkClass(name: string, page: string, panel: string): UrlClass {
+  return {
+    name,
+    open: { page },
+    check: async ({ page: browserPage }) => {
+      await expect(browserPage.locator('h1')).toHaveCount(1);
+      await expect(browserPage.locator('h1')).toHaveText('Codebase');
+      await expect(browserPage.locator('p.eyebrow').first()).toHaveText('Mapped, not started');
+      await expect(browserPage.getByRole('region', { name: 'Mapped, not started' })).toBeVisible();
+      await expect(browserPage.locator('#view-codebase-panel-title')).toHaveText(panel);
+    },
+  };
+}
+
+const PHASE_10_TIDEMARK: UrlClass[] = [
+  tidemarkClass("the map-only project's dashboard address opens its first panel", '/', 'Stack'),
+  tidemarkClass('a map document opens its panel under the head', '/codebase/concerns', 'Concerns'),
+];
+
+test.describe('Phase 10 addresses', () => {
+  for (const [server, classes] of [
+    [LENDSHED, PHASE_10_LENDSHED],
+    [SHAPES_DEV, PHASE_10_SHAPES],
+  ] as const) {
+    test.describe(server.name, () => {
+      for (const urlClass of classes) {
+        test(urlClass.name, async ({ page }) => {
+          await openAndReload(page, server, urlClass);
+        });
+      }
+    });
+  }
+
+  test.describe('Tidemark, development server', () => {
+    const tidemark: ServerMode = { name: 'Tidemark, development server', baseUrl: '', ...DEV_SERVER };
+    let projects: ProjectsServer;
+    let parent = '';
+
+    test.beforeAll(async () => {
+      test.setTimeout(120_000);
+      parent = realpathSync(mkdtempSync(join(tmpdir(), 'deep-reload-tidemark-')));
+      const copy = join(parent, 'tidemark');
+      cpSync(TIDEMARK_FIXTURE_ROOT, copy, { recursive: true });
+      projects = await startProjectsServer({ paths: [copy] });
+      tidemark.baseUrl = projects.base;
+    });
+
+    test.afterAll(async () => {
+      await projects?.stop();
+      if (parent !== '') rmSync(parent, { recursive: true, force: true });
+    });
+
+    for (const urlClass of PHASE_10_TIDEMARK) {
+      test(urlClass.name, async ({ page }) => {
+        await openAndReload(page, tidemark, urlClass);
+      });
+    }
+  });
+});

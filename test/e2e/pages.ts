@@ -5,7 +5,7 @@
 // `.planning/` corpus.
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { VIEW_KINDS } from '../../src/web/views/kinds.ts';
+import { VIEW_KINDS, viewKindOf } from '../../src/web/views/kinds.ts';
 import { projectApiUrl } from './app-url.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -92,6 +92,8 @@ export async function buildPageMatrix(baseURL: string): Promise<PageMatrix> {
     }
   }
 
+  // Every codebase-* wire kind is the one codebase view kind (viewKindOf, RESEARCH Pitfall 9), so a map document
+  // reads registered and the codebase view kind is not reported as one without a fixture.
   const viewKindSet = new Set<string>(VIEW_KINDS);
   const docSpecs: PageSpec[] = [...byKind.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
@@ -100,7 +102,7 @@ export async function buildPageMatrix(baseURL: string): Promise<PageMatrix> {
       url: artifact.key,
       family: 'artifact' as const,
       kind,
-      registered: viewKindSet.has(kind),
+      registered: viewKindSet.has(viewKindOf(kind)),
     }));
 
   let planPairSpec: PageSpec | null = null;
@@ -121,7 +123,7 @@ export async function buildPageMatrix(baseURL: string): Promise<PageMatrix> {
     }
   }
 
-  const kindsSeen = new Set(byKind.keys());
+  const kindsSeen = new Set([...byKind.keys()].map((kind) => viewKindOf(kind)));
   const kindsWithoutFixture = VIEW_KINDS.filter((kind) => !kindsSeen.has(kind));
 
   const pages: PageSpec[] = [...REFERENCE_SPECS, ...docSpecs];
