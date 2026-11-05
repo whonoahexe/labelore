@@ -23,6 +23,7 @@ import { composeWindowsLedger } from './windows-ledger.ts';
 import { composeMilestoneAudit } from './milestone-audit.ts';
 import { composeCoverage } from './coverage-matrix.ts';
 import { composeSpec } from './spec-page.ts';
+import { composeAiSpec } from './ai-spec-page.ts';
 import { composeCodebase } from './codebase-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
@@ -430,6 +431,9 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     kind: 'ai-spec',
     lead: 'What kind of AI system this phase builds, how it will be evaluated, and which sections are still template slots.',
     promote: [{ type: 'section', heading: /\S/, all: true }],
+    // The AI spec page is the View-mode render path; `promote` above is the silent fallback when it composes nothing
+    // (Phase 10, 10-18, RESEARCH C1).
+    aiSpecPage: composeAiSpec,
   },
   'user-setup': {
     kind: 'user-setup',

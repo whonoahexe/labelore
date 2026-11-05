@@ -4879,7 +4879,48 @@
                 "bodyHash": "34368c5ddc0b211c19faa9e0da3d78348b9cae7cf7e4bcec09c4b3d28f1d9e6e",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "aiSpec": {
+                    "systemType": "Extraction",
+                    "framework": "N/A",
+                    "version": "N/A",
+                    "stakes": "Low",
+                    "vendorLockIn": "No",
+                    "dimensions": [],
+                    "checklist": {
+                      "done": 3,
+                      "total": 6,
+                      "items": [
+                        true,
+                        false,
+                        true,
+                        true,
+                        false,
+                        false
+                      ]
+                    },
+                    "sections": [
+                      {
+                        "number": "1",
+                        "heading": "1. System Classification",
+                        "slot": false,
+                        "written": 5
+                      },
+                      {
+                        "number": "1b",
+                        "heading": "1b. Domain Context",
+                        "slot": false,
+                        "written": 8
+                      },
+                      {
+                        "number": "2",
+                        "heading": "2. Framework Decision",
+                        "slot": false,
+                        "written": 5
+                      }
+                    ]
+                  }
+                }
               },
               ".planning/phases/01-identity-slice/01-CONTEXT.md": {
                 "id": ".planning/phases/01-identity-slice/01-CONTEXT.md",
@@ -10292,7 +10333,48 @@
             "bodyHash": "34368c5ddc0b211c19faa9e0da3d78348b9cae7cf7e4bcec09c4b3d28f1d9e6e",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "aiSpec": {
+                "systemType": "Extraction",
+                "framework": "N/A",
+                "version": "N/A",
+                "stakes": "Low",
+                "vendorLockIn": "No",
+                "dimensions": [],
+                "checklist": {
+                  "done": 3,
+                  "total": 6,
+                  "items": [
+                    true,
+                    false,
+                    true,
+                    true,
+                    false,
+                    false
+                  ]
+                },
+                "sections": [
+                  {
+                    "number": "1",
+                    "heading": "1. System Classification",
+                    "slot": false,
+                    "written": 5
+                  },
+                  {
+                    "number": "1b",
+                    "heading": "1b. Domain Context",
+                    "slot": false,
+                    "written": 8
+                  },
+                  {
+                    "number": "2",
+                    "heading": "2. Framework Decision",
+                    "slot": false,
+                    "written": 5
+                  }
+                ]
+              }
+            }
           },
           ".planning/phases/01-identity-slice/01-CONTEXT.md": {
             "id": ".planning/phases/01-identity-slice/01-CONTEXT.md",
@@ -14290,7 +14372,48 @@
                   "bodyHash": "34368c5ddc0b211c19faa9e0da3d78348b9cae7cf7e4bcec09c4b3d28f1d9e6e",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "aiSpec": {
+                      "systemType": "Extraction",
+                      "framework": "N/A",
+                      "version": "N/A",
+                      "stakes": "Low",
+                      "vendorLockIn": "No",
+                      "dimensions": [],
+                      "checklist": {
+                        "done": 3,
+                        "total": 6,
+                        "items": [
+                          true,
+                          false,
+                          true,
+                          true,
+                          false,
+                          false
+                        ]
+                      },
+                      "sections": [
+                        {
+                          "number": "1",
+                          "heading": "1. System Classification",
+                          "slot": false,
+                          "written": 5
+                        },
+                        {
+                          "number": "1b",
+                          "heading": "1b. Domain Context",
+                          "slot": false,
+                          "written": 8
+                        },
+                        {
+                          "number": "2",
+                          "heading": "2. Framework Decision",
+                          "slot": false,
+                          "written": 5
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-CONTEXT.md": {
                   "id": ".planning/phases/01-identity-slice/01-CONTEXT.md",
@@ -17468,7 +17591,48 @@
                   "bodyHash": "34368c5ddc0b211c19faa9e0da3d78348b9cae7cf7e4bcec09c4b3d28f1d9e6e",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "aiSpec": {
+                      "systemType": "Extraction",
+                      "framework": "N/A",
+                      "version": "N/A",
+                      "stakes": "Low",
+                      "vendorLockIn": "No",
+                      "dimensions": [],
+                      "checklist": {
+                        "done": 3,
+                        "total": 6,
+                        "items": [
+                          true,
+                          false,
+                          true,
+                          true,
+                          false,
+                          false
+                        ]
+                      },
+                      "sections": [
+                        {
+                          "number": "1",
+                          "heading": "1. System Classification",
+                          "slot": false,
+                          "written": 5
+                        },
+                        {
+                          "number": "1b",
+                          "heading": "1b. Domain Context",
+                          "slot": false,
+                          "written": 8
+                        },
+                        {
+                          "number": "2",
+                          "heading": "2. Framework Decision",
+                          "slot": false,
+                          "written": 5
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-CONTEXT.md": {
                   "id": ".planning/phases/01-identity-slice/01-CONTEXT.md",
@@ -20646,7 +20810,48 @@
                   "bodyHash": "34368c5ddc0b211c19faa9e0da3d78348b9cae7cf7e4bcec09c4b3d28f1d9e6e",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "aiSpec": {
+                      "systemType": "Extraction",
+                      "framework": "N/A",
+                      "version": "N/A",
+                      "stakes": "Low",
+                      "vendorLockIn": "No",
+                      "dimensions": [],
+                      "checklist": {
+                        "done": 3,
+                        "total": 6,
+                        "items": [
+                          true,
+                          false,
+                          true,
+                          true,
+                          false,
+                          false
+                        ]
+                      },
+                      "sections": [
+                        {
+                          "number": "1",
+                          "heading": "1. System Classification",
+                          "slot": false,
+                          "written": 5
+                        },
+                        {
+                          "number": "1b",
+                          "heading": "1b. Domain Context",
+                          "slot": false,
+                          "written": 8
+                        },
+                        {
+                          "number": "2",
+                          "heading": "2. Framework Decision",
+                          "slot": false,
+                          "written": 5
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-CONTEXT.md": {
                   "id": ".planning/phases/01-identity-slice/01-CONTEXT.md",
