@@ -84,6 +84,8 @@ import type { ComposedUserSetup } from '../views/user-setup-page.ts';
 import { UserSetupView, userSetupHeaderProps } from '../views/user-setup-page-components.tsx';
 import type { ComposedEvalReview } from '../views/eval-review-page.ts';
 import { EvalReviewView, evalReviewHeaderProps } from '../views/eval-review-page-components.tsx';
+import type { ComposedDomVerify } from '../views/dom-verify-page.ts';
+import { DomVerifyView, domVerifyHeaderProps } from '../views/dom-verify-page-components.tsx';
 import type { ComposedPlanNavigator } from '../views/plan-navigator.ts';
 import { PlanIntroMeta, PlanNavigatorView } from '../views/plan-navigator-components.tsx';
 import { findPlanContext } from '../views/plan-context.ts';
@@ -158,6 +160,26 @@ function findPhaseRequirementIds(
         phase.identity.milestoneVersion === phaseIdentity.milestoneVersion
       ) {
         return phase.requirementIds.length > 0 ? phase.requirementIds : null;
+      }
+    }
+  }
+  return null;
+}
+
+/** Phase 10 (10-21): the phase's own name from the roadmap, found the way `findPhaseRequirementIds` finds its phase - by the
+ * artifact's resolved `phaseIdentity`, with no per-kind branch. `null` outside a phase. */
+function findPhaseName(
+  presentation: ProjectPresentation | undefined,
+  phaseIdentity: PhaseIdentity | null | undefined,
+): string | null {
+  if (!presentation || !phaseIdentity) return null;
+  for (const milestone of presentation.milestones) {
+    for (const phase of milestone.phases) {
+      if (
+        phase.identity.number === phaseIdentity.number &&
+        phase.identity.milestoneVersion === phaseIdentity.milestoneVersion
+      ) {
+        return phase.name.trim() === '' ? null : phase.name;
       }
     }
   }
@@ -705,6 +727,10 @@ export function ArtifactPage({
     () => findPhaseRequirementIds(presentationQuery.data, query.data?.phaseIdentity),
     [presentationQuery.data, query.data],
   );
+  const phaseName = useMemo(
+    () => findPhaseName(presentationQuery.data, query.data?.phaseIdentity),
+    [presentationQuery.data, query.data],
+  );
   const siblingArtifacts = useMemo(
     () =>
       findSiblingArtifacts(presentationQuery.data, query.data?.artifact.path),
@@ -733,6 +759,7 @@ export function ArtifactPage({
       planProgress,
       planContext,
       phaseRequirementIds,
+      phaseName,
       headings: shown?.headings ?? [],
       siblingArtifacts,
       reviewContext: query.data.reviewContext ?? null,
@@ -743,7 +770,7 @@ export function ArtifactPage({
       projectContext: query.data.projectContext ?? null,
       codebaseContext: query.data.codebaseContext ?? null,
     };
-  }, [query.data, groups, planSegments, planProgress, planContext, phaseRequirementIds, shown, siblingArtifacts]);
+  }, [query.data, groups, planSegments, planProgress, planContext, phaseRequirementIds, phaseName, shown, siblingArtifacts]);
   // VIEW-06: a registered manifest, or fallback.ts's synthesized structural-read manifest — one
   // dispatch path either way (`resolveView` itself stays registry-only, for 05-06's completeness
   // test).
@@ -956,6 +983,13 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.evalReviewPage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // Phase 10 (10-21, sketch 051 A): the Browser check page, when the resolved manifest opts into one - `null` for every
+  // other kind and for a browser check the page cannot shape (no `structured.domVerify`, or no outcome, count or
+  // criterion), where the promoted-section view renders with no notice. The composer is pure.
+  const domVerifyPage = useMemo<ComposedDomVerify | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.domVerifyPage?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // "In the source only" entries switch to Source mode, then scroll to the named heading once the
   // source document has mounted. The pending id lives in a ref and is cleared only when the frame
   // callback fires, so a re-run of the effect (StrictMode) still lands on it.
@@ -1018,6 +1052,7 @@ export function ArtifactPage({
     aiSpecPage !== null ||
     userSetupPage !== null ||
     evalReviewPage !== null ||
+    domVerifyPage !== null ||
     !documentHtmlAllowedInView(manifest) ||
     (composed !== null && composed.blocks.length > 0);
 
@@ -1339,6 +1374,9 @@ export function ArtifactPage({
   // The Eval review page's header override ("Phase N · Eval review", the phase name as the h1, "Audited {date}" as meta)
   // rides the same spread; its head carries what the metadata disclosure would repeat.
   const evalReviewPageCover = evalReviewPage && mode === 'view' ? evalReviewPage : null;
+  // The Browser check page's header override ("Phase N · Browser check", the phase name as the h1, "Wave {n}" as meta)
+  // rides the same spread; its window carries what the metadata disclosure would repeat.
+  const domVerifyPageCover = domVerifyPage && mode === 'view' ? domVerifyPage : null;
   // T-10-49: a manifest that sets withholdDocumentInView (user-setup) shows no document HTML in View mode - neither its
   // promoted sections nor the whole document - unless a composed model above has taken the page over.
   const documentWithheld = mode === 'view' && !documentHtmlAllowedInView(manifest);
@@ -1355,6 +1393,7 @@ export function ArtifactPage({
     (aiSpecPageCover ? aiSpecHeaderProps(aiSpecPageCover, artifact.title) : null) ??
     (userSetupPageCover ? userSetupHeaderProps(userSetupPageCover, artifact.title) : null) ??
     (evalReviewPageCover ? evalReviewHeaderProps(evalReviewPageCover, artifact.title) : null) ??
+    (domVerifyPageCover ? domVerifyHeaderProps(domVerifyPageCover, artifact.title) : null) ??
     (fixCover ? ledgerHeaderProps(fixCover, artifact.title) : null);
   return (
     <main className="artifact-page page-stack">
@@ -1447,6 +1486,7 @@ export function ArtifactPage({
         aiSpecPageCover ||
         userSetupPageCover ||
         evalReviewPageCover ||
+        domVerifyPageCover ||
         fixCover ? null : (
           <details className="artifact-metadata">
             <summary>
@@ -1562,6 +1602,8 @@ export function ArtifactPage({
         <UserSetupView key={artifact.path} model={userSetupPageCover} onShowSource={showSource} />
       ) : evalReviewPageCover ? (
         <EvalReviewView key={artifact.path} model={evalReviewPageCover} renderHtml={renderHtml} />
+      ) : domVerifyPageCover ? (
+        <DomVerifyView key={artifact.path} model={domVerifyPageCover} />
       ) : fixCover ? (
         <LedgerTabView key={artifact.path} model={fixCover} />
       ) : documentWithheld ? (
