@@ -86,6 +86,8 @@ import type { ComposedEvalReview } from '../views/eval-review-page.ts';
 import { EvalReviewView, evalReviewHeaderProps } from '../views/eval-review-page-components.tsx';
 import type { ComposedDomVerify } from '../views/dom-verify-page.ts';
 import { DomVerifyView, domVerifyHeaderProps } from '../views/dom-verify-page-components.tsx';
+import type { ComposedReviews } from '../views/reviews-page.ts';
+import { ReviewsView, reviewsHeaderProps } from '../views/reviews-page-components.tsx';
 import type { ComposedPlanNavigator } from '../views/plan-navigator.ts';
 import { PlanIntroMeta, PlanNavigatorView } from '../views/plan-navigator-components.tsx';
 import { findPlanContext } from '../views/plan-context.ts';
@@ -990,6 +992,13 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.domVerifyPage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // Phase 10 (10-22, sketch 052 A): the Cross-AI reviews page, when the resolved manifest opts into one - `null` for every
+  // other kind and for a review the page cannot shape (no `structured.reviews`, or no reviewer), where the promoted-section
+  // view renders with no notice. The composer is pure.
+  const reviewsPage = useMemo<ComposedReviews | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.reviewsPage?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // "In the source only" entries switch to Source mode, then scroll to the named heading once the
   // source document has mounted. The pending id lives in a ref and is cleared only when the frame
   // callback fires, so a re-run of the effect (StrictMode) still lands on it.
@@ -1053,6 +1062,7 @@ export function ArtifactPage({
     userSetupPage !== null ||
     evalReviewPage !== null ||
     domVerifyPage !== null ||
+    reviewsPage !== null ||
     !documentHtmlAllowedInView(manifest) ||
     (composed !== null && composed.blocks.length > 0);
 
@@ -1377,6 +1387,9 @@ export function ArtifactPage({
   // The Browser check page's header override ("Phase N · Browser check", the phase name as the h1, "Wave {n}" as meta)
   // rides the same spread; its window carries what the metadata disclosure would repeat.
   const domVerifyPageCover = domVerifyPage && mode === 'view' ? domVerifyPage : null;
+  // The Cross-AI reviews page's header override ("Phase N · Cross-AI reviews", the phase name as the h1, the review date, the
+  // plans and the reviewer count as meta) rides the same spread; its figure carries what the metadata disclosure would repeat.
+  const reviewsPageCover = reviewsPage && mode === 'view' ? reviewsPage : null;
   // T-10-49: a manifest that sets withholdDocumentInView (user-setup) shows no document HTML in View mode - neither its
   // promoted sections nor the whole document - unless a composed model above has taken the page over.
   const documentWithheld = mode === 'view' && !documentHtmlAllowedInView(manifest);
@@ -1394,6 +1407,7 @@ export function ArtifactPage({
     (userSetupPageCover ? userSetupHeaderProps(userSetupPageCover, artifact.title) : null) ??
     (evalReviewPageCover ? evalReviewHeaderProps(evalReviewPageCover, artifact.title) : null) ??
     (domVerifyPageCover ? domVerifyHeaderProps(domVerifyPageCover, artifact.title) : null) ??
+    (reviewsPageCover ? reviewsHeaderProps(reviewsPageCover, artifact.title) : null) ??
     (fixCover ? ledgerHeaderProps(fixCover, artifact.title) : null);
   return (
     <main className="artifact-page page-stack">
@@ -1487,6 +1501,7 @@ export function ArtifactPage({
         userSetupPageCover ||
         evalReviewPageCover ||
         domVerifyPageCover ||
+        reviewsPageCover ||
         fixCover ? null : (
           <details className="artifact-metadata">
             <summary>
@@ -1604,6 +1619,8 @@ export function ArtifactPage({
         <EvalReviewView key={artifact.path} model={evalReviewPageCover} renderHtml={renderHtml} />
       ) : domVerifyPageCover ? (
         <DomVerifyView key={artifact.path} model={domVerifyPageCover} />
+      ) : reviewsPageCover ? (
+        <ReviewsView key={artifact.path} model={reviewsPageCover} />
       ) : fixCover ? (
         <LedgerTabView key={artifact.path} model={fixCover} />
       ) : documentWithheld ? (

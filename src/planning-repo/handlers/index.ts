@@ -37,6 +37,7 @@ import { AiSpecHandler } from './ai-spec.ts';
 import { UserSetupHandler } from './user-setup.ts';
 import { EvalReviewHandler } from './eval-review.ts';
 import { DomVerifyHandler } from './dom-verify.ts';
+import { ReviewsHandler } from './reviews.ts';
 import { GenericMarkdownHandler } from './generic.ts';
 
 export const HANDLERS: ArtifactHandler[] = [
@@ -76,5 +77,6 @@ export const HANDLERS: ArtifactHandler[] = [
   UserSetupHandler,
   EvalReviewHandler,
   DomVerifyHandler,
+  ReviewsHandler,
   GenericMarkdownHandler,
 ];
