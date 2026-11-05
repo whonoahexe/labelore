@@ -369,7 +369,7 @@ testing such pages against made-up examples that are clearly labelled as made up
    and falls back to a readable generic page when a real file differs from what the design expected.
    *(VIEW-21, VIEW-11, VIEW-12, VIEW-13)*
 
-**Plans**: 15/24 plans executed
+**Plans**: 16/24 plans executed
 
 Plans:
 **Wave 1**
@@ -404,7 +404,7 @@ Plans:
 - [ ] 10-17-PLAN.md — Sketches 051 (Browser check) and 052 (Cross-AI reviews) (user picks the winners)
 
 **Wave 8** *(blocked on Wave 7 completion)*
-- [ ] 10-16-PLAN.md — Spec page from 047: locked enough to plan, requirements as current, target and acceptance
+- [x] 10-16-PLAN.md — Spec page from 047: locked enough to plan, requirements as current, target and acceptance
 
 **Wave 9** *(blocked on Wave 8 completion)*
 - [ ] 10-18-PLAN.md — AI spec page from 048: system, framework, dimensions, checklist progress and template slots; the shared status-meter
@@ -535,7 +535,7 @@ file, ID or project.
 | 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
 | 8. Several Projects and a Switcher | v2.1 | 18/18 | Complete    | 2026-11-02 |
 | 9. Review, Audit and Root Document Pages | v2.1 | 16/16 | In Progress | - |
-| 10. Codebase Map, Specification and Check Pages | v2.1 | 15/24 | In Progress | - |
+| 10. Codebase Map, Specification and Check Pages | v2.1 | 16/24 | In Progress | - |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |
 | 12. Project Settings, Source Mode and Reading Polish | v2.1 | 0/TBD | Not started | - |
 | 13. Search and Quick-Jump Palette | v2.1 | 0/TBD | Not started | - |
