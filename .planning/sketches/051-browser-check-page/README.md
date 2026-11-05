@@ -2,7 +2,7 @@
 sketch: 051
 name: browser-check-page
 question: "How should the Browser check page put the outcome first, with Verified, Nothing to report and Could not look plainly different in shape and words (not colour alone), then the passed, failed and needs-review counts and every criterion with what was observed, failed first, as a picture?"
-winner: null
+winner: "A"
 tags: [dom-verify, browser-check, outcome, criteria, phase-10]
 ---
 
@@ -172,3 +172,25 @@ are outside the page): exactly four sizes in every variant; at 390 the display s
 
 All text is the made-up Lendshed DOM-VERIFY files (test/fixtures/lendshed, 10-07), verbatim; the No outcome and
 Other reason states are sketch-made edits of 03 and 01. The repository is public.
+
+## Winner
+**A: Browser window**, chosen by the user at the 10-17 checkpoint: "A looks good for both". No synthesis.
+
+Build A as drawn in its tab (marked "★ Selected"; the sketch opens on it):
+- **The window:** one framed figure (1px `--foreground` border). Its bar holds three decorative squares, the
+  outcome chip at Heading size (icon, word; the accessible name carries the reason) and an address field with the
+  target(s) the body names as mono paths that end-ellipsise (an empty dashed field when the body names none).
+- **Inside, Verified (or any file with criteria):** the criteria as tiles grouped Failed, Needs review, Passed, each
+  group headed by its square, word and count. A tile shows what was seen as boxed mono values and, when the line
+  quotes the contract, "Contract “…”"; a line with neither shows its first two lines. A tile's top edge carries its
+  tone (failed a double `--missing-fill` rule on a `--missing-border` frame). A tile opens the full observation in
+  a dock under the window.
+- **Inside, Could not look:** the view is shut: `--hatch`, the eye-off icon in `--in-flight-fill`, and a card with
+  the reason sentence and `reason: {value}` in mono (raw value only for a reason with no sentence).
+- **Inside, Nothing to report:** the view is blank: a dashed inner frame, the minus-circle icon in the muted
+  foreground, the same reason card.
+- **The status bar:** the three counts (square, Heading numeral, word; a zero on a dashed square) with
+  "{n} checked", or "No criteria were checked." on the two non-pass outcomes.
+- **No outcome:** the bar's chip is the quiet "Outcome not stated"; the tiles and counts still render.
+- **Below:** "What the check wrote" (the body's paragraphs) as a closed bar.
+- **At 390px:** the address field wraps under the chip, tiles stack one per row, the status bar wraps.
