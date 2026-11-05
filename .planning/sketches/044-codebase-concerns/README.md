@@ -131,6 +131,73 @@ Measured in light theme, text of the page only; at 390 the display size falls to
 All content is Labelore's own public map, the made-up Tidemark fixture, or invented here in Labelore's own
 words. The repository is public.
 
+## Round 2: D, E, F (visual-first)
+Round 1 (A, B, C above, kept as the tabs "Round 1 A/B/C") was rejected by the user: "no creativity in them, plain
+boring wall of texts". Round 2 replaces the panel interiors with three pictures of where and how much the concerns
+are. The frame is still 042 A. **The first screen of the panel is the picture**; a concern is read only when you
+select its mark, and the nine sections stay reachable as closed accordion bars under the picture (each holds the round 1
+list with Read more). Colours are tokens only: the `in-flight` tone for Security's marks and for the heat of a map cell
+(three opacity steps), muted-foreground at opacity steps for every other mark, a hatch of `--border`. No new hue and no
+destructive, warning or missing tone; no concern or section is ever toned as a failure.
+
+How to view: tabs `#d`, `#e`, `#f` (the sketch now opens on D); the same four states. Select a mark (or a dot) to open
+the concern under the picture; the section chips filter the marks (the others dim); the sketch's "Close" returns to
+the picture.
+
+- **D: Hotspots on the codebase.** The structure treemap with each concern a small square placed in the folder its
+  Files field names, so you see WHERE the risk sits; a folder's tint deepens with how many marks it holds (1 to 3, 4 to
+  11, 12 and more); concerns that name no file wait in a dashed tray under the map; the nine sections are the legend
+  chips under the picture. The most dangerous mark carries an accent ring (key in the picture's foot), no sentence.
+- **E: Risk piles.** Nine columns, one per section, Security first; each concern is one segment stacked from the
+  baseline, so a dense section visibly piles up (the 40-in-Tech-Debt state makes one tower); counts and the square tone
+  sit under each column. Zero is a dashed box. The most dangerous mark carries the accent ring.
+- **F: Shape chart.** A nine-spoke chart, Security at the top, the rest clockwise in the document's order. The shaded
+  shape is the count per section (square-root scale, so 40 and 1 can share a chart); each concern is a dot on its
+  spoke, running outwards in the document's order. The most dangerous item is called out ON the picture: a leader
+  line from its dot to a labelled box with its title verbatim (the one "Most dangerous" line of the round, in F only;
+  D and E use the ring).
+
+### Where each mark comes from
+| Mark | Source in the map |
+|------|-------------------|
+| D treemap cell, its area | Directory Layout tree in STRUCTURE (Labelore's own or the Tidemark fixture's); area = entries listed; hatched = the files at that level |
+| D, E, F mark = one concern | a concern counted by the 10-03 rule in the CONCERNS document (sections: the nine headings; unit: `###`, bold-label group, bullet, or table row) |
+| D mark position | the deepest tree folder that contains a path named in the concern's Files field (else any backticked path in its other fields); no path = the tray |
+| Security tone | the section heading (Security Considerations is first and is `in-flight` above zero, `complete` at zero) |
+| Mark opacity step | the concern's Priority field when it states High, Medium or Low |
+| Ring, callout | the first Security item, else the first Tech Debt item (UI-SPEC pull-line rule) |
+| E column, F spoke | one section heading each; counts as in 10-03; Security first, the rest in document order |
+| Section chips, accordion | the nine headings and their counts |
+
+### Mobile form at 390px (no sideways page scroll in any state, theme or variant)
+All three reflow; none pans. D's treemap is re-laid out to 324 by 500px (marks wrap inside their cell). E keeps nine
+columns at about 32px each, hides the column labels and shows the section chips under the picture. F's chart is 324px
+square with counts only at the spokes; the callout moves under the chart and the leader line is dropped.
+
+### Layout contract, round 2
+**D: Hotspots**
+- 1280px: the frame is 838px wide and 658px tall; the treemap is 804 by 450px (0.56 of width), the tray under it
+  and the section chips under the frame.
+- 390px: the frame is 358px, the treemap 324 by 500px; cells under 40px wide carry no name, marks keep 11px.
+**E: Risk piles**
+- 1280px: nine columns across 804px, 163px tall for Labelore's own 30 concerns (segments 13px tall, 3px apart); with
+  40 in Tech Debt the tallest column is about 700px and the frame 890px tall.
+- 390px: nine columns across 324px (145px tall), labels hidden, the chips under the frame.
+**F: Shape chart**
+- 1280px: the chart is 512px square, centred in the 838px frame (695px tall); the callout sits at its lower left.
+- 390px: the chart is 324px square (frame 679px tall including the callout below it).
+
+### Font sizes, round 2
+Measured at 1280 and 390, light theme, text of the page only: the same four (`--fs-display-3` on the `h1`, `--fs-7`
+for counts and headings, `--fs-4` body, `--fs-2` labels). No exception needed.
+
+### What to look for, round 2
+- D: can you tell at a glance where the risk sits (the server folder, the handlers, `.planning`)? How does the map
+  read with Tidemark's two folders, and with 40 marks in one folder (the 40-item state)?
+- E: do the piles say "Tech Debt dwarfs everything" better than a number? Is Security first obvious from the piles?
+- F: is the shape chart a picture you would keep, or is a square-root radar hard to read for counts?
+- The "Most dangerous" decision: a ring (D, E), a callout with the title on the picture (F), or none.
+
 ## Winner
-Not chosen yet. The choice is the 10-09 checkpoint (Task 3), together with sketch 043 and whether the
-"Most dangerous" line stays.
+Not chosen yet. Round 1 (A, B, C) was rejected; round 2 (D, E, F) is the 10-09 checkpoint choice, together with sketch
+043 and whether "Most dangerous" stays.

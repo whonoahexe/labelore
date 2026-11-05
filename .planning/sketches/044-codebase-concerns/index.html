@@ -241,6 +241,187 @@ button.t-name:hover .nm { text-decoration: underline; text-underline-offset: var
 .lookup .where li { color: var(--muted-foreground); }
 .lookup .where li:first-child { color: var(--foreground); }
 
+/* ---------- round 2: visual-first atoms (tokens, opacity steps and hatch only; no colour of its own) ---------- */
+:root {
+  --fill-1: color-mix(in oklch, var(--foreground) 4%, transparent);
+  --fill-2: color-mix(in oklch, var(--foreground) 8%, transparent);
+  --fill-3: color-mix(in oklch, var(--foreground) 13%, transparent);
+  --fill-4: color-mix(in oklch, var(--foreground) 19%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px 6px);
+}
+.pic { border: 1px solid var(--border); min-width: 0; display: grid; }
+.pic-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); background: var(--veil); }
+.pic-bar .ff-title { margin-right: auto; }
+.pic-bar button.status-chip { cursor: pointer; }
+.pic-bar button.status-chip[aria-pressed='true'] { background: var(--muted); }
+.pic-body { overflow: auto; padding: var(--space-4); min-width: 0; max-width: 100%; }
+.pic-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--border); color: var(--muted-foreground); }
+.pic-foot .key { display: inline-flex; align-items: center; gap: var(--space-1-5); }
+.trace { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-items: center; margin-bottom: var(--space-3); }
+.trace .btn-xs { text-transform: none; letter-spacing: var(--ls-wider); font-family: var(--font-mono); font-weight: var(--fw-medium); }
+.trace .btn-xs[aria-pressed='true'] { background: var(--primary-tint); border-color: var(--primary-border); }
+
+/* the drawn graph: boxes are HTML at real size (text stays at its token size), arrows are an SVG overlay */
+.g-wrap { position: relative; margin: 0 auto; }
+.g-svg { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+.g-svg .e { stroke: var(--muted-foreground); stroke-width: 1.5; fill: none; }
+.g-svg .ah { fill: var(--muted-foreground); stroke: none; }
+.g-svg .edge[data-hot='true'] .e { stroke: var(--primary); stroke-width: 2.5; }
+.g-svg .edge[data-hot='true'] .ah { fill: var(--primary); }
+.g-svg .edge[data-dim='true'] { opacity: 0.3; }
+.g-node { position: absolute; display: grid; align-content: center; gap: var(--space-0-5); padding: var(--space-1-5) var(--space-3); border: 1px solid var(--border); background: var(--fill-1); text-align: left; min-width: 0; }
+.g-node:hover { background: var(--state-hover); }
+.g-node .g-t { font-weight: var(--fw-semibold); overflow-wrap: anywhere; line-height: var(--lh-tight); }
+.g-node .g-s { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); overflow-wrap: anywhere; line-height: var(--lh-snug); }
+.g-node[data-hot='true'] { border-color: var(--primary); background: var(--primary-tint); box-shadow: 0 0 0 1px var(--primary); }
+.g-node[data-dim='true'] { opacity: 0.45; }
+.g-node[data-onpath='true'] { border-color: var(--primary-border); }
+.g-lab { position: absolute; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); background: var(--background); padding: 0 var(--space-1); max-width: 17rem; line-height: var(--lh-snug); }
+.g-badges { position: absolute; top: calc(var(--space-2) * -1 - 1px); right: var(--space-2); display: flex; gap: var(--space-1); }
+.bd { display: inline-grid; place-items: center; min-width: var(--space-4-5, 1.125rem); height: 1.125rem; padding: 0 var(--space-1); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); line-height: 1; }
+.bd-step { background: var(--primary); color: var(--background); }
+.bd-flag { border: 1px dashed var(--muted-foreground); background: var(--background); color: var(--muted-foreground); }
+
+/* on-demand detail dock */
+.dock { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--primary-border); background: var(--primary-tint); min-width: 0; }
+.dock-empty { padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); color: var(--muted-foreground); }
+.dock h4 { margin: 0; font-size: inherit; font-weight: var(--fw-semibold); }
+.dock .d-row { display: grid; gap: var(--space-0-5); }
+.dock .d-row > span:first-child { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; color: var(--muted-foreground); }
+.dock pre { margin: 0; font-family: var(--font-mono); font-size: var(--fs-2); line-height: var(--lh-snug); white-space: pre-wrap; overflow-wrap: anywhere; }
+.dock .d-x { margin-left: auto; }
+.dock-head { display: flex; align-items: baseline; gap: var(--space-3); }
+.acc-list { display: grid; }
+.acc { border-top: 1px solid var(--border); }
+.acc:last-child { border-bottom: 1px solid var(--border); }
+.acc > summary { display: flex; align-items: center; gap: var(--space-3); min-height: var(--space-10); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); }
+.acc > summary::-webkit-details-marker { display: none; }
+.acc > summary:hover { background: var(--state-hover); }
+.acc > summary .n { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-7); }
+.acc > summary svg { color: var(--muted-foreground); }
+.acc[open] > summary svg { transform: rotate(90deg); }
+.acc > .acc-body { display: grid; gap: var(--space-4); padding: 0 0 var(--space-5) var(--space-7); }
+
+/* E: the territory, layers as bands */
+.bands { display: grid; gap: var(--space-0-5); }
+.band { display: grid; grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr); border: 1px solid var(--border); background: var(--fill-1); }
+.band[data-step='2'] { background: var(--fill-2); } .band[data-step='3'] { background: var(--fill-3); } .band[data-step='4'] { background: var(--fill-4); }
+.band[data-out='true'] { background: transparent; border-style: dashed; }
+.band[data-dim='true'] { opacity: 0.4; }
+.band-lab { display: grid; gap: var(--space-0-5); align-content: start; padding: var(--space-2-5) var(--space-3); border-right: 1px solid var(--border); min-width: 0; }
+.band-lab b { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.band-lab code { font-size: var(--fs-2); color: var(--muted-foreground); background: none; padding: 0; }
+.band-uses { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-1-5); }
+.use { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0 var(--space-1-5); border: 1px solid var(--border); background: var(--background); font-size: var(--fs-2); color: var(--muted-foreground); }
+.use svg { width: var(--space-3); height: var(--space-3); }
+.band-body { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-content: flex-start; padding: var(--space-2-5); min-width: 0; }
+.chip-c { padding: var(--space-1) var(--space-2-5); border: 1px solid var(--border); background: var(--background); text-align: left; min-width: 0; overflow-wrap: anywhere; }
+.chip-c:hover { background: var(--state-hover); }
+.chip-c[aria-pressed='true'] { border-color: var(--primary); background: var(--primary-tint); }
+.tile { position: relative; flex: var(--w) 1 0; min-width: 7rem; display: grid; gap: var(--space-0-5); padding: var(--space-1-5) var(--space-2); border: 1px solid var(--border); background: var(--background); text-align: left; align-content: start; }
+.tile:hover { background: var(--state-hover); }
+.tile[aria-pressed='true'] { border-color: var(--primary); background: var(--primary-tint); }
+.tile .tn { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); overflow-wrap: break-word; word-break: break-word; }
+.tile .tc { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.pins { display: flex; gap: var(--space-1); flex-wrap: wrap; }
+.pin { display: inline-grid; place-items: center; min-width: 1.125rem; height: 1.125rem; padding: 0 var(--space-1); background: var(--primary); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); line-height: 1; border: 0; cursor: pointer; }
+.pin[aria-pressed='true'] { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.pin-legend { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.pin-chip { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: 0 var(--space-2) 0 0; border: 1px solid var(--border); background: var(--background); font-size: var(--fs-2); text-align: left; }
+.pin-chip .pin { height: 1.5rem; }
+.pin-chip:hover { background: var(--state-hover); }
+.pin-chip[aria-pressed='true'] { border-color: var(--primary); background: var(--primary-tint); }
+@media (max-width: 42rem) { .band { grid-template-columns: minmax(0, 1fr); } .band-lab { border-right: 0; border-bottom: 1px solid var(--border-faint); } }
+
+/* D: the treemap */
+.tm { position: relative; width: 100%; }
+.tm-cell { position: absolute; border: 1px solid var(--border); background: var(--fill-1); overflow: hidden; text-align: left; cursor: pointer; }
+.tm-cell[data-d='2'] { background: var(--fill-2); } .tm-cell[data-d='3'] { background: var(--fill-3); }
+.tm-cell[data-group='true'] { background: var(--hatch); }
+.tm-cell:hover { outline: 2px solid var(--primary-border); outline-offset: -2px; z-index: 2; }
+.tm-cell[data-sel='true'] { outline: 2px solid var(--primary); outline-offset: -2px; z-index: 3; }
+.tm-n { display: block; padding: 1px 4px; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tm-c { display: block; padding: 0 4px; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tm-pins { position: absolute; right: 2px; bottom: 2px; display: flex; gap: 2px; flex-wrap: wrap; justify-content: flex-end; max-width: 100%; }
+
+/* F: sunburst and metro */
+.sb-wrap { position: relative; width: 100%; max-width: 36rem; margin: 0 auto; aspect-ratio: 1; }
+.sb-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sb-wrap .arc { stroke: var(--background); stroke-width: 1; cursor: pointer; fill: var(--fill-2); }
+.sb-wrap .arc[data-d='2'] { fill: var(--fill-3); } .sb-wrap .arc[data-d='3'] { fill: var(--fill-4); } .sb-wrap .arc[data-d='1'] { fill: var(--fill-1); }
+.sb-wrap .arc[data-group='true'] { fill: var(--border); }
+.sb-wrap .arc:hover { fill: var(--primary-tint); stroke: var(--primary-border); }
+.sb-wrap .arc[data-sel='true'] { fill: var(--primary-tint); stroke: var(--primary); stroke-width: 2; }
+.sb-lab, .sb-pin { position: absolute; transform: translate(-50%, -50%); }
+.sb-lab { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); pointer-events: none; white-space: nowrap; }
+.sb-core { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); pointer-events: none; }
+.metro { display: grid; gap: var(--space-5); width: max-content; min-width: 100%; }
+.m-row { position: relative; }
+.m-name { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; color: var(--muted-foreground); margin-bottom: var(--space-1); }
+.m-track { position: relative; height: 4.75rem; }
+.m-line { position: absolute; left: 0; right: 0; top: 1.05rem; border-top: 5px var(--ls) var(--muted-foreground); }
+.m-st { position: absolute; top: 0; transform: translateX(-50%); width: 6.5rem; display: grid; justify-items: center; gap: var(--space-1); text-align: center; }
+.m-dot { width: 1.25rem; height: 1.25rem; border: 2px solid var(--foreground); background: var(--background); display: grid; place-items: center; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); line-height: 1; }
+.m-st[data-on='true'] .m-dot { background: var(--primary); border-color: var(--primary); color: var(--background); }
+.m-st[data-ix='true'] .m-dot { outline: 2px solid var(--muted-foreground); outline-offset: 2px; }
+.m-st .m-t { font-size: var(--fs-2); line-height: var(--lh-snug); overflow-wrap: anywhere; }
+.m-link { position: absolute; width: 0; border-left: 2px dotted var(--muted-foreground); }
+
+/* ---------- 044 round 2: marks, hotspots, piles, radar ---------- */
+.mk { display: inline-block; flex: none; width: 11px; height: 11px; padding: 0; border: 1px solid var(--muted-foreground); background: var(--muted-foreground); opacity: 0.75; cursor: pointer; }
+.mk[data-sec='0'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.mk[data-pri='high'] { opacity: 1; } .mk[data-pri='med'] { opacity: 0.6; } .mk[data-pri='low'] { opacity: 0.38; }
+.mk[data-sec='0'][data-pri=''] { opacity: 1; }
+.mk:hover { outline: 2px solid var(--primary-border); outline-offset: 1px; }
+.mk[data-on='true'] { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.mk[data-top='true'] { outline: 2px solid var(--primary); outline-offset: 2px; }
+.mk[data-dim='true'] { opacity: 0.14; }
+.hs-marks { position: absolute; left: 3px; right: 3px; bottom: 3px; display: flex; flex-wrap: wrap; gap: 3px; align-content: flex-end; }
+.hs-marks[data-leaf='false'] { left: auto; top: 2px; bottom: auto; justify-content: flex-end; max-width: 55%; align-content: flex-start; }
+.tm-cell[data-heat='1'] { background: color-mix(in oklch, var(--in-flight-fill) 10%, transparent); }
+.tm-cell[data-heat='2'] { background: color-mix(in oklch, var(--in-flight-fill) 20%, transparent); }
+.tm-cell[data-heat='3'] { background: color-mix(in oklch, var(--in-flight-fill) 32%, transparent); }
+.tray { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); padding: var(--space-2) var(--space-3); border: 1px dashed var(--border); }
+.tray .hs-marks { position: static; display: flex; flex-wrap: wrap; gap: 3px; }
+.sec-legend { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.sec-chip { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--background); font-size: var(--fs-2); }
+.sec-chip b { font-family: var(--font-mono); font-weight: var(--fw-semibold); }
+.sec-chip:hover { background: var(--state-hover); }
+.sec-chip[aria-pressed='true'] { border-color: var(--primary-border); background: var(--primary-tint); }
+.piles { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: var(--space-1-5); align-items: end; }
+.pile-col { display: grid; gap: var(--space-2); align-content: end; min-width: 0; }
+.pile-col[data-dim='true'] { opacity: 0.35; }
+.pile { display: flex; flex-direction: column-reverse; gap: 3px; }
+.pile .mk { width: 100%; height: 13px; }
+.pile-zero { height: 13px; border: 1px dashed var(--muted-foreground); display: grid; place-items: center; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); line-height: 1; }
+.pile-lab { display: grid; gap: var(--space-1); justify-items: start; text-align: left; padding-top: var(--space-1-5); border-top: 1px solid var(--border); }
+.pile-lab b { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: 1.1; }
+.pile-lab .pl { font-size: var(--fs-2); color: var(--muted-foreground); overflow-wrap: break-word; line-height: 1.25; }
+.pile-lab[aria-pressed='true'] b { color: var(--primary); }
+.narrow-only { display: none; }
+.radar-box { display: grid; justify-items: center; }
+.radar { position: relative; width: 100%; max-width: 32rem; aspect-ratio: 1; }
+.radar svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.radar .ring, .radar .spoke { fill: none; stroke: var(--border); stroke-width: 1; }
+.radar .shape { fill: color-mix(in oklch, var(--in-flight-fill) 16%, transparent); stroke: var(--in-flight-fill); stroke-width: 1.5; }
+.radar .lead { stroke: var(--primary); stroke-width: 1.5; }
+.radar .mk { position: absolute; transform: translate(-50%, -50%); }
+.rd-lab { position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center; text-align: center; cursor: pointer; line-height: 1.1; }
+.rd-lab b { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); }
+.rd-t { font-size: var(--fs-2); color: var(--muted-foreground); max-width: 6.5rem; }
+.rd-call.out { display: none; }
+.rd-call { position: absolute; left: 0; bottom: 0; width: 28%; display: grid; gap: var(--space-1); padding: var(--space-2); border-left: 2px solid var(--primary); background: var(--background); color: var(--muted-foreground); font-size: var(--fs-2); overflow-wrap: anywhere; }
+@media (max-width: 42rem) {
+  .pile-lab .pl { display: none; }
+  .narrow-only { display: flex; }
+  .rd-t { display: none; }
+  .radar .lead { display: none; }
+  .rd-call.in { display: none; }
+  .rd-call.out { display: grid; position: static; width: auto; margin-top: var(--space-3); }
+  .radar-box { display: block; }
+  .radar { max-width: none; }
+}
+
 /* ---------- 044 specifics ---------- */
 .source-note { color: var(--muted-foreground); overflow-wrap: anywhere; }
 .cn-top { display: grid; gap: var(--space-4); min-width: 0; }
@@ -314,9 +495,12 @@ button.t-name:hover .nm { text-decoration: underline; text-underline-offset: var
 <nav id="sketch-bar" aria-label="Sketch controls">
   <span class="lbl">044 concerns</span>
   <span class="grp" id="tabs">
-    <a data-tab="a" href="#a">A: Count strip</a>
-    <a data-tab="b" href="#b">B: Count grid</a>
-    <a data-tab="c" href="#c">C: Gutter ledger</a>
+    <a data-tab="a" href="#a">Round 1 A: Count strip</a>
+    <a data-tab="b" href="#b">Round 1 B: Count grid</a>
+    <a data-tab="c" href="#c">Round 1 C: Gutter ledger</a>
+    <a data-tab="d" href="#d">D: Hotspots on the codebase</a>
+    <a data-tab="e" href="#e">E: Risk piles</a>
+    <a data-tab="f" href="#f">F: Shape chart</a>
   </span>
   <span class="grp">
     <button data-theme="light">Light</button>
@@ -329,10 +513,14 @@ button.t-name:hover .nm { text-decoration: underline; text-underline-offset: var
 <section data-variant="a" class="variant fr"></section>
 <section data-variant="b" class="variant fr" hidden></section>
 <section data-variant="c" class="variant fr" hidden></section>
+<section data-variant="d" class="variant fr" hidden></section>
+<section data-variant="e" class="variant fr" hidden></section>
+<section data-variant="f" class="variant fr" hidden></section>
 <div id="toast" role="status"></div>
 
 <script>
 const CONCERNS_DATA = {"labelore":{"sections":[{"h":"Security Considerations","label":"Security","items":[{"title":"Remote project mirroring copies the whole `.planning/` tree to local disk","fields":[["Risk","`src/server/remote-source.ts` runs `tar -cf - .planning` over ssh and extracts it into a local temp directory, which holds the full planning tree, including `config.json` with its secret keys in plaintext. Secret masking happens only in memory at display time (`src/planning-repo/secret-mask.ts`). The temp copy is not masked."],["Files","`src/server/remote-source.ts` (mirror and cleanup), `src/cli/remote-target.ts` (`buildMirrorCommands`), `src/planning-fs/local-fs.ts` (`createTempDirSync`, `removeTempDirSync`), `src/planning-repo/secret-mask.ts`"],["Current mitigation","Temp directories are created mode 0700 under the OS temp dir. The remote side only runs a path check and `tar -c`, so the remote host is never written to. ssh runs with `BatchMode=yes` and no password, and remote paths are single-quoted."],["Recommendations","Document that a remote mirror leaves plaintext on local disk until the process exits. Check whether `removeTempDirSync` runs on process signals as well as on mirror replacement. A plausible cleanup gap is a crash or SIGKILL, which would leave the mirror behind. Consider masking secret keys in the mirror, or excluding `config.json` from the tar."]]},{"title":"Mirror size and time are unbounded","fields":[["Risk","The mirror has no size cap. Its only limit is a 120-second timeout (`DEFAULT_TIMEOUT_MS` in `src/server/remote-source.ts`). A large `.planning/` tree, or one containing large generated assets, can fill the local temp directory before the timeout fires."],["Files","`src/server/remote-source.ts` (line 29)"],["Current mitigation","Timeout only."],["Recommendations","Cap the tar stream by bytes, and surface a failure status when the cap is hit."]]},{"title":"Sketch HTML runs scripts from the target project","fields":[["Risk","Sketch files from a project's `.planning/` are served with `Content-Security-Policy: sandbox allow-scripts`, so their scripts run in an opaque origin. That keeps them away from the app's API, but they still execute code that a project author wrote, or that arrived through a cloned repository."],["Files","`src/server/sketch-files.ts` (`SECURITY_HEADERS`, lines 23-27; font CORS wildcard at line 157)"],["Current mitigation","Opaque origin under the sandbox directive. The `/api` request guard does not apply to these routes. Font responses are the only ones given `Access-Control-Allow-Origin: *`."],["Recommendations","Keep the opaque-origin sandbox. Add a test that asserts the header on every sketch response, including directory redirects and error responses."]]},{"title":"Raw HTML in planning markdown is sanitized with an extended schema","fields":[["Risk","The markdown pipeline runs `rehype-raw` and then `rehype-sanitize` with a schema extended from `defaultSchema`. The extension allows `className` on every element and `checked`, `disabled` and `type` on `input`. Correctness depends on sanitize running before any trusted plugin adds markup. That order is correct today (`src/rendering/markdown.ts`, lines 300-315), but nothing enforces it."],["Files","`src/rendering/markdown.ts`, `src/web/pages/artifact-page.tsx` (line 260)"],["Current mitigation","Sanitize runs before `rehypeResolvedReferences`, `rehypeSlug` and `trustedEnrichment`."],["Recommendations","Add a test that feeds `<img src=x onerror=...>`, `<a href=\"javascript:...\">` and `<script>` through the full pipeline and asserts that all three are removed. This is the regression test noted as debt above."]]},{"title":"Secret masking uses a hard-coded key list","fields":[["Risk","`SECRET_CONFIG_KEYS` in `src/planning-repo/secret-mask.ts` holds three top-level keys (`brave_search`, `firecrawl`, `exa_search`). A new secret key added by GSD would display in plaintext."],["Files","`src/planning-repo/secret-mask.ts`"],["Current mitigation","Keys are copied from GSD's own `secrets.cjs`. Nested values under a secret key are masked fail-closed."],["Recommendations","Add a test that compares the list against the GSD version the project pins, and warn in the settings page when `config.json` contains top-level keys that look like credentials but are not on the list."]]},{"title":"Host allowlist widens by environment variable","fields":[["Risk","`LABELORE_ALLOWED_HOSTS` adds extra accepted `Host` values. It is opt-in and rejects wildcards, which is correct. The API is read-only apart from settings, but a tunnel that is not intended to be public would still expose every project it can read."],["Files","`src/server/request-guard.ts` (`parseAllowedHosts`, `createHostPolicy`), `src/server/index.ts` (`HOSTNAME = '127.0.0.1'`, line 23)"],["Current mitigation","Loopback-only binding. DNS-rebinding protection on every request. No `Access-Control-*` headers."],["Recommendations","Nothing urgent. Make the server log a line at startup listing the extra hosts it accepts."]]}]},{"h":"Tech Debt","label":"Tech debt","items":[{"title":"Oversized modules","fields":[["Issue","Several files have grown well past what a reader can hold in one pass. Each mixes parsing, shaping and presentation concerns."],["Files","`src/planning-repo/handlers/research-briefing.ts` (1879 lines), `src/web/pages/artifact-page.tsx` (1476), `src/planning-repo/handlers/context-brief.ts` (1421), `src/planning-repo/handlers/project-research-lift.ts` (1227), `src/planning-repo/handlers/debug-session.ts` (1150), `src/planning-repo/handlers/ui-review-audit.ts` (1125), `src/planning-repo/handlers/verification-report.ts` (1105), `src/server/project-registry.ts` (761)"],["Impact","Changes to one artifact type are hard to review in isolation. Regex-heavy extraction in these files is difficult to audit (see Fragile Areas)."],["Fix approach","When touching one of these, extract the pure parsing step into a sibling module with its own unit tests before adding features. Do not refactor them wholesale."]]},{"title":"One handler per artifact type, bespoke parsing each time","fields":[["Issue","Each GSD artifact type has its own handler under `src/planning-repo/handlers/`. Frontmatter reading is shared (`src/planning-repo/frontmatter.ts`, `tryParseFrontmatter`), but section extraction, heading matching and regex parsing are reimplemented per handler."],["Files","`src/planning-repo/handlers/`, `src/planning-repo/frontmatter.ts`, `src/planning-repo/handlers/section-projection.ts`"],["Impact","A fix in one handler's heading or table parsing does not reach its siblings. Compatibility with GSD artifact drift (a stated project constraint) has to be fixed per file."],["Fix approach","Route new section-level parsing through `section-projection.ts` rather than adding another local regex."]]},{"title":"Documentation drift in the project instructions","fields":[["Issue","`.claude/CLAUDE.md` records the research-time stack (TypeScript 7.0.2, Hono 4.13.3, mermaid 11.17.0) and says \"Architecture not yet mapped\". `package.json` pins TypeScript 5.9.3, Hono 4.13.4 and mermaid 11.17.1."],["Files","`.claude/CLAUDE.md`, `package.json`"],["Impact","A planner or executor reading CLAUDE.md gets a stack that does not match the installed one."],["Fix approach","Regenerate the stack section from `package.json` and point the architecture section at `.planning/codebase/ARCHITECTURE.md`."]]},{"title":"Deferred human verification recorded as \"fixed\"","fields":[["Issue","`.planning/WINDOWS.md` reports `open_count: 0`, but entries 8 and 9 are `unrun-verify` items whose live visual or motion checks were deferred \"to end-of-phase human verification\". They are marked `fixed` on the strength of automated tests."],["Files","`.planning/WINDOWS.md` (rows 8 and 9), `src/web/components/route-progress.tsx`, `src/web/styles/globals.css`"],["Impact","The ledger suggests nothing is outstanding while two real-browser checks (reduced-motion behaviour of the route progress bar, and the scrollbar reveal in both themes) have never been run."],["Fix approach","Run the two checks on the live server and record the result, or reopen the entries."]]},{"title":"Regression tests recorded as debt and not written","fields":[["Issue","The v1.0 retrospective notes three regression tests that were \"noted rather than added\" and carried forward: a ReDoS timing test, a guard against `dangerouslySetInnerHTML` misuse, and a view-mode outline cap."],["Files","`.planning/RETROSPECTIVE.md` (lines 110-111, 137), `src/web/pages/artifact-page.tsx` (line 260 uses `dangerouslySetInnerHTML`)"],["Impact","The safety property the `dangerouslySetInnerHTML` guard would protect (only sanitized HTML reaches that prop) is currently held only by convention."],["Fix approach","Add the guard as a test that fails on any new `dangerouslySetInnerHTML` outside an allowlist of files."]]},{"title":"Open test-hygiene warnings","fields":[["Issue","`.planning/STATE.md` (line 202) lists five test-hygiene review warnings still open from Phase 6. WR-02 is the one it calls worth fixing first: the no-skips scan's comment blanker hides test headers that appear after `//` inside string literals."],["Files","`.planning/STATE.md`, `test/` (the no-skips scan lives in the test gate tooling, `test/helpers/vitest-gate.mjs`)"],["Impact","The no-skips gate can miss a skipped test whose header sits after a `//` in a string."],["Fix approach","Fix the blanker to tokenise string literals before stripping comments."]]}]},{"h":"Known Bugs","label":"Known bugs","items":[{"title":"Startup mode depends on `NODE_ENV`","fields":[["Symptoms","On a previous occasion the tunnel origin ran `node src/server/index.ts` with `NODE_ENV` unset. The server then served the Vite dev middleware instead of `./dist`, and the first page load took roughly 12 seconds over a 150 ms round trip."],["Files","`src/server/index.ts` (production flag is derived from `process.env.NODE_ENV === 'production'`), `package.json` (the `dev` script runs `node src/server/index.ts` directly)"],["Trigger","Running the entry file without `NODE_ENV=production` in any deployed or tunnelled context."],["Workaround","Use `npm start` (sets `NODE_ENV=production`). The root cause is recorded in `.planning/debug/knowledge-base.md` under `loading-state-regression`."],["Fix approach","Make the mode an explicit flag on the entry point, or refuse to serve the dev middleware when a non-loopback `LABELORE_ALLOWED_HOSTS` entry is set."]]}]},{"h":"Performance Bottlenecks","label":"Performance","items":[{"title":"Full snapshot rebuilt per project load (inferred)","fields":[["Problem","Loading a project reads and parses every `.planning/` file, then builds a search index and a route table. The code shape suggests this happens on each load and each refresh, with no incremental path."],["Files","`src/planning-repo/snapshot.ts`, `src/server/search-index.ts`, `src/server/artifact-index.ts`, `src/presentation/route-table.ts`"],["Cause","No file watcher ships in v1 (CLAUDE.md lists it as a future direction). Each load is a full read."],["Improvement path","Cache per-file parse results keyed by path and mtime. This would also be the seam the planned watcher needs. Measure first on a large real project; this has not been timed."]]},{"title":"Synchronous filesystem calls on the server path","fields":[["Problem","`src/server/settings-store.ts` uses `readFileSync`, `writeFileSync`, `renameSync` and `realpathSync` inside request handlers. There are 13 `*Sync` calls across `src/server/`."],["Files","`src/server/settings-store.ts`, `src/server/remote-source.ts`, `src/server/sketch-files.ts`"],["Cause","The settings file is small, so the block is short. It is still a block on the single event loop."],["Improvement path","Low priority. Move the settings read to `fs/promises` if settings grow."]]},{"title":"Remote mirror runs on the request path","fields":[["Problem","An ssh mirror of a remote project can take up to 120 seconds, and the mirror lives in the same process that serves other projects."],["Files","`src/server/remote-source.ts`"],["Cause","The mirror is awaited inside the project load."],["Improvement path","Show the cached snapshot while a refresh runs in the background, and report the refresh state separately."]]}]},{"h":"Fragile Areas","label":"Fragile areas","items":[{"title":"Regex-driven parsing of free-form markdown","fields":[["Files","`src/presentation/project-research.ts`, `src/presentation/project-research-panels.ts`, `src/rendering/plan-segments.ts`, `src/presentation/sketches.ts`, `src/presentation/references.ts`"],["Why fragile","Many patterns match prose that GSD generates, such as `Phase N` labels, `**Bold:**` leads, em-dash separated clauses and \"mitigated\" phrasing. Each is length-capped (`{1,200}`, `{40,}`), which limits backtracking, but an edit to the source artifact wording silently changes what gets extracted."],["Safe modification","Add a fixture-based test for each pattern before changing it. The fixtures live under `fixtures/`. Do not loosen a length cap without a timing test."],["Test coverage","Unit tests exist for the presentation layer. The ReDoS timing test named in the retrospective is missing."]]},{"title":"Source-text contract tests with an implicit oracle","fields":[["Files","`test/web/loading-state-contract.test.ts`, and others of the same kind"],["Why fragile","These tests assert that a file contains certain identifiers. They pass when the parts exist but are not wired together. The loading-state regression shipped while this suite was green, and the knowledge base records it (`.planning/debug/knowledge-base.md`)."],["Safe modification","Prefer behavioural tests that drive the unit with no DOM, as `test/web/route-chunk-store.test.ts` does. Do not add new source-text assertions where a behavioural test can be written."],["Test coverage","Behavioural coverage of the route chunk store is good. Source-text tests still carry the most weight in the loading and shell contracts."]]},{"title":"Frontmatter parsing","fields":[["Files","`src/planning-repo/frontmatter.ts`"],["Why fragile","`gray-matter` is called inside a try block, and the file explains that a pre-parse cache entry survives a throw. This is handled today, but the cache behaviour is subtle."],["Safe modification","Keep every call on `tryParseFrontmatter`. Do not call `matter()` directly outside that function."]]},{"title":"Settings file write path","fields":[["Files","`src/server/settings-store.ts`"],["Why fragile","Writes go to a temp file, then rename over `settings.json`, with a `.bak` copy made from the existing file. The `wx` flag and the realpath check are what prevent a symlink from redirecting the write. Either can be removed in a refactor without any test failing."],["Safe modification","Keep the realpath check and the `wx` flag together. Add a test that places a symlink at `settings.json` and asserts that the write is refused."]]}]},{"h":"Scaling Limits","label":"Scaling limits","items":[{"title":"Project count and project size","fields":[["Current capacity","Not measured. The fixture corpus (`fixtures/`) and the Labelore repository are the largest known inputs."],["Limit","Unknown. The full-read design (see Performance Bottlenecks) will grow linearly with the number of `.planning/` files."],["Scaling path","Per-file caching keyed on path and mtime, then the watcher."]]},{"title":"Remote mirror size","fields":[["Current capacity","120-second timeout, no byte cap."],["Limit","Local temp disk space, and the timeout for large trees."],["Scaling path","Byte cap, and a mirror that copies only the directories the reader needs."]]}]},{"h":"Dependencies at Risk","label":"Dependencies at risk","items":[{"title":"TypeScript and tooling version split","fields":[["Risk","The project pins `typescript` 5.9.3 while the research recorded TypeScript 7.0.2 as the dist-tag latest. Editor and lint tooling may lag if the project moves."],["Impact","Upgrading later means checking `typescript-eslint` and the editor integration together."],["Migration plan","Stay on 5.x until `typescript-eslint` has a stated 7.x support line, then upgrade both in one change."]]},{"title":"`gray-matter` and `hast-util-sanitize` version coupling","fields":[["Risk","`hast-util-sanitize` is a direct dependency and must match the schema shape that `rehype-sanitize` 6.0.0 expects. A mismatch would silently change what the schema allows."],["Impact","Sanitize could start accepting markup it currently strips."],["Migration plan","Bump the two together and run the sanitizer test (see Security Considerations) before accepting the change."]]}]},{"h":"Missing Critical Features","label":"Missing features","items":[{"title":"No runtime guard that the reader stays read-only","fields":[["Problem","The read-only boundary is enforced by convention and by `test/portability.test.ts`, which holds the list of `node:fs` importers to exactly `src/planning-fs/local-fs.ts` and `src/server/settings-store.ts`. Nothing stops a new importer from being added without that test being updated."],["Blocks","Write-back (a named future direction) will need this boundary to be explicit, not just tested."]]},{"title":"No health surface for a degraded snapshot","fields":[["Problem","Unknown or malformed GSD artifacts degrade to warnings in the snapshot (`src/planning-repo/warnings.ts`). The UI does not offer a single place to see every warning across projects."],["Blocks","Diagnosing GSD format drift across many projects requires opening each one."]]}]},{"h":"Test Coverage Gaps","label":"Test coverage gaps","items":[{"title":"Markdown sanitizer end-to-end","fields":[["What's not tested","The full pipeline's handling of hostile raw HTML and `javascript:` URLs, against the actual schema."],["Files","`src/rendering/markdown.ts`"],["Risk","A schema edit could re-enable script or event-handler attributes without any test failing."],["Priority","High"]]},{"title":"ReDoS timing on presentation regexes","fields":[["What's not tested","Pathological input timing for the regexes in `src/presentation/` and `src/rendering/plan-segments.ts`. Named as debt in `.planning/RETROSPECTIVE.md`."],["Files","`src/presentation/project-research-panels.ts`, `src/rendering/plan-segments.ts`"],["Risk","A long adversarial line in a planning file could stall the server's event loop."],["Priority","Medium"]]},{"title":"Remote mirror failure paths","fields":[["","What's not tested (not confirmed by a test search in this pass): Behaviour when `tar` is missing, when ssh exits 255 mid-stream, and when the temp directory is left behind after a crash."],["Files","`src/server/remote-source.ts`, `src/cli/remote-target.ts`"],["Risk","Leftover plaintext mirrors (see Security Considerations)."],["Priority","High"]]},{"title":"Settings symlink refusal","fields":[["","What's not tested (not confirmed by a test search in this pass): A symlink placed at `settings.json` or at the settings directory."],["Files","`src/server/settings-store.ts`"],["Risk","Writes could be redirected outside the settings directory."],["Priority","Medium"]]}]}],"intro":["Scope: the full repository, excluding `.claude/worktrees` and `node_modules`. Findings come from reading the source, the planning ledgers (`.planning/WINDOWS.md`, `.planning/RETROSPECTIVE.md`, `.planning/STATE.md`, `.planning/debug/knowledge-base.md`) and grep sweeps for risky APIs. No runtime or load testing was performed, so performance items are inferred from code shape and are marked as such."]},"tidemark":{"sections":[{"h":"Security Considerations","label":"Security","items":[{"title":"Emailed codes never expire early","fields":[["Risk","A sign-in code stays valid for a full day even after it has been used"],["Files","`server/berths/auth.ts`"],["Current mitigation","Codes are six digits and rate limited per address"],["Recommendations","Mark a code as spent on first use"]]},{"title":"Staff session cookie","fields":[["Risk","The cookie is not marked secure when the proxy terminates TLS"],["Files","`server/office/auth.ts`"],["Current mitigation","The proxy redirects every plain request"],["Recommendations","Read the forwarded protocol header and set the flag"]]}]},{"h":"Tech Debt","label":"Tech debt","items":[{"title":"Window rebuild on every refresh","fields":[["Issue","The tide job deletes and rewrites all windows instead of changing the ones that moved"],["Files","`server/tides/refresh.ts`, `server/store/index.ts`"],["Impact","A request checked during a refresh can see no window at all"],["Fix approach","Write the new windows in one transaction and swap them in"]]},{"title":"Two copies of the overlap rule","fields":[["Issue","The board repeats the clash check so it can grey out dates early"],["Files","`board/components/RequestForm/index.tsx`, `server/store/clash.ts`"],["Impact","A rule change must land in two places"],["Fix approach","Serve the blocked dates from the server and drop the copy"]]},{"title":"Staff login shared by the whole office","fields":[["Issue","One password is used by every member of staff"],["Files","`server/office/auth.ts`"],["Impact","No record of who confirmed a request"],["Fix approach","Give each staff member a code sign-in like the owners"]]}]},{"h":"Known Bugs","label":"Known bugs","items":[{"title":"Confirmation mail sent twice","fields":[["Symptoms","An owner receives two notes when the office confirms and then edits a request"],["Files","`server/office/routes.ts`"],["Trigger","Confirm a request, then change its dates within one minute"],["Workaround","Edit the dates first, then confirm"]]}]},{"h":"Performance Bottlenecks","label":"Performance","items":[{"title":"Berth list for a long date range","fields":[["Problem","A query for a whole season loads every request and filters in memory"],["Files","`server/berths/routes.ts`"],["Cause","The range filter runs after the load, not in the query"],["Improvement path","Push the range into the SQL where clause"]]},{"title":"Tide feed parse","fields":[["Problem","Each refresh parses the full feed, not only the next fourteen days"],["Files","`server/tides/feed.ts`"],["Cause","The feed has no date filter"],["Improvement path","Drop rows beyond the horizon before parsing"]]}]},{"h":"Fragile Areas","label":"Fragile areas","items":[{"title":"The window builder assumes the feed rows arrive sorted by time and has no check for it","fields":[]},{"title":"The clash check treats an overnight stay as ending at noon, and the board mirrors that guess","fields":[]},{"title":"The migration runner applies files by name order, so a misnamed file runs out of place","fields":[]}]},{"h":"Scaling Limits","label":"Scaling limits","items":[{"title":"Berths in the store","fields":[["Current capacity","120"],["Limit","About 2,000 before the berth list query slows down"]]},{"title":"Concurrent staff logins","fields":[["Current capacity","1"],["Limit","The shared login allows one session at a time"]]}]},{"h":"Dependencies at Risk","label":"Dependencies at risk","items":[]},{"h":"Missing Critical Features","label":"Missing features","items":[{"title":"Waiting list","fields":[["Problem","A refused owner cannot ask to be told when the berth frees up"],["Blocks","The office handles the queue by phone"]]}]},{"h":"Test Coverage Gaps","label":"Test coverage gaps","items":[]}],"intro":["Scope: the whole repository at the stamped commit. Nine sections follow, in template order."]},"handlers":["artifact-token","context-brief","context","coverage-body","coverage","debug-session","debug","frontmatter-only","json-config","learnings-retro","learnings","milestone-audit-body","milestone-audit","milestones","note-lift","note","pattern-map","patterns","plan-structure","plan","project-research-lift","project-research","project","requirements","research-briefing","research","retrospective","review-disposition","review-report","review","roadmap","security-register","security","state"]};
+const STRUCT_DATA = {"labelore":"labelore/\n├── src/                      # All application source (TypeScript, one tree for server + web)\n│   ├── cli/                  # Target argument parsing (local path, sftp/ssh/scp remote)\n│   ├── domain/               # Shared entity types (model.ts) — no parsing imports\n│   ├── planning-fs/          # Filesystem port + Node adapter (the only node:fs reader)\n│   ├── planning-repo/        # Discovery, parsing, handlers, assembly, snapshot\n│   │   └── handlers/         # One parser per GSD artifact family (54 files)\n│   ├── presentation/         # Pure view-model builders and URL grammar (server-side)\n│   ├── rendering/            # Markdown → HTML pipeline, diagram lifting/layout\n│   ├── server/               # Hono app, project registry/runtime, search, settings\n│   └── web/                  # React SPA\n│       ├── components/       # Shell, switcher, dialogs, shared widgets\n│       │   └── ui/           # Base primitives (button, dialog, toast)\n│       ├── pages/            # Route-level components (lazy-loaded)\n│       ├── views/            # Pure view composers (*.ts) + presenters (*-components.tsx)\n│       └── styles/           # globals.css (oklch tokens, Tailwind v4 @theme)\n├── test/                     # Vitest unit/integration tests, goldens, e2e specs\n│   ├── __golden__/           # Golden JSON snapshots (dense, sparse-empty, sparse-started)\n│   ├── e2e/                  # Playwright specs and shared e2e helpers\n│   ├── fixtures/             # Fixture .planning trees used by tests (dashboard, debug, lendshed…)\n│   ├── helpers/              # Shared test setup, corpora builders, vitest-gate.mjs\n│   └── web/                  # Web-side tests (class-vocabulary, css-source-order, …)\n├── fixtures/                 # Top-level fixture projects (e.g. dense/.planning) and README\n├── docs/                     # design-language.md (visual and naming conventions)\n├── public/                   # favicon.svg, self-hosted woff2 fonts\n├── .claude/                  # Claude Code settings, project CLAUDE.md, cloud helper scripts\n├── .planning/                # This project's own GSD planning state (not read by the app at runtime)\n├── index.html                # Vite entry HTML (loads /src/web/main.tsx)\n├── vite.config.ts            # Vite + React + Tailwind plugins, '@' → src/web alias\n├── vitest.config.ts          # Test include: test/**/*.test.ts\n├── playwright.config.ts      # e2e configuration\n├── tsconfig.json             # Base TS config\n├── tsconfig.server.json      # Server typecheck (excludes src/web)\n├── tsconfig.web.json         # Web typecheck\n├── eslint.config.js          # Flat ESLint config\n├── components.json           # shadcn configuration (base-sera style)\n└── package.json              # Scripts: dev, build, start, smoke, test, test:e2e, typecheck, lint","tidemark":"tidemark/\n├── board/                  # Browser client\n│   ├── components/         # Presentational pieces\n│   │   ├── BerthCard/      # One berth and its windows\n│   │   │   ├── index.tsx   # The card\n│   │   │   └── window.css  # Window strip styling\n│   │   └── RequestForm/    # Dates and boat details\n│   ├── App.tsx             # Page shell\n│   └── main.tsx            # Mount point\n├── server/                 # API and jobs\n│   ├── berths/             # Owner-facing routes\n│   ├── office/             # Harbour-office routes\n│   ├── tides/              # Feed fetch and window building\n│   ├── store/              # The only database module\n│   └── main.ts             # Process entry\n├── scripts/                # One-off imports\n└── package.json            # Scripts and dependencies"};
 // ---------- icons (lucide paths, 24px grid) ----------
 const ICON = {
   copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
@@ -434,7 +622,7 @@ const grp = (h, body, n) => `<section class="grp"><h3 class="grp-h">${esc(h)}${n
 const rowsHtml = (items, cls = '') => `<ul class="ledger ${cls}">${items.map(([a, b, c]) => `<li><span class="l-name">${inline(a)}</span><span class="l-body">${inline(b)}</span>${c ? `<span class="l-file">${inline(c)}</span>` : '<span></span>'}</li>`).join('')}</ul>`;
 
 // ---------- render orchestration ----------
-const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c', 'd', 'e', 'f'].includes(h) ? h : 'd'; };
 function render() {
   const y = window.scrollY;
   const v = pickVariant();
@@ -459,6 +647,137 @@ document.addEventListener('click', (e) => {
   if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
 });
 window.addEventListener('hashchange', render);
+
+// ---------- round 2: the directory tree as a weighted model (shared by 043 and 044) ----------
+// Source: the Directory Layout fence in STRUCTURE (indent + trailing "# note"). Weight = the number of entries
+// the document lists under a folder (a file or an empty folder counts 1).
+function parseTree2(text) {
+  const root = { name: '', children: [], folder: true, depth: -1, note: '' };
+  const stack = [root];
+  for (const line of text.split('\n')) {
+    if (!line.trim()) continue;
+    const m = line.match(/^((?:│   |    )*)(?:├── |└── )(.*)$/);
+    const depth = m ? m[1].length / 4 + 1 : 0;
+    const rest = m ? m[2] : line.trim();
+    const hash = rest.search(/\s+#\s/);
+    const name = (hash >= 0 ? rest.slice(0, hash) : rest).trim();
+    const note = hash >= 0 ? rest.slice(hash).replace(/^\s+#\s+/, '').trim() : '';
+    const node = { name, note, folder: name.endsWith('/'), children: [], depth };
+    while (stack[stack.length - 1].depth >= depth) stack.pop();
+    stack[stack.length - 1].children.push(node);
+    stack.push(node);
+  }
+  return root.children[0];
+}
+// A folder's drawable children: folders that list entries, empty folders one each, and one "files" group.
+function kids2(n) {
+  if (n._k) return n._k;
+  const out = [];
+  n._k = out;
+  const files = [];
+  n.children.forEach((c) => { if (c.folder) out.push(c); else files.push(c); });
+  if (files.length) out.push({ name: `${files.length} file${files.length > 1 ? 's' : ''}`, folder: false, group: true, children: [], files, note: files.map((f) => f.name).join(', ') });
+  return out;
+}
+let GROUP_W = (n) => n;
+function weight2(n) {
+  if (n.group) return (n.w = GROUP_W(n.files.length));
+  const ks = kids2(n);
+  if (!ks.length) return (n.w = 1);
+  return (n.w = Math.max(1, ks.reduce((s, c) => s + weight2(c), 0)));
+}
+// Squarified treemap of the children of a folder inside a rectangle. Returns [{node, x, y, w, h}].
+function squarify2(items, x, y, w, h) {
+  const out = [];
+  const list = items.slice().sort((a, b) => b.node.w - a.node.w);
+  let total = list.reduce((s, i) => s + i.node.w, 0);
+  let area = w * h;
+  while (list.length) {
+    const side = Math.min(w, h);
+    const k = area / total;
+    const worst = (arr) => {
+      const as = arr.map((i) => i.node.w * k);
+      const s = as.reduce((p, q) => p + q, 0);
+      return Math.max((side * side * Math.max(...as)) / (s * s), (s * s) / (side * side * Math.min(...as)));
+    };
+    let row = [list[0]];
+    for (let j = 1; j < list.length; j++) { const next = [...row, list[j]]; if (worst(next) <= worst(row)) row = next; else break; }
+    const rowArea = row.reduce((s, i) => s + i.node.w * k, 0);
+    const thick = rowArea / side;
+    let off = 0;
+    row.forEach((it) => {
+      const len = (it.node.w * k) / thick;
+      if (w >= h) out.push({ node: it.node, x, y: y + off, w: thick, h: len });
+      else out.push({ node: it.node, x: x + off, y, w: len, h: thick });
+      off += len;
+    });
+    if (w >= h) { x += thick; w -= thick; } else { y += thick; h -= thick; }
+    total -= row.reduce((s, i) => s + i.node.w, 0);
+    list.splice(0, row.length);
+    area = w * h;
+  }
+  return out;
+}
+// Cells of the treemap down to maxDepth (root's children are depth 1). Each cell: {node, path, depth, x, y, w, h, leaf}.
+function cells2(root, W, H, maxDepth = 3, head = 20) {
+  weight2(root);
+  const out = [];
+  const rec = (n, path, depth, x, y, w, h) => {
+    const items = kids2(n).map((c) => ({ node: c }));
+    const rects = squarify2(items, x, y, w, h);
+    rects.forEach((r) => {
+      const c = r.node;
+      const p = c.group ? `${path}*files` : path + c.name;
+      const sub = kids2(c);
+      const canSplit = !c.group && sub.length && depth < maxDepth && r.w > 90 && r.h > 56;
+      out.push({ node: c, path: p, depth, x: r.x, y: r.y, w: r.w, h: r.h, leaf: !canSplit });
+      if (canSplit) rec(c, p, depth + 1, r.x + 2, r.y + head, r.w - 4, r.h - head - 2);
+    });
+  };
+  rec(root, '', 1, 0, 0, W, H);
+  return out;
+}
+// The deepest cell whose path is a prefix of a file token (the cell that "contains" the file).
+function cellFor2(cells, token) {
+  let best = null;
+  const t = token.replace(/^\.\//, '');
+  cells.forEach((c) => {
+    if (c.node.group) return;
+    if (t.startsWith(c.path) && (!best || c.path.length > best.path.length)) best = c;
+  });
+  if (best) return best;
+  if (!t.includes('/')) return cells.find((c) => c.node.group && c.depth === 1) || null;
+  return null;
+}
+// Sunburst arcs: rings for depth 1..maxDepth, angles by weight.
+function arcs2(root, maxDepth = 3) {
+  weight2(root);
+  const out = [];
+  const rec = (n, path, depth, a0, a1) => {
+    const ks = kids2(n);
+    const tot = ks.reduce((s, c) => s + c.w, 0) || 1;
+    let a = a0;
+    ks.forEach((c) => {
+      const span = (a1 - a0) * (c.w / tot);
+      const p = c.group ? `${path}*files` : path + c.name;
+      out.push({ node: c, path: p, depth, a0: a, a1: a + span });
+      if (!c.group && depth < maxDepth) rec(c, p, depth + 1, a, a + span);
+      a += span;
+    });
+  };
+  rec(root, '', 1, 0, Math.PI * 2);
+  return out;
+}
+const pol2 = (cx, cy, r, a) => [cx + r * Math.sin(a), cy - r * Math.cos(a)];
+function arcPath2(cx, cy, r0, r1, a0, a1) {
+  const pad = 0.012;
+  a0 += pad; a1 -= pad;
+  if (a1 <= a0) a1 = a0 + 0.001;
+  const large = a1 - a0 > Math.PI ? 1 : 0;
+  const [x0, y0] = pol2(cx, cy, r1, a0), [x1, y1] = pol2(cx, cy, r1, a1), [x2, y2] = pol2(cx, cy, r0, a1), [x3, y3] = pol2(cx, cy, r0, a0);
+  return `M${x0.toFixed(1)} ${y0.toFixed(1)}A${r1} ${r1} 0 ${large} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}A${r0} ${r0} 0 ${large} 0 ${x3.toFixed(1)} ${y3.toFixed(1)}Z`;
+}
+const fillStep2 = (d) => `var(--fill-${Math.min(4, d + 1)})`;
 
 // ---------- sketch 044 state ----------
 const STATES = {
@@ -553,8 +872,126 @@ function viewC() {
 
 const wrap = (fn) => () => { syncKeys(); return pageHtml(proj(), 'concerns', fn()); };
 VIEWS.a = wrap(viewA); VIEWS.b = wrap(viewB); VIEWS.c = wrap(viewC);
-render();
 
+// =====================================================================================
+// Round 2 (D, E, F): the first screen is a picture of where and how much the concerns are.
+// Every mark is one concern from the document; every position comes from a field it contains
+// (the files it names, its section, its Priority). Prose is reached by selecting a mark.
+// =====================================================================================
+GROUP_W = (n) => Math.max(1, Math.round(n / 3));
+Object.assign(S, { mark: null, secf: null, tmW: 0, busy: false });
+const onState1 = onState;
+onState = function () { onState1(); S.mark = null; S.secf = null; };
+ACTS.mark = (el) => { S.mark = S.mark === el.dataset.id ? null : el.dataset.id; render(); };
+ACTS.secf = (el) => { const i = Number(el.dataset.i); S.secf = S.secf === i ? null : i; render(); };
+ACTS.close = () => { S.mark = null; render(); };
+function afterRender() {
+  const tm = document.querySelector('.tm');
+  if (tm && !S.busy) { const w = Math.round(tm.clientWidth); if (w && Math.abs(w - S.tmW) > 3) { S.tmW = w; S.busy = true; render(); S.busy = false; } }
+}
+window.addEventListener('resize', () => { if (document.querySelector('.tm')) { S.tmW = 0; render(); } });
+
+// ---------- the data every picture reads ----------
+function flat() {
+  const out = [];
+  sections().forEach((s, si) => s.items.forEach((it, ii) => out.push({ id: `${si}:${ii}`, si, ii, it, sec: s })));
+  return out;
+}
+const pathLike = (t) => !/\s/.test(t) && (t.includes('/') || /^[\w.-]+\.\w{1,5}$/.test(t));
+function filesOfConcern(it) {
+  const own = it.fields.filter(([k]) => /^files$/i.test(k));
+  const src = own.length ? own : it.fields;
+  const out = [];
+  src.forEach(([, v]) => [...String(v).matchAll(/`([^`]+)`/g)].forEach((m) => { const t = m[1].replace(/\(.*$/, '').trim(); if (pathLike(t) && !out.includes(t)) out.push(t); }));
+  return out;
+}
+const priOf = (it) => { const f = it.fields.find(([k]) => /^priority$/i.test(k)); const v = f ? f[1].trim().toLowerCase() : ''; return v.startsWith('high') ? 'high' : v.startsWith('medium') ? 'med' : v.startsWith('low') ? 'low' : ''; };
+const topMark = () => { const s = sections(); const first = s[0].items[0] ? '0:0' : (() => { const k = s.findIndex((x) => x.label === 'Tech debt'); return k >= 0 && s[k].items[0] ? `${k}:0` : null; })(); return first; };
+const mk = (c, extra = '') => `<button class="mk" type="button" data-act="mark" data-id="${c.id}" data-sec="${c.si === 0 ? 0 : 1}" data-pri="${priOf(c.it)}"${S.mark === c.id ? ' data-on="true"' : ''}${topMark() === c.id ? ' data-top="true"' : ''}${S.secf != null && S.secf !== c.si ? ' data-dim="true"' : ''} title="${esc(c.it.title.replace(/`/g, ''))}"${extra}></button>`;
+const legend = () => { const secs = sections(); return `<div class="sec-legend" role="group" aria-label="Sections">${secs.map((s, i) => `<button class="sec-chip" type="button" data-act="secf" data-i="${i}" aria-pressed="${S.secf === i}">${sq(toneOf(i, s.items.length))}<span>${esc(s.label)}</span><b>${s.items.length}</b></button>`).join('')}</div>`; };
+const keyRow = () => `<span class="key"><span class="mk" data-sec="0"></span>a Security concern</span><span class="key"><span class="mk" data-sec="1"></span>any other section</span><span class="key"><span class="mk" data-sec="1" data-pri="high"></span><span class="mk" data-sec="1" data-pri="med"></span><span class="mk" data-sec="1" data-pri="low"></span>Priority High, Medium, Low when the concern states one</span><span class="key"><span class="mk" data-sec="1" data-top="true"></span>the most dangerous: first Security item, else first Tech debt</span>`;
+function mockDock() {
+  const c = flat().find((x) => x.id === S.mark);
+  if (!c) return `<div class="dock-empty">Select a mark to read that concern.</div>`;
+  const files = filesOfConcern(c.it);
+  return `<div class="dock"><div class="dock-head"><h4>${inline(c.it.title)}</h4><span class="source-note">${esc(c.sec.h)}${topMark() === c.id ? ' · most dangerous' : ''}</span><button class="text-link d-x" type="button" data-act="close">Close</button></div>${c.it.fields.length ? `<dl class="cn-fields">${c.it.fields.map(([k, v]) => `<div>${k ? `<dt>${esc(k)}</dt>` : ''}<dd>${inline(v)}</dd></div>`).join('')}</dl>` : ''}${files.length ? '' : '<p class="source-note">This concern names no file, so it has no place on the map.</p>'}</div>`;
+}
+const pic = (title, tools, body, foot) => `<figure class="pic"><div class="pic-bar"><span class="ff-title">${esc(title)}</span>${tools}</div><div class="pic-body">${body}</div><div class="pic-foot">${foot}</div></figure>`;
+const art2 = (inner) => `<article class="panel" aria-labelledby="panel-h">${head()}<div class="lifted">${inner}</div></article>`;
+const ledgerAcc = () => `<div class="acc-list">${sections().map((s, i) => `<details class="acc"><summary>${svg('chevr')}${sq(toneOf(i, s.items.length))}<span>${esc(s.h)}</span><span class="n">${s.items.length}</span></summary><div class="acc-body">${list(i, s)}</div></details>`).join('')}</div>`;
+
+// =====================================================================================
+// D: hotspots on the codebase (the structure treemap; each concern is a mark on the folders it names)
+// =====================================================================================
+function viewD() {
+  const root = parseTree2(STRUCT_DATA[proj()]);
+  const W = S.tmW || 780;
+  const H = W >= 640 ? Math.round(W * 0.56) : 500;
+  const cells = cells2(root, W, H, 3);
+  const all = flat();
+  const at = {};
+  const none = [];
+  all.forEach((c) => {
+    const hit = new Set();
+    filesOfConcern(c.it).forEach((f) => { const cell = cellFor2(cells, f); if (cell) hit.add(cell.path); });
+    if (!hit.size) none.push(c);
+    hit.forEach((p) => { (at[p] ||= []).push(c); });
+  });
+  const html = cells.map((c) => {
+    const ms = at[c.path] || [];
+    const sizeOk = c.w > 40 && c.h > 17;
+    return `<div class="tm-cell" data-d="${c.depth}"${c.node.group ? ' data-group="true"' : ''}${ms.length ? ` data-heat="${ms.length >= 12 ? 3 : ms.length >= 4 ? 2 : 1}"` : ''} title="${esc(c.path.replace('*files', 'files at the top'))}" style="left:${c.x.toFixed(1)}px;top:${c.y.toFixed(1)}px;width:${c.w.toFixed(1)}px;height:${c.h.toFixed(1)}px">${sizeOk ? `<span class="tm-n">${esc(c.node.name)}</span>` : ''}${ms.length ? `<span class="hs-marks" data-leaf="${c.leaf}">${ms.map((m) => mk(m)).join('')}</span>` : ''}</div>`;
+  }).join('');
+  const total = all.length;
+  const foot = `${keyRow()}<span>Folders are the tree in STRUCTURE (area = entries listed); a mark sits in the deepest folder named in the concern's Files field.</span>`;
+  const tray = none.length ? `<div class="tray"><span class="micro-label">No file named · ${none.length}</span><span class="hs-marks" data-leaf="true">${none.map((m) => mk(m)).join('')}</span></div>` : '';
+  return art2(`${pic('Where the concerns sit', `<span class="counts-line">${total} concerns</span>`, `<div class="tm" style="height:${H}px">${html}</div>${tray}`, foot)}${legend()}${mockDock()}${ledgerAcc()}`);
+}
+
+// =====================================================================================
+// E: a risk board (nine piles; each concern is one segment, so dense sections stack up)
+// =====================================================================================
+function viewE() {
+  const secs = sections();
+  const all = flat();
+  const top = topMark();
+  const cols = secs.map((s, i) => {
+    const items = all.filter((c) => c.si === i);
+    const body = items.length ? items.map((c) => mk(c)).join('') : `<span class="pile-zero">0</span>`;
+    return `<div class="pile-col"${S.secf != null && S.secf !== i ? ' data-dim="true"' : ''}><div class="pile">${body}</div><button class="pile-lab" type="button" data-act="secf" data-i="${i}" aria-pressed="${S.secf === i}"><b>${items.length}</b><span class="cc-top">${sq(toneOf(i, items.length))}</span><span class="pl">${esc(s.label)}</span></button></div>`;
+  }).join('');
+  const foot = `${keyRow()}<span>Each segment is one concern; columns are the nine sections, Security first, the rest in the document's order; a column's height is its count.</span>`;
+  return art2(`${pic('The nine sections as piles', `<span class="counts-line">${all.length} concerns</span>`, `<div class="piles">${cols}</div>`, foot)}${legend().replace('class="sec-legend"', 'class="sec-legend narrow-only"')}${mockDock()}${ledgerAcc()}`);
+}
+
+// =====================================================================================
+// F: a shape chart (nine spokes, Security at the top; each concern is a dot on its spoke)
+// =====================================================================================
+function viewF() {
+  const secs = sections();
+  const all = flat();
+  const max = Math.max(1, ...secs.map((s) => s.items.length));
+  const SIZE = 400, C = 200, R = 120;
+  const ang = (i) => -Math.PI / 2 + (i * 2 * Math.PI) / secs.length;
+  const pt = (i, r, off = 0) => [C + r * Math.cos(ang(i) + off), C + r * Math.sin(ang(i) + off)];
+  const rr = (n) => R * Math.sqrt(n / max);
+  const rings = [0.25, 0.5, 0.75, 1].map((f) => `<polygon class="ring" points="${secs.map((_, i) => pt(i, R * f).map((v) => v.toFixed(1)).join(',')).join(' ')}"/>`).join('');
+  const spokes = secs.map((_, i) => { const [x, y] = pt(i, R); return `<line class="spoke" x1="${C}" y1="${C}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`; }).join('');
+  const poly = `<polygon class="shape" points="${secs.map((s, i) => pt(i, s.items.length ? rr(s.items.length) : 3).map((v) => v.toFixed(1)).join(',')).join(' ')}"/>`;
+  const dots = all.map((c) => { const n = secs[c.si].items.length; const r = rr(c.ii + 1); const off = n > 10 ? (c.ii % 2 ? 0.045 : -0.045) : 0; const [x, y] = pt(c.si, r, off); return mk(c, ` style="left:${(x / SIZE * 100).toFixed(2)}%;top:${(y / SIZE * 100).toFixed(2)}%"`); }).join('');
+  const labels = secs.map((s, i) => { const [x, y] = pt(i, R + 34); return `<span class="rd-lab" data-act="secf" data-i="${i}" style="left:${(x / SIZE * 100).toFixed(1)}%;top:${(y / SIZE * 100).toFixed(1)}%"><b>${s.items.length}</b><span class="rd-t">${esc(s.label)}</span></span>`; }).join('');
+  const top = flat().find((c) => c.id === topMark());
+  let callout = '', calloutOut = '', lead = '';
+  if (top) { const [x, y] = pt(top.si, rr(top.ii + 1)); lead = `<line class="lead" x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="112" y2="322"/>`; callout = `<div class="rd-call in"><p class="micro-label">Most dangerous</p><p>${inline(top.it.title)}</p></div>`; calloutOut = callout.replace('rd-call in', 'rd-call out'); }
+  const ticks = [0.25, 0.5, 0.75, 1].map((f) => Math.max(1, Math.round(max * f * f))).join(' · ');
+  const foot = `${keyRow()}<span>Distance from the centre is the count (square-root scale, rings at ${ticks} concerns); dots run outwards in the document's order.</span>`;
+  return art2(`${pic('The shape of the concerns', `<span class="counts-line">${all.length} concerns</span>`, `<div class="radar-box"><div class="radar"><svg viewBox="0 0 ${SIZE} ${SIZE}" aria-hidden="true">${rings}${spokes}${poly}${lead}</svg>${labels}${dots}${callout}</div>${calloutOut}</div>`, foot)}${legend()}${mockDock()}${ledgerAcc()}`);
+}
+
+const wrap2 = (fn) => () => { syncKeys(); return pageHtml(proj(), 'concerns', fn()); };
+VIEWS.d = wrap2(viewD); VIEWS.e = wrap2(viewE); VIEWS.f = wrap2(viewF);
+
+render();
 </script>
 </body>
 </html>
