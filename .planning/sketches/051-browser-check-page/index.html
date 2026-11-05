@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 051 — Browser check page</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 051: the Browser check page (VIEW-12), three page structures, none of them the 016 validation cells or the
+   041 to 050 frames. Text is the made-up Lendshed DOM-VERIFY files (test/fixtures/lendshed, 10-07), embedded verbatim
+   below and parsed in the page; counts are shown as the file states them, never recomputed. Tokens come from
+   ../themes/default.css; every colour is a theme token or a colour-mix of tokens. Squared corners, spacing from
+   --space-* tokens, four font sizes counting everything on the page: --fs-display-3 (h1 only), --fs-7 (outcome chip,
+   count numerals, headings), --fs-4 (body), --fs-2 (labels, chips, links, mono values). The sketch bar and the app
+   shell are outside the page. The atoms below the first rule are 050's, verbatim. */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --neutral-fill: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; padding: 0 var(--space-0-5); background: var(--veil); overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.app-brand span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+@media (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- page atoms ---------- */
+.page { display: grid; gap: var(--space-8); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); min-width: 0; }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.meta { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.micro-label { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h2.sh { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+.btn-xs.icon { padding-inline: 0; width: var(--space-7); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } .btn-xs.icon { width: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; background: transparent; }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--neutral-fill); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); }
+.num { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.prose { max-width: 72ch; }
+.mono { font-family: var(--font-mono); }
+.vname { font-family: var(--font-mono); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+
+/* the lead and the shared status meter (048's drawing, reused) */
+.lead-line { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.lead-line b { font-family: var(--font-mono); }
+.status-meter { display: grid; gap: var(--space-1-5); min-width: 0; }
+.status-meter .cells { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.status-meter .cells .sq { --sq: var(--space-5); }
+.status-meter .cap { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); letter-spacing: var(--ls-wider); }
+.status-meter .cap b { color: var(--foreground); }
+
+/* the disagreement: the file's Status line beside the box count, never merged; quiet, not an alarm */
+.disagree { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; border: 1px dashed var(--muted-foreground); min-width: 0; }
+.disagree > div { display: grid; gap: var(--space-1); align-content: start; padding: var(--space-3) var(--space-4); min-width: 0; }
+.disagree .ne { display: grid; place-items: center; padding: 0 var(--space-2); border-inline: 1px dashed var(--border); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-7); }
+.disagree .foot { grid-column: 1 / -1; padding: var(--space-2) var(--space-4); border-top: 1px dashed var(--border); color: var(--muted-foreground); }
+.disagree .val { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.agree { display: inline-flex; gap: var(--space-2); align-items: center; }
+
+/* the step dock (shared) */
+.dock { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.dock-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.dock-head h3 { font-size: inherit; font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.dock-head .x { margin-left: auto; }
+.dock > h3 { font-size: inherit; font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.fields { display: grid; gap: var(--space-2); }
+.fields > div { display: grid; grid-template-columns: calc(var(--space-8) * 3.5) minmax(0, 1fr); gap: var(--space-3); }
+.fields dt { padding-top: var(--space-0-5); }
+.fields dd { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 42rem) { .fields > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-0-5); } }
+.dock-empty { padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); color: var(--muted-foreground); }
+.vfacts { display: grid; gap: var(--space-2); }
+.vfacts li { display: grid; grid-template-columns: var(--icon) minmax(0, 1fr); gap: var(--space-2); align-items: center; min-width: 0; overflow-wrap: anywhere; }
+.vfacts .i { color: var(--muted-foreground); }
+.cell .status-chip, .bar summary .status-chip, .tag .status-chip { white-space: normal; }
+.goes { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); align-items: baseline; }
+
+/* closed bars + the In the source only strip (shared) */
+.bars-wrap { display: grid; gap: var(--space-3); }
+.bars { display: grid; border-top: 1px solid var(--border); }
+.bar-group { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-8); padding: var(--space-3) var(--space-2) var(--space-1); border-bottom: 1px solid var(--border-faint); }
+.bar { border-bottom: 1px solid var(--border); }
+.bar > summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding-inline: var(--space-2); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); min-width: 0; }
+.bar > summary > span:not(.sq):not(.n) { min-width: 0; overflow-wrap: anywhere; }
+.bar > summary::-webkit-details-marker { display: none; }
+.bar > summary:hover { background: var(--state-hover); }
+.bar[open] > summary .chev { transform: rotate(90deg); }
+.bar > summary .n { margin-left: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.bar-body { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--icon) + var(--space-4)); min-width: 0; }
+@media (max-width: 42rem) { .bar-body { padding-left: var(--space-2); } }
+.only { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); }
+.only a { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; text-decoration: underline; text-underline-offset: var(--space-0-5); text-decoration-color: var(--border); }
+.blocks { display: grid; gap: var(--space-3); min-width: 0; }
+/* the shipped copy-command row (10-10): the command as selectable mono text, then the Copy command button */
+.copy-command { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-3); border: 1px solid var(--border-faint); background: var(--veil); min-width: 0; }
+.copy-command code { flex: 1 1 16rem; background: none; padding: 0; font-size: var(--fs-2); line-height: var(--lh-snug); min-width: 0; }
+.cmd-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+
+/* the missing tone (document content: the missing family only) */
+:root { --missing-border: color-mix(in oklch, var(--missing-fill) 55%, var(--border)); }
+.status-chip[data-tone='missing'] { border-color: var(--missing-border); color: var(--missing-fill); background: transparent; }
+.sq[data-tone='missing'] { background: transparent; border: 2px solid var(--missing-fill); }
+.status-chip.big { font-size: var(--fs-7); letter-spacing: var(--ls-tight); padding: var(--space-1-5) var(--space-3); }
+.status-chip.big .sq { --sq: var(--space-3); }
+.facts { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); }
+.facts span { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.facts b { color: var(--foreground); font-weight: var(--fw-semibold); }
+.score { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.word { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.tgt { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: 0 var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); white-space: nowrap; }
+.steps { display: grid; gap: var(--space-2); counter-reset: none; }
+.step { display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.step .no { font-family: var(--font-mono); font-weight: var(--fw-semibold); color: var(--muted-foreground); }
+.step .tx { min-width: 0; overflow-wrap: anywhere; }
+.step .tx .tgt { margin-left: var(--space-1); }
+.zero { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--muted-foreground); }
+
+/* ---------- 051 atoms ---------- */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.bul { display: grid; gap: var(--space-1-5); padding-left: var(--space-4); list-style: square; }
+.sk-note { padding: var(--space-2) var(--space-3); border: 1px dashed var(--border); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-8); align-items: start; }
+.pair-col { display: grid; gap: var(--space-6); align-content: start; min-width: 0; }
+.pair-col h2.sh { overflow-wrap: anywhere; }
+@media (max-width: 52rem) { .pair { grid-template-columns: minmax(0, 1fr); gap: var(--space-10); } }
+.meta code { font-size: inherit; }
+.tg { display: inline-flex; flex-wrap: wrap; gap: var(--space-1); align-items: baseline; min-width: 0; max-width: 100%; }
+/* mono paths end-ellipsise, the full value in title (UI-SPEC Accessibility, narrow widths) */
+code.path { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+
+/* the outcome chip: shape, icon and word differ per outcome, never colour alone */
+.status-chip.oc { white-space: normal; text-transform: none; letter-spacing: var(--ls-tight); }
+.status-chip.oc svg.i { width: 1em; height: 1em; }
+.status-chip.oc[data-tone='in-flight'] { border-width: 2px; background: transparent; }
+.status-chip.oc[data-tone='quiet'] { border-color: var(--muted-foreground); }
+.status-chip.oc .mono { font-family: var(--font-mono); }
+.why { display: grid; gap: var(--space-1-5); align-content: start; min-width: 0; }
+.why-s { max-width: 60ch; overflow-wrap: anywhere; }
+.raw { width: fit-content; max-width: 100%; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); overflow-wrap: anywhere; }
+.counts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-6); }
+.cnt { display: inline-flex; align-items: center; gap: var(--space-2); }
+.cnt .sq { --sq: var(--space-3); }
+.cnt .micro-label { color: var(--foreground); }
+.na { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--muted-foreground); }
+svg.i.big { width: var(--space-10); height: var(--space-10); stroke-width: 1.5; color: var(--muted-foreground); }
+.el-box { padding: var(--space-0-5) var(--space-2); border: 1px solid var(--muted-foreground); background: var(--background); font-family: var(--font-mono); overflow-wrap: anywhere; }
+.asks { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); overflow-wrap: anywhere; }
+
+/* =====================================================================
+   A: Browser window — the check drawn as the window it looked through: the outcome and the target in the bar, what
+   it saw inside, the counts in the status bar
+   ===================================================================== */
+.aw { display: grid; border: 1px solid var(--foreground); background: var(--card); min-width: 0; container-type: inline-size; }
+.aw-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-2-5) var(--space-3); border-bottom: 1px solid var(--border); background: var(--card-veil); min-width: 0; }
+.aw-dots { display: inline-flex; gap: var(--space-1); }
+.aw-dots i { width: var(--space-2); height: var(--space-2); border: 1px solid var(--muted-foreground); }
+.aw-addr { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); flex: 1 1 14rem; min-width: 0; min-height: var(--space-8); padding: var(--space-1); border: 1px solid var(--border); background: var(--background); }
+.aw-addr.empty { border-style: dashed; }
+.aw-addr code { padding: var(--space-0-5) var(--space-2); font-size: var(--fs-2); }
+.aw-view { min-height: calc(var(--space-8) * 7); padding: var(--space-5); min-width: 0; }
+.aw-view.shut { display: grid; place-content: center; justify-items: center; gap: var(--space-3); text-align: center; background: var(--hatch); }
+.aw-view.shut svg.big { color: var(--in-flight-fill); }
+.aw-view.blank { display: grid; place-content: center; justify-items: center; gap: var(--space-3); text-align: center; outline: 1px dashed var(--border); outline-offset: calc(var(--space-3) * -1); }
+.aw-view .why { justify-items: center; padding: var(--space-3) var(--space-4); border: 1px solid var(--border); background: var(--background); max-width: 52ch; }
+.aw-groups { display: grid; gap: var(--space-5); }
+.aw-g { display: grid; gap: var(--space-2); min-width: 0; }
+.aw-g > .micro-label { display: flex; align-items: center; gap: var(--space-1-5); }
+.snips { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--space-8) * 7)), 1fr)); gap: var(--space-2); }
+.snip { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3); border: 1px solid var(--border); border-top: 3px solid var(--border); background: var(--background); text-align: left; min-width: 0; }
+.snip[data-tone='missing'] { border-color: var(--missing-border); border-top: 3px double var(--missing-fill); }
+.snip[data-tone='in-flight'] { border-top-color: var(--in-flight-fill); }
+.snip[data-tone='complete'] { border-top-color: var(--primary); }
+.snip:hover { background: var(--state-hover); }
+.snip[aria-pressed='true'] { box-shadow: inset 0 0 0 1px var(--foreground); }
+.snip .el { display: flex; flex-wrap: wrap; gap: var(--space-1); min-width: 0; }
+.snip .el.txt { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--muted-foreground); }
+.aw-status { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); padding: var(--space-3) var(--space-4); border-top: 1px solid var(--border); background: var(--card-veil); }
+@container (max-width: 34rem) { .aw-view { padding: var(--space-3); min-height: calc(var(--space-8) * 6); } .aw-status .counts { gap: var(--space-2) var(--space-4); } }
+
+/* =====================================================================
+   B: Reuse — the outcome chip and reason, the status-meter, 044 E's piles (failed, needs review, passed)
+   ===================================================================== */
+.rb-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-5) var(--space-8); align-items: start; }
+.rb-o { display: grid; gap: var(--space-3); align-content: start; min-width: 0; }
+.rb-m { display: grid; gap: var(--space-3); align-content: start; min-width: 0; padding-left: var(--space-6); border-left: 1px solid var(--border); }
+.pair .rb-head, .rb-head.solo { grid-template-columns: minmax(0, 1fr); }
+.pair .rb-m { padding-left: 0; border-left: 0; }
+@media (max-width: 42rem) { .rb-head { grid-template-columns: minmax(0, 1fr); } .rb-m { padding-left: 0; border-left: 0; } }
+.status-meter.big-meter .cells .sq { --sq: var(--space-6); }
+.board { display: grid; border: 1px solid var(--border); min-width: 0; }
+.board-bar { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--card-veil); }
+.board-body { padding: var(--space-4); min-width: 0; }
+.board-body.empty { display: grid; place-content: center; justify-items: center; gap: var(--space-3); min-height: calc(var(--space-8) * 4); }
+.board-body.empty.shut { background: var(--hatch); }
+.board-body.empty.shut svg.big { color: var(--in-flight-fill); }
+.board-body.empty.blank { outline: 1px dashed var(--border); outline-offset: calc(var(--space-3) * -1); }
+.board-body.empty .na { padding: var(--space-2) var(--space-3); background: var(--background); border: 1px dashed var(--border); }
+.board-foot { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); padding: var(--space-2) var(--space-4); border-top: 1px solid var(--border); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.board-foot span { display: inline-flex; align-items: center; gap: var(--space-1-5); }
+.piles { display: grid; grid-template-columns: repeat(3, minmax(0, calc(var(--space-8) * 6))); grid-template-rows: calc(var(--space-8) * 4) auto; gap: var(--space-2) var(--space-4); }
+.pile-col { display: grid; grid-row: span 2; grid-template-rows: subgrid; gap: var(--space-2); min-width: 0; }
+.pile { display: flex; flex-direction: column-reverse; gap: var(--space-1); align-self: end; }
+.mk { display: block; width: 100%; height: var(--space-6); padding: 0; border: 1px solid var(--muted-foreground); background: var(--neutral-fill); cursor: pointer; }
+.mk[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.mk[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.mk[data-tone='missing'] { background: transparent; border: 2px solid var(--missing-fill); }
+.mk:hover { outline: 2px solid var(--border); outline-offset: 1px; }
+.mk[data-on='true'] { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.pile-zero { height: var(--space-6); border: 1px dashed var(--muted-foreground); }
+.pile-lab { display: grid; gap: var(--space-1); align-content: start; padding: var(--space-1-5) var(--space-1) var(--space-1); border-top: 2px solid var(--foreground); min-width: 0; }
+.pile-lab .pl { font-size: var(--fs-2); color: var(--muted-foreground); line-height: 1.25; overflow-wrap: anywhere; }
+@media (max-width: 42rem) { .piles { grid-template-rows: calc(var(--space-8) * 3) auto; gap: var(--space-2); } .mk, .pile-zero { height: var(--space-5); } }
+
+/* =====================================================================
+   C: Route map — the path the check took: was there anything to check, could it look, what it saw
+   ===================================================================== */
+.rc-out { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
+.rc-wrap { container-type: inline-size; min-width: 0; }
+.rc-route { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-areas: 'st q1 q2 ve' '. nt cn .'; gap: var(--space-10) var(--space-10); align-items: start; padding: var(--space-6); border: 1px solid var(--border); background: var(--card-veil); }
+@container (max-width: 44rem) { .rc-route { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: 'st .' 'q1 nt' 'q2 cn' 've .'; gap: var(--space-8) var(--space-8); padding: var(--space-4); } }
+.rc-route > svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.rc-route path { fill: none; stroke: var(--muted-foreground); stroke-width: 1.5; stroke-dasharray: 4 4; opacity: 0.6; }
+.rc-route path[data-lit='true'] { stroke: var(--foreground); stroke-width: 2.5; stroke-dasharray: none; opacity: 1; }
+.rc-route text { fill: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.rc-route text[data-lit='true'] { fill: var(--foreground); font-weight: var(--fw-semibold); }
+.rn { position: relative; z-index: 1; display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3); border: 1px dashed var(--border); background: var(--background); color: var(--muted-foreground); min-width: 0; overflow-wrap: anywhere; }
+.rn.q { border-style: solid; }
+.rn[data-lit='true'] { border: 1px solid var(--foreground); color: var(--foreground); }
+.rn.end[data-lit='true'] { border-width: 2px; box-shadow: 0 0 0 var(--space-1) var(--background); }
+.rn .t { font-weight: var(--fw-semibold); }
+.rn[data-area='st'] { grid-area: st; } .rn[data-area='q1'] { grid-area: q1; } .rn[data-area='q2'] { grid-area: q2; }
+.rn[data-area='ve'] { grid-area: ve; } .rn[data-area='nt'] { grid-area: nt; } .rn[data-area='cn'] { grid-area: cn; }
+.rc-list { display: grid; gap: var(--space-5); }
+.rc-g { display: grid; min-width: 0; }
+.rc-g > .micro-label { display: flex; align-items: center; gap: var(--space-1-5); padding-bottom: var(--space-1-5); border-bottom: 2px solid var(--foreground); }
+.crow { display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); align-items: center; width: 100%; min-height: var(--space-10); padding: var(--space-2) var(--space-2); border-bottom: 1px solid var(--border-faint); text-align: left; min-width: 0; }
+.crow:hover { background: var(--state-hover); }
+.crow[aria-expanded='true'] { background: var(--state-hover); }
+.crow .no { color: var(--muted-foreground); font-family: var(--font-mono); font-weight: var(--fw-semibold); }
+.crow .el { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); min-width: 0; }
+.crow .el.txt { color: var(--muted-foreground); }
+.crow .full { grid-column: 2 / -1; padding-top: var(--space-2); border-top: 1px solid var(--border-faint); }
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">051 browser check</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Browser window</a>
+    <a data-tab="b" href="#b">B: Reuse — chip, meter, piles</a>
+    <a data-tab="c" href="#c">C: Route map</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="03">03 Verified</button><button data-state="01">01 Could not look</button><button data-state="02">02 Nothing to report</button><button data-state="pair">01 beside 02</button><button data-state="none">No outcome</button><button data-state="raw">Other reason</button></span>
+</nav>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+// The made-up Lendshed DOM-VERIFY files, verbatim (injected by the sketch's generator). "none" is 03 with its outcome
+// and reason lines removed; "raw" is 01 with reason profile_locked and its body removed (both sketch-made).
+const SRC = /*DATA*/{"03":"---\nschema_version: 1\nwave: 2\noutcome: verified\nreason: ok\nchecked: 7\npassed: 4\nfailed: 2\nneeds_review: 1\nmade_up_example: true\nderived_from: agents/gsd-dom-verifier.md\ngsd_core_version: 1.19.0\n---\n\n# DOM verification: Phase 3, wave 2\n\nSeven criteria from the Copywriting Contract and the dialog contracts, observed on `/desk` and on a member page at `/stewards/{id}`.\n\n- passed: the create-member dialog opens with both fields blank and its submit button carries `disabled`.\n- **passed**: the reset button's text is `Reset password`, matching the contract.\n- passed: the disable button's text is `Disable account`, matching the contract.\n- **failed**: the danger block's button reads `Remove member`; the contract asks for \"Delete member\".\n- passed: a member with no open sessions shows `Not signed in anywhere` in the sessions block.\n- failed: the disabled-account alert reads `This account is turned off.` and stops there; the contract's second sentence, \"Ask a steward.\", is not in the DOM.\n- `needs_review`: with a 120-character display name the dialog kept its width (measured 480px before and after), but whether the wrapped name reads well is a human call.\n","01":"---\nschema_version: 1\nwave: 2\noutcome: could_not_look\nreason: target_unreachable\nchecked: 0\npassed: 0\nfailed: 0\nneeds_review: 0\nmade_up_example: true\nderived_from: agents/gsd-dom-verifier.md\ngsd_core_version: 1.19.0\n---\n\n# DOM verification: Phase 1, wave 2\n\nCould not look. Nothing answered at `http://localhost:4871/sign-in`, an invented local address on a made-up port, so no criterion from the sign-in page contract was observed.\n\nTo change this, start the sign-in page on that address (run the Lendshed dev server), then rerun the check.\n","02":"---\nschema_version: 1\nwave: 1\noutcome: nothing_to_report\nreason: no_criteria\nchecked: 0\npassed: 0\nfailed: 0\nneeds_review: 0\nmade_up_example: true\nderived_from: agents/gsd-dom-verifier.md\ngsd_core_version: 1.19.0\n---\n\n# DOM verification: Phase 2, wave 1\n\nNothing to report: the wave's plan states no UI acceptance criteria, so no criterion was invented and no browser was needed.\n","none":"---\nschema_version: 1\nwave: 2\nchecked: 7\npassed: 4\nfailed: 2\nneeds_review: 1\nmade_up_example: true\nderived_from: agents/gsd-dom-verifier.md\ngsd_core_version: 1.19.0\n---\n\n# DOM verification: Phase 3, wave 2\n\nSeven criteria from the Copywriting Contract and the dialog contracts, observed on `/desk` and on a member page at `/stewards/{id}`.\n\n- passed: the create-member dialog opens with both fields blank and its submit button carries `disabled`.\n- **passed**: the reset button's text is `Reset password`, matching the contract.\n- passed: the disable button's text is `Disable account`, matching the contract.\n- **failed**: the danger block's button reads `Remove member`; the contract asks for \"Delete member\".\n- passed: a member with no open sessions shows `Not signed in anywhere` in the sessions block.\n- failed: the disabled-account alert reads `This account is turned off.` and stops there; the contract's second sentence, \"Ask a steward.\", is not in the DOM.\n- `needs_review`: with a 120-character display name the dialog kept its width (measured 480px before and after), but whether the wrapped name reads well is a human call.\n","raw":"---\nschema_version: 1\nwave: 2\noutcome: could_not_look\nreason: profile_locked\nchecked: 0\npassed: 0\nfailed: 0\nneeds_review: 0\nmade_up_example: true\nderived_from: agents/gsd-dom-verifier.md\ngsd_core_version: 1.19.0\n---\n\n# DOM verification: Phase 1, wave 2\n"};
+const PHASE = { 1: 'Member Sign-In & Sessions', 2: 'Roles & Permissions', 3: 'Account Admin & Sessions' };
+
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const inline = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+
+// ---------- word tables (UI-SPEC Tone mapping, Browser check; the copy rows) ----------
+const OUTCOME = {
+  verified: { tone: 'complete', word: 'Verified', icon: 'check' },
+  nothing_to_report: { tone: 'quiet', word: 'Nothing to report', icon: 'minus' },
+  could_not_look: { tone: 'in-flight', word: 'Could not look', icon: 'eyeoff' },
+};
+const NOT_STATED = { tone: 'quiet', word: 'Outcome not stated', icon: 'help' };
+const REASON = {
+  target_unreachable: 'Could not look: nothing was serving the target. Start it, then rerun the browser check.',
+  no_criteria: 'Nothing to report: this wave had no UI acceptance criteria.',
+};
+const RESULT = { failed: { tone: 'missing', label: 'Failed' }, needs_review: { tone: 'in-flight', label: 'Needs review' }, passed: { tone: 'complete', label: 'Passed' } };
+const GROUP_ORDER = ['failed', 'needs_review', 'passed'];
+const COUNT_ORDER = ['passed', 'failed', 'needs_review'];
+
+// ---------- the DOM-VERIFY reader ----------
+function parseDom(md) {
+  const d = { fm: {}, title: '', paras: [], items: [] };
+  const lines = md.split('\n'); let i = 0;
+  if (lines[0] === '---') { for (i = 1; i < lines.length && lines[i] !== '---'; i++) { const m = lines[i].match(/^([a-z_]+):\s*(.*)$/); if (m) d.fm[m[1]] = m[2].trim(); } i++; }
+  let para = [];
+  const fp = () => { if (para.length) { d.paras.push(para.join(' ')); para = []; } };
+  for (; i < lines.length; i++) {
+    const l = lines[i]; let m;
+    if ((m = l.match(/^# (.*)$/))) { d.title = m[1].trim(); continue; }
+    if (!l.trim()) { fp(); continue; }
+    if ((m = l.match(/^\s*-\s+(.*)$/))) { fp(); d.items.push(m[1]); continue; }
+    para.push(l.trim());
+  }
+  fp();
+  const tm = d.title.match(/Phase\s+(\d+(?:\.\d+)*),\s*wave\s+(\d+)/i);
+  d.phaseNo = tm ? tm[1] : ''; d.wave = d.fm.wave || (tm ? tm[2] : '');
+  d.outcome = d.fm.outcome || null; d.reason = d.fm.reason || null;
+  d.o = OUTCOME[d.outcome] || (d.outcome ? { tone: 'quiet', word: d.outcome, icon: 'help', mono: true } : NOT_STATED);
+  d.counts = {};
+  ['checked', 'passed', 'failed', 'needs_review'].forEach((k) => { if (/^\d+$/.test(d.fm[k] || '')) d.counts[k] = Number(d.fm[k]); });
+  // a criterion is a list item that opens with its result (plain, bold or in backticks) and a colon
+  d.crit = d.items.map((t, k) => {
+    const m = t.match(/^(?:\*\*|`)?(passed|failed|needs_review)(?:\*\*|`)?\s*:\s*(.*)$/i);
+    const text = m ? m[2] : t;
+    return { k, no: k + 1, res: m ? m[1].toLowerCase() : 'other', text, seen: [...text.matchAll(/`([^`]+)`/g)].map((x) => x[1]), asks: (text.match(/"([^"]+)"/) || [])[1] || null };
+  });
+  d.groups = GROUP_ORDER.map((r) => ({ r, ...RESULT[r], items: d.crit.filter((c) => c.res === r) }));
+  const other = d.crit.filter((c) => c.res === 'other');
+  if (other.length) d.groups.push({ r: 'other', tone: 'quiet', label: 'Result not stated', items: other });
+  d.targets = [...new Set(d.paras.flatMap((p) => [...p.matchAll(/`([^`]+)`/g)].map((x) => x[1]).filter((x) => /^(\/|https?:\/\/)/.test(x))))];
+  d.na = (d.outcome === 'could_not_look' || d.outcome === 'nothing_to_report') && !d.crit.length;
+  d.hasCounts = !d.na && ['passed', 'failed', 'needs_review'].some((k) => k in d.counts);
+  d.name = PHASE[d.phaseNo] || d.title;
+  return d;
+}
+
+// ---------- state ----------
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+const S = { state: params.get('state') || '03', sel: null, open: new Set() };
+const doc = (k = S.state) => parseDom(SRC[k]);
+const VIEWS = {}; const ACTS = {};
+
+// ---------- shared atoms ----------
+const ICON = {
+  copy: '<rect x="9" y="9" width="13" height="13"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  chevr: '<path d="m9 18 6-6-6-6"/>',
+  check: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  minus: '<circle cx="12" cy="12" r="10"/><path d="M8 12h8"/>',
+  eyeoff: '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+};
+const svg = (k, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`;
+const sq = (tone, label) => `<span class="sq" data-tone="${tone}"${label ? ` role="img" aria-label="${esc(label)}"` : ' aria-hidden="true"'}></span>`;
+const chip = (tone, text, cls = '') => `<span class="status-chip ${cls}"${tone ? ` data-tone="${tone}"` : ''}>${tone ? sq(tone) : ''}${text}</span>`;
+const pathCode = (t) => `<code class="path" title="${esc(t)}">${esc(t)}</code>`;
+const human = (r) => (r || '').replace(/_/g, ' ');
+// The outcome chip's accessible name carries the reason (UI-SPEC Accessibility: could not look vs nothing to report)
+function outcomeChip(d, cls = 'big') {
+  const label = `Outcome: ${d.o.word}${d.reason && d.reason !== 'ok' ? `: ${human(d.reason)}` : ''}`;
+  return `<span class="status-chip oc ${cls}" data-tone="${d.o.tone}" role="img" aria-label="${esc(label)}">${svg(d.o.icon)}<span${d.o.mono ? ' class="mono"' : ''}>${esc(d.o.word)}</span></span>`;
+}
+// the reason as a short human sentence plus the raw value in mono; any other reason: its raw value only
+function reasonHtml(d) {
+  if (!d.reason || d.reason === 'ok') return '';
+  const s = REASON[d.reason];
+  return `<div class="why">${s ? `<p class="why-s">${esc(s)}</p>` : ''}<code class="raw">reason: ${esc(d.reason)}</code></div>`;
+}
+function counts(d) {
+  if (d.na) return `<p class="na">${sq('quiet')}<span>No criteria were checked.</span></p>`;
+  if (!d.hasCounts) return '';
+  return `<div class="counts">${COUNT_ORDER.filter((k) => k in d.counts).map((k) => `<span class="cnt">${sq(d.counts[k] ? RESULT[k].tone : 'quiet')}<span class="num">${d.counts[k]}</span><span class="micro-label">${RESULT[k].label}</span></span>`).join('')}</div>`;
+}
+const checkedMeta = (d) => !d.na && d.counts.checked != null ? `<span class="meta">${d.counts.checked} checked</span>` : '';
+const seenHtml = (c) => c.seen.length ? `<span class="el">${c.seen.map((s) => `<span class="el-box">${esc(s)}</span>`).join('')}</span>` : `<span class="el txt">${inline(c.text)}</span>`;
+const asksHtml = (c) => c.asks ? `<span class="asks">Contract “${esc(c.asks)}”</span>` : '';
+const appHead = () => `<header class="app-head"><span class="app-brand"><i></i>Labelore <span>/ Lendshed</span></span><nav class="app-nav" aria-label="Project"><a href="#" data-act="noop">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Search</a></nav></header>`;
+function header(d, { compact = false, target = true } = {}) {
+  const meta = `<div class="meta-row">${d.wave ? `<span class="meta">Wave ${esc(d.wave)}</span>` : ''}${target && d.targets.length ? `<span class="meta tg">Target ${d.targets.map(pathCode).join(' ')}</span>` : ''}${compact ? '' : `<button class="btn-xs icon" type="button" data-act="noop" aria-label="Copy path" title="Copy path">${svg('copy')}</button><div class="seg" role="group" aria-label="Show"><button class="btn-xs" type="button" aria-pressed="true">View</button><button class="btn-xs" type="button" aria-pressed="false" data-act="noop">Source</button></div>`}</div>`;
+  if (compact) return `<header class="heading-block"><p class="eyebrow">Phase ${esc(d.phaseNo)} · Browser check</p><h2 class="sh">${esc(d.name)}</h2>${meta}</header>`;
+  return `<nav class="crumbs" aria-label="Breadcrumb"><span>Lendshed</span><span aria-hidden="true">/</span><span>Phase ${esc(d.phaseNo)}</span><span aria-hidden="true">/</span><span aria-current="page">Browser check</span></nav>
+  <header class="heading-block"><p class="eyebrow">Phase ${esc(d.phaseNo)} · Browser check</p><h1>${esc(d.name)}</h1>${meta}</header>`;
+}
+function critDock(d) {
+  if (S.sel == null || !d.crit[S.sel]) return '';
+  const c = d.crit[S.sel]; const r = RESULT[c.res] || { tone: 'quiet', label: 'Result not stated' };
+  return `<div class="dock"><div class="dock-head"><span class="micro-label">Criterion ${c.no} of ${d.crit.length}</span>${chip(r.tone, r.label)}<button class="text-link x" type="button" data-act="close">Close</button></div><p class="prose">${inline(c.text)}</p></div>`;
+}
+function bars(d) {
+  if (!d.paras.length) return '';
+  return `<div class="bars"><details class="bar"${S.open.has('wrote') ? ' open' : ''} data-k="wrote"><summary>${svg('chevr', 'i chev')}<span>What the check wrote</span><span class="n">${d.paras.length} ${d.paras.length === 1 ? 'paragraph' : 'paragraphs'}</span></summary><div class="bar-body"><div class="blocks">${d.paras.map((p) => `<p class="prose">${inline(p)}</p>`).join('')}</div></div></details></div>`;
+}
+
+// =====================================================================================
+// A: Browser window. The check drawn as the window it looked through: the outcome chip and the target(s) in the
+// bar; inside, what it saw (failed first, each quoting what was seen), or the shut/blank view with the reason; the
+// counts in the window's status bar.
+// =====================================================================================
+VIEWS.a = function (d) {
+  const addr = d.targets.length ? `<span class="aw-addr" aria-label="Target">${d.targets.map(pathCode).join('')}</span>` : '<span class="aw-addr empty" aria-hidden="true"></span>';
+  let view;
+  if (!d.crit.length) {
+    const shut = d.outcome === 'could_not_look';
+    view = `<div class="aw-view ${shut ? 'shut' : 'blank'}">${svg(d.o.icon, 'i big')}${reasonHtml(d) || (d.na ? '' : `<p class="na">${sq('quiet')}<span>No criteria in the file.</span></p>`)}</div>`;
+  } else {
+    view = `<div class="aw-view"><div class="aw-groups">${d.groups.filter((g) => g.items.length).map((g) => `<div class="aw-g"><p class="micro-label">${sq(g.tone)}${g.label} · ${g.items.length}</p><div class="snips">${g.items.map((c) => `<button class="snip" type="button" data-act="crit" data-k="${c.k}" data-tone="${g.tone}" aria-pressed="${S.sel === c.k}" aria-label="Criterion ${c.no}, ${g.label}">${seenHtml(c)}${asksHtml(c)}</button>`).join('')}</div></div>`).join('')}</div></div>`;
+  }
+  const win = `<figure class="aw" aria-label="The browser check"><div class="aw-bar"><span class="aw-dots" aria-hidden="true"><i></i><i></i><i></i></span>${outcomeChip(d)}${addr}</div>${view}<div class="aw-status">${counts(d) || '<span></span>'}${checkedMeta(d)}</div></figure>`;
+  return `${win}${critDock(d)}`;
+};
+
+// =====================================================================================
+// B: Reuse. The outcome chip and its reason; the status-meter (one square per criterion, failed first); 044 E's piles
+// with one segment per criterion in three columns, the count under each; a segment opens the criterion in a dock.
+// =====================================================================================
+VIEWS.b = function (d) {
+  const meter = d.crit.length ? `<div class="status-meter big-meter" role="img" aria-label="${d.counts.passed ?? d.groups[2].items.length} of ${d.crit.length} criteria passed"><span class="cap"><b>${d.counts.checked ?? d.crit.length}</b> criteria checked</span><span class="cells" aria-hidden="true">${d.groups.flatMap((g) => g.items.map(() => `<span class="sq" data-tone="${g.tone}"></span>`)).join('')}</span></div>` : '';
+  const right = d.crit.length || d.hasCounts ? `<div class="rb-m">${meter}${counts(d)}</div>` : '';
+  const head = `<section class="rb-head${right ? '' : ' solo'}" aria-label="Outcome"><div class="rb-o"><span class="micro-label">Outcome</span>${outcomeChip(d)}${reasonHtml(d)}</div>${right}</section>`;
+  let board;
+  if (!d.crit.length) {
+    board = `<figure class="board"><div class="board-bar"><span class="micro-label">Criteria</span></div><div class="board-body empty ${d.outcome === 'could_not_look' ? 'shut' : 'blank'}">${svg(d.o.icon, 'i big')}${d.na ? counts(d) : `<p class="na">${sq('quiet')}<span>No criteria in the file.</span></p>`}</div></figure>`;
+  } else {
+    const col = (g) => `<div class="pile-col"><div class="pile">${g.items.length ? g.items.map((c) => `<button class="mk" type="button" data-act="crit" data-k="${c.k}" data-tone="${g.tone}"${S.sel === c.k ? ' data-on="true"' : ''} title="Criterion ${c.no}: ${esc(g.label)}" aria-label="Criterion ${c.no}, ${esc(g.label)}"></button>`).join('') : '<span class="pile-zero" aria-hidden="true"></span>'}</div><div class="pile-lab"><span class="cnt">${sq(g.items.length ? g.tone : 'quiet')}<span class="num">${d.counts[g.r] ?? g.items.length}</span></span><span class="pl">${g.label}</span></div></div>`;
+    board = `<figure class="board"><div class="board-bar"><span class="micro-label">One segment per criterion, failed first</span></div><div class="board-body"><div class="piles">${d.groups.slice(0, 3).map(col).join('')}</div></div><div class="board-foot"><span>${sq('missing')}failed</span><span>${sq('in-flight')}needs review</span><span>${sq('complete')}passed</span></div></figure>`;
+  }
+  return `${head}<section style="display:grid;gap:var(--space-3)" aria-label="Criteria">${board}${critDock(d)}</section>`;
+};
+
+// =====================================================================================
+// C: Route map. The outcome chip, then the path the check took through GSD's two questions (was there anything to
+// check; could the browser look), lit to the outcome the file records; the lit end holds the reason or the counts.
+// Then the criteria as a receipt, failed first; a row opens its observation in place.
+// =====================================================================================
+const ROUTE = { verified: ['st', 'q1', 'q2', 've'], could_not_look: ['st', 'q1', 'q2', 'cn'], nothing_to_report: ['st', 'q1', 'nt'] };
+const EDGES = [['st', 'q1', ''], ['q1', 'q2', 'Yes'], ['q2', 've', 'Yes'], ['q1', 'nt', 'No'], ['q2', 'cn', 'No']];
+VIEWS.c = function (d) {
+  const lit = ROUTE[d.outcome] || [];
+  const on = (a) => lit.includes(a);
+  const node = (a, cls, inner) => `<div class="rn ${cls}" data-area="${a}" data-n="${a}" data-lit="${on(a)}">${inner}</div>`;
+  const end = (a, key) => {
+    const o = OUTCOME[key];
+    if (!on(a)) return node(a, 'end', `<span class="t">${o.word}</span>`);
+    return node(a, 'end', `${outcomeChip(d, '')}${key === 'verified' ? `${counts(d)}${checkedMeta(d)}` : `${reasonHtml(d)}${counts(d)}`}`);
+  };
+  const route = `<div class="rc-wrap"><figure class="rc-route" data-o="${esc(d.outcome || 'none')}" aria-label="The path the check took: ${esc(d.o.word)}"><svg aria-hidden="true"></svg>
+    ${node('st', '', `<span class="micro-label">${d.wave ? `Wave ${esc(d.wave)}` : 'The wave'}</span>${d.targets.length ? `<span class="tg">${d.targets.map(pathCode).join(' ')}</span>` : ''}`)}
+    ${node('q1', 'q', '<span class="t">UI criteria to check?</span>')}
+    ${node('q2', 'q', '<span class="t">Could the browser look?</span>')}
+    ${end('ve', 'verified')}${end('nt', 'nothing_to_report')}${end('cn', 'could_not_look')}</figure></div>`;
+  const rows = d.crit.length ? `<section class="rc-list" aria-label="Criteria"><h2 class="sh">Criteria</h2>${!lit.length && d.hasCounts ? counts(d) : ''}${d.groups.filter((g) => g.items.length).map((g) => `<div class="rc-g"><p class="micro-label">${sq(g.tone)}${g.label} · ${g.items.length}</p>${g.items.map((c) => `<button class="crow" type="button" data-act="row" data-k="${c.k}" aria-expanded="${S.sel === c.k}"><span class="no">${c.no}</span><span class="el${c.seen.length ? '' : ' txt'}">${c.seen.length ? c.seen.map((s) => `<span class="el-box">${esc(s)}</span>`).join('') : inline(c.text.length > 90 ? `${c.text.slice(0, 88)}…` : c.text)}${asksHtml(c)}</span>${svg('chevr', 'i chev')}${S.sel === c.k ? `<span class="full prose">${inline(c.text)}</span>` : ''}</button>`).join('')}</div>`).join('')}</section>` : '';
+  return `<section class="rc-out" aria-label="Outcome"><span class="micro-label">Outcome</span>${outcomeChip(d)}</section>${route}${rows}`;
+};
+function drawRoutes() {
+  document.querySelectorAll('.rc-route').forEach((R) => {
+    const s = R.querySelector('svg'); const box = R.getBoundingClientRect();
+    const lit = ROUTE[R.dataset.o] || [];
+    s.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+    s.innerHTML = EDGES.map(([f, t, lab]) => {
+      const a = R.querySelector(`[data-n="${f}"]`).getBoundingClientRect(); const b = R.querySelector(`[data-n="${t}"]`).getBoundingClientRect();
+      const isLit = lit.includes(f) && lit.includes(t);
+      let x1, y1, x2, y2, tx, ty, anchor;
+      if (b.left >= a.right - 1) { x1 = a.right; y1 = a.top + 22; x2 = b.left; y2 = b.top + 22; tx = (x1 + x2) / 2; ty = R.clientWidth < 704 ? y1 + 16 : y1 - 8; anchor = 'middle'; }
+      else { x1 = a.left + Math.min(a.width / 2, 48); y1 = a.bottom; x2 = b.left + Math.min(b.width / 2, 48); y2 = b.top; tx = x1 + 8; ty = (y1 + y2) / 2 + 4; anchor = 'start'; }
+      [x1, x2, tx] = [x1, x2, tx].map((v) => v - box.left); [y1, y2, ty] = [y1, y2, ty].map((v) => v - box.top);
+      const p = `<path d="M${x1} ${y1} L ${x2} ${y2}" data-lit="${isLit}"/>`;
+      return lab ? `${p}<text x="${tx}" y="${ty}" text-anchor="${anchor}" data-lit="${isLit}">${lab}</text>` : p;
+    }).join('');
+  });
+}
+ACTS.row = (el) => { const k = Number(el.dataset.k); S.sel = S.sel === k ? null : k; render(); };
+
+// ---------- render orchestration ----------
+ACTS.crit = (el) => { const k = Number(el.dataset.k); S.sel = S.sel === k ? null : k; render(); };
+ACTS.close = () => { S.sel = null; render(); };
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function pageHtml(v) {
+  if (S.state === 'pair') {
+    return `${appHead()}<main class="page"><p class="sk-note">Sketch-only comparison: 01-DOM-VERIFY (could not look) beside 02-DOM-VERIFY (nothing to report), each as its own page would show it.</p><div class="pair">${['01', '02'].map((k) => { const d = doc(k); return `<div class="pair-col">${header(d, { compact: true, target: v !== 'a' && v !== 'c' })}${VIEWS[v](d)}</div>`; }).join('')}</div></main>`;
+  }
+  const d = doc();
+  return `${appHead()}<main class="page">${header(d, { target: v === 'b' })}${VIEWS[v](d)}${bars(d)}</main>`;
+}
+function render() {
+  const y = window.scrollY; const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = pageHtml(v);
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  window.scrollTo(0, y);
+  drawRoutes();
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; S.sel = null; S.open = new Set(); return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+document.addEventListener('toggle', (e) => { const el = e.target; if (el.matches && el.matches('details.bar')) { if (el.open) S.open.add(el.dataset.k); else S.open.delete(el.dataset.k); } }, true);
+window.addEventListener('hashchange', () => { S.sel = null; render(); });
+window.addEventListener('resize', drawRoutes);
+if (document.fonts) document.fonts.ready.then(drawRoutes);
+render();
+</script>
+</body>
+</html>
