@@ -148,5 +148,83 @@ Measured in light theme, text of the page only. Same four in all variants; at 39
 All content is Labelore's own public map, the made-up Tidemark fixture, or invented here in Labelore's own
 words. The repository is public.
 
+## Round 2: D, E, F (visual-first)
+Round 1 (A, B, C above, kept as the tabs "Round 1 A/B/C") was rejected by the user: "no creativity in them, plain
+boring wall of texts". Round 2 replaces the panel interiors with three pictures. The frame is still 042 A. In each
+variant **the first screen of the panel is a picture of the codebase**; prose is reached on demand (a click on a box,
+a step, a folder, a signpost, or one of the closed accordion bars under the picture, which hold every section of the
+document so nothing is lost). Colours are tokens only: the opacity steps `--fill-1..4` (foreground at 4, 8, 13 and 19
+percent), a hatch of `--border`, and the existing accent and `in-flight` tones. No new hue, no destructive, warning or
+missing tone.
+
+How to view: the tabs `#d`, `#e`, `#f` (the sketch now opens on D); the same State bar. Each picture is HTML at real
+size with an SVG overlay for lines only, so text stays on the four font sizes. Click boxes, steps, cells, pins and
+signposts; "Shown as drawn" in D swaps the picture for the round 1 text figure.
+
+- **D: Boxes and arrows + treemap.** Architecture is a drawn graph: the System Overview diagram redrawn as boxes and
+  arrows at the author's proportions, arrow labels kept. "Trace" chips pick one of the document's data flows and
+  numbered markers light up on the boxes the steps pass through, with the connecting arrows in accent; clicking a box
+  dims the rest, lights its arrows and opens its components and the anti-patterns that name it. Structure is a
+  treemap of the directory tree (area = entries the tree lists), with the ten "Where to add new code" entries as
+  numbered signposts planted on the folders they name.
+- **E: Territory bands.** One picture answers "how is it built" and "where does it live": the Layers section as
+  horizontal bands (the first layer listed is the bottom band), each holding the components that live in it as chips
+  and, on the Structure panel, the folders under it as tiles; "uses" chips on a band name the layers it depends on;
+  folders and components outside every layer sit in a dashed "outside" band. Signposts as in D.
+- **F: Metro lines + sunburst.** Architecture is the document's data flows drawn as metro lines (one line style per
+  flow: solid, dashed, dotted, double), each step a station labelled with the component it passes through; a station
+  outlined twice is a component on more than one line. Structure is a sunburst of the tree (rings are folder depth,
+  angle is entries listed) with the same signposts.
+
+### Where each mark comes from (every one is computed from a field the map documents contain)
+| Mark | Source in the map |
+|------|-------------------|
+| D box, its title, its one-line sub, box proportions | rectangles of the System Overview fenced diagram (shared walls split into several boxes); first line, its parenthetical or first backticked path |
+| D arrow, its label | a `▼` or `▶` connector between two boxes, the text beside it |
+| D step marker, trace chip | numbered lists under each `###` of Data Flow; the box is the one whose text holds a path named in the step |
+| D box dock: components, flag count | Component Responsibilities rows whose File paths match the box; Anti-Patterns that name a path in the box |
+| D graph when the diagram is not liftable | Layers: Location (box), Depends on (arrows) |
+| D, F treemap cell and sunburst slice | Directory Layout tree (indent, trailing `# note`); area or angle = entries listed; hatched or grey = the files at that level |
+| D, E, F signpost | backticked paths in each Where to Add New Code entry, planted on the deepest folder that holds them |
+| Folder dock: purpose | Directory Purposes entry for that folder |
+| E band, its folder, "uses" chips | Layers: name, Location, and the paths or "all layers below" in Depends on |
+| E component chip | Component Responsibilities row whose File path is under the layer's Location |
+| E folder tile | a Directory Layout folder placed by the longest Location prefix; tile width = entries listed |
+| E bands in Tidemark (no Layers section) | the rows of its System Overview diagram |
+| F line, station | each numbered Data Flow list; the Component Responsibilities row whose File matches a path in the step (else the first path in the step) |
+
+### Mobile form at 390px (no sideways page scroll in any state, theme or variant)
+D architecture and F architecture are pictures that pan inside their own frame (the graph is 667px wide, the metro
+680px, the frame body 356px). Everything else reflows: D's treemap is re-laid out to 324 by 520px, E's bands stack the
+label over the chips (324 wide, about 1400px tall), F's sunburst scales to 324px square.
+
+### Layout contract, round 2
+**D: Boxes and arrows + treemap**
+- 1280px: the frame is 838px wide and 854px tall; the graph is 667 by 598px, centred, seven boxes in six tiers
+  (the two boxes of the third tier sit side by side with an arrow between them).
+- 1280px: the Structure treemap is 804 by 498px (height is 0.62 of width); cells under 40px wide carry no name.
+- 390px: the graph keeps 667px and pans inside the 356px frame body; the treemap is 324 by 520px.
+- 390px: after a click the dock (components in the box, anti-patterns) is the next block under the frame.
+**E: Territory bands**
+- 1280px: seven bands plus a dashed one, 804px wide, 830px tall (Architecture) and 800px (Structure); band labels are
+  12rem wide, chips and tiles wrap in the rest.
+- 390px: each band is one column of 324px: label and "uses" chips over the chips; the picture is about 1400px tall.
+**F: Metro lines + sunburst**
+- 1280px: four lines of up to 6 stations, 112px apart, 680px wide, 467px tall in an 838px frame.
+- 1280px: the sunburst is 576px square at x=522, three rings, ten signposts; labels only on slices with 50px of arc.
+- 390px: the metro keeps 680px and pans in the frame; the sunburst scales to 324px square, signposts stay 18px.
+
+### Font sizes, round 2
+Measured at 1280 and 390, light theme, text of the page only: the same four (`--fs-display-3` on the `h1`, `--fs-7`
+heading, `--fs-4` body, `--fs-2` label) in D, E and F. No exception needed.
+
+### What to look for, round 2
+- Is the redrawn diagram (D) a picture you would rather read than the author's text diagram? Does tracing a data flow
+  across it say what the Data Flow prose says?
+- Does E's one-picture-two-answers (layers holding components and folders) earn the bands, or is it a table in colour?
+- Is F's metro a better picture of "what happens, in order" than D's trace, and is the sunburst readable against
+  D's treemap for a tree this size?
+- For Structure only: treemap (D), territory tiles (E) or sunburst (F)?
+
 ## Winner
-Not chosen yet. The choice is the 10-09 checkpoint (Task 3), together with sketch 044.
+Not chosen yet. Round 1 (A, B, C) was rejected; round 2 (D, E, F) is the 10-09 checkpoint choice, together with sketch 044.

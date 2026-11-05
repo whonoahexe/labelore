@@ -241,6 +241,187 @@ button.t-name:hover .nm { text-decoration: underline; text-underline-offset: var
 .lookup .where li { color: var(--muted-foreground); }
 .lookup .where li:first-child { color: var(--foreground); }
 
+/* ---------- round 2: visual-first atoms (tokens, opacity steps and hatch only; no colour of its own) ---------- */
+:root {
+  --fill-1: color-mix(in oklch, var(--foreground) 4%, transparent);
+  --fill-2: color-mix(in oklch, var(--foreground) 8%, transparent);
+  --fill-3: color-mix(in oklch, var(--foreground) 13%, transparent);
+  --fill-4: color-mix(in oklch, var(--foreground) 19%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px 6px);
+}
+.pic { border: 1px solid var(--border); min-width: 0; display: grid; }
+.pic-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); background: var(--veil); }
+.pic-bar .ff-title { margin-right: auto; }
+.pic-bar button.status-chip { cursor: pointer; }
+.pic-bar button.status-chip[aria-pressed='true'] { background: var(--muted); }
+.pic-body { overflow: auto; padding: var(--space-4); min-width: 0; max-width: 100%; }
+.pic-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--border); color: var(--muted-foreground); }
+.pic-foot .key { display: inline-flex; align-items: center; gap: var(--space-1-5); }
+.trace { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-items: center; margin-bottom: var(--space-3); }
+.trace .btn-xs { text-transform: none; letter-spacing: var(--ls-wider); font-family: var(--font-mono); font-weight: var(--fw-medium); }
+.trace .btn-xs[aria-pressed='true'] { background: var(--primary-tint); border-color: var(--primary-border); }
+
+/* the drawn graph: boxes are HTML at real size (text stays at its token size), arrows are an SVG overlay */
+.g-wrap { position: relative; margin: 0 auto; }
+.g-svg { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+.g-svg .e { stroke: var(--muted-foreground); stroke-width: 1.5; fill: none; }
+.g-svg .ah { fill: var(--muted-foreground); stroke: none; }
+.g-svg .edge[data-hot='true'] .e { stroke: var(--primary); stroke-width: 2.5; }
+.g-svg .edge[data-hot='true'] .ah { fill: var(--primary); }
+.g-svg .edge[data-dim='true'] { opacity: 0.3; }
+.g-node { position: absolute; display: grid; align-content: center; gap: var(--space-0-5); padding: var(--space-1-5) var(--space-3); border: 1px solid var(--border); background: var(--fill-1); text-align: left; min-width: 0; }
+.g-node:hover { background: var(--state-hover); }
+.g-node .g-t { font-weight: var(--fw-semibold); overflow-wrap: anywhere; line-height: var(--lh-tight); }
+.g-node .g-s { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); overflow-wrap: anywhere; line-height: var(--lh-snug); }
+.g-node[data-hot='true'] { border-color: var(--primary); background: var(--primary-tint); box-shadow: 0 0 0 1px var(--primary); }
+.g-node[data-dim='true'] { opacity: 0.45; }
+.g-node[data-onpath='true'] { border-color: var(--primary-border); }
+.g-lab { position: absolute; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); background: var(--background); padding: 0 var(--space-1); max-width: 17rem; line-height: var(--lh-snug); }
+.g-badges { position: absolute; top: calc(var(--space-2) * -1 - 1px); right: var(--space-2); display: flex; gap: var(--space-1); }
+.bd { display: inline-grid; place-items: center; min-width: var(--space-4-5, 1.125rem); height: 1.125rem; padding: 0 var(--space-1); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); line-height: 1; }
+.bd-step { background: var(--primary); color: var(--background); }
+.bd-flag { border: 1px dashed var(--muted-foreground); background: var(--background); color: var(--muted-foreground); }
+
+/* on-demand detail dock */
+.dock { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--primary-border); background: var(--primary-tint); min-width: 0; }
+.dock-empty { padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); color: var(--muted-foreground); }
+.dock h4 { margin: 0; font-size: inherit; font-weight: var(--fw-semibold); }
+.dock .d-row { display: grid; gap: var(--space-0-5); }
+.dock .d-row > span:first-child { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; color: var(--muted-foreground); }
+.dock pre { margin: 0; font-family: var(--font-mono); font-size: var(--fs-2); line-height: var(--lh-snug); white-space: pre-wrap; overflow-wrap: anywhere; }
+.dock .d-x { margin-left: auto; }
+.dock-head { display: flex; align-items: baseline; gap: var(--space-3); }
+.acc-list { display: grid; }
+.acc { border-top: 1px solid var(--border); }
+.acc:last-child { border-bottom: 1px solid var(--border); }
+.acc > summary { display: flex; align-items: center; gap: var(--space-3); min-height: var(--space-10); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); }
+.acc > summary::-webkit-details-marker { display: none; }
+.acc > summary:hover { background: var(--state-hover); }
+.acc > summary .n { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-7); }
+.acc > summary svg { color: var(--muted-foreground); }
+.acc[open] > summary svg { transform: rotate(90deg); }
+.acc > .acc-body { display: grid; gap: var(--space-4); padding: 0 0 var(--space-5) var(--space-7); }
+
+/* E: the territory, layers as bands */
+.bands { display: grid; gap: var(--space-0-5); }
+.band { display: grid; grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr); border: 1px solid var(--border); background: var(--fill-1); }
+.band[data-step='2'] { background: var(--fill-2); } .band[data-step='3'] { background: var(--fill-3); } .band[data-step='4'] { background: var(--fill-4); }
+.band[data-out='true'] { background: transparent; border-style: dashed; }
+.band[data-dim='true'] { opacity: 0.4; }
+.band-lab { display: grid; gap: var(--space-0-5); align-content: start; padding: var(--space-2-5) var(--space-3); border-right: 1px solid var(--border); min-width: 0; }
+.band-lab b { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.band-lab code { font-size: var(--fs-2); color: var(--muted-foreground); background: none; padding: 0; }
+.band-uses { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-1-5); }
+.use { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0 var(--space-1-5); border: 1px solid var(--border); background: var(--background); font-size: var(--fs-2); color: var(--muted-foreground); }
+.use svg { width: var(--space-3); height: var(--space-3); }
+.band-body { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-content: flex-start; padding: var(--space-2-5); min-width: 0; }
+.chip-c { padding: var(--space-1) var(--space-2-5); border: 1px solid var(--border); background: var(--background); text-align: left; min-width: 0; overflow-wrap: anywhere; }
+.chip-c:hover { background: var(--state-hover); }
+.chip-c[aria-pressed='true'] { border-color: var(--primary); background: var(--primary-tint); }
+.tile { position: relative; flex: var(--w) 1 0; min-width: 7rem; display: grid; gap: var(--space-0-5); padding: var(--space-1-5) var(--space-2); border: 1px solid var(--border); background: var(--background); text-align: left; align-content: start; }
+.tile:hover { background: var(--state-hover); }
+.tile[aria-pressed='true'] { border-color: var(--primary); background: var(--primary-tint); }
+.tile .tn { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); overflow-wrap: break-word; word-break: break-word; }
+.tile .tc { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.pins { display: flex; gap: var(--space-1); flex-wrap: wrap; }
+.pin { display: inline-grid; place-items: center; min-width: 1.125rem; height: 1.125rem; padding: 0 var(--space-1); background: var(--primary); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); line-height: 1; border: 0; cursor: pointer; }
+.pin[aria-pressed='true'] { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.pin-legend { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.pin-chip { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: 0 var(--space-2) 0 0; border: 1px solid var(--border); background: var(--background); font-size: var(--fs-2); text-align: left; }
+.pin-chip .pin { height: 1.5rem; }
+.pin-chip:hover { background: var(--state-hover); }
+.pin-chip[aria-pressed='true'] { border-color: var(--primary); background: var(--primary-tint); }
+@media (max-width: 42rem) { .band { grid-template-columns: minmax(0, 1fr); } .band-lab { border-right: 0; border-bottom: 1px solid var(--border-faint); } }
+
+/* D: the treemap */
+.tm { position: relative; width: 100%; }
+.tm-cell { position: absolute; border: 1px solid var(--border); background: var(--fill-1); overflow: hidden; text-align: left; cursor: pointer; }
+.tm-cell[data-d='2'] { background: var(--fill-2); } .tm-cell[data-d='3'] { background: var(--fill-3); }
+.tm-cell[data-group='true'] { background: var(--hatch); }
+.tm-cell:hover { outline: 2px solid var(--primary-border); outline-offset: -2px; z-index: 2; }
+.tm-cell[data-sel='true'] { outline: 2px solid var(--primary); outline-offset: -2px; z-index: 3; }
+.tm-n { display: block; padding: 1px 4px; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tm-c { display: block; padding: 0 4px; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tm-pins { position: absolute; right: 2px; bottom: 2px; display: flex; gap: 2px; flex-wrap: wrap; justify-content: flex-end; max-width: 100%; }
+
+/* F: sunburst and metro */
+.sb-wrap { position: relative; width: 100%; max-width: 36rem; margin: 0 auto; aspect-ratio: 1; }
+.sb-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sb-wrap .arc { stroke: var(--background); stroke-width: 1; cursor: pointer; fill: var(--fill-2); }
+.sb-wrap .arc[data-d='2'] { fill: var(--fill-3); } .sb-wrap .arc[data-d='3'] { fill: var(--fill-4); } .sb-wrap .arc[data-d='1'] { fill: var(--fill-1); }
+.sb-wrap .arc[data-group='true'] { fill: var(--border); }
+.sb-wrap .arc:hover { fill: var(--primary-tint); stroke: var(--primary-border); }
+.sb-wrap .arc[data-sel='true'] { fill: var(--primary-tint); stroke: var(--primary); stroke-width: 2; }
+.sb-lab, .sb-pin { position: absolute; transform: translate(-50%, -50%); }
+.sb-lab { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); pointer-events: none; white-space: nowrap; }
+.sb-core { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); pointer-events: none; }
+.metro { display: grid; gap: var(--space-5); width: max-content; min-width: 100%; }
+.m-row { position: relative; }
+.m-name { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; color: var(--muted-foreground); margin-bottom: var(--space-1); }
+.m-track { position: relative; height: 4.75rem; }
+.m-line { position: absolute; left: 0; right: 0; top: 1.05rem; border-top: 5px var(--ls) var(--muted-foreground); }
+.m-st { position: absolute; top: 0; transform: translateX(-50%); width: 6.5rem; display: grid; justify-items: center; gap: var(--space-1); text-align: center; }
+.m-dot { width: 1.25rem; height: 1.25rem; border: 2px solid var(--foreground); background: var(--background); display: grid; place-items: center; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); line-height: 1; }
+.m-st[data-on='true'] .m-dot { background: var(--primary); border-color: var(--primary); color: var(--background); }
+.m-st[data-ix='true'] .m-dot { outline: 2px solid var(--muted-foreground); outline-offset: 2px; }
+.m-st .m-t { font-size: var(--fs-2); line-height: var(--lh-snug); overflow-wrap: anywhere; }
+.m-link { position: absolute; width: 0; border-left: 2px dotted var(--muted-foreground); }
+
+/* ---------- 044 round 2: marks, hotspots, piles, radar ---------- */
+.mk { display: inline-block; flex: none; width: 11px; height: 11px; padding: 0; border: 1px solid var(--muted-foreground); background: var(--muted-foreground); opacity: 0.75; cursor: pointer; }
+.mk[data-sec='0'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.mk[data-pri='high'] { opacity: 1; } .mk[data-pri='med'] { opacity: 0.6; } .mk[data-pri='low'] { opacity: 0.38; }
+.mk[data-sec='0'][data-pri=''] { opacity: 1; }
+.mk:hover { outline: 2px solid var(--primary-border); outline-offset: 1px; }
+.mk[data-on='true'] { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.mk[data-top='true'] { outline: 2px solid var(--primary); outline-offset: 2px; }
+.mk[data-dim='true'] { opacity: 0.14; }
+.hs-marks { position: absolute; left: 3px; right: 3px; bottom: 3px; display: flex; flex-wrap: wrap; gap: 3px; align-content: flex-end; }
+.hs-marks[data-leaf='false'] { left: auto; top: 2px; bottom: auto; justify-content: flex-end; max-width: 55%; align-content: flex-start; }
+.tm-cell[data-heat='1'] { background: color-mix(in oklch, var(--in-flight-fill) 10%, transparent); }
+.tm-cell[data-heat='2'] { background: color-mix(in oklch, var(--in-flight-fill) 20%, transparent); }
+.tm-cell[data-heat='3'] { background: color-mix(in oklch, var(--in-flight-fill) 32%, transparent); }
+.tray { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); padding: var(--space-2) var(--space-3); border: 1px dashed var(--border); }
+.tray .hs-marks { position: static; display: flex; flex-wrap: wrap; gap: 3px; }
+.sec-legend { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.sec-chip { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--background); font-size: var(--fs-2); }
+.sec-chip b { font-family: var(--font-mono); font-weight: var(--fw-semibold); }
+.sec-chip:hover { background: var(--state-hover); }
+.sec-chip[aria-pressed='true'] { border-color: var(--primary-border); background: var(--primary-tint); }
+.piles { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: var(--space-1-5); align-items: end; }
+.pile-col { display: grid; gap: var(--space-2); align-content: end; min-width: 0; }
+.pile-col[data-dim='true'] { opacity: 0.35; }
+.pile { display: flex; flex-direction: column-reverse; gap: 3px; }
+.pile .mk { width: 100%; height: 13px; }
+.pile-zero { height: 13px; border: 1px dashed var(--muted-foreground); display: grid; place-items: center; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); line-height: 1; }
+.pile-lab { display: grid; gap: var(--space-1); justify-items: start; text-align: left; padding-top: var(--space-1-5); border-top: 1px solid var(--border); }
+.pile-lab b { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: 1.1; }
+.pile-lab .pl { font-size: var(--fs-2); color: var(--muted-foreground); overflow-wrap: break-word; line-height: 1.25; }
+.pile-lab[aria-pressed='true'] b { color: var(--primary); }
+.narrow-only { display: none; }
+.radar-box { display: grid; justify-items: center; }
+.radar { position: relative; width: 100%; max-width: 32rem; aspect-ratio: 1; }
+.radar svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.radar .ring, .radar .spoke { fill: none; stroke: var(--border); stroke-width: 1; }
+.radar .shape { fill: color-mix(in oklch, var(--in-flight-fill) 16%, transparent); stroke: var(--in-flight-fill); stroke-width: 1.5; }
+.radar .lead { stroke: var(--primary); stroke-width: 1.5; }
+.radar .mk { position: absolute; transform: translate(-50%, -50%); }
+.rd-lab { position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center; text-align: center; cursor: pointer; line-height: 1.1; }
+.rd-lab b { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); }
+.rd-t { font-size: var(--fs-2); color: var(--muted-foreground); max-width: 6.5rem; }
+.rd-call.out { display: none; }
+.rd-call { position: absolute; left: 0; bottom: 0; width: 28%; display: grid; gap: var(--space-1); padding: var(--space-2); border-left: 2px solid var(--primary); background: var(--background); color: var(--muted-foreground); font-size: var(--fs-2); overflow-wrap: anywhere; }
+@media (max-width: 42rem) {
+  .pile-lab .pl { display: none; }
+  .narrow-only { display: flex; }
+  .rd-t { display: none; }
+  .radar .lead { display: none; }
+  .rd-call.in { display: none; }
+  .rd-call.out { display: grid; position: static; width: auto; margin-top: var(--space-3); }
+  .radar-box { display: block; }
+  .radar { max-width: none; }
+}
+
 /* ---------- 043 specifics ---------- */
 .swaps.purp .swap > summary { grid-template-columns: minmax(0, 1fr); }
 .swaps.purp .arr { display: none; }
@@ -294,9 +475,12 @@ button.t-name:hover .nm { text-decoration: underline; text-underline-offset: var
 <nav id="sketch-bar" aria-label="Sketch controls">
   <span class="lbl">043 architecture + structure</span>
   <span class="grp" id="tabs">
-    <a data-tab="a" href="#a">A: Diagram first</a>
-    <a data-tab="b" href="#b">B: Lens switch</a>
-    <a data-tab="c" href="#c">C: Map + legend</a>
+    <a data-tab="a" href="#a">Round 1 A: Diagram first</a>
+    <a data-tab="b" href="#b">Round 1 B: Lens switch</a>
+    <a data-tab="c" href="#c">Round 1 C: Map + legend</a>
+    <a data-tab="d" href="#d">D: Boxes and arrows + treemap</a>
+    <a data-tab="e" href="#e">E: Territory bands</a>
+    <a data-tab="f" href="#f">F: Metro lines + sunburst</a>
   </span>
   <span class="grp">
     <button data-theme="light">Light</button>
@@ -309,6 +493,9 @@ button.t-name:hover .nm { text-decoration: underline; text-underline-offset: var
 <section data-variant="a" class="variant fr"></section>
 <section data-variant="b" class="variant fr" hidden></section>
 <section data-variant="c" class="variant fr" hidden></section>
+<section data-variant="d" class="variant fr" hidden></section>
+<section data-variant="e" class="variant fr" hidden></section>
+<section data-variant="f" class="variant fr" hidden></section>
 <div id="toast" role="status"></div>
 
 <script>
@@ -414,7 +601,7 @@ const grp = (h, body, n) => `<section class="grp"><h3 class="grp-h">${esc(h)}${n
 const rowsHtml = (items, cls = '') => `<ul class="ledger ${cls}">${items.map(([a, b, c]) => `<li><span class="l-name">${inline(a)}</span><span class="l-body">${inline(b)}</span>${c ? `<span class="l-file">${inline(c)}</span>` : '<span></span>'}</li>`).join('')}</ul>`;
 
 // ---------- render orchestration ----------
-const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c', 'd', 'e', 'f'].includes(h) ? h : 'd'; };
 function render() {
   const y = window.scrollY;
   const v = pickVariant();
@@ -439,6 +626,137 @@ document.addEventListener('click', (e) => {
   if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
 });
 window.addEventListener('hashchange', render);
+
+// ---------- round 2: the directory tree as a weighted model (shared by 043 and 044) ----------
+// Source: the Directory Layout fence in STRUCTURE (indent + trailing "# note"). Weight = the number of entries
+// the document lists under a folder (a file or an empty folder counts 1).
+function parseTree2(text) {
+  const root = { name: '', children: [], folder: true, depth: -1, note: '' };
+  const stack = [root];
+  for (const line of text.split('\n')) {
+    if (!line.trim()) continue;
+    const m = line.match(/^((?:│   |    )*)(?:├── |└── )(.*)$/);
+    const depth = m ? m[1].length / 4 + 1 : 0;
+    const rest = m ? m[2] : line.trim();
+    const hash = rest.search(/\s+#\s/);
+    const name = (hash >= 0 ? rest.slice(0, hash) : rest).trim();
+    const note = hash >= 0 ? rest.slice(hash).replace(/^\s+#\s+/, '').trim() : '';
+    const node = { name, note, folder: name.endsWith('/'), children: [], depth };
+    while (stack[stack.length - 1].depth >= depth) stack.pop();
+    stack[stack.length - 1].children.push(node);
+    stack.push(node);
+  }
+  return root.children[0];
+}
+// A folder's drawable children: folders that list entries, empty folders one each, and one "files" group.
+function kids2(n) {
+  if (n._k) return n._k;
+  const out = [];
+  n._k = out;
+  const files = [];
+  n.children.forEach((c) => { if (c.folder) out.push(c); else files.push(c); });
+  if (files.length) out.push({ name: `${files.length} file${files.length > 1 ? 's' : ''}`, folder: false, group: true, children: [], files, note: files.map((f) => f.name).join(', ') });
+  return out;
+}
+let GROUP_W = (n) => n;
+function weight2(n) {
+  if (n.group) return (n.w = GROUP_W(n.files.length));
+  const ks = kids2(n);
+  if (!ks.length) return (n.w = 1);
+  return (n.w = Math.max(1, ks.reduce((s, c) => s + weight2(c), 0)));
+}
+// Squarified treemap of the children of a folder inside a rectangle. Returns [{node, x, y, w, h}].
+function squarify2(items, x, y, w, h) {
+  const out = [];
+  const list = items.slice().sort((a, b) => b.node.w - a.node.w);
+  let total = list.reduce((s, i) => s + i.node.w, 0);
+  let area = w * h;
+  while (list.length) {
+    const side = Math.min(w, h);
+    const k = area / total;
+    const worst = (arr) => {
+      const as = arr.map((i) => i.node.w * k);
+      const s = as.reduce((p, q) => p + q, 0);
+      return Math.max((side * side * Math.max(...as)) / (s * s), (s * s) / (side * side * Math.min(...as)));
+    };
+    let row = [list[0]];
+    for (let j = 1; j < list.length; j++) { const next = [...row, list[j]]; if (worst(next) <= worst(row)) row = next; else break; }
+    const rowArea = row.reduce((s, i) => s + i.node.w * k, 0);
+    const thick = rowArea / side;
+    let off = 0;
+    row.forEach((it) => {
+      const len = (it.node.w * k) / thick;
+      if (w >= h) out.push({ node: it.node, x, y: y + off, w: thick, h: len });
+      else out.push({ node: it.node, x: x + off, y, w: len, h: thick });
+      off += len;
+    });
+    if (w >= h) { x += thick; w -= thick; } else { y += thick; h -= thick; }
+    total -= row.reduce((s, i) => s + i.node.w, 0);
+    list.splice(0, row.length);
+    area = w * h;
+  }
+  return out;
+}
+// Cells of the treemap down to maxDepth (root's children are depth 1). Each cell: {node, path, depth, x, y, w, h, leaf}.
+function cells2(root, W, H, maxDepth = 3, head = 20) {
+  weight2(root);
+  const out = [];
+  const rec = (n, path, depth, x, y, w, h) => {
+    const items = kids2(n).map((c) => ({ node: c }));
+    const rects = squarify2(items, x, y, w, h);
+    rects.forEach((r) => {
+      const c = r.node;
+      const p = c.group ? `${path}*files` : path + c.name;
+      const sub = kids2(c);
+      const canSplit = !c.group && sub.length && depth < maxDepth && r.w > 90 && r.h > 56;
+      out.push({ node: c, path: p, depth, x: r.x, y: r.y, w: r.w, h: r.h, leaf: !canSplit });
+      if (canSplit) rec(c, p, depth + 1, r.x + 2, r.y + head, r.w - 4, r.h - head - 2);
+    });
+  };
+  rec(root, '', 1, 0, 0, W, H);
+  return out;
+}
+// The deepest cell whose path is a prefix of a file token (the cell that "contains" the file).
+function cellFor2(cells, token) {
+  let best = null;
+  const t = token.replace(/^\.\//, '');
+  cells.forEach((c) => {
+    if (c.node.group) return;
+    if (t.startsWith(c.path) && (!best || c.path.length > best.path.length)) best = c;
+  });
+  if (best) return best;
+  if (!t.includes('/')) return cells.find((c) => c.node.group && c.depth === 1) || null;
+  return null;
+}
+// Sunburst arcs: rings for depth 1..maxDepth, angles by weight.
+function arcs2(root, maxDepth = 3) {
+  weight2(root);
+  const out = [];
+  const rec = (n, path, depth, a0, a1) => {
+    const ks = kids2(n);
+    const tot = ks.reduce((s, c) => s + c.w, 0) || 1;
+    let a = a0;
+    ks.forEach((c) => {
+      const span = (a1 - a0) * (c.w / tot);
+      const p = c.group ? `${path}*files` : path + c.name;
+      out.push({ node: c, path: p, depth, a0: a, a1: a + span });
+      if (!c.group && depth < maxDepth) rec(c, p, depth + 1, a, a + span);
+      a += span;
+    });
+  };
+  rec(root, '', 1, 0, Math.PI * 2);
+  return out;
+}
+const pol2 = (cx, cy, r, a) => [cx + r * Math.sin(a), cy - r * Math.cos(a)];
+function arcPath2(cx, cy, r0, r1, a0, a1) {
+  const pad = 0.012;
+  a0 += pad; a1 -= pad;
+  if (a1 <= a0) a1 = a0 + 0.001;
+  const large = a1 - a0 > Math.PI ? 1 : 0;
+  const [x0, y0] = pol2(cx, cy, r1, a0), [x1, y1] = pol2(cx, cy, r1, a1), [x2, y2] = pol2(cx, cy, r0, a1), [x3, y3] = pol2(cx, cy, r0, a0);
+  return `M${x0.toFixed(1)} ${y0.toFixed(1)}A${r1} ${r1} 0 ${large} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}A${r0} ${r0} 0 ${large} 0 ${x3.toFixed(1)} ${y3.toFixed(1)}Z`;
+}
+const fillStep2 = (d) => `var(--fill-${Math.min(4, d + 1)})`;
 
 // ---------- sketch 043 state ----------
 const REJECTED_DIAGRAM = [
@@ -788,8 +1106,436 @@ const DEEP_TREE = [
   '└── docs/                         # design-language.md',
 ].join('\n');
 
-render();
 
+// =====================================================================================
+// Round 2 (D, E, F): the first screen of each panel is a picture of the codebase, drawn only from
+// what the map documents contain. Prose is reached on demand (a click, a pin, an accordion bar).
+// =====================================================================================
+Object.assign(S, { pick: null, path: 0, step: null, drawn: false, pin: null, cell: null, tmW: 0, acc: new Set(), busy: false });
+document.addEventListener('toggle', (e) => { const d = e.target; if (d && d.dataset && d.dataset.acc) { d.open ? S.acc.add(d.dataset.acc) : S.acc.delete(d.dataset.acc); } }, true);
+const onState1 = onState;
+onState = function () { onState1(); S.pick = null; S.path = 0; S.step = null; S.drawn = false; S.pin = null; S.cell = null; };
+ACTS.gnode = (el) => { const i = Number(el.dataset.i); S.pick = S.pick === i ? null : i; S.step = null; render(); };
+ACTS.trace = (el) => { S.path = Number(el.dataset.i); S.step = null; S.pick = null; render(); };
+ACTS.step = (el) => { const i = Number(el.dataset.i); S.step = S.step === i ? null : i; render(); };
+ACTS.drawn = () => { S.drawn = !S.drawn; render(); };
+ACTS.cpick = (el) => { const i = Number(el.dataset.i); S.pick = S.pick === i ? null : i; render(); };
+ACTS.band = (el) => { const i = Number(el.dataset.i); S.pick = S.pick === i ? null : i; render(); };
+ACTS.tile = (el) => { S.cell = S.cell === el.dataset.path ? null : el.dataset.path; S.pin = null; render(); };
+ACTS.pin2 = (el) => { const i = Number(el.dataset.i); S.pin = S.pin === i ? null : i; render(); };
+ACTS.close = () => { S.pick = null; S.step = null; S.cell = null; S.pin = null; render(); };
+function afterRender() {
+  const tm = document.querySelector('.tm');
+  if (tm && !S.busy) {
+    const w = Math.round(tm.clientWidth);
+    if (w && Math.abs(w - S.tmW) > 3) { S.tmW = w; S.busy = true; render(); S.busy = false; }
+  }
+}
+window.addEventListener('resize', () => { if (document.querySelector('.tm')) { S.tmW = 0; render(); } });
+
+// ---------- data readers ----------
+const dirOf = (p) => (p.endsWith('/') ? p : p.replace(/[^/]*$/, ''));
+function layersOf() {
+  const d = DATA[proj()].arch;
+  const s = findSec(d, /^layers/);
+  if (!s) return [];
+  const out = [];
+  let cur = null;
+  for (const b of s.blocks) {
+    if (b.t === 'label') { cur = { name: b.text.replace(/\s*\(.*$/, '').trim(), f: {} }; out.push(cur); }
+    else if (b.t === 'ul' && cur) b.items.forEach((it) => { const [k, v] = splitField(it.text); cur.f[k] = v; });
+  }
+  out.forEach((l, i) => {
+    l.i = i;
+    l.loc = filesOf(l.f.Location || '').map(dirOf);
+    l.dep = l.f['Depends on'] || '';
+    if (/^nothing/i.test(l.dep)) l.dep = '';
+  });
+  out.forEach((l, i) => {
+    l.uses = out.filter((m, j) => j !== i && m.loc.some((p) => l.dep.includes(p) || l.dep.includes(p.replace(/^src\//, '')))).map((m) => m.i);
+    if (/all layers below/i.test(l.dep)) out.slice(0, i).forEach((m) => { if (!l.uses.includes(m.i)) l.uses.push(m.i); });
+  });
+  return out;
+}
+function flowsOf() {
+  const d = DATA[proj()].arch;
+  const s = findSec(d, /^data flow/);
+  if (!s) return [];
+  const out = [];
+  let title = '';
+  for (const b of s.blocks) {
+    if (b.t === 'h3') title = b.text.replace(/\s*\(.*\)\s*$/, '').trim();
+    else if (b.t === 'ol') out.push({ name: title || 'Flow', steps: b.items.map((it) => ({ text: it.text, sub: it.sub })) });
+  }
+  return out;
+}
+const tokScore = (tok, text, comp) => {
+  const t = tok.replace(/\(.*$/, '').trim();
+  if (!t) return 0;
+  if (t.includes('/')) {
+    if (text.includes(t)) return 4;
+    const dir = t.slice(0, t.lastIndexOf('/') + 1);
+    if (dir && text.includes(dir)) return 3;
+    const top = t.split('/').slice(0, 2).join('/') + '/';
+    if (top.length > 3 && text.includes(top)) return 1;
+    return 0;
+  }
+  if (/\.\w+$/.test(t)) return text.includes(t) ? 3 : 0;
+  return !comp && text.includes(t) && /^[A-Z]/.test(t) ? 2 : 0;
+};
+const bestScore = (toks, text) => toks.reduce((m, t) => Math.max(m, tokScore(t, text)), 0);
+
+// ---------- the graph, read from the System Overview diagram ----------
+const KX = 9, NODE_H = 58, GAP = 50;
+function graph2(text) {
+  const grid = text.split('\n').map((l) => [...l]);
+  const nodes = [];
+  for (let r = 0; r < grid.length; r++) for (let c = 0; c < grid[r].length; c++) {
+    if (grid[r][c] !== '┌') continue;
+    let c2 = c + 1;
+    while (c2 < grid[r].length && '─┬┴┼'.includes(grid[r][c2])) c2++;
+    if (grid[r][c2] !== '┐') continue;
+    let r2 = r + 1;
+    while (r2 < grid.length && grid[r2][c] && '│├'.includes(grid[r2][c])) r2++;
+    if (r2 >= grid.length || grid[r2][c] !== '└' || grid[r2][c2] !== '┘') continue;
+    const inner = grid.slice(r + 1, r2).map((row) => row.slice(c + 1, c2));
+    const w = c2 - c - 1;
+    const cuts = [];
+    for (let x = 0; x < w; x++) if (inner.every((rw) => rw[x] === '│')) cuts.push(x);
+    const bounds = [-1, ...cuts, w];
+    for (let s = 0; s < bounds.length - 1; s++) {
+      const a = bounds[s] + 1, b = bounds[s + 1];
+      if (b <= a) continue;
+      const lines = inner.map((rw) => rw.slice(a, b).join('').trim()).filter(Boolean);
+      if (!lines.length) continue;
+      nodes.push({ lines, c0: c + 1 + a, c1: c + b, br0: r, br1: r2 });
+    }
+  }
+  nodes.forEach((n, i) => {
+    n.i = i;
+    const first = n.lines[0];
+    n.title = first.replace(/`[^`]*`/g, '').replace(/\(.*$/, '').replace(/\s+/g, ' ').trim() || first.replace(/`/g, '');
+    const paren = first.match(/\(([^)]*)\)/);
+    const code = n.lines.join(' ').match(/`([^`]+)`/);
+    n.sub = paren ? paren[1] : code ? code[1] : (n.lines[1] || '').replace(/`/g, '');
+    n.text = n.lines.join('\n');
+  });
+  const rows = [...new Set(nodes.map((n) => n.br0))].sort((a, b) => a - b);
+  nodes.forEach((n) => { n.tier = rows.indexOf(n.br0); });
+  const edges = [];
+  nodes.forEach((a) => {
+    const below = nodes.filter((b) => b.tier > a.tier && b.c0 <= a.c1 && a.c0 <= b.c1);
+    if (!below.length) return;
+    const minTier = Math.min(...below.map((b) => b.tier));
+    below.filter((b) => b.tier === minTier).forEach((b) => {
+      const lo = Math.max(a.c0, b.c0), hi = Math.min(a.c1, b.c1);
+      let found = false;
+      const lab = [];
+      for (let r = a.br1 + 1; r < b.br0; r++) {
+        const row = grid[r];
+        let at = -1;
+        for (let c = lo; c <= hi; c++) if ('│▼▲'.includes(row[c] || ' ')) { at = c; found = true; break; }
+        if (at < 0) continue;
+        let end = at + 1;
+        while (end < row.length && !'│▼▲'.includes(row[end])) end++;
+        const t = row.slice(at + 1, end).join('').replace(/`/g, '').replace(/\s+/g, ' ').trim();
+        if (t) lab.push(t);
+      }
+      if (found) edges.push({ a: a.i, b: b.i, kind: 'v', cx: (lo + hi) / 2, label: lab.join(' ') });
+    });
+    nodes.filter((b) => b.tier === a.tier && b.c0 > a.c1).forEach((b) => {
+      let ar = false;
+      for (let r = Math.max(a.br0, b.br0) + 1; r < Math.min(a.br1, b.br1); r++) for (let c = a.c1 + 1; c < b.c0; c++) if (grid[r][c] === '▶') ar = true;
+      if (ar) edges.push({ a: a.i, b: b.i, kind: 'h', label: '' });
+    });
+  });
+  // pixel layout: columns keep the author's proportions, tiers are evenly spaced
+  nodes.forEach((n) => { n.x = n.c0 * KX; n.w = Math.max(116, (n.c1 - n.c0 + 1) * KX - 8); n.y = n.tier * (NODE_H + GAP); n.h = NODE_H; });
+  edges.forEach((e) => {
+    const A = nodes[e.a], B = nodes[e.b];
+    if (e.kind === 'v') { e.ax = e.bx = Math.round(e.cx * KX); e.ay = A.y + A.h; e.by = B.y; }
+    else { e.ax = A.x + A.w; e.bx = B.x; e.ay = e.by = A.y + A.h / 2; }
+  });
+  const W = Math.max(...nodes.map((n) => n.x + n.w)), H = Math.max(...nodes.map((n) => n.y + n.h));
+  return { nodes, edges, W, H };
+}
+// When the diagram is not liftable, the layers section still names what depends on what.
+function graphFromLayers(L) {
+  const rank = L.map(() => 0);
+  for (let k = 0; k < L.length; k++) L.forEach((l) => l.uses.forEach((u) => { if (rank[u] < rank[l.i] + 1) rank[u] = rank[l.i] + 1; }));
+  const tiers = [...new Set(rank)].sort((a, b) => a - b);
+  const nodes = L.map((l) => ({ i: l.i, title: l.name, sub: l.loc[0] || '', lines: [l.f.Purpose || ''], text: `${l.f.Purpose || ''}\n${(l.f.Contains || '')}`, tier: tiers.indexOf(rank[l.i]) }));
+  tiers.forEach((t, ti) => { const row = nodes.filter((n) => n.tier === ti); row.forEach((n, k) => { n.w = 170; n.h = NODE_H; n.x = k * 186; n.y = ti * (NODE_H + GAP); }); });
+  const edges = [];
+  L.forEach((l) => l.uses.forEach((u) => { const A = nodes[l.i], B = nodes[u]; if (B.tier > A.tier) edges.push({ a: A.i, b: B.i, kind: 'v', ax: A.x + A.w / 2, ay: A.y + A.h, bx: B.x + B.w / 2, by: B.y, label: '' }); }));
+  return { nodes, edges, W: Math.max(...nodes.map((n) => n.x + n.w)), H: Math.max(...nodes.map((n) => n.y + n.h)), fromLayers: true };
+}
+function graphModel(m) {
+  if (st().diagram !== 'plain' && m.diagram) { const g = graph2(m.diagram); if (g.nodes.length >= 3) return g; }
+  const L = layersOf();
+  return L.length ? graphFromLayers(L) : null;
+}
+const nodeFor = (g, text) => {
+  const toks = filesOf(text).concat((text.match(/\b[A-Z][A-Za-z]+[A-Z][A-Za-z]+\b/g) || []));
+  let best = null, bs = 0;
+  g.nodes.forEach((n) => { const s = bestScore(toks, n.text); if (s > bs) { bs = s; best = n.i; } });
+  return best;
+};
+const compNode = (g, c) => {
+  const toks = filesOf(c[2]);
+  let best = null, bs = 0;
+  g.nodes.forEach((n) => { const s = bestScore(toks, n.text); if (s > bs) { bs = s; best = n.i; } });
+  return best;
+};
+const antiNodes = (g, m) => m.antis.map((a) => nodeFor(g, `${a.title} ${a.what} ${a.why} ${a.doit}`));
+
+// ---------- accordion for the rest of the document ----------
+const countOf = (blocks) => { const n = blocks.reduce((s, b) => s + (b.t === 'ul' || b.t === 'ol' ? b.items.length : b.t === 'table' ? b.rows.length : 0), 0); return n || blocks.filter((b) => b.t === 'label' || b.t === 'h3').length || ''; };
+const acc = (id, title, n, body) => `<details class="acc" data-acc="${id}"${S.acc.has(id) ? ' open' : ''}><summary>${svg('chevr')}<span>${esc(title)}</span><span class="n">${n}</span></summary><div class="acc-body">${body}</div></details>`;
+function archAcc(m, skip = []) {
+  const parts = [];
+  if (!skip.includes('components')) parts.push(acc('components', 'Component responsibilities', m.components.length, rowsHtml(m.components)));
+  parts.push(acc('pattern', 'Pattern overview', m.chars.length, patternHtml(m)));
+  parts.push(acc('entries', 'Entry points', m.entries.length, entryRows(m)));
+  parts.push(acc('antis', 'Anti-patterns', m.antis.length, swapsHtml(m.antis)));
+  m.plain.forEach((s, i) => parts.push(acc('p' + i, s.h, countOf(s.blocks), blocksHtml(s.blocks))));
+  return `<div class="acc-list">${parts.join('')}</div>`;
+}
+function structAcc(m) {
+  const parts = [acc('where', 'Where to add new code', m.where.length, lookupHtml(m)), acc('purposes', 'Directory purposes', m.purposes.length, purposeRows(m))];
+  m.plain.forEach((s, i) => parts.push(acc('p' + i, s.h, countOf(s.blocks), blocksHtml(s.blocks))));
+  return `<div class="acc-list">${parts.join('')}</div>`;
+}
+const dock = (inner, close = true) => (inner ? `<div class="dock">${inner}</div>` : `<div class="dock-empty">${HINT}</div>`);
+let HINT = 'Select a mark to read it.';
+const dockHead = (title, sub) => `<div class="dock-head"><h4>${title}</h4>${sub ? `<span class="source-note">${sub}</span>` : ''}<button class="text-link d-x" type="button" data-act="close">Close</button></div>`;
+const drow = (k, v) => (v ? `<div class="d-row"><span>${esc(k)}</span><span>${v}</span></div>` : '');
+const picture = (title, tools, body, foot = '') => `<figure class="pic"><div class="pic-bar"><span class="ff-title">${esc(title)}</span>${tools}</div><div class="pic-body">${body}</div>${foot ? `<div class="pic-foot">${foot}</div>` : ''}</figure>`;
+const drawnTool = () => `<button class="status-chip" type="button" aria-pressed="${S.drawn}" data-act="drawn">Shown as drawn</button>`;
+const drawnText = (m) => `<p class="ff-note"><span class="status-chip" data-tone="quiet">Shown as drawn</span><span>This figure keeps the author's layout.</span></p>${liftDiagram(m.diagram, null)}`;
+
+// =====================================================================================
+// D: boxes and arrows (Architecture) + treemap with signposts (Structure)
+// =====================================================================================
+function arrowSvg(g, hotSet, dimSet) {
+  const edges = g.edges.map((e) => {
+    const hot = hotSet.has(e);
+    const dim = dimSet && !hot;
+    let d, ah;
+    if (e.kind === 'h') { d = `M${e.ax} ${e.ay}H${e.bx - 2}`; ah = `M${e.bx} ${e.by}l-8 -4v8z`; }
+    else if (e.ax === e.bx) { d = `M${e.ax} ${e.ay}V${e.by - 2}`; ah = `M${e.bx} ${e.by}l-4 -8h8z`; }
+    else { const my = (e.ay + e.by) / 2; d = `M${e.ax} ${e.ay}V${my}H${e.bx}V${e.by - 2}`; ah = `M${e.bx} ${e.by}l-4 -8h8z`; }
+    return `<g class="edge"${hot ? ' data-hot="true"' : ''}${dim ? ' data-dim="true"' : ''}><path class="e" d="${d}"/><path class="ah" d="${ah}"/></g>`;
+  }).join('');
+  return `<svg class="g-svg" width="${g.W}" height="${g.H}" viewBox="0 0 ${g.W} ${g.H}" aria-hidden="true">${edges}</svg>`;
+}
+function archD() {
+  const m = archModel();
+  const g = graphModel(m);
+  if (!g) return art('architecture', 'components', `<div class="dock-empty">No diagram and no Layers section to draw from.</div>${archAcc(m)}`);
+  const flows = flowsOf();
+  const fl = flows[S.path] || flows[0];
+  const stepNodes = fl ? fl.steps.map((s) => nodeFor(g, s.text)) : [];
+  const flags = antiNodes(g, m);
+  const sel = S.pick;
+  const hotEdges = new Set();
+  if (sel != null) g.edges.forEach((e) => { if (e.a === sel || e.b === sel) hotEdges.add(e); });
+  else stepNodes.forEach((n, k) => { if (k && n != null && stepNodes[k - 1] != null) g.edges.forEach((e) => { if ((e.a === stepNodes[k - 1] && e.b === n) || (e.a === n && e.b === stepNodes[k - 1])) hotEdges.add(e); }); });
+  const dimSet = sel != null || hotEdges.size > 0;
+  const nodes = g.nodes.map((n) => {
+    const steps = stepNodes.map((s, k) => (s === n.i ? k + 1 : null)).filter(Boolean);
+    const fl2 = flags.filter((x) => x === n.i).length;
+    const hot = sel === n.i || (S.step != null && stepNodes[S.step] === n.i);
+    const onpath = steps.length > 0;
+    const dim = sel != null && sel !== n.i && !hotEdges.size ? false : (sel != null && sel !== n.i && ![...hotEdges].some((e) => e.a === n.i || e.b === n.i));
+    return `<button class="g-node" type="button" data-act="gnode" data-i="${n.i}" aria-pressed="${sel === n.i}"${hot ? ' data-hot="true"' : ''}${dim ? ' data-dim="true"' : ''}${onpath ? ' data-onpath="true"' : ''} style="left:${n.x}px;top:${n.y}px;width:${n.w}px;height:${n.h}px"><span class="g-t">${esc(n.title)}</span><span class="g-s">${esc(n.sub)}</span><span class="g-badges">${fl2 ? `<span class="bd bd-flag" title="Anti-patterns that name this box">${fl2}</span>` : ''}${steps.map((k) => `<span class="bd bd-step" title="Step ${k}">${k}</span>`).join('')}</span></button>`;
+  }).join('');
+  const labels = g.edges.filter((e) => e.label).map((e) => `<span class="g-lab" style="left:${e.ax + 8}px;top:${(e.ay + e.by) / 2 - 9}px">${esc(e.label)}</span>`).join('');
+  const trace = flows.length ? `<div class="trace" role="group" aria-label="Trace a path"><span class="micro-label">Trace</span>${flows.map((f, i) => `<button class="btn-xs" type="button" aria-pressed="${S.path === i}" data-act="trace" data-i="${i}">${esc(f.name)}</button>`).join('')}</div>` : '';
+  const stepRow = fl ? `<div class="trace" role="group" aria-label="Steps"><span class="micro-label">Steps</span>${fl.steps.map((s, k) => `<button class="btn-xs" type="button" aria-pressed="${S.step === k}" data-act="step" data-i="${k}">${k + 1}</button>`).join('')}</div>` : '';
+  const pic = S.drawn && m.diagram ? drawnText(m) : `${trace}${stepRow}<div class="g-wrap" style="width:${g.W}px;height:${g.H}px">${arrowSvg(g, hotEdges, dimSet)}${nodes}${labels}</div>`;
+  const foot = `<span class="key"><span class="bd bd-step">1</span>a step of the traced path</span><span class="key"><span class="bd bd-flag">1</span>anti-patterns naming the box</span>${g.fromLayers ? '<span>Drawn from the Layers section: the diagram is not liftable.</span>' : '<span>Boxes, arrows and arrow labels come from the System Overview diagram.</span>'}`;
+  HINT = 'Select a box to read what it does, or a step number to read that step.';
+  let inner = '';
+  if (sel != null) {
+    const n = g.nodes[sel];
+    const comps = m.components.filter((c) => compNode(g, c) === sel);
+    const rel = m.antis.filter((a, k) => flags[k] === sel);
+    inner = `${dockHead(esc(n.title), esc(n.sub))}${n.lines.some(Boolean) && !g.fromLayers ? drow('As drawn', `<pre>${esc(n.text)}</pre>`) : drow('Purpose', esc(n.lines[0]))}${comps.length ? drow(`Components in this box (${comps.length})`, rowsHtml(comps)) : ''}${rel.length ? drow('Anti-patterns that name it', swapsHtml(rel)) : ''}`;
+  } else if (S.step != null && fl) {
+    const s = fl.steps[S.step];
+    const n = stepNodes[S.step];
+    inner = `${dockHead(`${esc(fl.name)}, step ${S.step + 1}`, n != null ? esc(g.nodes[n].title) : '')}<p>${inline(s.text)}</p>${s.sub.length ? `<ul class="bul">${s.sub.map((x) => `<li><span>${inline(x)}</span></li>`).join('')}</ul>` : ''}`;
+  }
+  return art('architecture', 'components', `<div class="lifted">${picture('System overview', drawnTool(), pic, foot)}${dock(inner)}</div>${archAcc(m)}`);
+}
+
+// ---- Structure D: treemap with signposts
+function cellDock(cells, m, root) {
+  const sel = S.cell && cells.find((c) => c.path === S.cell);
+  if (S.pin != null) {
+    const w = m.where[S.pin];
+    return `${dockHead(`<span class="pin">${S.pin + 1}</span> ${inline(w.when)}`, 'Where to add new code')}<ul class="bul">${w.lines.map((l) => `<li><span>${inline(l)}</span></li>`).join('')}</ul>`;
+  }
+  if (!sel) return '';
+  const n = sel.node;
+  const pur = m.purposes.find((p) => p.path === sel.path);
+  const kids = n.group ? n.files.map((f) => f.name) : kids2(n).map((k) => k.name);
+  return `${dockHead(`<code>${esc(sel.path.replace('*files', '') || '/')}</code>`, n.group ? 'files at this level' : `${n.w} entries listed`)}${n.note ? drow('Note', inline(n.note)) : ''}${pur ? drow('Purpose', inline((pur.f.find(([k]) => k === 'Purpose') || ['', ''])[1])) : ''}${kids.length ? drow('Lists', `<code>${esc(kids.join('  '))}</code>`) : ''}`;
+}
+function pinMap(m, cells) {
+  const map = {};
+  m.where.forEach((w, i) => LOOKUP_DIRS(i).forEach((dir) => { const c = cellFor2(cells, dir); if (c) { (map[c.path] ||= []); if (!map[c.path].includes(i)) map[c.path].push(i); } }));
+  return map;
+}
+const pinChips = (m) => `<div class="pin-legend">${m.where.map((w, i) => `<button class="pin-chip" type="button" data-act="pin2" data-i="${i}" aria-pressed="${S.pin === i}"><span class="pin">${i + 1}</span><span>${esc(w.when.replace(/\s*\(.*$/, ''))}</span></button>`).join('')}</div>`;
+function structD() {
+  const m = structModel();
+  const root = parseTree2(m.layout);
+  const W = S.tmW || 780;
+  const H = W >= 640 ? Math.round(W * 0.62) : 520;
+  const cells = cells2(root, W, H, 3);
+  const pins = pinMap(m, cells);
+  const hotPaths = S.pin != null ? new Set(LOOKUP_DIRS(S.pin).map((d) => (cellFor2(cells, d) || {}).path)) : new Set();
+  const html = cells.map((c) => {
+    const n = c.node;
+    const showN = c.w > 36 && c.h > 17;
+    const showC = c.h > 36 && c.w > 52 && c.leaf;
+    const pn = pins[c.path] || [];
+    return `<div class="tm-cell" role="button" tabindex="0" data-act="tile" data-path="${esc(c.path)}" data-d="${c.depth}"${n.group ? ' data-group="true"' : ''}${S.cell === c.path ? ' data-sel="true"' : ''}${hotPaths.has(c.path) ? ' data-sel="true"' : ''} title="${esc((n.name || '') + (n.note ? ' - ' + n.note : ''))}" style="left:${c.x.toFixed(1)}px;top:${c.y.toFixed(1)}px;width:${c.w.toFixed(1)}px;height:${c.h.toFixed(1)}px">${showN ? `<span class="tm-n">${esc(n.name)}</span>` : ''}${showC ? `<span class="tm-c">${n.group || !n.children.length ? '' : n.w + ' listed'}</span>` : ''}${pn.length ? `<span class="tm-pins">${pn.map((i) => `<button class="pin" type="button" data-act="pin2" data-i="${i}" aria-pressed="${S.pin === i}" title="${esc(m.where[i].when)}">${i + 1}</button>`).join('')}</span>` : ''}</div>`;
+  }).join('');
+  const foot = `<span class="key"><span class="pin">1</span>where to add: a signpost on the folder it names</span><span>Cell area is the number of entries the tree lists under a folder; hatched cells are the files at that level.</span>`;
+  HINT = 'Select a folder, or a numbered signpost, to read about it.';
+  const inner = cellDock(cells, m, root);
+  return art('structure', 'directories', `<div class="lifted">${picture('Directory structure', `<span class="counts-line">${root ? kids2(root).length : 0} at the top</span>`, `<div class="tm" style="height:${H}px">${html}</div>`, foot)}${pinChips(m)}${dock(inner)}</div>${structAcc(m)}`);
+}
+
+// =====================================================================================
+// E: the territory (layers as bands; components and folders live inside the band they belong to)
+// =====================================================================================
+function bandsModel(m) {
+  const L = layersOf();
+  if (L.length) {
+    const comps = m.components.map((c, i) => ({ c, i, layer: (() => { let best = -1, len = 0; filesOf(c[2]).forEach((f) => L.forEach((l) => l.loc.forEach((p) => { if (f.startsWith(p) && p.length > len) { len = p.length; best = l.i; } }))); return best; })() }));
+    const bands = L.slice().reverse().map((l, pos) => ({ key: l.i, name: l.name, loc: l.loc, uses: l.uses.map((u) => L[u].name), comps: comps.filter((x) => x.layer === l.i), step: 1 + Math.min(3, Math.floor((pos / Math.max(1, L.length - 1)) * 3.99)), layer: l }));
+    return { bands, rest: comps.filter((x) => x.layer < 0), source: 'Layers' };
+  }
+  const g = m.diagram ? graph2(m.diagram) : null;
+  if (!g) return { bands: [], rest: m.components.map((c, i) => ({ c, i })), source: '' };
+  const tiers = [...new Set(g.nodes.map((n) => n.tier))].sort((a, b) => a - b);
+  const bands = tiers.map((t, pos) => { const ns = g.nodes.filter((n) => n.tier === t); return { key: t, name: ns.map((n) => n.title).join(' + '), loc: [], uses: [], comps: m.components.map((c, i) => ({ c, i })).filter((x) => ns.some((n) => compNode(g, x.c) === n.i)), step: 1 + Math.min(3, Math.floor((pos / Math.max(1, tiers.length - 1)) * 3.99)) }; });
+  const used = new Set(bands.flatMap((b) => b.comps.map((x) => x.i)));
+  return { bands, rest: m.components.map((c, i) => ({ c, i })).filter((x) => !used.has(x.i)), source: 'the diagram rows' };
+}
+function archE() {
+  const m = archModel();
+  const bm = bandsModel(m);
+  const sel = S.pick;
+  const selComp = sel != null ? m.components[sel] : null;
+  const dimBand = (b) => (S.band != null && S.band !== b.key && !(bm.bands.find((x) => x.key === S.band) || { uses: [] }).uses.includes(b.name));
+  const bandsHtml = bm.bands.map((b) => `<div class="band" data-step="${b.step}"${dimBand(b) ? ' data-dim="true"' : ''}><div class="band-lab"><b>${esc(b.name)}</b>${b.loc.length ? `<code>${esc(b.loc.join('  '))}</code>` : ''}${b.uses.length ? `<span class="band-uses">${b.uses.map((u) => `<span class="use">${svg('arrow')}${esc(u)}</span>`).join('')}</span>` : ''}</div><div class="band-body">${b.comps.map((x) => `<button class="chip-c" type="button" data-act="cpick" data-i="${x.i}" aria-pressed="${sel === x.i}">${inline(x.c[0])}</button>`).join('') || `<span class="source-note">No component names this band's files.</span>`}</div></div>`).join('');
+  const rest = bm.rest.length ? `<div class="band" data-out="true"><div class="band-lab"><b>Not in a layer</b></div><div class="band-body">${bm.rest.map((x) => `<button class="chip-c" type="button" data-act="cpick" data-i="${x.i}" aria-pressed="${sel === x.i}">${inline(x.c[0])}</button>`).join('')}</div></div>` : '';
+  const foot = `<span>Bands are the document's ${bm.source === 'Layers' ? 'Layers, the first one listed at the bottom' : 'diagram rows'}; arrows name the layers a band depends on; each chip is a row of Component Responsibilities.</span>`;
+  HINT = 'Select a component to read what it does and where it lives.';
+  let inner = '';
+  if (selComp) {
+    const band = bm.bands.find((b) => b.comps.some((x) => x.i === sel));
+    const rel = m.antis.filter((a) => filesOf(selComp[2]).some((f) => `${a.title} ${a.what} ${a.why} ${a.doit}`.includes(f)));
+    inner = `${dockHead(inline(selComp[0]), band ? `in ${esc(band.name)}` : 'not in a layer')}${drow('Responsibility', inline(selComp[1]))}${drow('Files', inline(selComp[2]))}${rel.length ? drow('Anti-pattern on these files', swapsHtml(rel)) : ''}`;
+  }
+  return art('architecture', 'components', `<div class="lifted">${picture('The territory: layers and their components', '', `<div class="bands">${bandsHtml}${rest}</div>`, foot)}${dock(inner)}</div>${archAcc(m, ['components'])}`);
+}
+function structE() {
+  const m = structModel();
+  const arch = archModel();
+  const bm = bandsModel(arch);
+  const root = parseTree2(m.layout);
+  weight2(root);
+  const folders = [];
+  const walk = (n, path) => kids2(n).forEach((c) => { if (c.group) return; const p = path + c.name; folders.push({ path: p, node: c }); walk(c, p); });
+  walk(root, '');
+  const layerLocs = bm.bands.flatMap((b) => b.loc.map((l) => ({ l, key: b.key })));
+  const place = (f) => { let best = null; layerLocs.forEach((x) => { if (f.path.startsWith(x.l) && (!best || x.l.length > best.l.length)) best = x; }); return best; };
+  const ancestors = (f) => layerLocs.some((x) => x.l.startsWith(f.path) && x.l !== f.path);
+  const pinsAt = {};
+  m.where.forEach((w, i) => LOOKUP_DIRS(i).forEach((dir) => { let best = null; folders.forEach((f) => { if (dir.startsWith(f.path) && (!best || f.path.length > best.path.length)) best = f; }); if (best) { (pinsAt[best.path] ||= []); if (!pinsAt[best.path].includes(i)) pinsAt[best.path].push(i); } }));
+  const tile = (f, rel) => `<button class="tile" type="button" data-act="tile" data-path="${esc(f.path)}" style="--w:${Math.max(1, f.node.w)}" aria-pressed="${S.cell === f.path}"><span class="tn">${esc(rel)}</span>${f.node.children.length ? `<span class="tc">${f.node.w} listed</span>` : ''}${(pinsAt[f.path] || []).length ? `<span class="pins">${pinsAt[f.path].map((i) => `<span class="pin" data-act="pin2" data-i="${i}" title="${esc(m.where[i].when)}">${i + 1}</span>`).join('')}</span>` : ''}</button>`;
+  const bandsHtml = bm.bands.map((b) => {
+    const mine = folders.filter((f) => { const p = place(f); return p && p.key === b.key; });
+    return `<div class="band" data-step="${b.step}"><div class="band-lab"><b>${esc(b.name)}</b>${b.loc.length ? `<code>${esc(b.loc.join('  '))}</code>` : ''}</div><div class="band-body">${mine.map((f) => tile(f, f.path.replace(b.loc[0] || '', '') || f.path)).join('') || `<span class="source-note">No folder in the tree sits under this layer.</span>`}</div></div>`;
+  }).join('');
+  const outside = folders.filter((f) => !place(f) && !ancestors(f) && f.node.depth <= 2);
+  const out = `<div class="band" data-out="true"><div class="band-lab"><b>Outside the layers</b></div><div class="band-body">${outside.map((f) => tile(f, f.path)).join('')}</div></div>`;
+  HINT = 'Select a folder, or a numbered signpost, to read about it.';
+  let inner = '';
+  if (S.pin != null) inner = `${dockHead(`<span class="pin">${S.pin + 1}</span> ${inline(m.where[S.pin].when)}`, 'Where to add new code')}<ul class="bul">${m.where[S.pin].lines.map((l) => `<li><span>${inline(l)}</span></li>`).join('')}</ul>`;
+  else if (S.cell) {
+    const f = folders.find((x) => x.path === S.cell);
+    if (f) { const pur = m.purposes.find((p) => p.path === f.path); inner = `${dockHead(`<code>${esc(f.path)}</code>`, `${f.node.w} entries listed`)}${f.node.note ? drow('Note', inline(f.node.note)) : ''}${pur ? pur.f.map(([k, v]) => drow(k, inline(v))).join('') : ''}`; }
+  }
+  const foot = `<span class="key"><span class="pin">1</span>where to add: a signpost on the folder it names</span><span>Folders sit in the layer whose Location holds them; tile width is the number of entries listed.</span>`;
+  return art('structure', 'directories', `<div class="lifted">${picture('The territory: layers and their folders', '', `<div class="bands">${bandsHtml}${out}</div>`, foot)}${pinChips(m)}${dock(inner)}</div>${structAcc(m)}`);
+}
+
+// =====================================================================================
+// F: a metro map of the data flows (Architecture) + a sunburst of the tree (Structure)
+// =====================================================================================
+function archF() {
+  const m = archModel();
+  const flows = flowsOf();
+  const STEP = 112;
+  const compFor = (text) => { const toks = filesOf(text); let best = null, bs = 1; m.components.forEach((c) => { const s = Math.max(0, ...toks.map((t) => Math.max(...filesOf(c[2]).map((f) => (f === t.replace(/\(.*$/, '') ? 5 : tokScore(t, f)))))); if (s > bs) { bs = s; best = c; } }); return best; };
+  const lines = flows.map((f) => {
+    const st2 = [];
+    f.steps.forEach((s, k) => { const c = compFor(s.text); const label = c ? c[0].replace(/`/g, '') : (filesOf(s.text)[0] || `Step ${k + 1}`).replace(/\(.*$/, ''); const prev = st2[st2.length - 1]; if (prev && prev.label === label) { prev.steps.push(k); } else st2.push({ label, comp: c, steps: [k] }); });
+    return { f, stations: st2 };
+  });
+  const seen = {};
+  lines.forEach((l) => l.stations.forEach((s) => { (seen[s.label] ||= new Set()).add(l.f.name); }));
+  const dash = ['solid', 'dashed', 'dotted', 'double'];
+  const rows = lines.map((l, li) => {
+    const n = l.stations.length;
+    const w = n * STEP + 8;
+    return `<div class="m-row" style="width:${w}px"><p class="m-name">${esc(l.f.name)} <span style="font-weight:var(--fw-medium)">${l.f.steps.length} steps</span></p><div class="m-track"><div class="m-line" style="--ls:${dash[li % 4]}"></div>${l.stations.map((s, k) => { const id = `${li}:${k}`; const on = S.step === id; return `<button class="m-st" type="button" data-act="mst" data-id="${id}" data-on="${on}"${seen[s.label].size > 1 ? ' data-ix="true"' : ''} style="left:${k * STEP + STEP / 2 + 4}px"><span class="m-dot">${s.steps.length > 1 ? '' : s.steps[0] + 1}</span><span class="m-t">${esc(s.label)}</span></button>`; }).join('')}</div></div>`;
+  }).join('');
+  const maxW = Math.max(...lines.map((l) => l.stations.length * STEP + 8));
+  const foot = `<span class="key"><span class="m-dot" style="width:1rem;height:1rem"></span>a step of the flow, in the document's order</span><span class="key"><span class="m-dot" style="width:1rem;height:1rem;outline:2px solid var(--muted-foreground);outline-offset:2px"></span>a component on more than one line</span><span>Line styles tell the flows apart; stations are the components whose files each step names.</span>`;
+  HINT = 'Select a station to read the step.';
+  let inner = '';
+  if (S.step) {
+    const [li, k] = String(S.step).split(':').map(Number);
+    const st3 = lines[li].stations[k];
+    inner = `${dockHead(esc(st3.label), `${esc(lines[li].f.name)}, step${st3.steps.length > 1 ? 's' : ''} ${st3.steps.map((x) => x + 1).join(' and ')}`)}${st3.steps.map((x) => `<p>${inline(lines[li].f.steps[x].text)}</p>${lines[li].f.steps[x].sub.length ? `<ul class="bul">${lines[li].f.steps[x].sub.map((y) => `<li><span>${inline(y)}</span></li>`).join('')}</ul>` : ''}`).join('')}${st3.comp ? drow('Component', inline(st3.comp[1]) + ' ' + inline(st3.comp[2])) : ''}`;
+  }
+  return art('architecture', 'components', `<div class="lifted">${picture('Data flow, drawn as lines', '', `<div class="metro" style="min-width:${maxW}px">${rows}</div>`, foot)}${dock(inner)}</div>${archAcc(m)}`);
+}
+ACTS.mst = (el) => { S.step = S.step === el.dataset.id ? null : el.dataset.id; render(); };
+function structF() {
+  const m = structModel();
+  const root = parseTree2(m.layout);
+  const arcs = arcs2(root, 3);
+  const SIZE = 400, C = 200, R0 = 46, RW = 51;
+  const rad = (d) => [R0 + (d - 1) * RW, R0 + d * RW - 2];
+  const pinsAt = {};
+  m.where.forEach((w, i) => LOOKUP_DIRS(i).forEach((dir) => { let best = null; arcs.forEach((a) => { if (!a.node.group && dir.startsWith(a.path) && (!best || a.path.length > best.path.length)) best = a; }); if (best) { (pinsAt[best.path] ||= []); if (!pinsAt[best.path].includes(i)) pinsAt[best.path].push(i); } }));
+  const hot = S.pin != null ? new Set(LOOKUP_DIRS(S.pin).map((d) => { let best = null; arcs.forEach((a) => { if (!a.node.group && d.startsWith(a.path) && (!best || a.path.length > best.path.length)) best = a; }); return best && best.path; })) : new Set();
+  const paths = arcs.map((a) => { const [r0, r1] = rad(a.depth); return `<path class="arc" d="${arcPath2(C, C, r0, r1, a.a0, a.a1)}" data-act="tile" data-path="${esc(a.path)}" data-d="${a.depth}"${a.node.group ? ' data-group="true"' : ''}${S.cell === a.path || hot.has(a.path) ? ' data-sel="true"' : ''}><title>${esc(a.path.replace('*files', 'files'))}${a.node.note ? ' - ' + esc(a.node.note) : ''}</title></path>`; }).join('');
+  const labels = arcs.map((a) => { const [r0, r1] = rad(a.depth); const rm = (r0 + r1) / 2; const len = (a.a1 - a.a0) * rm; if (a.node.group || len < 50 || a.depth > 2) return ''; const [x, y] = pol2(C, C, rm, (a.a0 + a.a1) / 2); return `<span class="sb-lab" style="left:${(x / SIZE * 100).toFixed(1)}%;top:${(y / SIZE * 100).toFixed(1)}%">${esc(a.node.name.replace(/\/$/, ''))}</span>`; }).join('');
+  const pins = arcs.filter((a) => pinsAt[a.path]).map((a) => { const [r0, r1] = rad(a.depth); const rm = (r0 + r1) / 2; const [x, y] = pol2(C, C, rm, (a.a0 + a.a1) / 2); return pinsAt[a.path].map((i, k) => `<button class="pin sb-pin" type="button" data-act="pin2" data-i="${i}" aria-pressed="${S.pin === i}" title="${esc(m.where[i].when)}" style="left:calc(${(x / SIZE * 100).toFixed(1)}% + ${k * 14 - (pinsAt[a.path].length - 1) * 7}px);top:calc(${(y / SIZE * 100).toFixed(1)}% + ${k % 2 ? 9 : -9}px)">${i + 1}</button>`).join(''); }).join('');
+  const sel = S.cell && arcs.find((a) => a.path === S.cell);
+  HINT = 'Select a slice, or a numbered signpost, to read about it.';
+  let inner = '';
+  if (S.pin != null) inner = `${dockHead(`<span class="pin">${S.pin + 1}</span> ${inline(m.where[S.pin].when)}`, 'Where to add new code')}<ul class="bul">${m.where[S.pin].lines.map((l) => `<li><span>${inline(l)}</span></li>`).join('')}</ul>`;
+  else if (sel) { const n = sel.node; const pur = m.purposes.find((p) => p.path === sel.path); inner = `${dockHead(`<code>${esc(sel.path.replace('*files', '') || '/')}</code>`, n.group ? 'files at this level' : `${n.w} entries listed`)}${n.note ? drow('Note', inline(n.note)) : ''}${pur ? pur.f.map(([k, v]) => drow(k, inline(v))).join('') : ''}${n.group ? drow('Lists', `<code>${esc(n.files.map((f) => f.name).join('  '))}</code>`) : ''}`; }
+  const foot = `<span class="key"><span class="pin">1</span>where to add: a signpost on the slice it names</span><span>Rings are folder depth (inner is the top of the tree); a slice's angle is the number of entries listed under it; grey slices are the files at that level.</span>`;
+  const body = `<div class="sb-wrap"><svg viewBox="0 0 ${SIZE} ${SIZE}" role="img" aria-label="Directory structure as rings">${paths}</svg>${labels}${pins}<div class="sb-core">${esc(root.name.replace(/\/$/, ''))}</div></div>`;
+  return art('structure', 'directories', `<div class="lifted">${picture('Directory structure', '', body, foot)}${pinChips(m)}${dock(inner)}</div>${structAcc(m)}`);
+}
+
+const viewR2 = (arch, struct) => () => pageHtml(proj(), st().panel, st().panel === 'architecture' ? arch() : struct());
+VIEWS.d = viewR2(archD, structD); VIEWS.e = viewR2(archE, structE); VIEWS.f = viewR2(archF, structF);
+
+render();
 </script>
 </body>
 </html>
