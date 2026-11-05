@@ -11,21 +11,32 @@
 // in (its one server-sanitised document renderer), never a new raw-HTML site here. No href is built from
 // document text. Colour comes only from the tone a composed model carries and the theme tokens; nothing here is
 // drawn missing or in a parse-degradation tone.
+import { useMemo, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { Link } from '../nav.tsx';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
+import { classifyFence } from '../../rendering/figure-detect.ts';
 import { CopyCommand } from '../components/copy-command.tsx';
-import { ResearchInline } from '../pages/research-atoms.tsx';
+import { FigureFor } from '../components/fenced-figure.tsx';
+import { FigureFrame } from '../components/figure-frame.tsx';
+import { PlainDiagram } from '../components/lifted-diagram.tsx';
+import { ResearchInline, SwapRows } from '../pages/research-atoms.tsx';
 import { stripLeadingHeading } from './document-sections.ts';
-import { NOT_MAPPED } from './codebase-page.ts';
+import { NOT_MAPPED, linkMapMentions } from './codebase-page.ts';
 import type {
+  ComposedArchitecture,
   ComposedCodebase,
   ComposedCodebaseHead,
   ComposedCodebaseLifted,
   ComposedCodebasePanel,
   ComposedCodebasePlain,
+  ComposedConcern,
   ComposedConcernRow,
+  ComposedConcerns,
+  ComposedConcernSection,
   ComposedStackGroup,
   ComposedStackSet,
+  ComposedStructure,
 } from './codebase-page.ts';
 
 /** Every field optional on purpose: the page spreads this over ArtifactHeader's own props. */
@@ -44,7 +55,10 @@ export function codebaseHeaderProps(model: ComposedCodebase): CodebaseHeaderProp
     eyebrow: model.head === null ? 'Codebase' : model.head.eyebrow,
     title: 'Codebase',
     lead: null,
-    crumbs: [{ label: 'Dashboard', to: presentationRoutePatterns.dashboard }, { label: 'Codebase' }],
+    crumbs: [
+      { label: 'Dashboard', to: presentationRoutePatterns.dashboard },
+      { label: 'Codebase' },
+    ],
   };
 }
 
@@ -57,9 +71,15 @@ function Facts({ facts }: { facts: ComposedCodebase['facts'] }): React.JSX.Eleme
         <i className="status-square" data-tone={readiness.tone} aria-hidden="true" />
         {readiness.label}
       </span>
-      {facts.mappedText !== null ? <span className="view-codebase-facts-date">{facts.mappedText}</span> : null}
+      {facts.mappedText !== null ? (
+        <span className="view-codebase-facts-date">{facts.mappedText}</span>
+      ) : null}
       {facts.commitText !== null ? (
-        <span className="status-chip view-codebase-commit" data-tone="quiet" title={facts.commitText}>
+        <span
+          className="status-chip view-codebase-commit"
+          data-tone="quiet"
+          title={facts.commitText}
+        >
           {facts.commitText}
         </span>
       ) : null}
@@ -72,7 +92,9 @@ function Entry({ panel }: { panel: ComposedCodebasePanel }): React.JSX.Element {
     <>
       <span className="view-codebase-entry-no">{panel.no}</span>
       <span className="view-codebase-entry-name">{panel.label}</span>
-      {panel.keyText !== null ? <span className="view-codebase-entry-key">{panel.keyText}</span> : null}
+      {panel.keyText !== null ? (
+        <span className="view-codebase-entry-key">{panel.keyText}</span>
+      ) : null}
     </>
   );
   if (panel.ghost || panel.url === null) {
@@ -91,7 +113,11 @@ function Entry({ panel }: { panel: ComposedCodebasePanel }): React.JSX.Element {
   }
   return (
     <li className="view-codebase-entry-item">
-      <Link to={panel.url} className="view-codebase-entry" aria-current={panel.current ? 'page' : undefined}>
+      <Link
+        to={panel.url}
+        className="view-codebase-entry"
+        aria-current={panel.current ? 'page' : undefined}
+      >
         {body}
       </Link>
     </li>
@@ -150,8 +176,16 @@ function Concerns({
       </p>
       <ul className="view-codebase-counts">
         {counts.map((row, index) => (
-          <li className="view-codebase-count" key={`${index}-${row.label}`} data-lead={index === 0 ? 'true' : undefined}>
-            <i className="status-square view-codebase-square" data-tone={row.tone} aria-hidden="true" />
+          <li
+            className="view-codebase-count"
+            key={`${index}-${row.label}`}
+            data-lead={index === 0 ? 'true' : undefined}
+          >
+            <i
+              className="status-square view-codebase-square"
+              data-tone={row.tone}
+              aria-hidden="true"
+            />
             <span title={row.title ?? row.label}>
               <ResearchInline text={row.label} />
             </span>
@@ -180,7 +214,11 @@ function Head({ head }: { head: ComposedCodebaseHead }): React.JSX.Element {
             </div>
           ) : null}
           {head.concerns !== null ? (
-            <Concerns total={head.concerns.total} noun={head.concerns.noun} counts={head.concerns.counts} />
+            <Concerns
+              total={head.concerns.total}
+              noun={head.concerns.noun}
+              counts={head.concerns.counts}
+            />
           ) : null}
         </div>
       ) : null}
@@ -193,19 +231,434 @@ function Head({ head }: { head: ComposedCodebaseHead }): React.JSX.Element {
   );
 }
 
-function Lifted({ lifted }: { lifted: ComposedCodebaseLifted }): React.JSX.Element {
-  if (lifted.kind === 'stack') {
-    return (
-      <div className="view-codebase-lifted">
-        {lifted.groups.map((group) => (
-          <ChipGroup key={group.label} group={group} />
+/** A fenced block in the shipped figure frame: the lane diagram or the clean tree when the shared detector says so
+ * (the same decision every document makes), else the author's text as drawn, in the same frame. */
+function FenceFigure({
+  fence,
+  title,
+}: {
+  fence: { info: string; text: string };
+  title: string;
+}): React.JSX.Element {
+  const kind = useMemo(() => classifyFence(fence.info, fence.text), [fence.info, fence.text]);
+  if (kind !== null) return <FigureFor kind={kind} text={fence.text} title={title} />;
+  return <FigureFrame title={title}>{() => <PlainDiagram text={fence.text} />}</FigureFrame>;
+}
+
+/** Author text with a mention of another mapped document (`see STRUCTURE.md`, `.planning/codebase/NAME.md`) linked to
+ * that panel through the page's Link. The address comes from the composed panel list, never from the text; a
+ * document that is not mapped has no address, so its mention stays text. */
+function MappedText({
+  text,
+  urls,
+}: {
+  text: string;
+  urls: ReadonlyMap<string, string>;
+}): React.JSX.Element {
+  const parts = useMemo(() => linkMapMentions(text, urls), [text, urls]);
+  if (parts.every((part) => part.to === null)) return <ResearchInline text={text} />;
+  return (
+    <>
+      {parts.map((part, index) =>
+        part.to === null ? (
+          <ResearchInline key={index} text={part.text} />
+        ) : (
+          <Link key={index} to={part.to} className="view-codebase-xref">
+            {part.code ? <code>{part.text}</code> : part.text}
+          </Link>
+        ),
+      )}
+    </>
+  );
+}
+
+/** The Structure panel's designed part (10-12; sketch 043 reuses the Research figures): the Directory Layout as the
+ * shipped clean tree in a figure frame titled "Directory structure". Every other section stays plain. */
+function StructurePanel({ lifted }: { lifted: ComposedStructure }): React.JSX.Element {
+  return (
+    <div className="view-codebase-lifted view-codebase-structure">
+      <section className="view-codebase-figure">
+        <FenceFigure fence={lifted.tree} title="Directory structure" />
+      </section>
+    </div>
+  );
+}
+
+/** The Architecture panel's designed parts (10-12; sketch 043 reuses the Research figures): the System Overview as
+ * the shipped lane diagram figure (its "Shown as drawn" fallback included), then the Anti-Patterns as the
+ * shipped swap rows. Every other section stays a plain section below. */
+function ArchitecturePanel({
+  lifted,
+  urls,
+}: {
+  lifted: ComposedArchitecture;
+  urls: ReadonlyMap<string, string>;
+}): React.JSX.Element {
+  return (
+    <div className="view-codebase-lifted view-codebase-architecture">
+      {lifted.diagram !== null ? (
+        <section className="view-codebase-figure">
+          <FenceFigure fence={lifted.diagram} title="System overview" />
+        </section>
+      ) : null}
+      {lifted.swaps.length > 0 ? (
+        <section className="view-codebase-swaps">
+          <h3 className="view-codebase-group-head">
+            <span>Anti-patterns</span>
+            <span className="view-codebase-tally">{lifted.swaps.length} to avoid</span>
+          </h3>
+          <SwapRows
+            items={lifted.swaps}
+            renderText={(text) => <MappedText text={text} urls={urls} />}
+          />
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+/** One concern in a section's list: its title, its first field as a gist, and "Read more" / "Read less" in place. The
+ * opened form lists every field the document wrote, nothing cut. */
+function ConcernRow({
+  concern,
+  open,
+  onToggle,
+}: {
+  concern: ComposedConcern;
+  open: boolean;
+  onToggle: () => void;
+}): React.JSX.Element {
+  const first = concern.fields[0];
+  const needsMore =
+    concern.fields.length > 1 || (first !== undefined && first.text.length > CONCERN_GIST_MAX);
+  return (
+    <li className="view-codebase-concern">
+      <p className="view-codebase-concern-title">
+        <ResearchInline text={concern.title} />
+      </p>
+      {open ? (
+        <ConcernFields fields={concern.fields} />
+      ) : first !== undefined ? (
+        <p className="view-codebase-concern-gist" data-clamp={needsMore ? 'true' : undefined}>
+          <ResearchInline text={first.text} />
+        </p>
+      ) : null}
+      {needsMore ? (
+        <button
+          type="button"
+          className="view-codebase-text-link"
+          aria-expanded={open}
+          onClick={onToggle}
+        >
+          {open ? 'Read less' : 'Read more'}
+        </button>
+      ) : null}
+    </li>
+  );
+}
+
+/** The concern a mark selected, with its section, or null. */
+function findConcern(
+  sections: readonly ComposedConcernSection[],
+  id: string | null,
+): { concern: ComposedConcern; section: ComposedConcernSection } | null {
+  if (id === null) return null;
+  for (const section of sections) {
+    const concern = section.items.find((item) => item.id === id);
+    if (concern !== undefined) return { concern, section };
+  }
+  return null;
+}
+
+/** A first field longer than this many characters earns "Read more" even when it is the only field. */
+const CONCERN_GIST_MAX = 130;
+
+function ConcernFields({
+  fields,
+}: {
+  fields: ComposedConcern['fields'];
+}): React.JSX.Element | null {
+  if (fields.length === 0) return null;
+  return (
+    <dl className="view-codebase-fields">
+      {fields.map((field, index) => (
+        <div key={index}>
+          {field.label !== null ? <dt>{field.label}</dt> : null}
+          <dd>
+            <ResearchInline text={field.text} />
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** Sketch 044 E, "Risk piles": nine columns, one per section (Security first), each concern one segment stacked from
+ * the baseline, so a dense section piles up. A segment's opacity follows its Priority when it states one, a zero is a
+ * dashed box, and the most dangerous mark carries an accent ring. Selecting a mark opens that concern in a dock under
+ * the picture; the section chips filter the marks; the sections stay as closed bars below, each holding its concerns
+ * with "Read more" / "Read less". Nothing here is toned missing, destructive or warning. */
+function ConcernsPanel({
+  lifted,
+  renderHtml,
+}: {
+  lifted: ComposedConcerns;
+  renderHtml: (html: string) => React.ReactNode;
+}): React.JSX.Element {
+  const [selected, setSelected] = useState<string | null>(null);
+  const [filter, setFilter] = useState<number | null>(null);
+  const [openBars, setOpenBars] = useState<ReadonlySet<number>>(new Set());
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+  const { sections } = lifted;
+  const toggle = <T,>(set: ReadonlySet<T>, value: T): Set<T> => {
+    const next = new Set(set);
+    if (!next.delete(value)) next.add(value);
+    return next;
+  };
+  const chosen = findConcern(sections, selected);
+  const nine = sections.length === 9;
+  return (
+    <div className="view-codebase-lifted view-codebase-concerns-panel">
+      <figure className="view-codebase-pic">
+        <div className="view-codebase-pic-bar">
+          <span className="view-codebase-pic-title">
+            {nine ? 'The nine sections as piles' : 'The sections as piles'}
+          </span>
+          <span className="view-codebase-pic-count">{lifted.totalText}</span>
+        </div>
+        <div className="view-codebase-pic-body">
+          <div
+            className="view-codebase-piles"
+            style={{ '--view-codebase-pile-cols': sections.length } as React.CSSProperties}
+          >
+            {sections.map((section, at) => {
+              const tone = section.tone ?? undefined;
+              return (
+                <div
+                  className="view-codebase-pile-col"
+                  key={`${at}-${section.heading}`}
+                  data-dim={filter !== null && filter !== at ? 'true' : undefined}
+                >
+                  <div className="view-codebase-pile">
+                    {section.items.length > 0 ? (
+                      section.items.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className="view-codebase-mark"
+                          data-security={section.key === SECURITY_SECTION ? 'true' : undefined}
+                          data-pri={item.priority}
+                          data-top={lifted.top === item.id ? 'true' : undefined}
+                          data-on={selected === item.id ? 'true' : undefined}
+                          data-dim={filter !== null && filter !== at ? 'true' : undefined}
+                          aria-pressed={selected === item.id}
+                          aria-label={item.title}
+                          title={item.title}
+                          onClick={() => setSelected(selected === item.id ? null : item.id)}
+                        />
+                      ))
+                    ) : (
+                      <span className="view-codebase-pile-zero">0</span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="view-codebase-pile-lab"
+                    aria-pressed={filter === at}
+                    aria-label={`${section.label}: ${section.count}`}
+                    onClick={() => setFilter(filter === at ? null : at)}
+                  >
+                    <b>{section.count}</b>
+                    <i
+                      className="status-square view-codebase-square"
+                      data-tone={tone}
+                      aria-hidden="true"
+                    />
+                    <span className="view-codebase-pile-name">
+                      <ResearchInline text={section.label} />
+                    </span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="view-codebase-pic-foot">
+          <span className="view-codebase-key">
+            <span className="view-codebase-mark" data-security="true" data-pri="" />a Security
+            concern
+          </span>
+          <span className="view-codebase-key">
+            <span className="view-codebase-mark" data-pri="" />
+            any other section
+          </span>
+          <span className="view-codebase-key">
+            <span className="view-codebase-mark" data-pri="high" />
+            <span className="view-codebase-mark" data-pri="med" />
+            <span className="view-codebase-mark" data-pri="low" />
+            Priority High, Medium, Low when the concern states one
+          </span>
+          <span className="view-codebase-key">
+            <span className="view-codebase-mark" data-pri="" data-top="true" />
+            the most dangerous: first Security item, else first Tech debt
+          </span>
+          <span>
+            Each segment is one concern; columns are the {nine ? 'nine ' : ''}sections, Security
+            first, the rest in the document&apos;s order; a column&apos;s height is its count.
+          </span>
+        </div>
+      </figure>
+      <div className="view-codebase-legend" role="group" aria-label="Sections">
+        {sections.map((section, at) => {
+          const tone = section.tone ?? undefined;
+          return (
+            <button
+              key={`${at}-${section.heading}`}
+              type="button"
+              className="view-codebase-sec-chip"
+              aria-pressed={filter === at}
+              onClick={() => setFilter(filter === at ? null : at)}
+            >
+              <i
+                className="status-square view-codebase-square"
+                data-tone={tone}
+                aria-hidden="true"
+              />
+              <span>
+                <ResearchInline text={section.label} />
+              </span>
+              <b>{section.count}</b>
+            </button>
+          );
+        })}
+      </div>
+      {chosen !== null ? (
+        <div className="view-codebase-dock" role="region" aria-label="Selected concern">
+          <div className="view-codebase-dock-head">
+            <h4>
+              <ResearchInline text={chosen.concern.title} />
+            </h4>
+            <span className="source-note">
+              {chosen.section.heading}
+              {lifted.top === chosen.concern.id ? ' · most dangerous' : ''}
+            </span>
+            <button
+              type="button"
+              className="view-codebase-text-link"
+              onClick={() => setSelected(null)}
+            >
+              Close
+            </button>
+          </div>
+          <ConcernFields fields={chosen.concern.fields} />
+        </div>
+      ) : (
+        <div className="view-codebase-dock-empty">Select a mark to read that concern.</div>
+      )}
+      <div className="view-codebase-acc-list">
+        {sections.map((section, at) => (
+          <ConcernBar
+            key={`${at}-${section.heading}`}
+            section={section}
+            open={openBars.has(at)}
+            onToggle={() => setOpenBars(toggle(openBars, at))}
+            expanded={expanded}
+            onExpand={(id) => setExpanded(toggle(expanded, id))}
+            renderHtml={renderHtml}
+          />
         ))}
       </div>
-    );
-  }
+      {lifted.intro !== null ? (
+        <div className="view-codebase-plain-section view-codebase-concerns-intro">
+          {renderHtml(lifted.intro)}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** The section the page rings and colours first; the lift's own key for Security Considerations. */
+const SECURITY_SECTION = 'security-considerations';
+
+function ConcernBar({
+  section,
+  open,
+  onToggle,
+  expanded,
+  onExpand,
+  renderHtml,
+}: {
+  section: ComposedConcernSection;
+  open: boolean;
+  onToggle: () => void;
+  expanded: ReadonlySet<string>;
+  onExpand: (id: string) => void;
+  renderHtml: (html: string) => React.ReactNode;
+}): React.JSX.Element {
+  const tone = section.tone ?? undefined;
+  return (
+    <section className="view-codebase-acc" data-open={open ? 'true' : undefined}>
+      <button
+        type="button"
+        className="view-codebase-acc-sum"
+        aria-expanded={open}
+        onClick={onToggle}
+      >
+        <ChevronRight className="view-codebase-acc-chev" aria-hidden="true" />
+        <i className="status-square view-codebase-square" data-tone={tone} aria-hidden="true" />
+        <span className="view-codebase-acc-name">
+          <ResearchInline text={section.heading} />
+        </span>
+        <span className="view-codebase-acc-n">{section.count}</span>
+      </button>
+      {open ? (
+        <div className="view-codebase-acc-body">
+          {section.items.length > 0 ? (
+            <ul className="view-codebase-concern-list">
+              {section.items.map((item) => (
+                <ConcernRow
+                  key={item.id}
+                  concern={item}
+                  open={expanded.has(item.id)}
+                  onToggle={() => onExpand(item.id)}
+                />
+              ))}
+            </ul>
+          ) : section.fallbackHtml !== null ? (
+            <div className="view-codebase-plain-section">
+              {renderHtml(stripLeadingHeading(section.fallbackHtml))}
+            </div>
+          ) : (
+            <p className="source-note view-codebase-none">None under this heading.</p>
+          )}
+          {section.omitted > 0 ? (
+            <p className="source-note">
+              {section.items.length} of {section.count} shown; the rest are in the Source view.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function Lifted({
+  lifted,
+  urls,
+  renderHtml,
+}: {
+  lifted: ComposedCodebaseLifted;
+  urls: ReadonlyMap<string, string>;
+  renderHtml: (html: string) => React.ReactNode;
+}): React.JSX.Element {
+  if (lifted.kind === 'concerns') return <ConcernsPanel lifted={lifted} renderHtml={renderHtml} />;
+  if (lifted.kind === 'architecture') return <ArchitecturePanel lifted={lifted} urls={urls} />;
+  if (lifted.kind === 'structure') return <StructurePanel lifted={lifted} />;
   return (
     <div className="view-codebase-lifted">
-      <Concerns total={lifted.total} noun={lifted.noun} counts={lifted.counts} />
+      {lifted.groups.map((group) => (
+        <ChipGroup key={group.label} group={group} />
+      ))}
     </div>
   );
 }
@@ -219,7 +672,9 @@ function PlainSection({
 }): React.JSX.Element {
   return (
     <section className="view-codebase-plain-section" id={section.id ?? undefined}>
-      {section.heading !== null ? <h3 className="view-codebase-group-head">{section.heading}</h3> : null}
+      {section.heading !== null ? (
+        <h3 className="view-codebase-group-head">{section.heading}</h3>
+      ) : null}
       {renderHtml(section.heading !== null ? stripLeadingHeading(section.html) : section.html)}
     </section>
   );
@@ -233,6 +688,18 @@ export function CodebaseView({
   renderHtml: (html: string) => React.ReactNode;
 }): React.JSX.Element {
   const { facts, panels, active } = model;
+  // Another mapped panel's address by its file name, for a mention in the active panel's text (never the current one).
+  const urls = useMemo(
+    () =>
+      new Map(
+        model.panels.flatMap((panel) =>
+          panel.url !== null && !panel.current
+            ? [[`${panel.key.toUpperCase()}.md`, panel.url] as const]
+            : [],
+        ),
+      ),
+    [model.panels],
+  );
   return (
     <div className="view-codebase-page">
       <aside className="view-codebase-rail">
@@ -251,13 +718,21 @@ export function CodebaseView({
           <header className="view-codebase-panel-head">
             <span className="view-codebase-panel-no">{active.no}</span>
             <h2 id="view-codebase-panel-title">{active.label}</h2>
-            {active.keyPhrase !== null ? <span className="view-codebase-panel-key">{active.keyPhrase}</span> : null}
+            {active.keyPhrase !== null ? (
+              <span className="view-codebase-panel-key">{active.keyPhrase}</span>
+            ) : null}
           </header>
-          {active.lifted !== null ? <Lifted lifted={active.lifted} /> : null}
+          {active.lifted !== null ? (
+            <Lifted lifted={active.lifted} urls={urls} renderHtml={renderHtml} />
+          ) : null}
           {active.plain.length > 0 ? (
             <div className="view-codebase-plain">
               {active.plain.map((section, index) => (
-                <PlainSection key={`${index}-${section.id ?? ''}`} section={section} renderHtml={renderHtml} />
+                <PlainSection
+                  key={`${index}-${section.id ?? ''}`}
+                  section={section}
+                  renderHtml={renderHtml}
+                />
               ))}
             </div>
           ) : null}

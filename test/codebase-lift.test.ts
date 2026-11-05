@@ -4,7 +4,16 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
-import { extractCodebase, matchKey, normaliseHeading } from '../src/planning-repo/handlers/codebase-lift.ts';
+import {
+  CONCERN_ITEM_CAP,
+  CONCERN_LINES_CAP,
+  CONCERN_LINE_CHARS,
+  FIGURE_LINES_CAP,
+  FIGURE_TEXT_CAP,
+  extractCodebase,
+  matchKey,
+  normaliseHeading,
+} from '../src/planning-repo/handlers/codebase-lift.ts';
 
 const TIDEMARK = new URL('./fixtures/tidemark/.planning/codebase/', import.meta.url);
 
@@ -207,7 +216,14 @@ describe('the Concerns lift', () => {
 
   it('counts a single bold-label group as one (the "two or more" rule would lose it)', () => {
     const result = concerns('## Dependencies at Risk\n\n**Old parser:**\n- Issue: unmaintained\n- Impact: low\n')!;
-    expect(result.sections).toEqual([{ key: 'dependencies-at-risk', heading: 'Dependencies at Risk', count: 1 }]);
+    expect(result.sections).toEqual([
+      {
+        key: 'dependencies-at-risk',
+        heading: 'Dependencies at Risk',
+        count: 1,
+        items: [{ label: 'Old parser', lines: ['- Issue: unmaintained', '- Impact: low'] }],
+      },
+    ]);
   });
 
   it('counts a group whose first field value is None, Not detected or Not applicable as zero', () => {
@@ -301,7 +317,12 @@ describe('the Concerns lift', () => {
   it('lets an unknown extra heading be a plain section with a count and no key', () => {
     const result = lift('concerns', '# C\n\n## Odd Heading\n\n**X:**\n- Issue: y\n');
     expect(result.sections).toEqual([{ heading: 'Odd Heading', level: 2, key: null }]);
-    expect(result.concerns?.sections[0]).toEqual({ key: null, heading: 'Odd Heading', count: 1 });
+    expect(result.concerns?.sections[0]).toEqual({
+      key: null,
+      heading: 'Odd Heading',
+      count: 1,
+      items: [{ label: 'X', lines: ['- Issue: y'] }],
+    });
   });
 
   it('never counts the single-star footer, a rule line or a preamble as a concern', () => {
@@ -315,7 +336,9 @@ describe('the Concerns lift', () => {
     const result = concerns(
       '## Tech Debt\n\n**Real:**\n- Issue: a\n\n```md\n**Fake:**\n## Fake section\n- not a concern\n```\n',
     )!;
-    expect(result.sections).toEqual([{ key: 'tech-debt', heading: 'Tech Debt', count: 1 }]);
+    expect(result.sections).toEqual([
+      { key: 'tech-debt', heading: 'Tech Debt', count: 1, items: [{ label: 'Real', lines: ['- Issue: a'] }] },
+    ]);
   });
 
   it('claims a repeated known heading once: the second is a plain section counted as an extra', () => {
@@ -326,14 +349,212 @@ describe('the Concerns lift', () => {
     ]);
   });
 
-  it('keeps the body out of the projection', () => {
+  it('keeps each concern its own lines and nothing else of the body', () => {
     const json = JSON.stringify(lift('concerns').concerns);
-    expect(json).not.toContain('tide job deletes');
+    expect(json).toContain('tide job deletes');
+    expect(json).not.toContain('Concerns audit');
   });
 
   it('gives a document with no sections zero and eight-plus missing keys', () => {
     const result = lift('concerns', '# Codebase Concerns\n\nNothing yet.\n');
     expect(result.keyNumber).toBe(0);
     expect(result.concerns?.missing).toHaveLength(9);
+  });
+});
+
+describe('the Architecture lift (10-12)', () => {
+  const arch = (body: string) => lift('architecture', `# Architecture\n\n${body}`);
+  const lifted = lift('architecture').architecture!;
+
+  it('lifts the Tidemark System Overview fence whole, a line starting with two hashes staying inside it', () => {
+    expect(lifted.diagram?.info).toBe('text');
+    expect(lifted.diagram?.text).toContain('Berth board (browser)');
+    expect(lifted.diagram?.text.split('\n').pop()).toBe('## the three route groups above share one process');
+    expect(lifted.diagram?.text).not.toContain('```');
+    expect(lift('architecture').sections.map((s) => s.heading)).not.toContain('the three route groups above share one process');
+  });
+
+  it('counts the five Tidemark components, gives them as the key number and leaves API Architecture plain', () => {
+    expect(lifted.components).toBe(5);
+    const body = lift('architecture');
+    expect(body.keyNumber).toBe(5);
+    expect(body.keyUnit).toBeUndefined();
+    expect(body.sections.find((s) => s.heading === 'API Architecture')?.key).toBeNull();
+  });
+
+  it('lifts the two Tidemark anti-patterns with their three parts', () => {
+    expect(lifted.antiPatterns.map((a) => a.name)).toEqual(['Reading the database from a route', 'Hard-coded depth in the board']);
+    expect(lifted.antiPatterns[0]).toEqual({
+      name: 'Reading the database from a route',
+      whatHappens: 'The office confirm route opens the database file directly to check a clash.',
+      whyWrong: 'Two modules now know the table layout, and the clash rule exists twice.',
+      doInstead: 'Ask the slot store for the clash check (`server/store/clash.ts`).',
+      more: [],
+    });
+  });
+
+  it('gives the Layers count as the key number, in layers, when there is no component table', () => {
+    const body = arch('## Layers\n\n### One\n\nx\n\n### Two\n\ny\n');
+    expect(body.keyNumber).toBe(2);
+    expect(body.keyUnit).toBe('layer');
+    const labelled = arch('## Layers\n\n**Port:**\n- a\n\n**Core:**\n- b\n\n**Edge:**\n- c\n');
+    expect(labelled.keyNumber).toBe(3);
+    expect(labelled.keyUnit).toBe('layer');
+    expect(arch('## Layers\n\nJust prose.\n').keyNumber).toBeNull();
+  });
+
+  it('lifts the diagram only when the System Overview holds that one fence and nothing else', () => {
+    const fence = '```text\n┌──┐\n│ a│\n└──┘\n```';
+    expect(arch(`## System Overview\n\n${fence}\n`).architecture?.diagram?.text).toContain('│ a│');
+    expect(arch(`## System Overview\n\nSome prose first.\n\n${fence}\n`).architecture?.diagram).toBeNull();
+    expect(arch(`## System Overview\n\n${fence}\n\nAnd a note after.\n`).architecture?.diagram).toBeNull();
+    expect(arch(`## System Overview\n\n${fence}\n\n${fence}\n`).architecture?.diagram).toBeNull();
+    expect(arch('## System Overview\n\n```mermaid\ngraph TD; A-->B\n```\n').architecture?.diagram).toBeNull();
+    expect(arch('## System Overview\n\n```ts\nconst a = 1;\n```\n').architecture?.diagram).toBeNull();
+  });
+
+  it('leaves a figure over the caps to the plain section, whole', () => {
+    expect(arch(`## System Overview\n\n\`\`\`text\n${'x'.repeat(FIGURE_TEXT_CAP + 10)}\n\`\`\`\n`).architecture?.diagram).toBeNull();
+    const tall = Array.from({ length: FIGURE_LINES_CAP + 5 }, (_, i) => `line ${i}`).join('\n');
+    expect(arch(`## System Overview\n\n\`\`\`text\n${tall}\n\`\`\`\n`).architecture?.diagram).toBeNull();
+  });
+
+  it('lifts anti-patterns all or nothing', () => {
+    const entry = (name: string, instead = true) =>
+      `### ${name}\n\n**What happens:** a\n**Why it's wrong:** b\n${instead ? '**Do this instead:** c\n' : ''}\n`;
+    expect(arch(`## Anti-Patterns\n\n${entry('One')}${entry('Two')}`).architecture?.antiPatterns).toHaveLength(2);
+    expect(arch(`## Anti-Patterns\n\n${entry('One')}${entry('Two', false)}`).architecture?.antiPatterns).toEqual([]);
+    expect(arch(`## Anti-Patterns\n\nWe avoid these.\n\n${entry('One')}`).architecture?.antiPatterns).toEqual([]);
+    expect(arch('## Anti-Patterns\n\nNone yet.\n').architecture?.antiPatterns).toEqual([]);
+    expect(
+      arch('## Anti-Patterns\n\n### One\n\n**What happens:** a\n```\ncode\n```\n**Do this instead:** c\n').architecture?.antiPatterns,
+    ).toEqual([]);
+  });
+
+  it('keeps a part it has no slot for and the text of a continuation line', () => {
+    const body = arch(
+      '## Anti-Patterns\n\n### One\n\nA lead line.\n**Cost**: high\n**What happens:** first\ncontinues here\n**Do this instead:** c\n',
+    );
+    expect(body.architecture?.antiPatterns[0]).toEqual({
+      name: 'One',
+      whatHappens: 'first continues here',
+      whyWrong: null,
+      doInstead: 'c',
+      more: [
+        { label: 'Note', text: 'A lead line.' },
+        { label: 'Cost', text: 'high' },
+      ],
+    });
+  });
+});
+
+describe('the Structure lift (10-12)', () => {
+  const structure = (body: string) => lift('structure', `# Codebase Structure\n\n${body}`);
+  const lifted = lift('structure').structure!;
+
+  it('lifts the Tidemark Directory Layout fence and counts its directories as the key number', () => {
+    expect(lifted.tree?.text.split('\n')[0]).toBe('tidemark/');
+    expect(lifted.tree?.text).toContain('BerthCard/');
+    expect(lifted.tree?.text).not.toContain('```');
+    expect(lifted.directories).toBe(11);
+    expect(lift('structure').keyNumber).toBe(11);
+  });
+
+  it('keeps Where to Add New Code and the other sections as plain keyed sections, lifting nothing from them', () => {
+    const body = lift('structure');
+    expect(body.sections.find((s) => s.heading === 'Where to Add New Code')?.key).toBe('where-to-add-new-code');
+    expect(Object.keys(body.structure!).sort()).toEqual(['directories', 'tree']);
+  });
+
+  it('gives tree null, no key number and every section plain when there is no Directory Layout', () => {
+    const body = structure('## Directory Purposes\n\n**src/:**\n- Purpose: code\n');
+    expect(body.structure).toEqual({ tree: null, directories: 0 });
+    expect(body.keyNumber).toBeNull();
+  });
+
+  it('lifts the tree only when the Directory Layout holds that one fence and nothing else', () => {
+    const fence = '```\nroot/\n├── a/\n└── b.ts\n```';
+    expect(structure(`## Directory Layout\n\n${fence}\n`).structure?.directories).toBe(2);
+    expect(structure(`## Directory Layout\n\nHow it is laid out.\n\n${fence}\n`).structure?.tree).toBeNull();
+    expect(structure(`## Directory Layout\n\n${fence}\n\n${fence}\n`).structure?.tree).toBeNull();
+    expect(structure('## Directory Layout\n\n```ts\nroot/\n```\n').structure?.tree).toBeNull();
+  });
+
+  it('leaves a tree over the caps to the plain section, whole', () => {
+    const tall = Array.from({ length: FIGURE_LINES_CAP + 5 }, (_, i) => `├── d${i}/`).join('\n');
+    expect(structure(`## Directory Layout\n\n\`\`\`\nroot/\n${tall}\n\`\`\`\n`).structure?.tree).toBeNull();
+  });
+});
+
+describe('the Concerns items (10-12)', () => {
+  const lifted = lift('concerns').concerns!;
+  const section = (heading: string) => lifted.sections.find((entry) => entry.heading === heading)!;
+
+  it('lists every Tidemark concern in each section, so the items listed are exactly the ones counted', () => {
+    for (const entry of lifted.sections) expect(entry.items.length, entry.heading).toBe(entry.count);
+    expect(lifted.sections.reduce((sum, entry) => sum + entry.items.length, 0)).toBe(14);
+  });
+
+  it('keeps a ### subsection as a label over its own field lines', () => {
+    expect(section('Tech Debt').items[0]).toEqual({
+      label: 'Window rebuild on every refresh',
+      lines: [
+        '- Issue: The tide job deletes and rewrites all windows instead of changing the ones that moved',
+        '- Files: `server/tides/refresh.ts`, `server/store/index.ts`',
+        '- Impact: A request checked during a refresh can see no window at all',
+        '- Fix approach: Write the new windows in one transaction and swap them in',
+      ],
+    });
+  });
+
+  it('keeps a plain bullet as its own first line, with no label', () => {
+    const items = section('Fragile Areas').items;
+    expect(items).toHaveLength(3);
+    for (const item of items) expect(item.label).toBeNull();
+    expect(items[0].lines[0]).not.toMatch(/^- /);
+  });
+
+  it('keeps a table row as its first cell over header: cell lines', () => {
+    const items = section('Scaling Limits').items;
+    expect(items).toHaveLength(2);
+    expect(items[0].label).not.toBe('');
+    expect(items[0].lines.every((line) => line.includes(': '))).toBe(true);
+  });
+
+  it('lists nothing for a section that counts zero', () => {
+    expect(section('Dependencies at Risk').items).toEqual([]);
+    expect(section('Test Coverage Gaps').items).toEqual([]);
+  });
+
+  it('leaves out a group whose first field says None, as the count does', () => {
+    const result = concerns('## Tech Debt\n\n**Real:**\n- Issue: a\n\n**Empty:**\n- Issue: None\n')!;
+    expect(result.sections[0].count).toBe(1);
+    expect(result.sections[0].items.map((item) => item.label)).toEqual(['Real']);
+  });
+
+  it('lists all 40 items of a section with 40 groups', () => {
+    const body = `## Tech Debt\n\n${Array.from({ length: 40 }, (_, i) => `**Item ${i}:**\n- Issue: thing ${i}\n- Files: \`a/${i}.ts\`\n`).join('\n')}`;
+    const result = concerns(body)!;
+    expect(result.sections[0].count).toBe(40);
+    expect(result.sections[0].items).toHaveLength(40);
+    expect(result.sections[0].items[39]).toEqual({ label: 'Item 39', lines: ['- Issue: thing 39', '- Files: `a/39.ts`'] });
+  });
+
+  it('keeps at most 500 items a section and 60 lines of 2,000 characters a concern, the count staying true', () => {
+    const many = concerns(`## Fragile Areas\n\n${'- one more fragile thing\n'.repeat(600)}`)!;
+    expect(many.sections[0].count).toBe(600);
+    expect(many.sections[0].items).toHaveLength(CONCERN_ITEM_CAP);
+    const long = concerns(
+      `## Tech Debt\n\n**Big:**\n${Array.from({ length: 80 }, (_, i) => `- Note ${i}: ${'x'.repeat(2500)}`).join('\n')}\n`,
+    )!;
+    expect(long.sections[0].items[0].lines).toHaveLength(CONCERN_LINES_CAP);
+    expect(long.sections[0].items[0].lines[0].length).toBe(CONCERN_LINE_CHARS);
+  });
+
+  it('gives a continuation line to the concern it follows and ignores a bold line inside a fence for the count', () => {
+    const result = concerns('## Tech Debt\n\n**Real:**\n- Issue: a\n  and more\n\n```md\n**Fake:**\n```\n')!;
+    expect(result.sections[0].count).toBe(1);
+    expect(result.sections[0].items[0].lines[0]).toBe('- Issue: a');
+    expect(result.sections[0].items[0].lines).toContain('  and more');
   });
 });
