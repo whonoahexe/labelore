@@ -33,6 +33,7 @@ import { MilestoneAuditHandler } from './milestone-audit.ts';
 import { CoverageHandler } from './coverage.ts';
 import { CodebaseHandler } from './codebase.ts';
 import { SpecHandler } from './spec.ts';
+import { AiSpecHandler } from './ai-spec.ts';
 import { GenericMarkdownHandler } from './generic.ts';
 
 export const HANDLERS: ArtifactHandler[] = [
@@ -68,5 +69,6 @@ export const HANDLERS: ArtifactHandler[] = [
   CoverageHandler,
   CodebaseHandler,
   SpecHandler,
+  AiSpecHandler,
   GenericMarkdownHandler,
 ];

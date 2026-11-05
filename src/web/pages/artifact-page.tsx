@@ -78,6 +78,8 @@ import type { ComposedCodebase } from '../views/codebase-page.ts';
 import { CodebaseView, codebaseHeaderProps } from '../views/codebase-components.tsx';
 import type { ComposedSpec } from '../views/spec-page.ts';
 import { SpecView, specHeaderProps } from '../views/spec-page-components.tsx';
+import type { ComposedAiSpec } from '../views/ai-spec-page.ts';
+import { AiSpecView, aiSpecHeaderProps } from '../views/ai-spec-page-components.tsx';
 import type { ComposedPlanNavigator } from '../views/plan-navigator.ts';
 import { PlanIntroMeta, PlanNavigatorView } from '../views/plan-navigator-components.tsx';
 import { findPlanContext } from '../views/plan-context.ts';
@@ -928,6 +930,13 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.specPage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // Phase 10 (10-18, sketch 048 C): the AI spec page, when the resolved manifest opts into one - `null` for every other
+  // kind and for an AI spec the page cannot shape (no `structured.aiSpec`, or no numbered section, field, dimension
+  // or checklist item), where the promoted-section view renders with no notice. The composer is pure.
+  const aiSpecPage = useMemo<ComposedAiSpec | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.aiSpecPage?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // "In the source only" entries switch to Source mode, then scroll to the named heading once the
   // source document has mounted. The pending id lives in a ref and is cleared only when the frame
   // callback fires, so a re-run of the effect (StrictMode) still lands on it.
@@ -987,6 +996,7 @@ export function ArtifactPage({
     coverage !== null ||
     codebase !== null ||
     specPage !== null ||
+    aiSpecPage !== null ||
     !documentHtmlAllowedInView(manifest) ||
     (composed !== null && composed.blocks.length > 0);
 
@@ -1299,6 +1309,9 @@ export function ArtifactPage({
   // The Spec page's header override ("Phase N · Spec", the phase name as the h1, created date and requirement count
   // as meta) rides the same spread; the page's strip carries what the metadata disclosure would repeat.
   const specPageCover = specPage && mode === 'view' ? specPage : null;
+  // The AI spec page's header override ("Phase N · AI spec", the phase name as the h1) rides the same spread; its
+  // datasheet carries what the metadata disclosure would repeat.
+  const aiSpecPageCover = aiSpecPage && mode === 'view' ? aiSpecPage : null;
   // T-10-49: a manifest that sets withholdDocumentInView (user-setup) shows no document HTML in View mode - neither its
   // promoted sections nor the whole document - unless a composed model above has taken the page over.
   const documentWithheld = mode === 'view' && !documentHtmlAllowedInView(manifest);
@@ -1312,6 +1325,7 @@ export function ArtifactPage({
     (coverageCover ? coverageHeaderProps(coverageCover) : null) ??
     (codebaseCover ? codebaseHeaderProps(codebaseCover) : null) ??
     (specPageCover ? specHeaderProps(specPageCover, artifact.title) : null) ??
+    (aiSpecPageCover ? aiSpecHeaderProps(aiSpecPageCover, artifact.title) : null) ??
     (fixCover ? ledgerHeaderProps(fixCover, artifact.title) : null);
   return (
     <main className="artifact-page page-stack">
@@ -1401,6 +1415,7 @@ export function ArtifactPage({
         coverageCover ||
         codebaseCover ||
         specPageCover ||
+        aiSpecPageCover ||
         fixCover ? null : (
           <details className="artifact-metadata">
             <summary>
@@ -1510,6 +1525,8 @@ export function ArtifactPage({
         <CodebaseView key={artifact.path} model={codebaseCover} renderHtml={renderHtml} />
       ) : specPageCover ? (
         <SpecView key={artifact.path} model={specPageCover} renderHtml={renderHtml} onShowSource={showSource} />
+      ) : aiSpecPageCover ? (
+        <AiSpecView key={artifact.path} model={aiSpecPageCover} renderHtml={renderHtml} onShowSource={showSource} />
       ) : fixCover ? (
         <LedgerTabView key={artifact.path} model={fixCover} />
       ) : documentWithheld ? (
