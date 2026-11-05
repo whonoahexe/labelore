@@ -369,7 +369,7 @@ for (const server of SERVERS) {
 // map, and the six type pages), Shapes (port 4197: a map with three documents next to a roadmap) and a copy
 // of Tidemark (a map-only project, on a server of its own). A page's own marker is the class its view puts on
 // its root; the h1 is exactly one on every address.
-const DEV_SERVER = { entryPrefix: '/src/', neverPrefixes: ['/assets/'] } as const;
+const DEV_SERVER: Pick<ServerMode, 'entryPrefix' | 'neverPrefixes'> = { entryPrefix: '/src/', neverPrefixes: ['/assets/'] };
 const LENDSHED: ServerMode = { name: 'Lendshed, development server', baseUrl: FIXTURE_BASE_URL, ...DEV_SERVER };
 const SHAPES_DEV: ServerMode = { name: 'Shapes, development server', baseUrl: SHAPES_BASE_URL, ...DEV_SERVER };
 
