@@ -174,7 +174,7 @@ describe('the Stack lift', () => {
 
   it('gives an empty lift for a stack document with none of the three sections', () => {
     const result = lift('stack', '# S\n\n## Something Else\n\n- Go 1.22 - x\n');
-    expect(result.stack).toEqual({ languages: [], runtime: [], frameworks: [] });
+    expect(result.stack).toEqual({ languages: [], runtime: [], frameworks: [], keyDependencies: [], notPresent: [] });
     expect(result.keyNumber).toBe(0);
   });
 
@@ -191,6 +191,396 @@ describe('the Stack lift', () => {
   it('lifts nothing for a document that is not the stack', () => {
     expect(lift('architecture').stack).toBeUndefined();
     expect(lift('concerns').stack).toBeUndefined();
+  });
+});
+
+describe('the Key Dependencies lift (10-14)', () => {
+  it('reads Tidemark Key Dependencies as Critical and Infrastructure sets of name, version and purpose', () => {
+    const lifted = lift('stack').stack!;
+    expect(lifted.keyDependencies).toEqual([
+      {
+        label: 'Critical',
+        deps: [
+          { name: 'better-sqlite3', version: '11', purpose: 'the berth and booking store, opened once per process' },
+          { name: 'zod', version: '3.24', purpose: 'every request body and every tide feed row is parsed with it' },
+        ],
+      },
+      {
+        label: 'Infrastructure',
+        deps: [
+          { name: 'pino', version: '9', purpose: 'structured logs from the server' },
+          { name: 'node-cron', version: '3', purpose: 'the tide window refresh' },
+        ],
+      },
+    ]);
+    expect(lifted.notPresent).toEqual([]);
+  });
+
+  it('splits one bullet that lists several packages at its top-level commas, a comma in parentheses or backticks staying', () => {
+    const deps = stack(
+      [
+        '## Key Dependencies',
+        '',
+        '**Critical (pipeline):**',
+        '- unified 11.0.5 - core',
+        '- remark-parse 11.0.0, remark-gfm 4.0.1, remark-rehype 11.1.2',
+        '- rehype-raw 7.0.0, rehype-sanitize 6.0.0 (runs right after raw, `.use(a, b)`), rehype-slug 6.0.0',
+      ].join('\n'),
+    )!.keyDependencies;
+    expect(deps).toHaveLength(1);
+    expect(deps[0].label).toBe('Critical (pipeline)');
+    expect(deps[0].deps.map((d) => [d.name, d.version])).toEqual([
+      ['unified', '11.0.5'],
+      ['remark-parse', '11.0.0'],
+      ['remark-gfm', '4.0.1'],
+      ['remark-rehype', '11.1.2'],
+      ['rehype-raw', '7.0.0'],
+      ['rehype-sanitize', '6.0.0'],
+      ['rehype-slug', '6.0.0'],
+    ]);
+  });
+
+  it('reads a comparator in a version and a package with no version as a name alone', () => {
+    const deps = stack('## Key Dependencies\n\n**Critical:**\n- `node-thing` >=22.18.0 - x\n- left-pad (a tiny helper) - y\n')!
+      .keyDependencies[0].deps;
+    expect(deps.map((d) => [d.name, d.version])).toEqual([
+      ['node-thing', '>=22.18.0'],
+      ['left-pad', null],
+    ]);
+  });
+
+  it('lists the names a Not present line gives, splitting at commas and "or"', () => {
+    const lifted = stack(
+      '## Key Dependencies\n\n**Critical:**\n- zod 3 - x\n\n**Not present:** No database driver, ORM, auth library, queue, or cloud SDK is installed.\n',
+    )!;
+    expect(lifted.notPresent).toEqual(['database driver', 'ORM', 'auth library', 'queue', 'cloud SDK']);
+    expect(lifted.keyDependencies[0].deps.map((d) => d.name)).toEqual(['zod']);
+  });
+
+  it('puts bullets that follow no label in a set called Dependencies, and ignores bullets in a fence', () => {
+    const sets = stack('## Key Dependencies\n\n- zod 3 - x\n```\n- fenced 1 - ignored\n```\n')!.keyDependencies;
+    expect(sets).toEqual([{ label: 'Dependencies', deps: [{ name: 'zod', version: '3', purpose: 'x' }] }]);
+  });
+
+  it('lists 30 dependencies in full and caps at 80 with every purpose at 400 characters', () => {
+    const thirty = Array.from({ length: 30 }, (_, i) => `- pkg${i} ${i}.0 - note`).join('\n');
+    expect(stack(`## Key Dependencies\n\n**Critical:**\n${thirty}\n`)!.keyDependencies[0].deps).toHaveLength(30);
+    const many = Array.from({ length: 200 }, (_, i) => `- pkg${i} ${i}.0 - note`).join('\n');
+    const capped = stack(`## Key Dependencies\n\n**Critical:**\n${many}\n`)!.keyDependencies;
+    expect(capped.reduce((sum, set) => sum + set.deps.length, 0)).toBe(80);
+    const long = stack(`## Key Dependencies\n\n**Critical:**\n- pkg 1.0 - ${'p'.repeat(900)}\n`)!.keyDependencies[0].deps[0];
+    expect(long.purpose).toHaveLength(400);
+  });
+});
+
+const integrations = (body: string) => lift('integrations', `# External Integrations\n\n${body}`).integrations!;
+
+describe('the Integrations lift (10-14)', () => {
+  const lifted = lift('integrations').integrations!;
+
+  it('lists Tidemark groups by bold label, the section each sits in, and whether the group is in use', () => {
+    expect(lifted.groups.map((g) => [g.section, g.label, g.inUse])).toEqual([
+      ['external-services', 'Tide data', true],
+      ['external-services', 'Messaging', true],
+      ['data-storage', 'Databases', true],
+      ['data-storage', 'File Storage', true],
+      ['data-storage', 'Caching', false],
+      ['webhooks', 'Incoming', false],
+      ['webhooks', 'Outgoing', true],
+    ]);
+    expect(lifted.services).toBe(5);
+    expect(lift('integrations').keyNumber).toBe(5);
+    expect(lifted.missing).toEqual(['authentication', 'monitoring', 'ci-cd']);
+  });
+
+  it('reads a row as the service, its use, its client and its credential variable (a name only)', () => {
+    expect(lifted.groups[0].rows).toEqual([
+      {
+        service: 'Coastal tide feed',
+        use: 'hourly water heights for the harbour mouth',
+        sdk: 'none, plain `fetch` in `server/tides/feed.ts`',
+        authVariable: 'TIDEMARK_TIDE_FEED_KEY',
+      },
+    ]);
+    expect(lifted.groups[1].rows[0]).toMatchObject({ sdk: '`nodemailer` 6', authVariable: 'TIDEMARK_MAIL_TOKEN' });
+    expect(lifted.groups[2].rows[0]).toMatchObject({ service: 'SQLite file `data/tidemark.db`', sdk: '`TIDEMARK_DB_PATH`' });
+  });
+
+  it('lists TIDEMARK_TIDE_FEED_KEY with hadValue true and the other two names with false, all required', () => {
+    expect(lifted.variables).toEqual([
+      { name: 'TIDEMARK_TIDE_FEED_KEY', hadValue: true, kind: 'required' },
+      { name: 'TIDEMARK_MAIL_TOKEN', hadValue: false, kind: 'required' },
+      { name: 'TIDEMARK_DB_PATH', hadValue: false, kind: 'required' },
+    ]);
+  });
+
+  it('never holds the planted value anywhere in the structured record', () => {
+    expect(JSON.stringify(lift('integrations'))).not.toContain('PLACEHOLDER-NOT-A-REAL-KEY');
+  });
+
+  it('draws the Environment Configuration section whole when it holds only names and lines', () => {
+    expect(lifted.environment).toEqual({
+      heading: 'Environment Configuration',
+      groups: [
+        { label: 'Required env vars', names: ['TIDEMARK_TIDE_FEED_KEY', 'TIDEMARK_MAIL_TOKEN', 'TIDEMARK_DB_PATH'], lines: [] },
+        { label: 'Secrets location', names: [], lines: ['A `.env` file on the harbour office machine, outside the repository'] },
+      ],
+      whole: true,
+    });
+  });
+
+  it('leaves the section plain (whole false) when it holds a fence or a table', () => {
+    const fenced = integrations('## Environment Configuration\n\n**Required env vars:**\n- `A_KEY=abc123`\n\n```\nA_KEY=abc123\n```\n');
+    expect(fenced.environment?.whole).toBe(false);
+    expect(JSON.stringify(fenced)).not.toContain('abc123');
+    const table = integrations('## Environment Configuration\n\n| Name | Note |\n|---|---|\n| `A_KEY` | x |\n');
+    expect(table.environment?.whole).toBe(false);
+  });
+
+  it('removes a value in every place a name can sit: a backticked NAME=value, NAME: value, a bare word, a sub-bullet', () => {
+    const body = [
+      '## Environment Configuration',
+      '',
+      '**Required env vars:**',
+      '- `ONE_KEY=secret-one`',
+      '- TWO_KEY: secret-two',
+      '- `THREE_KEY`=secret-three',
+      '- FOUR_KEY=secret-four - used for x',
+      '  - note: set FIVE_KEY=secret-five before starting',
+      '',
+      '## APIs & External Services',
+      '',
+      '**Mail:**',
+      '- Relay - sends mail using `SIX_KEY=secret-six`',
+      '  - Auth: `SEVEN_KEY=secret-seven`',
+    ].join('\n');
+    const found = integrations(body);
+    const text = JSON.stringify(found);
+    for (const value of ['secret-one', 'secret-two', 'secret-three', 'secret-four', 'secret-five', 'secret-six', 'secret-seven']) {
+      expect(text).not.toContain(value);
+    }
+    expect(found.variables.filter((v) => v.hadValue).map((v) => v.name).sort()).toEqual(
+      ['FOUR_KEY', 'ONE_KEY', 'SEVEN_KEY', 'SIX_KEY', 'THREE_KEY', 'TWO_KEY'].sort(),
+    );
+    expect(found.groups[0].rows[0].authVariable).toBe('SEVEN_KEY');
+  });
+
+  it('keeps a placeholder as not a value', () => {
+    expect(integrations('## Environment Configuration\n\n**Optional env vars:**\n- `PORT=[your port]`\n').variables).toEqual([
+      { name: 'PORT', hadValue: false, kind: 'optional' },
+    ]);
+  });
+
+  it('counts a group whose first line says None, Not detected, Not hosted or No as not in use, and "None of" as in use', () => {
+    const found = integrations(
+      [
+        '## Monitoring & Observability',
+        '',
+        '**Error Tracking:**',
+        '- None. No Sentry client is installed.',
+        '**Logs:**',
+        '- Not detected.',
+        '**Analytics:**',
+        '- No analytics',
+        '**Alerts:**',
+        '- None of the alerts are paged - a pager rota exists',
+      ].join('\n'),
+    );
+    expect(found.groups.map((g) => [g.label, g.inUse])).toEqual([
+      ['Error Tracking', false],
+      ['Logs', false],
+      ['Analytics', false],
+      ['Alerts', true],
+    ]);
+  });
+
+  it('makes a group of bullets that follow no label, named by the section heading', () => {
+    const found = integrations('## File Watching\n\n- Not implemented in v1.\n');
+    expect(found.groups).toHaveLength(1);
+    expect(found.groups[0]).toMatchObject({ section: null, label: 'File Watching', inUse: false });
+  });
+
+  it('leaves out a line that names a path under a home folder', () => {
+    const found = integrations(
+      [
+        '## CI/CD & Deployment',
+        '',
+        '**MCP:**',
+        '- registers a stdio server (`/home/someone/.npm-global/bin/tool`)',
+        '',
+        '**Pipeline:**',
+        '- Hosted runner - runs the gate',
+        '  - Client: `act` at `/Users/someone/bin/act`',
+      ].join('\n'),
+    );
+    expect(found.groups.map((g) => g.label)).toEqual(['Pipeline']);
+    expect(JSON.stringify(found)).not.toContain('someone');
+  });
+
+  it('names a variable mentioned in another group, when it has an underscore', () => {
+    const found = integrations('## CI/CD & Deployment\n\n**Hooks:**\n- Reads `PAUSE_AT` and `CI` - hooks\n');
+    expect(found.variables).toEqual([{ name: 'PAUSE_AT', hadValue: false, kind: 'named' }]);
+  });
+
+  it('caps groups, rows, lines and variables and lifts nothing for another document', () => {
+    const many = Array.from({ length: 100 }, (_, i) => `**G${i}:**\n- svc ${i} - use`).join('\n');
+    expect(integrations(`## APIs & External Services\n\n${many}\n`).groups).toHaveLength(60);
+    const rows = Array.from({ length: 100 }, (_, i) => `- svc ${i} - use`).join('\n');
+    const group = integrations(`## APIs & External Services\n\n**G:**\n${rows}\n`).groups[0];
+    expect(group.rows).toHaveLength(30);
+    expect(group.lines).toHaveLength(12);
+    const names = Array.from({ length: 100 }, (_, i) => `- \`VAR_${i}\``).join('\n');
+    expect(integrations(`## Environment Configuration\n\n**Required:**\n${names}\n`).variables).toHaveLength(60);
+    expect(lift('stack').integrations).toBeUndefined();
+  });
+});
+
+const conventions = (body: string) => lift('conventions', `# Coding Conventions\n\n${body}`).conventions!;
+const testing = (body: string) => lift('testing', `# Testing Patterns\n\n${body}`).testing!;
+
+describe('the Conventions lift (10-14)', () => {
+  it('gives Tidemark eight rule groups in the template order, and the older-form stamp from its Analysis Date line', () => {
+    const result = lift('conventions');
+    expect(result.keyNumber).toBe(8);
+    expect(result.conventions!.groups.map((g) => [g.key, g.count])).toEqual([
+      ['naming-patterns', 5],
+      ['code-style', 4],
+      ['import-organization', 1],
+      ['error-handling', 2],
+      ['logging', 3],
+      ['comments', 2],
+      ['function-design', 3],
+      ['module-design', 2],
+    ]);
+    expect(result.stamp).toEqual({ mappedAt: '2026-10-27', commit: null, source: 'analysis-date' });
+  });
+
+  it('reads a bullet as a rule, a bold label with its value as "Label: value", and leaves ordered steps and the footer out', () => {
+    const groups = lift('conventions').conventions!.groups;
+    expect(groups[0].rules[0]).toBe('Server modules are lower-case, one noun per file (`clash.ts`, `window.ts`)');
+    expect(groups[4].rules[0]).toBe('Framework: pino');
+    expect(groups[2].rules).toEqual(['None']);
+    expect(JSON.stringify(groups)).not.toContain('Node built-ins');
+    expect(JSON.stringify(groups)).not.toContain('Last updated');
+  });
+
+  it('appends a nested bullet to the rule above it, and takes a plain line under a label as a rule', () => {
+    const found = conventions('## Naming Patterns\n\n**Files:**\n- kebab-case\n  - never `camelCase` files\nplain line under the label\n');
+    expect(found.groups[0].rules).toEqual(['kebab-case never `camelCase` files', 'plain line under the label']);
+  });
+
+  it('ignores a bullet inside a fence and a table row, and keeps a section with no rule as a group of zero', () => {
+    const found = conventions('## Naming Patterns\n\n```\n- fenced\n```\n| a | b |\n|---|---|\n\n## Logging\n\n- one\n');
+    expect(found.groups.map((g) => [g.heading, g.count])).toEqual([['Naming Patterns', 0], ['Logging', 1]]);
+  });
+
+  it('caps the groups at 20, the rules at 30 and each rule at 400 characters, keeping the true count', () => {
+    const groups = Array.from({ length: 30 }, (_, i) => `## S${i}\n\n- r`).join('\n\n');
+    expect(conventions(groups).groups).toHaveLength(20);
+    const many = Array.from({ length: 50 }, (_, i) => `- rule ${i}`).join('\n');
+    const group = conventions(`## Naming Patterns\n\n${many}\n`).groups[0];
+    expect(group.rules).toHaveLength(30);
+    expect(group.count).toBe(50);
+    expect(conventions(`## Naming Patterns\n\n- ${'x'.repeat(900)}\n`).groups[0].rules[0]).toHaveLength(400);
+    expect(lift('stack').conventions).toBeUndefined();
+  });
+});
+
+describe('the Testing lift (10-14)', () => {
+  const lifted = lift('testing').testing!;
+
+  it('gives Tidemark the framework, the runner plate with its config, the assertion plate and the coverage requirement', () => {
+    expect(lift('testing').keyLabel).toBe('Vitest');
+    expect(lift('testing').keyNumber).toBeNull();
+    expect(lifted.framework).toBe('Vitest');
+    expect(lifted.runner).toBe('Vitest');
+    expect(lifted.plates).toEqual([
+      { label: 'Runner', name: 'Vitest', version: '3.2', config: 'vitest.config.ts' },
+      { label: 'Assertion Library', name: 'Vitest built-ins', version: null, config: null },
+    ]);
+    expect(lifted.coverage).toBe('None enforced');
+  });
+
+  it('gives Tidemark three run commands, the comment lines above them as captions and not as commands', () => {
+    expect(lifted.commands).toEqual([
+      { command: 'npm test', caption: 'Run every unit and route test once' },
+      { command: 'npm run test:watch', caption: 'Watch mode while editing' },
+      { command: 'npm run test:coverage', caption: 'Coverage report' },
+    ]);
+  });
+
+  it('takes a comment beside a command as its caption, keeps a # inside quotes, and shows a repeated command once', () => {
+    const found = testing(
+      [
+        '## Test Framework',
+        '',
+        '**Run Commands:**',
+        '```bash',
+        'npm test            # vitest run',
+        'npx playwright test -g "a # b"   # one spec',
+        'npm test',
+        '$ npm run lint',
+        '```',
+        '',
+        '## Coverage',
+        '',
+        '**View Coverage:**',
+        '```bash',
+        'npm run test:coverage',
+        '```',
+      ].join('\n'),
+    );
+    expect(found.commands).toEqual([
+      { command: 'npm test', caption: 'vitest run' },
+      { command: 'npx playwright test -g "a # b"', caption: 'one spec' },
+      { command: 'npm run lint', caption: null },
+      { command: 'npm run test:coverage', caption: null },
+    ]);
+  });
+
+  it('removes a control character from a run command, so the command copied is the command shown', () => {
+    const found = testing('## Test Framework\n\n**Run Commands:**\n```bash\nnpm\u0007 test‮ --all\n```\n');
+    expect(found.commands).toEqual([{ command: 'npm test --all', caption: null }]);
+  });
+
+  it('reads commands only from a fence under a Run Commands label or in Coverage, not from a code sample', () => {
+    const found = testing('## Test Structure\n\n```bash\nrm -rf /\n```\n\n## Test Framework\n\n**Run Commands:**\n```ts\nconst x = 1;\n```\n');
+    expect(found.commands).toEqual([]);
+  });
+
+  it('caps the commands at 30 and each at 400 characters', () => {
+    const many = Array.from({ length: 60 }, (_, i) => `cmd-${i}`).join('\n');
+    expect(testing(`## Test Framework\n\n**Run Commands:**\n\`\`\`bash\n${many}\n\`\`\`\n`).commands).toHaveLength(30);
+    expect(testing(`## Test Framework\n\n**Run Commands:**\n\`\`\`bash\n${'c'.repeat(900)}\n\`\`\`\n`).commands[0].command).toHaveLength(400);
+  });
+
+  it('lifts the test folder tree and the Test Types with the folders their parenthesis names', () => {
+    expect(lifted.tree?.text).toContain('clash.test.ts');
+    expect(lifted.types.map((t) => t.name)).toEqual(['Unit', 'Integration', 'E2E']);
+    const found = testing(
+      [
+        '## Test Types',
+        '',
+        '**Unit tests (`test/rendering/`, `test/*.test.ts`):**',
+        '- pure',
+        '**HTTP / server tests (`test/server/`):**',
+        '- app.request',
+        '**Golden tests:**',
+        '- snapshot',
+      ].join('\n'),
+    );
+    expect(found.types).toEqual([
+      { name: 'Unit', paths: ['test/rendering/', 'test/*.test.ts'] },
+      { name: 'HTTP / server', paths: ['test/server/'] },
+      { name: 'Golden', paths: [] },
+    ]);
+  });
+
+  it('gives a document with no recognised section an empty lift and no key label', () => {
+    const result = lift('testing', '# T\n\n## Something\n\n- x\n');
+    expect(result.testing).toEqual({ framework: null, runner: null, plates: [], coverage: null, commands: [], tree: null, types: [] });
+    expect(result.keyLabel).toBeUndefined();
+    expect(lift('stack').testing).toBeUndefined();
   });
 });
 

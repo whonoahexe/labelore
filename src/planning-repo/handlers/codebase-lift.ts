@@ -14,6 +14,7 @@
 import { eachLineOutsideFences, fenceMarker, scanFencedLines, splitBodyLines } from './fenced-sections.ts';
 import type { FencedSection } from './fenced-sections.ts';
 import { parseTree, treeCounts } from '../../rendering/ascii-tree.ts';
+import { stripControlCharacters, withholdInText, withholdValue } from './withhold-values.ts';
 
 // ---------------------------------------------------------------------------------------------------------
 // Heading normalisation and keys
@@ -311,6 +312,14 @@ export interface CodebaseBody {
   architecture?: ArchitectureLift;
   /** The Directory Layout tree and its directory count (document structure only). */
   structure?: StructureLift;
+  /** The groups, variable names and Environment Configuration (document integrations only). */
+  integrations?: IntegrationsLift;
+  /** The rule groups (document conventions only). */
+  conventions?: ConventionsLift;
+  /** The runner plates, run commands, test tree and test types (document testing only). */
+  testing?: TestingLift;
+  /** A word shown in place of the key number where the panel's key is a name: Testing's framework. */
+  keyLabel?: string;
   /** What `keyNumber` counts when it is not the panel's usual unit: Architecture counts layers when the
    * document has no component table. */
   keyUnit?: 'layer';
@@ -382,11 +391,33 @@ export interface StackChip {
   group: StackChipGroup;
 }
 
+/** One Key Dependencies row (10-14): a package name, its version and the purpose the line gives it. */
+export interface StackDependency {
+  name: string;
+  version: string | null;
+  purpose: string | null;
+}
+
+/** The Key Dependencies under one bold label (Critical, Infrastructure, ...). */
+export interface StackDependencySet {
+  label: string;
+  deps: StackDependency[];
+}
+
 export interface StackLift {
   languages: StackChip[];
   runtime: StackChip[];
   frameworks: StackChip[];
+  /** The Key Dependencies, one set per bold label (10-14). */
+  keyDependencies: StackDependencySet[];
+  /** The names a `**Not present:**` line lists, as the document words them (10-14). */
+  notPresent: string[];
 }
+
+/** The most Key Dependencies kept across all sets, the longest purpose, and the most Not present names. */
+export const STACK_DEPENDENCY_CAP = 80;
+export const STACK_PURPOSE_CAP = 400;
+export const STACK_ABSENT_CAP = 20;
 
 /** The most chips the Stack lift keeps, across all three lists. */
 export const STACK_CHIP_CAP = 60;
@@ -449,17 +480,131 @@ function chipOf(text: string, group: StackChipGroup): StackChip | null {
   return { name: left.slice(0, STACK_CHIP_TEXT_CAP), version: null, group };
 }
 
+/** `text` cut at its top-level commas: a comma inside parentheses or backticks does not split. */
+function splitTopLevel(text: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let tick = false;
+  let current = '';
+  for (const ch of text) {
+    if (ch === '`') tick = !tick;
+    else if (!tick && ch === '(') depth += 1;
+    else if (!tick && ch === ')' && depth > 0) depth -= 1;
+    if (ch === ',' && depth === 0 && !tick) {
+      parts.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  parts.push(current);
+  return parts.map((part) => part.trim()).filter((part) => part.length > 0);
+}
+
+/** One package in a Key Dependencies bullet: the name, then the first digit-led token after the first word
+ * outside any parenthetical as its version (a comparator allowed). A part with no version is a name alone. */
+function dependencyOf(part: string, purpose: string | null): StackDependency | null {
+  const clean = part.replaceAll('`', '').replaceAll('*', '').trim();
+  if (clean.length === 0) return null;
+  const tokens = clean.split(' ').filter((token) => token.length > 0);
+  let depth = 0;
+  for (let i = 0; i < tokens.length; i += 1) {
+    const token = tokens[i];
+    const inside = depth > 0;
+    for (let c = 0; c < token.length; c += 1) {
+      if (token.charCodeAt(c) === 40) depth += 1;
+      else if (token.charCodeAt(c) === 41 && depth > 0) depth -= 1;
+    }
+    if (i === 0 || inside) continue;
+    const version = versionOf(token);
+    if (version !== null) {
+      return {
+        name: tokens.slice(0, i).join(' ').slice(0, STACK_CHIP_TEXT_CAP),
+        version: version.slice(0, STACK_CHIP_TEXT_CAP),
+        purpose,
+      };
+    }
+  }
+  const paren = clean.indexOf(' (');
+  let name = (paren > 0 ? clean.slice(0, paren) : clean).trim();
+  while (name.endsWith(';') || name.endsWith(',') || name.endsWith('.') || name.endsWith(':')) name = name.slice(0, -1);
+  return name.length === 0 ? null : { name: name.slice(0, STACK_CHIP_TEXT_CAP), version: null, purpose };
+}
+
+/** The names of a `**Not present:** No A, B, or C is installed.` line: the leading "No" and the trailing
+ * "is/are installed" dropped, split at commas and "or". */
+function absentNames(text: string): string[] {
+  let body = text.trim();
+  if (body.toLowerCase().startsWith('no ')) body = body.slice(3);
+  for (const tail of [' is installed.', ' are installed.', ' is installed', ' are installed', '.']) {
+    if (body.toLowerCase().endsWith(tail)) {
+      body = body.slice(0, body.length - tail.length);
+      break;
+    }
+  }
+  const names: string[] = [];
+  for (const piece of body.split(',')) {
+    for (const part of piece.split(' or ')) {
+      const name = part.replaceAll('`', '').trim();
+      if (name.length > 0 && name.length <= 80) names.push(name);
+    }
+  }
+  return names.slice(0, STACK_ABSENT_CAP);
+}
+
+/** The Key Dependencies section: each top-level bullet is one or more packages (split at top-level commas on
+ * the left of the first spaced dash, the right being their purpose), grouped under the bold label above them. */
+function liftKeyDependencies(lines: readonly string[], section: KeyedSection, lift: StackLift): void {
+  let set: StackDependencySet = { label: 'Dependencies', deps: [] };
+  let total = lift.keyDependencies.reduce((sum, s) => sum + s.deps.length, 0);
+  const flush = (): void => {
+    if (set.deps.length > 0) lift.keyDependencies.push(set);
+  };
+  eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+    const label = boldLabel(line);
+    if (label !== null) {
+      flush();
+      set = { label: label.replaceAll('`', '').replaceAll('*', '').slice(0, 80), deps: [] };
+      return;
+    }
+    const labelled = labelledLine(line);
+    if (labelled !== null && normaliseHeading(labelled.label).startsWith('not present')) {
+      lift.notPresent = absentNames(labelled.text);
+      return;
+    }
+    const bullet = topBullet(line);
+    if (bullet === null || total >= STACK_DEPENDENCY_CAP) return;
+    const clean = bullet.replaceAll('*', '');
+    const dash = firstSpacedDash(clean);
+    const left = dash < 0 ? clean : clean.slice(0, dash);
+    const purposeText = dash < 0 ? '' : clean.slice(dash + 3).replaceAll('`', '').trim();
+    const purpose = purposeText.length === 0 ? null : purposeText.slice(0, STACK_PURPOSE_CAP);
+    for (const part of splitTopLevel(left)) {
+      if (total >= STACK_DEPENDENCY_CAP) break;
+      const dep = dependencyOf(part, purpose);
+      if (dep === null) continue;
+      set.deps.push(dep);
+      total += 1;
+    }
+  });
+  flush();
+}
+
 /**
  * Languages, runtime and frameworks as chips. The Languages section's `Runtime` group (a combined
  * "Languages & Runtimes" heading) and a Runtime section both feed the runtime list; a `Package Manager`
  * group feeds nothing. Frameworks group by their bold label (core, testing, build and dev).
  */
 export function liftStack(sections: readonly KeyedSection[], lines: readonly string[]): StackLift {
-  const lift: StackLift = { languages: [], runtime: [], frameworks: [] };
+  const lift: StackLift = { languages: [], runtime: [], frameworks: [], keyDependencies: [], notPresent: [] };
   let total = 0;
   for (const section of sections) {
     if (section.level !== 2) continue;
     const key = section.key;
+    if (key === 'key-dependencies') {
+      liftKeyDependencies(lines, section, lift);
+      continue;
+    }
     if (key !== 'languages' && key !== 'runtime' && key !== 'frameworks') continue;
     let group: StackChipGroup = key === 'languages' ? 'primary' : key === 'runtime' ? 'runtime' : 'core';
     let target: StackChip[] | null =
@@ -988,6 +1133,627 @@ export function liftStructure(sections: readonly KeyedSection[], lines: readonly
   return lift;
 }
 
+// ---------------------------------------------------------------------------------------------------------
+// The Integrations lift (10-14)
+// ---------------------------------------------------------------------------------------------------------
+
+/** One service row of a group: the first bullet's words, and the lines under it that name its client and its
+ * credential variable. Only a variable's name is kept (T-10-24). */
+export interface IntegrationRow {
+  service: string;
+  use: string | null;
+  sdk: string | null;
+  authVariable: string | null;
+}
+
+export interface IntegrationGroup {
+  /** The known section key (external-services, data-storage, authentication, monitoring, ci-cd, webhooks), or null
+   * for a section the template does not have. */
+  section: string | null;
+  sectionHeading: string;
+  /** The bold label the group sits under; the section's heading for bullets that follow no label. */
+  label: string;
+  /** False when the group's first line says None, Not detected, Not applicable, Not implemented, Not hosted or No. */
+  inUse: boolean;
+  /** The group's first line, for a title on a quiet chip. */
+  firstLine: string;
+  rows: IntegrationRow[];
+  /** The group's bullets and sub-bullets with every variable value removed, for the node's details. */
+  lines: string[];
+}
+
+export type VariableKind = 'required' | 'conditional' | 'optional' | 'named';
+
+export interface IntegrationVariable {
+  name: string;
+  /** True when the document writes a value beside the name; the value is never kept. */
+  hadValue: boolean;
+  kind: VariableKind;
+}
+
+export interface EnvironmentGroup {
+  label: string;
+  names: string[];
+  /** The group's lines with every value removed. */
+  lines: string[];
+}
+
+export interface IntegrationsLift {
+  groups: IntegrationGroup[];
+  variables: IntegrationVariable[];
+  /** The Environment Configuration section as names and cleaned lines; `whole` when nothing in the section is left
+   * out (no fence, no table), so the page may draw it in place of the plain section. */
+  environment: { heading: string; groups: EnvironmentGroup[]; whole: boolean } | null;
+  /** The known section keys the document lacks. */
+  missing: string[];
+  /** Groups in use: the key number. */
+  services: number;
+}
+
+export const INTEGRATION_GROUP_CAP = 60;
+export const INTEGRATION_ROW_CAP = 30;
+export const INTEGRATION_LINE_CAP = 12;
+export const INTEGRATION_TEXT_CAP = 300;
+export const INTEGRATION_VARIABLE_CAP = 60;
+
+const INTEGRATION_KEYS: readonly string[] = [...(CODEBASE_KEYS.get('integrations')?.values() ?? [])];
+
+const ABSENT_OPENINGS: readonly string[] = ['none', 'not detected', 'not applicable', 'not implemented', 'not hosted', 'no'];
+
+/** True when a line opens with an absence marker as a whole word ("None.", "Not detected. No AI SDK ...", "No Sentry"). */
+function saysAbsent(text: string): boolean {
+  const lower = text.replaceAll('`', '').replaceAll('*', '').trimStart().slice(0, 40).toLowerCase();
+  for (const opening of ABSENT_OPENINGS) {
+    if (!lower.startsWith(opening)) continue;
+    const next = lower.charCodeAt(opening.length);
+    if (!Number.isNaN(next) && ((next >= 97 && next <= 122) || (next >= 48 && next <= 57))) continue;
+    if (lower.startsWith('none of ')) continue;
+    return true;
+  }
+  return false;
+}
+
+/** True when a line names a path under a person's home folder: a private detail the lifted rows leave out. */
+function hasHomePath(text: string): boolean {
+  return text.includes('/home/') || text.includes('/Users/') || text.includes(':\\Users\\') || text.includes('/root/');
+}
+
+/** The text of an indented list item (a marker after leading spaces), else null. */
+function nestedBullet(line: string): string | null {
+  let i = 0;
+  while (i < line.length && line.charCodeAt(i) === 32) i += 1;
+  if (i < 2) return null;
+  const c = line.charCodeAt(i);
+  if ((c === 45 || c === 42 || c === 43) && line.charCodeAt(i + 1) === 32) {
+    return (line.length > LINE_CAP ? line.slice(i + 2, LINE_CAP) : line.slice(i + 2)).trim();
+  }
+  return null;
+}
+
+/** The contents of every backtick span in `text`, in order. */
+function tickSpans(text: string): string[] {
+  const spans: string[] = [];
+  let from = 0;
+  for (;;) {
+    const open = text.indexOf('`', from);
+    if (open < 0) break;
+    const close = text.indexOf('`', open + 1);
+    if (close < 0) break;
+    spans.push(text.slice(open + 1, close));
+    from = close + 1;
+  }
+  return spans;
+}
+
+function cleanText(text: string): string {
+  const scrubbed = withholdInText(text).text;
+  return scrubbed.length > INTEGRATION_TEXT_CAP ? scrubbed.slice(0, INTEGRATION_TEXT_CAP) : scrubbed;
+}
+
+const KIND_RANK: Readonly<Record<VariableKind, number>> = { required: 3, conditional: 2, optional: 1, named: 0 };
+
+/** The variables found so far, by name: a repeat keeps a value flag once set and the strongest kind. */
+function addVariable(book: Map<string, IntegrationVariable>, name: string, hadValue: boolean, kind: VariableKind): void {
+  const found = book.get(name);
+  if (found === undefined) {
+    if (book.size < INTEGRATION_VARIABLE_CAP) book.set(name, { name, hadValue, kind });
+    return;
+  }
+  if (hadValue) found.hadValue = true;
+  if (KIND_RANK[kind] > KIND_RANK[found.kind]) found.kind = kind;
+}
+
+/** Variable names in one bullet: its leading token and every backticked span (on the left of the first spaced dash, for
+ * the Environment section; anywhere for a group's bullet, where only names with an underscore count). */
+function namesIn(text: string, needsUnderscore: boolean): { name: string; hadValue: boolean }[] {
+  // A group's bullet may name a variable anywhere in it; the Environment section names them on the left of the dash.
+  const dash = needsUnderscore ? -1 : firstSpacedDash(text);
+  const left = dash < 0 ? text : text.slice(0, dash);
+  const found: { name: string; hadValue: boolean }[] = [];
+  const keep = (name: string, hadValue: boolean): void => {
+    if (needsUnderscore && !name.includes('_')) return;
+    const known = found.find((entry) => entry.name === name);
+    if (known === undefined) found.push({ name, hadValue });
+    else if (hadValue) known.hadValue = true;
+  };
+  const lead = withholdValue(left);
+  if (lead !== null) keep(lead.name, lead.hadValue);
+  for (const span of tickSpans(left)) {
+    const read = withholdValue(span);
+    if (read !== null) keep(read.name, read.hadValue);
+  }
+  return found;
+}
+
+function variableKind(label: string, text: string): VariableKind {
+  const lower = `${label} ${text.slice(0, 40)}`.toLowerCase();
+  if (lower.includes('optional')) return 'optional';
+  if (lower.includes('conditional')) return 'conditional';
+  if (lower.includes('required')) return 'required';
+  return 'named';
+}
+
+function groupRow(top: string, subs: readonly string[]): IntegrationRow {
+  const dash = firstSpacedDash(top);
+  const service = cleanText(dash < 0 ? top : top.slice(0, dash)).slice(0, 120);
+  const use = dash < 0 ? null : cleanText(top.slice(dash + 3)) || null;
+  let sdk: string | null = null;
+  let authVariable: string | null = null;
+  for (const sub of subs) {
+    const colon = sub.indexOf(':');
+    if (colon <= 0 || colon > 20) continue;
+    const label = sub.slice(0, colon).replaceAll('*', '').trim().toLowerCase();
+    const value = sub.slice(colon + 1).trim();
+    if (sdk === null && (label === 'sdk/client' || label === 'client' || label === 'connection')) {
+      sdk = cleanText(value) || null;
+    } else if (authVariable === null && label === 'auth') {
+      for (const span of tickSpans(value)) {
+        const read = withholdValue(span);
+        if (read !== null) {
+          authVariable = read.name;
+          break;
+        }
+      }
+    }
+  }
+  return { service, use, sdk, authVariable };
+}
+
+/**
+ * The Integrations document as groups (one per bold label under a section, or per section when its bullets follow
+ * no label), the variable names and the Environment Configuration section. Every variable passes through
+ * `withholdValue` or `withholdInText`, so no value is stored; a line naming a path under a home folder is left out.
+ */
+export function liftIntegrations(sections: readonly KeyedSection[], lines: readonly string[]): IntegrationsLift {
+  const lift: IntegrationsLift = { groups: [], variables: [], environment: null, missing: [], services: 0 };
+  const book = new Map<string, IntegrationVariable>();
+  const present = new Set<string>();
+  for (const section of sections) {
+    if (section.level !== 2) continue;
+    if (section.key !== null) present.add(section.key);
+    if (section.key === 'environment-configuration') {
+      liftEnvironment(lines, section, lift, book);
+      continue;
+    }
+    const state: { group: IntegrationGroup | null; top: string | null; subs: string[] } = { group: null, top: null, subs: [] };
+    const finishRow = (): void => {
+      const { group, top } = state;
+      if (group !== null && top !== null && group.rows.length < INTEGRATION_ROW_CAP) {
+        group.rows.push(groupRow(top, state.subs));
+        if (group.lines.length < INTEGRATION_LINE_CAP) group.lines.push(cleanText(top));
+        for (const sub of state.subs) if (group.lines.length < INTEGRATION_LINE_CAP) group.lines.push(cleanText(sub));
+      }
+      state.top = null;
+      state.subs = [];
+    };
+    const finishGroup = (): void => {
+      finishRow();
+      if (state.group !== null && state.group.rows.length > 0 && lift.groups.length < INTEGRATION_GROUP_CAP) {
+        lift.groups.push(state.group);
+      }
+      state.group = null;
+    };
+    const startGroup = (label: string): IntegrationGroup => {
+      finishGroup();
+      const group: IntegrationGroup = {
+        section: section.key,
+        sectionHeading: section.heading,
+        label: label.replaceAll('`', '').replaceAll('*', '').slice(0, 120),
+        inUse: true,
+        firstLine: '',
+        rows: [],
+        lines: [],
+      };
+      state.group = group;
+      return group;
+    };
+    eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+      const label = boldLabel(line);
+      if (label !== null) {
+        startGroup(label);
+        return;
+      }
+      const bullet = topBullet(line);
+      if (bullet !== null) {
+        for (const name of namesIn(bullet, true)) addVariable(book, name.name, name.hadValue, 'named');
+        finishRow();
+        const group = state.group ?? startGroup(section.heading);
+        if (group.firstLine === '') {
+          group.firstLine = cleanText(bullet);
+          group.inUse = !saysAbsent(bullet);
+        }
+        state.top = hasHomePath(bullet) ? null : bullet;
+        return;
+      }
+      const nested = nestedBullet(line);
+      if (nested !== null && state.top !== null) {
+        for (const name of namesIn(nested, true)) addVariable(book, name.name, name.hadValue, 'named');
+        if (!hasHomePath(nested)) state.subs.push(nested);
+      }
+    });
+    finishGroup();
+  }
+  lift.missing = INTEGRATION_KEYS.filter((key) => !present.has(key));
+  lift.variables = [...book.values()];
+  lift.services = lift.groups.filter((entry) => entry.inUse).length;
+  return lift;
+}
+
+function liftEnvironment(
+  lines: readonly string[],
+  section: KeyedSection,
+  lift: IntegrationsLift,
+  book: Map<string, IntegrationVariable>,
+): void {
+  const groups: EnvironmentGroup[] = [];
+  let current: EnvironmentGroup = { label: '', names: [], lines: [] };
+  let label = '';
+  let whole = true;
+  const flush = (): void => {
+    if (current.names.length > 0 || current.lines.length > 0) groups.push(current);
+  };
+  for (let i = section.startLine + 1; i < section.endLine; i += 1) {
+    const line = lines[i];
+    if (fenceMarker(line) !== null || line.trimStart().charCodeAt(0) === 124) whole = false;
+  }
+  eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+    const bold = boldLabel(line);
+    if (bold !== null) {
+      flush();
+      label = bold.replaceAll('`', '').replaceAll('*', '').slice(0, 120);
+      current = { label, names: [], lines: [] };
+      return;
+    }
+    const text = topBullet(line) ?? nestedBullet(line);
+    if (text === null) {
+      const plain = line.trim();
+      const footer = plain.startsWith('*') && plain.endsWith('*');
+      if (plain.length > 0 && !plain.startsWith('---') && !footer && current.lines.length < INTEGRATION_LINE_CAP) {
+        current.lines.push(cleanText(plain));
+      }
+      return;
+    }
+    const names = namesIn(text, false);
+    const kind = variableKind(label, text);
+    for (const name of names) {
+      addVariable(book, name.name, name.hadValue, kind);
+      if (!current.names.includes(name.name)) current.names.push(name.name);
+    }
+    const rest = text
+      .split('`')
+      .filter((_, index) => index % 2 === 0)
+      .join('')
+      .replaceAll(',', '')
+      .trim();
+    if ((names.length === 0 || rest.length > 0) && !hasHomePath(text) && current.lines.length < INTEGRATION_LINE_CAP) {
+      current.lines.push(cleanText(text));
+    }
+  });
+  flush();
+  lift.environment = { heading: section.heading, groups, whole };
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// The Conventions lift (10-14)
+// ---------------------------------------------------------------------------------------------------------
+
+export interface ConventionsGroup {
+  heading: string;
+  /** The known key (naming-patterns, code-style, ...), or null for a section the template does not have. */
+  key: string | null;
+  /** How many rules the section holds; `rules` holds at most CONVENTION_RULE_CAP of them. */
+  count: number;
+  rules: string[];
+}
+
+export interface ConventionsLift {
+  groups: ConventionsGroup[];
+}
+
+export const CONVENTION_GROUP_CAP = 20;
+export const CONVENTION_RULE_CAP = 30;
+export const CONVENTION_RULE_CHARS = 400;
+
+function clipRule(text: string): string {
+  return text.length > CONVENTION_RULE_CHARS ? text.slice(0, CONVENTION_RULE_CHARS) : text;
+}
+
+/** A line that is only a list-item number ("1. Node built-ins"): a step of an ordered list, not a rule. */
+function isNumbered(line: string): boolean {
+  let i = 0;
+  while (i < line.length && line.charCodeAt(i) === 32) i += 1;
+  const start = i;
+  while (i < line.length && line.charCodeAt(i) >= 48 && line.charCodeAt(i) <= 57) i += 1;
+  return i > start && i - start <= 3 && line.charCodeAt(i) === 46 && line.charCodeAt(i + 1) === 32;
+}
+
+/**
+ * The rules of each `##` section, one group per section (at most 20): a top-level bullet is a rule (the bullets
+ * nested under it are part of it), a line that opens with a bold label and carries its value is the rule
+ * `Label: value`, and a plain line under a label is a rule. Ordered-list steps, table rows, the footer and fenced
+ * code are not rules (the section stays in the plain list as written).
+ */
+export function liftConventions(sections: readonly KeyedSection[], lines: readonly string[]): ConventionsLift {
+  const groups: ConventionsGroup[] = [];
+  for (const section of sections) {
+    if (section.level !== 2 || groups.length >= CONVENTION_GROUP_CAP) continue;
+    const group: ConventionsGroup = { heading: section.heading, key: section.key, count: 0, rules: [] };
+    const state: { label: string | null } = { label: null };
+    const add = (text: string): void => {
+      group.count += 1;
+      if (group.rules.length < CONVENTION_RULE_CAP) group.rules.push(clipRule(text));
+    };
+    eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+      const bold = boldLabel(line);
+      if (bold !== null) {
+        state.label = bold;
+        return;
+      }
+      const trimmed = line.trim();
+      if (trimmed.length === 0 || trimmed.startsWith('---') || trimmed.charCodeAt(0) === 124 || isNumbered(line)) return;
+      const bullet = topBullet(line);
+      if (bullet !== null) {
+        add(bullet);
+        return;
+      }
+      const nested = nestedBullet(line);
+      if (nested !== null) {
+        const last = group.rules.length - 1;
+        if (last >= 0 && group.count <= CONVENTION_RULE_CAP) group.rules[last] = clipRule(`${group.rules[last]} ${nested}`);
+        return;
+      }
+      const labelled = labelledLine(line);
+      if (labelled !== null) {
+        state.label = labelled.label;
+        if (labelled.text.length > 0) add(`${labelled.label}: ${labelled.text}`);
+        return;
+      }
+      if (trimmed.charCodeAt(0) === 42 && trimmed.endsWith('*')) return;
+      if (state.label !== null && line.charCodeAt(0) !== 32) add(trimmed);
+    });
+    groups.push(group);
+  }
+  return { groups };
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// The Testing lift (10-14)
+// ---------------------------------------------------------------------------------------------------------
+
+/** One plate of the runner strip: a Test Framework label (Runner, E2E runner, Assertion Library), its name and
+ * version, and the config file its `Config:` bullet names. */
+export interface TestingPlate {
+  label: string;
+  name: string;
+  version: string | null;
+  config: string | null;
+}
+
+export interface TestingCommand {
+  /** The command as shown and copied: control characters removed, at most 400 characters. */
+  command: string;
+  /** The comment beside the command, or the `#` line above it. */
+  caption: string | null;
+}
+
+/** A Test Types label: its name ("Unit tests" gives "Unit") and the folders its parenthesis names. */
+export interface TestingType {
+  name: string;
+  paths: string[];
+}
+
+export interface TestingLift {
+  /** The first plate's name: the framework the document is about, or null. */
+  framework: string | null;
+  /** The plate labelled Runner (not the end-to-end one), or null. */
+  runner: string | null;
+  plates: TestingPlate[];
+  /** The Coverage requirement's first sentence, or null. */
+  coverage: string | null;
+  commands: TestingCommand[];
+  /** The Test File Organization structure fence, or null. */
+  tree: FigureFence | null;
+  types: TestingType[];
+}
+
+export const TESTING_PLATE_CAP = 8;
+export const TESTING_COMMAND_CAP = 30;
+export const TESTING_COMMAND_CHARS = 400;
+export const TESTING_TYPE_CAP = 12;
+
+interface FenceAt {
+  /** The bold label above the fence, or null. */
+  label: string | null;
+  info: string;
+  body: string[];
+}
+
+/** Every fenced block in [from, to) with the bold label that last preceded it. An unclosed fence runs to the end. */
+function fencesIn(lines: readonly string[], from: number, to: number): FenceAt[] {
+  const found: FenceAt[] = [];
+  let open: ReturnType<typeof fenceMarker> = null;
+  let current: FenceAt | null = null;
+  let label: string | null = null;
+  for (let i = from; i < to; i += 1) {
+    const line = lines[i];
+    const marker = fenceMarker(line);
+    if (open !== null && current !== null) {
+      if (marker !== null && marker.bare && marker.char === open.char && marker.length >= open.length) {
+        found.push(current);
+        open = null;
+        current = null;
+      } else if (current.body.length < FIGURE_LINES_CAP) {
+        current.body.push(line);
+      }
+      continue;
+    }
+    if (marker !== null) {
+      open = marker;
+      current = { label, info: infoOf(line), body: [] };
+      continue;
+    }
+    const bold = boldLabel(line);
+    if (bold !== null) label = bold;
+  }
+  if (current !== null) found.push(current);
+  return found;
+}
+
+/** The index where a shell comment starts in `line`: a `#` at the start or after whitespace, outside quotes. */
+function commentAt(line: string): number {
+  let quote = '';
+  for (let i = 0; i < line.length; i += 1) {
+    const ch = line[i];
+    if (quote !== '') {
+      if (ch === quote) quote = '';
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') quote = ch;
+    else if (ch === '#' && (i === 0 || line[i - 1] === ' ' || line[i - 1] === '\t')) return i;
+  }
+  return -1;
+}
+
+const SHELL_INFOS: ReadonlySet<string> = new Set(['', 'bash', 'sh', 'shell', 'zsh', 'console', 'text']);
+
+/** The commands in a shell fence: every non-comment line, its trailing comment or the `#` line above it as the
+ * caption, each command passed through `stripControlCharacters`. A repeated command is kept once. */
+function commandsOf(body: readonly string[], into: TestingCommand[]): void {
+  let pending: string | null = null;
+  for (const raw of body) {
+    const line = raw.trim();
+    if (line.length === 0) continue;
+    if (line.charCodeAt(0) === 35) {
+      pending = stripControlCharacters(line.replace('#', '').trim()).slice(0, 200) || null;
+      continue;
+    }
+    const at = commentAt(line);
+    let command = (at < 0 ? line : line.slice(0, at)).trim();
+    if (command.startsWith('$ ')) command = command.slice(2).trim();
+    const beside = at < 0 ? null : stripControlCharacters(line.slice(at + 1).trim()).slice(0, 200) || null;
+    const caption = beside ?? pending;
+    pending = null;
+    command = stripControlCharacters(command).slice(0, TESTING_COMMAND_CHARS);
+    if (command.length === 0 || into.length >= TESTING_COMMAND_CAP) continue;
+    if (!into.some((entry) => entry.command === command)) into.push({ command, caption });
+  }
+}
+
+function firstSentence(text: string): string {
+  const clean = text.replaceAll('`', '').replaceAll('*', '').trim();
+  const stop = clean.indexOf('. ');
+  const sentence = stop >= 0 ? clean.slice(0, stop) : clean.endsWith('.') ? clean.slice(0, -1) : clean;
+  return sentence.slice(0, 120);
+}
+
+/** The name and version of a "Vitest 4.1.11 (`package.json` devDependencies)" bullet. */
+function plateOf(label: string, bullet: string): TestingPlate | null {
+  const dash = firstSpacedDash(bullet);
+  const dep = dependencyOf(dash < 0 ? bullet : bullet.slice(0, dash), null);
+  return dep === null ? null : { label: label.replaceAll('`', '').slice(0, 60), name: dep.name, version: dep.version, config: null };
+}
+
+function typeNameOf(label: string): string {
+  const open = label.indexOf(' (');
+  let name = (open > 0 ? label.slice(0, open) : label).replaceAll('`', '').trim();
+  for (const suffix of [' tests', ' Tests', ' test', ' Test']) {
+    if (name.endsWith(suffix)) {
+      name = name.slice(0, name.length - suffix.length);
+      break;
+    }
+  }
+  return name.slice(0, 40);
+}
+
+/**
+ * The Testing document as the runner plates (the Test Framework labels that name a runner or an assertion library),
+ * the run commands (the shell fences under a Run Commands label and in Coverage), the Coverage requirement, the
+ * Test File Organization tree and the Test Types with the folders they name.
+ */
+export function liftTesting(sections: readonly KeyedSection[], lines: readonly string[]): TestingLift {
+  const lift: TestingLift = { framework: null, runner: null, plates: [], coverage: null, commands: [], tree: null, types: [] };
+  for (const section of sections) {
+    if (section.level !== 2) continue;
+    if (section.key === 'test-framework') {
+      const state: { label: string | null; plate: TestingPlate | null } = { label: null, plate: null };
+      eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+        const bold = boldLabel(line);
+        if (bold !== null) {
+          state.label = bold;
+          state.plate = null;
+          return;
+        }
+        const bullet = topBullet(line);
+        if (bullet === null || state.label === null) return;
+        const norm = normaliseHeading(state.label);
+        if (norm.includes('command')) return;
+        if (!norm.includes('runner') && !norm.includes('assertion') && !norm.includes('framework')) return;
+        if (state.plate === null) {
+          const made = plateOf(state.label, bullet);
+          if (made !== null && lift.plates.length < TESTING_PLATE_CAP) {
+            lift.plates.push(made);
+            state.plate = made;
+          }
+        } else if (state.plate.config === null && bullet.toLowerCase().startsWith('config:')) {
+          const span = tickSpans(bullet)[0];
+          state.plate.config = span === undefined ? null : span.slice(0, 80);
+        }
+      });
+    } else if (section.key === 'test-file-organization') {
+      for (const fence of fencesIn(lines, section.startLine + 1, section.endLine)) {
+        const text = fence.body.join('\n');
+        if (lift.tree === null && (text.includes('├') || text.includes('└')) && PLAIN_INFOS.has(fence.info) && text.length <= FIGURE_TEXT_CAP) {
+          lift.tree = { info: fence.info, text };
+        }
+      }
+    } else if (section.key === 'test-types') {
+      eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+        const bold = boldLabel(line);
+        if (bold === null || lift.types.length >= TESTING_TYPE_CAP) return;
+        lift.types.push({ name: typeNameOf(bold), paths: tickSpans(bold).filter((span) => span.includes('/')).slice(0, 8) });
+      });
+    }
+    if (section.key === 'coverage') {
+      eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+        const labelled = labelledLine(line);
+        if (labelled !== null && lift.coverage === null && normaliseHeading(labelled.label).startsWith('requirement')) {
+          lift.coverage = firstSentence(labelled.text) || null;
+        }
+      });
+    }
+    if (section.key === 'test-framework' || section.key === 'coverage') {
+      for (const fence of fencesIn(lines, section.startLine + 1, section.endLine)) {
+        const asksForCommands = section.key === 'coverage' || normaliseHeading(fence.label ?? '').includes('command');
+        if (asksForCommands && SHELL_INFOS.has(fence.info)) commandsOf(fence.body, lift.commands);
+      }
+    }
+  }
+  lift.framework = lift.plates[0]?.name ?? null;
+  const runner = lift.plates.find((plate) => normaliseHeading(plate.label).includes('runner') && !normaliseHeading(plate.label).includes('e2e'));
+  lift.runner = runner?.name ?? null;
+  return lift;
+}
+
 export function extractCodebase(doc: string, frontmatter: Record<string, unknown>, body: string): CodebaseBody {
   const lines = splitBodyLines(body);
   const keyed = keySections(doc, scanFencedLines(lines));
@@ -1014,6 +1780,18 @@ export function extractCodebase(doc: string, frontmatter: Record<string, unknown
     const structure = liftStructure(keyed, lines);
     result.structure = structure;
     if (structure.tree !== null && structure.directories > 0) result.keyNumber = structure.directories;
+  } else if (doc === 'conventions') {
+    const conventions = liftConventions(keyed, lines);
+    result.conventions = conventions;
+    result.keyNumber = conventions.groups.length;
+  } else if (doc === 'testing') {
+    const testing = liftTesting(keyed, lines);
+    result.testing = testing;
+    if (testing.framework !== null) result.keyLabel = testing.framework;
+  } else if (doc === 'integrations') {
+    const integrations = liftIntegrations(keyed, lines);
+    result.integrations = integrations;
+    result.keyNumber = integrations.services;
   } else if (doc === 'concerns') {
     const concerns = countConcerns(keyed, lines);
     result.concerns = concerns;

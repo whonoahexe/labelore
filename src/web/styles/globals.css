@@ -29338,6 +29338,270 @@ button.view-codebase-mark:hover {
     display: flex;
   }
 }
+
+/* The Stack panel (10-14, sketch 045 winner C, "Reuse"): the chip groups of 10-08 and Key Dependencies in the same chip set,
+   inside the picture frame. Chips are untoned (the page's content is never a status); a package the document says is not
+   present is a dashed, hatched ghost; "+N notes" is a dashed quiet chip. */
+.view-codebase-stack-body {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.view-codebase-stack-body > .view-codebase-group {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.view-codebase-stack-body > .view-codebase-group:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.view-codebase-stack-body .view-codebase-group-head {
+  padding-top: 0;
+  border-top: 0;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: var(--fs-4);
+  letter-spacing: var(--ls-normal);
+  text-transform: none;
+}
+
+.view-codebase-group-sets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-3) var(--space-5);
+  min-width: 0;
+}
+
+.view-codebase-chip[data-ghost='true'] {
+  border-style: dashed;
+  background: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px 6px);
+  color: var(--muted-foreground);
+}
+
+.view-codebase-chip[data-note='true'] {
+  border-style: dashed;
+  background: none;
+  color: var(--muted-foreground);
+}
+
+/* The Integrations panel (10-14, sketch 045 winner C, "Reuse"): the shipped lane diagram inside the picture frame, the
+   groups that say None as quiet chips under it, then the variable names as tags. A value the document writes beside a name
+   is never in the page: the tag carries the quiet dashed "Value not shown" mark instead. The shipped diagram sets its own
+   small sizes; inside this page they take Label, as the figure frames' do. */
+.view-codebase-integrations-body {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.view-codebase-lanes {
+  min-width: 0;
+}
+
+.view-codebase-lanes .lane-diagram * {
+  font-size: var(--fs-2);
+}
+
+.view-codebase-strip {
+  display: grid;
+  gap: var(--space-1-5);
+  min-width: 0;
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--border);
+}
+
+.view-codebase-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-codebase-vtag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  padding: 0 var(--space-1-5);
+  border: 1px solid var(--border);
+  background: var(--background);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-codebase-vtag code {
+  background: none;
+  font-size: var(--fs-2);
+}
+
+.view-codebase-vtag[data-kind='optional'],
+.view-codebase-vtag[data-kind='named'] {
+  border-style: dashed;
+}
+
+.view-codebase-vns {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-1-5);
+  border: 1px dashed var(--muted-foreground);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.view-codebase-env {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.view-codebase-env > div {
+  display: grid;
+  gap: var(--space-0-5);
+}
+
+.view-codebase-env dt {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
+}
+
+.view-codebase-env dd {
+  display: grid;
+  gap: var(--space-0-5);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-codebase-env p {
+  margin: 0;
+}
+
+.view-codebase-xrefs {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-codebase-xrefs li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+}
+
+.view-codebase-chip .view-codebase-xref {
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+
+/* The Conventions panel (10-14, sketch 046 winner B, "Reuse") draws the Concerns piles with its own opacity rule (a rule's
+   strength) and ring rule (a rule a test or the linter checks); it adds no pile CSS. The rule in the dock reads in Body. */
+.view-codebase-rule-text {
+  max-width: 78ch;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The Testing panel (10-14, sketch 046 winner B): the runner plates, the shipped clean tree with test-type chips, then the
+   run commands on the shared copy-command row. The plates are bordered boxes with a heavy top rule; coverage is hatched. */
+.view-codebase-testing {
+  gap: var(--space-5);
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-codebase-plates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.view-codebase-plate {
+  display: grid;
+  gap: var(--space-0-5);
+  min-width: 0;
+  padding: var(--space-1-5) var(--space-2-5);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--foreground);
+}
+
+.view-codebase-plate[data-kind='coverage'] {
+  border-style: dashed;
+  border-top-width: 1px;
+  background: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px 6px);
+}
+
+.view-codebase-plate b {
+  font-weight: var(--fw-semibold);
+}
+
+.view-codebase-plate code {
+  margin-left: var(--space-1-5);
+  background: none;
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+}
+
+.view-codebase-plate > code {
+  margin-left: 0;
+}
+
+.view-codebase-testing .clean-tree-note .status-chip {
+  margin-right: var(--space-1);
+}
+
+.view-codebase-cmds {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  list-style: none;
+}
+
+.view-codebase-cmd {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.view-codebase-cap {
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+/* The Testing panel's commands size to their text, as the sketch draws them (the head's command fills its row). */
+.view-codebase-cmds .copy-command-text {
+  flex: 0 1 auto;
+}
+
+/* The Conventions panel keeps its section chips at every width (sketch 046 B); the Concerns panel shows them at 390px only. */
+.view-codebase-conventions-panel .view-codebase-legend {
+  display: flex;
+}
+/* A chip set in a row of sets keeps its chips at their own height: the grid stretches the set, never the chips. */
+.view-codebase-group-sets .view-codebase-chip-set {
+  align-content: start;
+}
+
+.view-codebase-group-sets .view-codebase-chips {
+  align-content: flex-start;
+}
+
 /* phase-10-codebase:end */
 
 /* copy-command (10-10, shared): a command as selectable mono text that wraps, outside its Copy command button. The

@@ -3,6 +3,9 @@
 // builds a ViewInput over the committed Tidemark (complete) and Shapes (three of seven) maps through the real
 // repository, with the section groups cut from the file's own `##` headings the way the page's splitter would.
 import { readFile } from 'node:fs/promises';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -14,7 +17,10 @@ import {
   NOT_MAPPED,
   composeCodebase,
   linkMapMentions,
+  ruleChecked,
+  ruleStrength,
 } from '../../src/web/views/codebase-page.ts';
+import { CodebaseView } from '../../src/web/views/codebase-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { loadProject } from '../helpers/fixture-project.ts';
 import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
@@ -152,7 +158,9 @@ describe('composeCodebase - the panel list', () => {
     const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'STACK'));
     expect(model?.panels.find((panel) => panel.key === 'stack')?.keyText).toBe('9');
     expect(model?.panels.find((panel) => panel.key === 'concerns')?.keyText).toBe('14');
-    expect(model?.panels.find((panel) => panel.key === 'testing')?.keyText).toBeNull();
+    expect(model?.panels.find((panel) => panel.key === 'testing')?.keyText).toBe('Vitest');
+    expect(model?.panels.find((panel) => panel.key === 'conventions')?.keyText).toBe('8');
+    expect(model?.panels.find((panel) => panel.key === 'integrations')?.keyText).toBe('5');
   });
 
   it("names the active panel's key number with a singular or plural noun", async () => {
@@ -175,16 +183,76 @@ describe('composeCodebase - the panel list', () => {
 });
 
 describe('composeCodebase - the lifted part', () => {
-  it('lifts the Stack chips in the sketch groups: Languages, Runtime, Frameworks', async () => {
+  it('lifts the Stack chips in the sketch groups: Languages, Runtime, Frameworks, then Key Dependencies', async () => {
     const lifted = composeCodebase(await inputFor(TIDEMARK_ROOT, 'STACK'))?.active.lifted;
     expect(lifted?.kind).toBe('stack');
     if (lifted?.kind !== 'stack') return;
-    expect(lifted.groups.map((group) => group.label)).toEqual(['Languages', 'Runtime', 'Frameworks']);
+    expect(lifted.groups.map((group) => group.label)).toEqual(['Languages', 'Runtime', 'Frameworks', 'Key Dependencies']);
     const languages = lifted.groups[0];
     expect(languages.sets.map((set) => set.label)).toEqual(['Primary', 'Secondary']);
     expect(languages.sets[0].chips).toEqual([{ name: 'TypeScript', version: '5.6' }]);
     expect(languages.sets[1].chips.map((chip) => chip.name)).toEqual(['SQL', 'Shell']);
     expect(lifted.groups[2].sets.map((set) => set.label)).toEqual(['Core', 'Testing', 'Build and dev']);
+  });
+
+  it('lifts the Key Dependencies as chip sets in the same chip set, Critical and Infrastructure, with the purpose as the title (10-14)', async () => {
+    const lifted = composeCodebase(await inputFor(TIDEMARK_ROOT, 'STACK'))?.active.lifted;
+    if (lifted?.kind !== 'stack') throw new Error('expected the stack panel');
+    expect(lifted.groups.map((group) => group.label)).toEqual(['Languages', 'Runtime', 'Frameworks', 'Key Dependencies']);
+    const dependencies = lifted.groups[3];
+    expect(dependencies.sets.map((set) => set.label)).toEqual(['Critical', 'Infrastructure']);
+    expect(dependencies.sets[0].chips[0]).toEqual({
+      name: 'better-sqlite3',
+      version: '11',
+      purpose: 'the berth and booking store, opened once per process',
+      xref: ['Databases'],
+    });
+    expect(lifted.toolCount).toBe(9);
+    expect(lifted.dependencyCount).toBe(4);
+  });
+
+  it('draws the Not present names as dashed ghost chips after the dependency sets, and counts none of them as dependencies', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'STACK');
+    const codebase = input.structured.codebase as { stack: Record<string, unknown> };
+    const lifted = composeCodebase({
+      ...input,
+      structured: { ...input.structured, codebase: { ...codebase, stack: { ...codebase.stack, notPresent: ['ORM', 'queue'] } } },
+    })?.active.lifted;
+    if (lifted?.kind !== 'stack') throw new Error('expected the stack panel');
+    const sets = lifted.groups[3].sets;
+    expect(sets[sets.length - 1]).toEqual({ label: 'Not present', chips: [{ name: 'ORM', version: null }, { name: 'queue', version: null }], ghost: true });
+    expect(lifted.dependencyCount).toBe(4);
+  });
+
+  it('lists all 30 dependencies of a stack that has 30', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'STACK');
+    const codebase = input.structured.codebase as { stack: Record<string, unknown> };
+    const deps = Array.from({ length: 30 }, (_, i) => ({ name: `pkg-${i}`, version: `${i}.0`, purpose: null }));
+    const lifted = composeCodebase({
+      ...input,
+      structured: { ...input.structured, codebase: { ...codebase, stack: { ...codebase.stack, keyDependencies: [{ label: 'Critical', deps }] } } },
+    })?.active.lifted;
+    if (lifted?.kind !== 'stack') throw new Error('expected the stack panel');
+    expect(lifted.groups[3].sets[0].chips).toHaveLength(30);
+    expect(lifted.dependencyCount).toBe(30);
+  });
+
+  it('keeps a long lifted sentence out of the chips, counted as a note, and recovers a name and version from "Node.js >=22 (...)"', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'STACK');
+    const codebase = input.structured.codebase as { stack: Record<string, unknown> };
+    const stack = {
+      ...codebase.stack,
+      languages: [
+        { name: 'TypeScript', version: '5.9.3', group: 'primary' },
+        { name: 'Module system: ESM only (type is module in package.json) with nodenext resolution', version: null, group: 'primary' },
+      ],
+      runtime: [{ name: 'Node.js >=22.18.0 (engines in package.json)', version: null, group: 'runtime' }],
+    };
+    const lifted = composeCodebase({ ...input, structured: { ...input.structured, codebase: { ...codebase, stack } } })?.active.lifted;
+    if (lifted?.kind !== 'stack') throw new Error('expected the stack panel');
+    expect(lifted.groups[0].sets[0].chips).toEqual([{ name: 'TypeScript', version: '5.9.3' }]);
+    expect(lifted.groups[0].sets[0].notes).toBe(1);
+    expect(lifted.groups[1].sets[0].chips).toEqual([{ name: 'Node.js', version: '>=22.18.0' }]);
   });
 
   it('lifts the Concerns counts: the total, Security first, a zero as a dashed quiet row', async () => {
@@ -224,8 +292,297 @@ describe('composeCodebase - the lifted part', () => {
     });
   });
 
-  it('lifts nothing for a panel with no designed form yet', async () => {
-    expect(composeCodebase(await inputFor(TIDEMARK_ROOT, 'CONVENTIONS'))?.active.lifted).toBeNull();
+  it('lifts nothing when the document carries no lift for its panel, and keeps every section plain', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'CONVENTIONS');
+    const bare = composeCodebase({ ...input, structured: { ...input.structured, codebase: { doc: 'conventions', sections: [] } } });
+    expect(bare?.active.lifted).toBeNull();
+    expect(bare?.active.plain.length).toBeGreaterThan(0);
+  });
+});
+
+const PLANTED = 'PLACEHOLDER-NOT-A-REAL-KEY';
+
+function renderPage(model: NonNullable<ReturnType<typeof composeCodebase>>): string {
+  return renderToStaticMarkup(
+    createElement(MemoryRouter, null, createElement(CodebaseView, { model, renderHtml: (html: string) => createElement('div', null, html) })),
+  );
+}
+
+describe('composeCodebase - the Integrations panel (10-14, sketch 045 C)', () => {
+  it('builds a graph of the app wired to one node per group in use, each in the lane its section names', async () => {
+    const lifted = composeCodebase(await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS'))?.active.lifted;
+    if (lifted?.kind !== 'integrations') throw new Error('expected the integrations panel');
+    expect(lifted.inUse).toBe(5);
+    const graph = lifted.graph!;
+    expect(graph.nodes.map((n) => [n.label.main, n.kind])).toEqual([
+      ['This app', 'service'],
+      ['Tide data', 'external'],
+      ['Messaging', 'external'],
+      ['Databases', 'data'],
+      ['File Storage', 'data'],
+      ['Outgoing', 'channel'],
+    ]);
+    expect(graph.edges.map((e) => [e.from, e.to, e.label])).toEqual([
+      [0, 1, 'fetch'],
+      [0, 2, 'nodemailer'],
+      [0, 3, ''],
+      [0, 4, ''],
+      [0, 5, ''],
+    ]);
+    expect(graph.thin).toBe(false);
+  });
+
+  it('keeps the groups that say None as quiet chips, and each known section the document lacks as "not in this document"', async () => {
+    const lifted = composeCodebase(await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS'))?.active.lifted;
+    if (lifted?.kind !== 'integrations') throw new Error('expected the integrations panel');
+    expect(lifted.quiet.map((q) => q.label)).toEqual([
+      'Data storage · Caching',
+      'Webhooks · Incoming',
+      'Authentication · not in this document',
+      'Monitoring · not in this document',
+      'CI/CD · not in this document',
+    ]);
+    expect(lifted.quiet[0].title).toBe('None');
+  });
+
+  it('lists the variable names with the value flag, and draws the Environment Configuration section itself', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS'));
+    const lifted = model?.active.lifted;
+    if (lifted?.kind !== 'integrations') throw new Error('expected the integrations panel');
+    expect(lifted.variables.map((v) => [v.name, v.hadValue])).toEqual([
+      ['TIDEMARK_TIDE_FEED_KEY', true],
+      ['TIDEMARK_MAIL_TOKEN', false],
+      ['TIDEMARK_DB_PATH', false],
+    ]);
+    expect(lifted.environment?.groups).toEqual([
+      { label: 'Secrets location', lines: ['A `.env` file on the harbour office machine, outside the repository'] },
+    ]);
+    expect(model?.active.plainSections).not.toContain('Environment Configuration');
+    expect(model?.active.plainSections).toContain('Webhooks & Callbacks');
+  });
+
+  it('renders "Value not shown" beside the name and the planted value nowhere: not in the text, a title or an attribute', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS');
+    const model = composeCodebase(input)!;
+    const html = renderPage(model);
+    expect(html).toContain('TIDEMARK_TIDE_FEED_KEY');
+    expect(html).toContain('Value not shown');
+    expect(html).not.toContain(PLANTED);
+    expect(JSON.stringify(model)).not.toContain(PLANTED);
+    expect(JSON.stringify(input.structured.codebase)).not.toContain(PLANTED);
+  });
+
+  it('renders the lifted rows alone free of the value too, when the plain sections are left out', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS'))!;
+    const html = renderPage({ ...model, active: { ...model.active, plain: [], plainSections: [] } });
+    expect(html).toContain('Value not shown');
+    expect(html).not.toContain(PLANTED);
+    expect(html).not.toMatch(/(title|aria-label|data-[a-z-]+)="[^"]*PLACEHOLDER/);
+  });
+
+  it('shows the Environment section plain, as written, when it holds a fence the panel cannot draw', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS');
+    const codebase = input.structured.codebase as { integrations: { environment: Record<string, unknown> } };
+    const model = composeCodebase({
+      ...input,
+      structured: {
+        ...input.structured,
+        codebase: { ...codebase, integrations: { ...codebase.integrations, environment: { ...codebase.integrations.environment, whole: false } } },
+      },
+    });
+    expect(model?.active.plainSections).toContain('Environment Configuration');
+    expect(model?.active.lifted?.kind === 'integrations' ? model.active.lifted.environment : 'x').toBeNull();
+  });
+
+  it('gives no graph, and no lifted panel, for a document with nothing in it', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS');
+    const emptied = composeCodebase({
+      ...input,
+      structured: { ...input.structured, codebase: { doc: 'integrations', integrations: { groups: [], variables: [], environment: null, missing: [], services: 0 } } },
+    });
+    expect(emptied?.active.lifted).toBeNull();
+  });
+
+  it('keeps the Stack and Integrations cross-read to names both documents hold: better-sqlite3', async () => {
+    const stack = composeCodebase(await inputFor(TIDEMARK_ROOT, 'STACK'))?.active.lifted;
+    if (stack?.kind !== 'stack') throw new Error('expected the stack panel');
+    const crossed = stack.groups.flatMap((g) => g.sets.flatMap((s) => s.chips.filter((c) => c.xref !== undefined)));
+    expect(crossed.map((c) => [c.name, c.xref])).toEqual([['better-sqlite3', ['Databases']]]);
+    expect(stack.integrationsUrl).toMatch(/integrations/i);
+    const integrations = composeCodebase(await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS'))?.active.lifted;
+    if (integrations?.kind !== 'integrations') throw new Error('expected the integrations panel');
+    expect(integrations.alsoInStack).toEqual([{ group: 'Databases', names: ['better-sqlite3'] }]);
+    expect(integrations.stackUrl).toMatch(/stack/i);
+  });
+
+  it('adds no cross-read link when the other document is not mapped', async () => {
+    const stack = composeCodebase(await inputFor(SHAPES_ROOT, 'STACK'))?.active.lifted;
+    if (stack?.kind !== 'stack') return;
+    expect(stack.integrationsUrl).toBeNull();
+    expect(stack.groups.every((g) => g.sets.every((s) => s.chips.every((c) => c.xref === undefined)))).toBe(true);
+  });
+
+  it('draws a lane diagram, the quiet chips and the name tags in the markup, linking only through the in-app Link', async () => {
+    const html = renderPage(composeCodebase(await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS'))!);
+    expect(html).toContain('lane-diagram');
+    expect(html).toContain('Not used');
+    expect(html).toContain('Also in Stack');
+    expect(html).not.toContain('Environment Configuration</h3>');
+  });
+});
+
+describe('composeCodebase - the Conventions panel (10-14, sketch 046 B)', () => {
+  it('gives Tidemark eight groups with short labels, and counts the rules, the hard ones and the checked ones', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'CONVENTIONS'));
+    const lifted = model?.active.lifted;
+    if (lifted?.kind !== 'conventions') throw new Error('expected the conventions panel');
+    expect(lifted.groups.map((g) => g.label)).toEqual(['Naming', 'Code style', 'Imports', 'Errors', 'Logging', 'Comments', 'Functions', 'Modules']);
+    expect(lifted.total).toBe(22);
+    expect(lifted.hard).toBe(6);
+    expect(lifted.checked).toBe(1);
+    expect(model?.active.keyPhrase).toBe('8 rule groups');
+  });
+
+  it('keeps every section as a plain section below, so the picture drops nothing', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'CONVENTIONS'));
+    expect(model?.active.plainSections).toContain('Naming Patterns');
+    expect(model?.active.plainSections).toContain('Module Design');
+  });
+
+  it('draws the shared piles: a column per group, a segment per rule, the strength as the opacity step and the ring on a checked rule', async () => {
+    const html = renderPage(composeCodebase(await inputFor(TIDEMARK_ROOT, 'CONVENTIONS'))!);
+    expect(html.split('class="view-codebase-pile-col"').length - 1).toBe(8);
+    // 22 rules, and the four marks of the picture's key
+    expect(html.split('class="view-codebase-mark"').length - 1).toBe(26);
+    expect(html).toContain('data-pri="high"');
+    expect(html).toContain('data-pri="low"');
+    expect(html).toContain('data-top="true"');
+    expect(html).toContain('Select a rule to read it in full.');
+  });
+
+  it('keeps Concerns drawn by the same piles: one column per section and a ring on the most dangerous concern', async () => {
+    const html = renderPage(composeCodebase(await inputFor(TIDEMARK_ROOT, 'CONCERNS'))!);
+    expect(html.split('class="view-codebase-pile-col"').length - 1).toBe(9);
+    expect(html.split('data-top="true"').length - 1).toBe(2);
+  });
+});
+
+describe('rule strength and the checked ring (10-14)', () => {
+  it.each([
+    ['Never swallow an error in the store', 'hard'],
+    ['Routes must throw a `HarbourError`', 'hard'],
+    ['Named exports only', 'hard'],
+    ['Do not log an email address', 'hard'],
+    ['No `I` prefix on interfaces', 'hard'],
+    ['`export default` is refused by the linter', 'plain'],
+    ['Usually one info line per request', 'observed'],
+    ['Observed habit: tests sit beside the module', 'observed'],
+    ['Prefer small files', 'observed'],
+    ['Never prefer a default export', 'hard'],
+    ['A rule with no strong word', 'plain'],
+    ['The word onlyish does not count', 'plain'],
+    ['A neverland of names', 'plain'],
+  ])('reads "%s" as %s', (text, strength) => {
+    expect(ruleStrength(text)).toBe(strength);
+  });
+
+  it.each([
+    ['Pinned by `test/web/class-vocabulary.test.ts`', true],
+    ['ESLint 9 with the recommended TypeScript rules', true],
+    ['The linter flags unused exports', true],
+    ['Prettier enforces two spaces', true],
+    ['The compiler rejects value imports of types', true],
+    ['A test directory is named `test/`', false],
+    ['Named exports', false],
+    ['Pinned by `src/web/x.test.ts`', false],
+    ['Delinted prose', false],
+  ])('reads "%s" as checked %s', (text, checked) => {
+    expect(ruleChecked(text)).toBe(checked);
+  });
+});
+
+describe('composeCodebase - the Testing panel (10-14, sketch 046 B)', () => {
+  it('leads with the framework as the key and the plates, then the tree, then three run commands with the comment lines dropped', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'TESTING'));
+    const lifted = model?.active.lifted;
+    if (lifted?.kind !== 'testing') throw new Error('expected the testing panel');
+    expect(model?.active.keyPhrase).toBe('Vitest');
+    expect(lifted.plates.map((p) => p.name)).toEqual(['Vitest', 'Vitest built-ins']);
+    expect(lifted.commands.map((c) => c.command)).toEqual(['npm test', 'npm run test:watch', 'npm run test:coverage']);
+    expect(lifted.tree?.text).toContain('clash.test.ts');
+  });
+
+  it('badges a folder with the test types that name it, and lists the types with no folder on the tree', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'TESTING');
+    const codebase = input.structured.codebase as { testing: Record<string, unknown> };
+    const testing = {
+      ...codebase.testing,
+      tree: { info: '', text: 'test/\n├── rendering/\n│   └── a.test.ts\n└── server/\n    └── b.test.ts' },
+      types: [
+        { name: 'Unit', paths: ['test/rendering/', 'test/*.test.ts'] },
+        { name: 'HTTP / server', paths: ['test/server/'] },
+        { name: 'Golden', paths: [] },
+        { name: 'Integration', paths: ['test/fixture.test.ts'] },
+      ],
+    };
+    const lifted = composeCodebase({ ...input, structured: { ...input.structured, codebase: { ...codebase, testing } } })?.active.lifted;
+    if (lifted?.kind !== 'testing') throw new Error('expected the testing panel');
+    expect(lifted.badges).toEqual([
+      { path: 'test/rendering/', labels: ['Unit'] },
+      { path: 'test/server/', labels: ['HTTP / server'] },
+    ]);
+    expect(lifted.unplaced).toEqual(['Golden', 'Integration']);
+  });
+
+  it('draws a quiet chip on the badged folders and the unplaced types as a note, in the markup', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'TESTING');
+    const codebase = input.structured.codebase as { testing: Record<string, unknown> };
+    const testing = {
+      ...codebase.testing,
+      tree: { info: '', text: 'test/\n├── rendering/\n│   └── a.test.ts\n└── server/\n    └── b.test.ts' },
+      types: [{ name: 'Unit', paths: ['test/rendering/'] }, { name: 'Golden', paths: [] }],
+    };
+    const html = renderPage(composeCodebase({ ...input, structured: { ...input.structured, codebase: { ...codebase, testing } } })!);
+    expect(html).toMatch(/clean-tree-note[^>]*><span class="status-chip" data-tone="quiet">Unit<\/span>/);
+    expect(html).toContain('Test types with no folder on this tree: Golden.');
+  });
+
+  it('puts each run command on the shared copy row: the copied text is the shown text, one per command', async () => {
+    const html = renderPage(composeCodebase(await inputFor(TIDEMARK_ROOT, 'TESTING'))!);
+    // three run commands, and the map-only head's own next-step command
+    expect(html.split('class="copy-command"').length - 1).toBe(4);
+    expect(html).toContain('aria-label="Copy command: npm run test:watch"');
+    expect(html).toContain('Run every unit and route test once');
+  });
+
+  it('copies a command with a control character without it, even if the lift held one', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'TESTING');
+    const codebase = input.structured.codebase as { testing: Record<string, unknown> };
+    const testing = { ...codebase.testing, commands: [{ command: 'npm\u0007 test‮ --all', caption: null }] };
+    const lifted = composeCodebase({ ...input, structured: { ...input.structured, codebase: { ...codebase, testing } } })?.active.lifted;
+    if (lifted?.kind !== 'testing') throw new Error('expected the testing panel');
+    expect(lifted.commands).toEqual([{ command: 'npm test --all', caption: null }]);
+  });
+
+  it('keeps every section plain below, the Test Framework and the others, so nothing in the document is dropped', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'TESTING'));
+    expect(model?.active.plainSections).toContain('Test Framework');
+    expect(model?.active.plainSections).toContain('Mocking');
+  });
+});
+
+describe('composeCodebase - two codebase inputs composed alternately (10-14)', () => {
+  it('give each the output it gives alone, across Stack, Integrations, Conventions and Testing', async () => {
+    const docs = ['STACK', 'INTEGRATIONS', 'CONVENTIONS', 'TESTING'];
+    const inputs = await Promise.all(docs.map((doc) => inputFor(TIDEMARK_ROOT, doc)));
+    const alone = inputs.map((input) => composeCodebase(input));
+    const mixed = [inputs[3], inputs[0], inputs[2], inputs[1], inputs[0], inputs[3]].map((input) => composeCodebase(input));
+    expect(mixed[0]).toEqual(alone[3]);
+    expect(mixed[1]).toEqual(alone[0]);
+    expect(mixed[2]).toEqual(alone[2]);
+    expect(mixed[3]).toEqual(alone[1]);
+    expect(mixed[4]).toEqual(alone[0]);
+    expect(mixed[5]).toEqual(alone[3]);
   });
 });
 
