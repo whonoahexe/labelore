@@ -89,7 +89,7 @@ describe('extractUserSetup on 04-USER-SETUP (part done, a pasted value)', () => 
     expect(step.title).toBe('Cap the monthly spend');
     expect(step.group).toBe('Dashboard Configuration');
     expect(step.fields.map((f) => f.key)).toEqual(['URL', 'Location', 'Set to', 'Notes']);
-    expect(step.fields[1].value).toBe('Association model host → Settings → Limits → Monthly cap');
+    expect(step.fields[1].text).toBe('Association model host → Settings → Limits → Monthly cap');
     expect(step.notes).toEqual([
       'One note per export is about 300 tokens, so the cap is far above need; it is a safety stop only',
     ]);
@@ -204,7 +204,7 @@ describe('UserSetupHandler masks every stored string', () => {
     const body = extractUserSetup(STEP_BODY);
     expect(body.steps).toHaveLength(1);
     expect(body.steps[0].notes).toEqual([`export LOANNOTE_MODEL_KEY=${VALUE_NOT_SHOWN_MARK} then restart`]);
-    expect(body.steps[0].fields.find((f) => f.key === 'Notes')?.value).toContain('LOANNOTE_MODEL_KEY');
+    expect(body.steps[0].fields.find((f) => f.key === 'Notes')?.text).toContain('LOANNOTE_MODEL_KEY');
     expect(planted(body)).toEqual([]);
   });
 
