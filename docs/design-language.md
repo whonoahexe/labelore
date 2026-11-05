@@ -29,6 +29,10 @@ is always to add the missing name to this document, never to edit the reference 
 | `compact` | Modifier on `.section-heading`: adds a bordered icon well + bottom rule | globals.css:1289 |
 | `status-chip` | The tone-badge base class — pair with a `data-tone=…` attribute; see `## Tones` below | globals.css:910–953, 3458–3491 |
 | `status-square` | A square mark; the tone says finished, waiting, missing or neutral. Never the only carrier of meaning. Pair with `data-tone` (`complete` filled `--primary`, `in-flight` filled `--in-flight-fill`, `missing` a 2px `--missing-fill` outline, `quiet` dashed `--muted-foreground`); the size is the `--status-square-size` custom property (Phase 9) | globals.css — Phase 9 (09-07) block |
+| `status-meter` | The shared segmented meter (Phase 10, 10-18): one `status-square` per item, the done ones in a tone (`complete`) and the rest `quiet`; the whole meter is one `role="img"` whose `aria-label` is its one accessible name (the squares are `aria-hidden`), at most 40 squares (past that one per bucket, the label still exact). Built once in `components/status-meter.tsx`, never a `view-x-meter` per page; `data-size="large"` is the page-level meter | globals.css — status-meter block |
+| `status-meter-cap` | The meter's caption above the squares (Label size, mono; hidden from assistive technology because the label already says it) | globals.css — status-meter block |
+| `status-meter-cells` | The wrapping row of squares inside a `.status-meter` | globals.css — status-meter block |
+| `status-meter-sq` | One square of a `.status-meter`: sets `--status-square-size` (a step up for `data-size="large"`) on the shared `status-square` | globals.css — status-meter block |
 | `empty-note` | Absence copy — quiet inline paragraph | globals.css:1723 |
 | `empty-flow` | Absence copy — icon + message block | globals.css:1369–1392, 1730 |
 | `quiet-state` | Icon + muted message row, `--primary`-tinted icon | globals.css:1369–1392 |

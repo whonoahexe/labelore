@@ -30356,6 +30356,559 @@ button.view-codebase-mark:hover {
 }
 /* phase-10-spec:end */
 
+/* status-meter:start */
+/* The shared status-meter (Phase 10, 10-18): one square per item, filled ones toned, the rest quiet. Drawn by
+   components/status-meter.tsx and nowhere else; a page never styles its own meter. */
+.status-meter {
+  display: grid;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+
+.status-meter-cap {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.status-meter-cap b {
+  color: var(--foreground);
+  font-weight: var(--fw-semibold);
+}
+
+.status-meter-cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.status-meter-sq {
+  --status-square-size: var(--space-3);
+}
+
+.status-meter[data-size='large'] .status-meter-sq {
+  --status-square-size: var(--space-5);
+}
+
+@media (max-width: 42rem) {
+  .status-meter[data-size='large'] .status-meter-cells {
+    gap: var(--space-0-5);
+  }
+
+  .status-meter[data-size='large'] .status-meter-sq {
+    --status-square-size: var(--space-4);
+  }
+}
+/* status-meter:end */
+
+/* phase-10-ai-spec:start */
+/* Phase 10 (10-18): the AI spec page, sketch 048 winner C (Datasheet + eval matrix). The page renders four font sizes:
+   the h1 as ArtifactHeader draws it (--fs-display-3), the section headings, the lead and the datasheet values
+   (--fs-7), Body (--fs-4) and Label (--fs-2). Where a shared class sets a size outside that set, the page takes it
+   inside with a page-scoped rule below, so no shared class is edited. */
+.view-ai-spec-page {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-ai-spec-page > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-ai-spec-page) .status-chip,
+.artifact-page:has(.view-ai-spec-page) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.artifact-page:has(.view-ai-spec-page) .source-note,
+.artifact-page:has(.view-ai-spec-page) .empty-note {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+/* The shared outline reads at the Label step on this page (UI-SPEC Typography); the page itself draws none. */
+.artifact-page:has(.view-ai-spec-page)
+  :is(.document-outline a, .document-outline li[data-overflow='true'], .document-outline > p) {
+  font-size: var(--fs-2);
+}
+
+.view-ai-spec-page code {
+  font-size: inherit;
+}
+
+.view-ai-spec-meta {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-ai-spec-key {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+/* The squares: a written one is neutral (filled, not toned); a slot is the shared dashed quiet square. */
+.view-ai-spec-sq-s {
+  --status-square-size: var(--space-2-5);
+}
+
+.view-ai-spec-sq-l {
+  --status-square-size: calc(var(--space-8) * 1.25);
+}
+
+.view-ai-spec-sq-s:not([data-tone]),
+.view-ai-spec-sq-l:not([data-tone]) {
+  border-color: var(--muted-foreground);
+  background: var(--muted-foreground);
+  opacity: 0.7;
+}
+
+/* The datasheet: four field cells in one hard-ruled sheet; a cell with no value is hatched. */
+.view-ai-spec-sheet {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 2px solid var(--foreground);
+}
+
+.view-ai-spec-cell {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-4);
+  min-width: 0;
+}
+
+.view-ai-spec-cell + .view-ai-spec-cell {
+  border-left: 1px solid var(--border);
+}
+
+.view-ai-spec-cell[data-slot='true'] {
+  background: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+}
+
+.view-ai-spec-val {
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  overflow-wrap: anywhere;
+}
+
+.view-ai-spec-val code {
+  padding: 0;
+  background: none;
+}
+
+.view-ai-spec-slot-chip {
+  max-width: 100%;
+  white-space: normal;
+}
+
+@media (max-width: 42rem) {
+  .view-ai-spec-sheet {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .view-ai-spec-cell:nth-child(3) {
+    border-left: 0;
+  }
+
+  .view-ai-spec-cell:nth-child(n + 3) {
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* The section strip beside the checklist meter. */
+.view-ai-spec-progress-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.view-ai-spec-sections,
+.view-ai-spec-checklist {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-ai-spec-lead {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+}
+
+.view-ai-spec-lead b {
+  font-family: var(--font-mono);
+}
+
+.view-ai-spec-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.view-ai-spec-strip-btn {
+  display: inline-grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 1px solid transparent;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.view-ai-spec-strip-btn:hover {
+  border-color: var(--border);
+}
+
+.view-ai-spec-strip-no {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-ai-spec-legend {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.view-ai-spec-legend > i + i {
+  margin-left: var(--space-3);
+}
+
+@media (max-width: 42rem) {
+  .view-ai-spec-progress-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .view-ai-spec-strip {
+    gap: var(--space-0-5);
+  }
+
+  .view-ai-spec-strip-btn {
+    padding: var(--space-0-5);
+  }
+
+  .view-ai-spec-sq-l {
+    --status-square-size: var(--space-6);
+  }
+}
+
+/* The evaluation dimensions: a grid of Priority rows by Measurement columns, chips placed in it. */
+.view-ai-spec-block {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-ai-spec-block-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  min-width: 0;
+}
+
+.view-ai-spec-h {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+}
+
+.view-ai-spec-matrix {
+  display: table;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  table-layout: fixed;
+  border-collapse: collapse;
+  border: 1px solid var(--border);
+}
+
+.view-ai-spec-matrix th:first-child {
+  width: calc(var(--space-8) * 3);
+}
+
+.view-ai-spec-matrix :is(th, td) {
+  padding: var(--space-3);
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.view-ai-spec-matrix :is(th, td):first-child {
+  border-left: 0;
+}
+
+.view-ai-spec-matrix thead th {
+  border-top: 0;
+  background: var(--card-veil);
+}
+
+.view-ai-spec-mc {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: start;
+  gap: var(--space-1-5);
+  min-height: calc(var(--space-8) * 1.75);
+}
+
+.view-ai-spec-dim {
+  min-width: 0;
+  white-space: normal;
+  text-align: left;
+  cursor: pointer;
+}
+
+.view-ai-spec-dim:hover {
+  background: var(--state-hover);
+}
+
+.view-ai-spec-dim[aria-pressed='true'] {
+  border-color: var(--foreground);
+}
+
+.view-ai-spec-matrix-slot {
+  display: grid;
+  place-items: center;
+  min-height: calc(var(--space-8) * 4);
+  border: 1px dashed var(--muted-foreground);
+  background: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+}
+
+.view-ai-spec-unplaced {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.view-ai-spec-unplaced .view-ai-spec-mc {
+  min-height: 0;
+}
+
+@media (max-width: 42rem) {
+  .view-ai-spec-matrix th:first-child {
+    width: calc(var(--space-8) * 2.25);
+  }
+
+  .view-ai-spec-matrix :is(th, td) {
+    padding: var(--space-2) var(--space-1-5);
+  }
+}
+
+/* A dimension's dock: its rubric, measurement and priority, opened by its chip. */
+.view-ai-spec-dock {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+  min-width: 0;
+}
+
+.view-ai-spec-dock-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+}
+
+.view-ai-spec-dock-title {
+  margin: 0;
+  font-size: inherit;
+  font-weight: var(--fw-semibold);
+}
+
+.view-ai-spec-close,
+.view-ai-spec-source {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: var(--space-0-5);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.view-ai-spec-close {
+  margin-left: auto;
+}
+
+.view-ai-spec-close:hover,
+.view-ai-spec-source:hover {
+  color: var(--foreground);
+}
+
+.view-ai-spec-fields {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.view-ai-spec-fields > div {
+  display: grid;
+  grid-template-columns: calc(var(--space-8) * 3) minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.view-ai-spec-fields dt {
+  padding-top: var(--space-0-5);
+}
+
+.view-ai-spec-fields dd {
+  margin: 0;
+  min-width: 0;
+}
+
+@media (max-width: 42rem) {
+  .view-ai-spec-fields > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+}
+
+/* The sections below, in file order: a written one a closed native bar, a slot a dashed row that does not open. */
+.view-ai-spec-bars {
+  display: grid;
+  border-top: 1px solid var(--border);
+}
+
+.view-ai-spec-bar {
+  border-bottom: 1px solid var(--border);
+}
+
+.view-ai-spec-bar-sum {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-10);
+  padding-inline: var(--space-2);
+  font-weight: var(--fw-semibold);
+  list-style: none;
+  cursor: pointer;
+}
+
+.view-ai-spec-bar-sum::-webkit-details-marker {
+  display: none;
+}
+
+.view-ai-spec-bar-sum:hover {
+  background: var(--state-hover);
+}
+
+.view-ai-spec-bar-chev {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--muted-foreground);
+}
+
+.view-ai-spec-bar[open] .view-ai-spec-bar-chev {
+  transform: rotate(90deg);
+}
+
+.view-ai-spec-bar-name,
+.view-ai-spec-slot-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-ai-spec-bar-count {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-ai-spec-bar-body {
+  padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--space-4) + var(--space-4));
+  min-width: 0;
+}
+
+.view-ai-spec-slot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-10);
+  padding-inline: var(--space-2);
+  border-bottom: 1px dashed var(--border);
+  color: var(--muted-foreground);
+}
+
+.view-ai-spec-slot-name {
+  font-weight: var(--fw-semibold);
+}
+
+.view-ai-spec-slot .view-ai-spec-source {
+  margin-left: auto;
+}
+
+/* The plain sections render the shared document markup, whose own sizes are fluid and larger than this page's
+   scale. They are taken inside the four sizes here (Body for prose, lists, cells and code, Label for table heads,
+   figure text and the heading copy marks), so no shared document class is edited. */
+.view-ai-spec-plain-section .artifact-document {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-ai-spec-plain-section .artifact-document > :first-child {
+  margin-top: 0;
+}
+
+.view-ai-spec-plain-section .artifact-document :is(h3, h4, h5, h6) {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+.view-ai-spec-plain-section .artifact-document :is(h3, h4, h5, h6) .heading-copy {
+  font-size: var(--fs-2);
+}
+
+.view-ai-spec-plain-section .artifact-document table,
+.view-ai-spec-plain-section .artifact-document pre:not([data-figure-island] *) {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-ai-spec-plain-section .artifact-document :not(pre) > code {
+  font-size: var(--fs-4);
+}
+
+.view-ai-spec-plain-section .artifact-document [data-figure-island] * {
+  font-size: var(--fs-2);
+}
+/* phase-10-ai-spec:end */
+
 /* copy-command (10-10, shared): a command as selectable mono text that wraps, outside its Copy command button. The
    confirmation is the button reading "Copied", never a toast. Used by the Codebase head, the Testing panel's run
    commands and, in Phase 11, the onboarding page. */
