@@ -382,11 +382,33 @@ export interface StackChip {
   group: StackChipGroup;
 }
 
+/** One Key Dependencies row (10-14): a package name, its version and the purpose the line gives it. */
+export interface StackDependency {
+  name: string;
+  version: string | null;
+  purpose: string | null;
+}
+
+/** The Key Dependencies under one bold label (Critical, Infrastructure, ...). */
+export interface StackDependencySet {
+  label: string;
+  deps: StackDependency[];
+}
+
 export interface StackLift {
   languages: StackChip[];
   runtime: StackChip[];
   frameworks: StackChip[];
+  /** The Key Dependencies, one set per bold label (10-14). */
+  keyDependencies: StackDependencySet[];
+  /** The names a `**Not present:**` line lists, as the document words them (10-14). */
+  notPresent: string[];
 }
+
+/** The most Key Dependencies kept across all sets, the longest purpose, and the most Not present names. */
+export const STACK_DEPENDENCY_CAP = 80;
+export const STACK_PURPOSE_CAP = 400;
+export const STACK_ABSENT_CAP = 20;
 
 /** The most chips the Stack lift keeps, across all three lists. */
 export const STACK_CHIP_CAP = 60;
@@ -449,17 +471,131 @@ function chipOf(text: string, group: StackChipGroup): StackChip | null {
   return { name: left.slice(0, STACK_CHIP_TEXT_CAP), version: null, group };
 }
 
+/** `text` cut at its top-level commas: a comma inside parentheses or backticks does not split. */
+function splitTopLevel(text: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let tick = false;
+  let current = '';
+  for (const ch of text) {
+    if (ch === '`') tick = !tick;
+    else if (!tick && ch === '(') depth += 1;
+    else if (!tick && ch === ')' && depth > 0) depth -= 1;
+    if (ch === ',' && depth === 0 && !tick) {
+      parts.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  parts.push(current);
+  return parts.map((part) => part.trim()).filter((part) => part.length > 0);
+}
+
+/** One package in a Key Dependencies bullet: the name, then the first digit-led token after the first word
+ * outside any parenthetical as its version (a comparator allowed). A part with no version is a name alone. */
+function dependencyOf(part: string, purpose: string | null): StackDependency | null {
+  const clean = part.replaceAll('`', '').replaceAll('*', '').trim();
+  if (clean.length === 0) return null;
+  const tokens = clean.split(' ').filter((token) => token.length > 0);
+  let depth = 0;
+  for (let i = 0; i < tokens.length; i += 1) {
+    const token = tokens[i];
+    const inside = depth > 0;
+    for (let c = 0; c < token.length; c += 1) {
+      if (token.charCodeAt(c) === 40) depth += 1;
+      else if (token.charCodeAt(c) === 41 && depth > 0) depth -= 1;
+    }
+    if (i === 0 || inside) continue;
+    const version = versionOf(token);
+    if (version !== null) {
+      return {
+        name: tokens.slice(0, i).join(' ').slice(0, STACK_CHIP_TEXT_CAP),
+        version: version.slice(0, STACK_CHIP_TEXT_CAP),
+        purpose,
+      };
+    }
+  }
+  const paren = clean.indexOf(' (');
+  let name = (paren > 0 ? clean.slice(0, paren) : clean).trim();
+  while (name.endsWith(';') || name.endsWith(',') || name.endsWith('.') || name.endsWith(':')) name = name.slice(0, -1);
+  return name.length === 0 ? null : { name: name.slice(0, STACK_CHIP_TEXT_CAP), version: null, purpose };
+}
+
+/** The names of a `**Not present:** No A, B, or C is installed.` line: the leading "No" and the trailing
+ * "is/are installed" dropped, split at commas and "or". */
+function absentNames(text: string): string[] {
+  let body = text.trim();
+  if (body.toLowerCase().startsWith('no ')) body = body.slice(3);
+  for (const tail of [' is installed.', ' are installed.', ' is installed', ' are installed', '.']) {
+    if (body.toLowerCase().endsWith(tail)) {
+      body = body.slice(0, body.length - tail.length);
+      break;
+    }
+  }
+  const names: string[] = [];
+  for (const piece of body.split(',')) {
+    for (const part of piece.split(' or ')) {
+      const name = part.replaceAll('`', '').trim();
+      if (name.length > 0 && name.length <= 80) names.push(name);
+    }
+  }
+  return names.slice(0, STACK_ABSENT_CAP);
+}
+
+/** The Key Dependencies section: each top-level bullet is one or more packages (split at top-level commas on
+ * the left of the first spaced dash, the right being their purpose), grouped under the bold label above them. */
+function liftKeyDependencies(lines: readonly string[], section: KeyedSection, lift: StackLift): void {
+  let set: StackDependencySet = { label: 'Dependencies', deps: [] };
+  let total = lift.keyDependencies.reduce((sum, s) => sum + s.deps.length, 0);
+  const flush = (): void => {
+    if (set.deps.length > 0) lift.keyDependencies.push(set);
+  };
+  eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+    const label = boldLabel(line);
+    if (label !== null) {
+      flush();
+      set = { label: label.replaceAll('`', '').replaceAll('*', '').slice(0, 80), deps: [] };
+      return;
+    }
+    const labelled = labelledLine(line);
+    if (labelled !== null && normaliseHeading(labelled.label).startsWith('not present')) {
+      lift.notPresent = absentNames(labelled.text);
+      return;
+    }
+    const bullet = topBullet(line);
+    if (bullet === null || total >= STACK_DEPENDENCY_CAP) return;
+    const clean = bullet.replaceAll('*', '');
+    const dash = firstSpacedDash(clean);
+    const left = dash < 0 ? clean : clean.slice(0, dash);
+    const purposeText = dash < 0 ? '' : clean.slice(dash + 3).replaceAll('`', '').trim();
+    const purpose = purposeText.length === 0 ? null : purposeText.slice(0, STACK_PURPOSE_CAP);
+    for (const part of splitTopLevel(left)) {
+      if (total >= STACK_DEPENDENCY_CAP) break;
+      const dep = dependencyOf(part, purpose);
+      if (dep === null) continue;
+      set.deps.push(dep);
+      total += 1;
+    }
+  });
+  flush();
+}
+
 /**
  * Languages, runtime and frameworks as chips. The Languages section's `Runtime` group (a combined
  * "Languages & Runtimes" heading) and a Runtime section both feed the runtime list; a `Package Manager`
  * group feeds nothing. Frameworks group by their bold label (core, testing, build and dev).
  */
 export function liftStack(sections: readonly KeyedSection[], lines: readonly string[]): StackLift {
-  const lift: StackLift = { languages: [], runtime: [], frameworks: [] };
+  const lift: StackLift = { languages: [], runtime: [], frameworks: [], keyDependencies: [], notPresent: [] };
   let total = 0;
   for (const section of sections) {
     if (section.level !== 2) continue;
     const key = section.key;
+    if (key === 'key-dependencies') {
+      liftKeyDependencies(lines, section, lift);
+      continue;
+    }
     if (key !== 'languages' && key !== 'runtime' && key !== 'frameworks') continue;
     let group: StackChipGroup = key === 'languages' ? 'primary' : key === 'runtime' ? 'runtime' : 'core';
     let target: StackChip[] | null =

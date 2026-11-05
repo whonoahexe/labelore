@@ -174,7 +174,7 @@ describe('the Stack lift', () => {
 
   it('gives an empty lift for a stack document with none of the three sections', () => {
     const result = lift('stack', '# S\n\n## Something Else\n\n- Go 1.22 - x\n');
-    expect(result.stack).toEqual({ languages: [], runtime: [], frameworks: [] });
+    expect(result.stack).toEqual({ languages: [], runtime: [], frameworks: [], keyDependencies: [], notPresent: [] });
     expect(result.keyNumber).toBe(0);
   });
 
@@ -191,6 +191,85 @@ describe('the Stack lift', () => {
   it('lifts nothing for a document that is not the stack', () => {
     expect(lift('architecture').stack).toBeUndefined();
     expect(lift('concerns').stack).toBeUndefined();
+  });
+});
+
+describe('the Key Dependencies lift (10-14)', () => {
+  it('reads Tidemark Key Dependencies as Critical and Infrastructure sets of name, version and purpose', () => {
+    const lifted = lift('stack').stack!;
+    expect(lifted.keyDependencies).toEqual([
+      {
+        label: 'Critical',
+        deps: [
+          { name: 'better-sqlite3', version: '11', purpose: 'the berth and booking store, opened once per process' },
+          { name: 'zod', version: '3.24', purpose: 'every request body and every tide feed row is parsed with it' },
+        ],
+      },
+      {
+        label: 'Infrastructure',
+        deps: [
+          { name: 'pino', version: '9', purpose: 'structured logs from the server' },
+          { name: 'node-cron', version: '3', purpose: 'the tide window refresh' },
+        ],
+      },
+    ]);
+    expect(lifted.notPresent).toEqual([]);
+  });
+
+  it('splits one bullet that lists several packages at its top-level commas, a comma in parentheses or backticks staying', () => {
+    const deps = stack(
+      [
+        '## Key Dependencies',
+        '',
+        '**Critical (pipeline):**',
+        '- unified 11.0.5 - core',
+        '- remark-parse 11.0.0, remark-gfm 4.0.1, remark-rehype 11.1.2',
+        '- rehype-raw 7.0.0, rehype-sanitize 6.0.0 (runs right after raw, `.use(a, b)`), rehype-slug 6.0.0',
+      ].join('\n'),
+    )!.keyDependencies;
+    expect(deps).toHaveLength(1);
+    expect(deps[0].label).toBe('Critical (pipeline)');
+    expect(deps[0].deps.map((d) => [d.name, d.version])).toEqual([
+      ['unified', '11.0.5'],
+      ['remark-parse', '11.0.0'],
+      ['remark-gfm', '4.0.1'],
+      ['remark-rehype', '11.1.2'],
+      ['rehype-raw', '7.0.0'],
+      ['rehype-sanitize', '6.0.0'],
+      ['rehype-slug', '6.0.0'],
+    ]);
+  });
+
+  it('reads a comparator in a version and a package with no version as a name alone', () => {
+    const deps = stack('## Key Dependencies\n\n**Critical:**\n- `node-thing` >=22.18.0 - x\n- left-pad (a tiny helper) - y\n')!
+      .keyDependencies[0].deps;
+    expect(deps.map((d) => [d.name, d.version])).toEqual([
+      ['node-thing', '>=22.18.0'],
+      ['left-pad', null],
+    ]);
+  });
+
+  it('lists the names a Not present line gives, splitting at commas and "or"', () => {
+    const lifted = stack(
+      '## Key Dependencies\n\n**Critical:**\n- zod 3 - x\n\n**Not present:** No database driver, ORM, auth library, queue, or cloud SDK is installed.\n',
+    )!;
+    expect(lifted.notPresent).toEqual(['database driver', 'ORM', 'auth library', 'queue', 'cloud SDK']);
+    expect(lifted.keyDependencies[0].deps.map((d) => d.name)).toEqual(['zod']);
+  });
+
+  it('puts bullets that follow no label in a set called Dependencies, and ignores bullets in a fence', () => {
+    const sets = stack('## Key Dependencies\n\n- zod 3 - x\n```\n- fenced 1 - ignored\n```\n')!.keyDependencies;
+    expect(sets).toEqual([{ label: 'Dependencies', deps: [{ name: 'zod', version: '3', purpose: 'x' }] }]);
+  });
+
+  it('lists 30 dependencies in full and caps at 80 with every purpose at 400 characters', () => {
+    const thirty = Array.from({ length: 30 }, (_, i) => `- pkg${i} ${i}.0 - note`).join('\n');
+    expect(stack(`## Key Dependencies\n\n**Critical:**\n${thirty}\n`)!.keyDependencies[0].deps).toHaveLength(30);
+    const many = Array.from({ length: 200 }, (_, i) => `- pkg${i} ${i}.0 - note`).join('\n');
+    const capped = stack(`## Key Dependencies\n\n**Critical:**\n${many}\n`)!.keyDependencies;
+    expect(capped.reduce((sum, set) => sum + set.deps.length, 0)).toBe(80);
+    const long = stack(`## Key Dependencies\n\n**Critical:**\n- pkg 1.0 - ${'p'.repeat(900)}\n`)!.keyDependencies[0].deps[0];
+    expect(long.purpose).toHaveLength(400);
   });
 });
 

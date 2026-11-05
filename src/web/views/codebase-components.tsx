@@ -34,6 +34,7 @@ import type {
   ComposedConcernRow,
   ComposedConcerns,
   ComposedConcernSection,
+  ComposedStack,
   ComposedStackGroup,
   ComposedStackSet,
   ComposedStructure,
@@ -130,7 +131,12 @@ function ChipSet({ set }: { set: ComposedStackSet }): React.JSX.Element {
       <p className="view-codebase-micro">{set.label}</p>
       <ul className="view-codebase-chips">
         {set.chips.map((chip, index) => (
-          <li className="view-codebase-chip" key={`${index}-${chip.name}`} title={chip.name}>
+          <li
+            className="view-codebase-chip"
+            key={`${index}-${chip.name}`}
+            data-ghost={set.ghost ? 'true' : undefined}
+            title={chip.purpose ?? chip.name}
+          >
             <span>
               <ResearchInline text={chip.name} />
             </span>
@@ -141,6 +147,15 @@ function ChipSet({ set }: { set: ComposedStackSet }): React.JSX.Element {
             ) : null}
           </li>
         ))}
+        {set.notes !== undefined && set.notes > 0 ? (
+          <li
+            className="view-codebase-chip"
+            data-note="true"
+            title="Sentences, not tools: they stay in the sections below."
+          >
+            +{set.notes} {set.notes === 1 ? 'note' : 'notes'}
+          </li>
+        ) : null}
       </ul>
     </div>
   );
@@ -150,10 +165,43 @@ function ChipGroup({ group }: { group: ComposedStackGroup }): React.JSX.Element 
   return (
     <section className="view-codebase-group">
       <h3 className="view-codebase-group-head">{group.label}</h3>
-      {group.sets.map((set) => (
-        <ChipSet key={set.label} set={set} />
-      ))}
+      <div className="view-codebase-group-sets">
+        {group.sets.map((set) => (
+          <ChipSet key={set.label} set={set} />
+        ))}
+      </div>
     </section>
+  );
+}
+
+/** The Stack panel (10-14, sketch 045 winner C, "Reuse"): the chip groups the page has drawn since 10-08 -
+ * Languages, Runtime, Frameworks - and Key Dependencies in the same chip set, in the picture frame: untoned chips,
+ * the version in mono, a package the document says is not present a dashed ghost. Configuration and Platform
+ * Requirements stay as plain sections below. */
+function StackPanel({ lifted }: { lifted: ComposedStack }): React.JSX.Element {
+  const ghosts = lifted.groups.some((group) => group.sets.some((set) => set.ghost === true));
+  const notes = lifted.groups.some((group) => group.sets.some((set) => (set.notes ?? 0) > 0));
+  return (
+    <div className="view-codebase-lifted view-codebase-stack">
+      <figure className="view-codebase-pic">
+        <div className="view-codebase-pic-bar">
+          <span className="view-codebase-pic-title">Stack chips</span>
+          <span className="view-codebase-pic-count">
+            {lifted.toolCount} languages and frameworks · {lifted.dependencyCount} key dependencies
+          </span>
+        </div>
+        <div className="view-codebase-pic-body view-codebase-stack-body">
+          {lifted.groups.map((group) => (
+            <ChipGroup key={group.label} group={group} />
+          ))}
+        </div>
+        <div className="view-codebase-pic-foot">
+          <span>Versions in mono, as the document writes them.</span>
+          {ghosts ? <span>A dashed chip is something the document says is not present.</span> : null}
+          {notes ? <span>+N notes are sentences, kept in the sections below.</span> : null}
+        </div>
+      </figure>
+    </div>
   );
 }
 
@@ -654,13 +702,7 @@ function Lifted({
   if (lifted.kind === 'concerns') return <ConcernsPanel lifted={lifted} renderHtml={renderHtml} />;
   if (lifted.kind === 'architecture') return <ArchitecturePanel lifted={lifted} urls={urls} />;
   if (lifted.kind === 'structure') return <StructurePanel lifted={lifted} />;
-  return (
-    <div className="view-codebase-lifted">
-      {lifted.groups.map((group) => (
-        <ChipGroup key={group.label} group={group} />
-      ))}
-    </div>
-  );
+  return <StackPanel lifted={lifted} />;
 }
 
 function PlainSection({

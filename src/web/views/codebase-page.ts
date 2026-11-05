@@ -75,16 +75,31 @@ export interface ComposedCodebasePanel {
 export interface ComposedStackChip {
   name: string;
   version: string | null;
+  /** A Key Dependencies chip's purpose line, shown as its title (10-14). */
+  purpose?: string;
 }
 
 export interface ComposedStackSet {
   label: string;
   chips: ComposedStackChip[];
+  /** True for the "Not present" set: its chips are dashed ghosts, packages the document says are absent (10-14). */
+  ghost?: true;
+  /** Lifted sentences left out of the chips (a bullet that is prose, not a tool); they stay in the sections below. */
+  notes?: number;
 }
 
 export interface ComposedStackGroup {
-  label: 'Languages' | 'Runtime' | 'Frameworks';
+  label: 'Languages' | 'Runtime' | 'Frameworks' | 'Key Dependencies';
   sets: ComposedStackSet[];
+}
+
+/** The Stack panel's chips (10-14, sketch 045 C): the shipped chip groups plus Key Dependencies in the same chip set. */
+export interface ComposedStack {
+  kind: 'stack';
+  groups: ComposedStackGroup[];
+  /** Languages and frameworks (the key number, notes included), and the key dependencies. */
+  toolCount: number;
+  dependencyCount: number;
 }
 
 export interface ComposedConcernRow {
@@ -171,7 +186,7 @@ export interface ComposedConcerns {
 }
 
 export type ComposedCodebaseLifted =
-  | { kind: 'stack'; groups: ComposedStackGroup[] }
+  | ComposedStack
   | ComposedArchitecture
   | ComposedStructure
   | ComposedConcerns;
@@ -280,18 +295,62 @@ function chipsOf(value: unknown, group: string): ComposedStackChip[] {
     });
 }
 
+/** The longest chip name the Stack panel keeps (sketch 045): a longer lifted bullet is a sentence, not a tool. */
+const PANEL_CHIP_NAME_MAX = 32;
+
+/** A lifted chip as the panel draws it, or null when it is a sentence: a long name whose second word starts like a
+ * version ("Node.js >=22.18.0 (engines in package.json)") is a name and a version, any other long name is a note. */
+function panelChip(chip: ComposedStackChip): ComposedStackChip | null {
+  if (chip.name.length <= PANEL_CHIP_NAME_MAX) return chip;
+  if (chip.version !== null) return null;
+  const [name, version] = chip.name.split(' ');
+  if (name === undefined || version === undefined || name.length > PANEL_CHIP_NAME_MAX || !startsLikeVersion(version)) {
+    return null;
+  }
+  return { name, version };
+}
+
 function stackGroup(
   label: ComposedStackGroup['label'],
   list: unknown,
   sets: readonly (readonly [label: string, group: string])[],
 ): ComposedStackGroup | null {
   const composed = sets
-    .map(([setLabel, group]) => ({ label: setLabel, chips: chipsOf(list, group) }))
-    .filter((set) => set.chips.length > 0);
+    .map(([setLabel, group]): ComposedStackSet => {
+      const lifted = chipsOf(list, group);
+      const kept = lifted.flatMap((chip) => {
+        const chosen = panelChip(chip);
+        return chosen === null ? [] : [chosen];
+      });
+      return kept.length === lifted.length
+        ? { label: setLabel, chips: kept }
+        : { label: setLabel, chips: kept, notes: lifted.length - kept.length };
+    })
+    .filter((set) => set.chips.length > 0 || (set.notes ?? 0) > 0);
   return composed.length > 0 ? { label, sets: composed } : null;
 }
 
-function liftStack(codebase: Record<string, unknown>): ComposedCodebaseLifted | null {
+/** The Key Dependencies as chip sets, one per bold label, then the "Not present" names as ghosts. */
+function dependencyGroup(stack: Record<string, unknown>): ComposedStackGroup | null {
+  const sets: ComposedStackSet[] = recordsOf(stack.keyDependencies).flatMap((set) => {
+    const label = textOrNull(set.label);
+    const chips = recordsOf(set.deps).flatMap((dep): ComposedStackChip[] => {
+      const name = textOrNull(dep.name);
+      if (name === null) return [];
+      const purpose = textOrNull(dep.purpose);
+      return [purpose === null ? { name, version: textOrNull(dep.version) } : { name, version: textOrNull(dep.version), purpose }];
+    });
+    return label === null || chips.length === 0 ? [] : [{ label, chips }];
+  });
+  const absent = (Array.isArray(stack.notPresent) ? stack.notPresent : []).flatMap((name) => {
+    const text = textOrNull(name);
+    return text === null ? [] : [{ name: text, version: null }];
+  });
+  if (absent.length > 0) sets.push({ label: 'Not present', chips: absent, ghost: true });
+  return sets.length > 0 ? { label: 'Key Dependencies', sets } : null;
+}
+
+function liftStack(codebase: Record<string, unknown>): ComposedStack | null {
   const stack = isRecord(codebase.stack) ? codebase.stack : null;
   if (stack === null) return null;
   const groups = [
@@ -305,8 +364,22 @@ function liftStack(codebase: Record<string, unknown>): ComposedCodebaseLifted | 
       ['Testing', 'testing'],
       ['Build and dev', 'build-dev'],
     ]),
+    dependencyGroup(stack),
   ].filter((group): group is ComposedStackGroup => group !== null);
-  return groups.length > 0 ? { kind: 'stack', groups } : null;
+  if (groups.length === 0) return null;
+  const count = (label: ComposedStackGroup['label']): number =>
+    groups
+      .filter((group) => group.label === label)
+      .reduce(
+        (sum, group) => sum + group.sets.filter((set) => set.ghost !== true).reduce((n, set) => n + set.chips.length + (set.notes ?? 0), 0),
+        0,
+      );
+  return {
+    kind: 'stack',
+    groups,
+    toolCount: count('Languages') + count('Frameworks'),
+    dependencyCount: count('Key Dependencies'),
+  };
 }
 
 // --- the Concerns lift ------------------------------------------------------------------------------------

@@ -175,16 +175,75 @@ describe('composeCodebase - the panel list', () => {
 });
 
 describe('composeCodebase - the lifted part', () => {
-  it('lifts the Stack chips in the sketch groups: Languages, Runtime, Frameworks', async () => {
+  it('lifts the Stack chips in the sketch groups: Languages, Runtime, Frameworks, then Key Dependencies', async () => {
     const lifted = composeCodebase(await inputFor(TIDEMARK_ROOT, 'STACK'))?.active.lifted;
     expect(lifted?.kind).toBe('stack');
     if (lifted?.kind !== 'stack') return;
-    expect(lifted.groups.map((group) => group.label)).toEqual(['Languages', 'Runtime', 'Frameworks']);
+    expect(lifted.groups.map((group) => group.label)).toEqual(['Languages', 'Runtime', 'Frameworks', 'Key Dependencies']);
     const languages = lifted.groups[0];
     expect(languages.sets.map((set) => set.label)).toEqual(['Primary', 'Secondary']);
     expect(languages.sets[0].chips).toEqual([{ name: 'TypeScript', version: '5.6' }]);
     expect(languages.sets[1].chips.map((chip) => chip.name)).toEqual(['SQL', 'Shell']);
     expect(lifted.groups[2].sets.map((set) => set.label)).toEqual(['Core', 'Testing', 'Build and dev']);
+  });
+
+  it('lifts the Key Dependencies as chip sets in the same chip set, Critical and Infrastructure, with the purpose as the title (10-14)', async () => {
+    const lifted = composeCodebase(await inputFor(TIDEMARK_ROOT, 'STACK'))?.active.lifted;
+    if (lifted?.kind !== 'stack') throw new Error('expected the stack panel');
+    expect(lifted.groups.map((group) => group.label)).toEqual(['Languages', 'Runtime', 'Frameworks', 'Key Dependencies']);
+    const dependencies = lifted.groups[3];
+    expect(dependencies.sets.map((set) => set.label)).toEqual(['Critical', 'Infrastructure']);
+    expect(dependencies.sets[0].chips[0]).toEqual({
+      name: 'better-sqlite3',
+      version: '11',
+      purpose: 'the berth and booking store, opened once per process',
+    });
+    expect(lifted.toolCount).toBe(9);
+    expect(lifted.dependencyCount).toBe(4);
+  });
+
+  it('draws the Not present names as dashed ghost chips after the dependency sets, and counts none of them as dependencies', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'STACK');
+    const codebase = input.structured.codebase as { stack: Record<string, unknown> };
+    const lifted = composeCodebase({
+      ...input,
+      structured: { ...input.structured, codebase: { ...codebase, stack: { ...codebase.stack, notPresent: ['ORM', 'queue'] } } },
+    })?.active.lifted;
+    if (lifted?.kind !== 'stack') throw new Error('expected the stack panel');
+    const sets = lifted.groups[3].sets;
+    expect(sets[sets.length - 1]).toEqual({ label: 'Not present', chips: [{ name: 'ORM', version: null }, { name: 'queue', version: null }], ghost: true });
+    expect(lifted.dependencyCount).toBe(4);
+  });
+
+  it('lists all 30 dependencies of a stack that has 30', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'STACK');
+    const codebase = input.structured.codebase as { stack: Record<string, unknown> };
+    const deps = Array.from({ length: 30 }, (_, i) => ({ name: `pkg-${i}`, version: `${i}.0`, purpose: null }));
+    const lifted = composeCodebase({
+      ...input,
+      structured: { ...input.structured, codebase: { ...codebase, stack: { ...codebase.stack, keyDependencies: [{ label: 'Critical', deps }] } } },
+    })?.active.lifted;
+    if (lifted?.kind !== 'stack') throw new Error('expected the stack panel');
+    expect(lifted.groups[3].sets[0].chips).toHaveLength(30);
+    expect(lifted.dependencyCount).toBe(30);
+  });
+
+  it('keeps a long lifted sentence out of the chips, counted as a note, and recovers a name and version from "Node.js >=22 (...)"', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'STACK');
+    const codebase = input.structured.codebase as { stack: Record<string, unknown> };
+    const stack = {
+      ...codebase.stack,
+      languages: [
+        { name: 'TypeScript', version: '5.9.3', group: 'primary' },
+        { name: 'Module system: ESM only (type is module in package.json) with nodenext resolution', version: null, group: 'primary' },
+      ],
+      runtime: [{ name: 'Node.js >=22.18.0 (engines in package.json)', version: null, group: 'runtime' }],
+    };
+    const lifted = composeCodebase({ ...input, structured: { ...input.structured, codebase: { ...codebase, stack } } })?.active.lifted;
+    if (lifted?.kind !== 'stack') throw new Error('expected the stack panel');
+    expect(lifted.groups[0].sets[0].chips).toEqual([{ name: 'TypeScript', version: '5.9.3' }]);
+    expect(lifted.groups[0].sets[0].notes).toBe(1);
+    expect(lifted.groups[1].sets[0].chips).toEqual([{ name: 'Node.js', version: '>=22.18.0' }]);
   });
 
   it('lifts the Concerns counts: the total, Security first, a zero as a dashed quiet row', async () => {
