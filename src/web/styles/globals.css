@@ -29338,6 +29338,53 @@ button.view-codebase-mark:hover {
     display: flex;
   }
 }
+
+/* The Stack panel (10-14, sketch 045 winner C, "Reuse"): the chip groups of 10-08 and Key Dependencies in the same chip set,
+   inside the picture frame. Chips are untoned (the page's content is never a status); a package the document says is not
+   present is a dashed, hatched ghost; "+N notes" is a dashed quiet chip. */
+.view-codebase-stack-body {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.view-codebase-stack-body > .view-codebase-group {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.view-codebase-stack-body > .view-codebase-group:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.view-codebase-stack-body .view-codebase-group-head {
+  padding-top: 0;
+  border-top: 0;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: var(--fs-4);
+  letter-spacing: var(--ls-normal);
+  text-transform: none;
+}
+
+.view-codebase-group-sets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-3) var(--space-5);
+  min-width: 0;
+}
+
+.view-codebase-chip[data-ghost='true'] {
+  border-style: dashed;
+  background: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px 6px);
+  color: var(--muted-foreground);
+}
+
+.view-codebase-chip[data-note='true'] {
+  border-style: dashed;
+  background: none;
+  color: var(--muted-foreground);
+}
 /* phase-10-codebase:end */
 
 /* copy-command (10-10, shared): a command as selectable mono text that wraps, outside its Copy command button. The
