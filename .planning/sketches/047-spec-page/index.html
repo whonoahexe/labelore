@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 047 — Spec page</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 047: the Spec page (VIEW-11), three page structures, none of them the 041 to 046 frames.
+   Text is the made-up Lendshed specs (test/fixtures/lendshed, 10-04), embedded verbatim below and
+   parsed in the page. Tokens come from ../themes/default.css; every colour here is a theme token or a
+   colour-mix of tokens. Squared corners, spacing from --space-* tokens, four font sizes counting
+   everything on the page: --fs-display-3 (h1 only), --fs-7 (headings, lead numbers, verdict), --fs-4
+   (body), --fs-2 (labels, chips, links). The sketch bar and the app shell are outside the page. */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --neutral-fill: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+  --read: calc(var(--space-8) * 24);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; padding: 0 var(--space-0-5); background: var(--veil); overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.app-brand span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+@media (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- page atoms ---------- */
+.page { display: grid; gap: var(--space-8); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); min-width: 0; }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.meta { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.micro-label { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h2.sh { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+.btn-xs.icon { padding-inline: 0; width: var(--space-7); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } .btn-xs.icon { width: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; }
+.status-chip.big { font-size: var(--fs-7); letter-spacing: var(--ls-tight); text-transform: none; padding: var(--space-1-5) var(--space-3); font-family: var(--font-sans); }
+.status-chip.big .sq { --sq: var(--space-3); }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--neutral-fill); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); }
+.num { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.prose { max-width: 72ch; }
+.prose + .prose { margin-top: var(--space-2); }
+
+/* plain blocks (what the generic section rendering shows) */
+.blocks { display: grid; gap: var(--space-3); min-width: 0; }
+.bul { display: grid; gap: var(--space-1-5); }
+.bul > li { display: grid; grid-template-columns: var(--space-3) minmax(0, 1fr); gap: var(--space-2); }
+.bul > li::before { content: ''; width: var(--space-1-5); height: var(--space-1-5); margin-top: 0.55em; background: var(--muted-foreground); }
+.chk > li::before { width: var(--sq); height: var(--sq); margin-top: 0.35em; background: transparent; border: 1px dashed var(--muted-foreground); }
+.sub-h { font-weight: var(--fw-semibold); }
+.tbl-scroll { overflow-x: auto; max-width: 100%; border: 1px solid var(--border-faint); }
+.ptable { border-collapse: collapse; width: 100%; }
+.ptable th, .ptable td { padding: var(--space-1-5) var(--space-2); border-bottom: 1px solid var(--border-faint); text-align: left; vertical-align: top; }
+.ptable th { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+
+/* closed section bars + the In the source only strip (shared by all three) */
+.bars { display: grid; border-top: 1px solid var(--border); }
+.bar { border-bottom: 1px solid var(--border); }
+.bar > summary { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding-inline: var(--space-2); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); }
+.bar > summary::-webkit-details-marker { display: none; }
+.bar > summary:hover { background: var(--state-hover); }
+.bar > summary .chev { transition: none; }
+.bar[open] > summary .chev { transform: rotate(90deg); }
+.bar > summary .n { margin-left: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.bar-body { padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--icon) + var(--space-4)); min-width: 0; }
+.only { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); }
+.only a { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; text-decoration: underline; text-underline-offset: var(--space-0-5); text-decoration-color: var(--border); }
+.only a:hover { color: var(--foreground); }
+
+/* the requirement dock (shared) */
+.dock { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.dock-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); }
+.dock-head h3 { font-size: inherit; font-weight: var(--fw-semibold); }
+.dock-head .x { margin-left: auto; }
+.fields { display: grid; gap: var(--space-3); }
+.fields > div { display: grid; grid-template-columns: calc(var(--space-8) * 3) minmax(0, 1fr); gap: var(--space-3); }
+.fields dt { padding-top: var(--space-0-5); }
+@media (max-width: 42rem) { .fields > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); } }
+.dock-empty { padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); color: var(--muted-foreground); }
+
+/* =====================================================================
+   A: Gate gauge — a full-bleed instrument band, then one reading column
+   ===================================================================== */
+.va-band { margin-inline: calc(var(--space-fluid-8) * -1); padding: var(--space-6) var(--space-fluid-8); border-block: 1px solid var(--border); background: var(--card-veil); display: grid; gap: var(--space-6); min-width: 0; }
+.va-verdict { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4); }
+.va-verdict .line { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.va-verdict .line b { font-family: var(--font-mono); }
+.va-verdict .line span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.gauge { position: relative; height: calc(var(--space-8) * 2.5); min-width: 0; }
+.gauge-track { position: absolute; left: 0; right: 0; top: var(--space-8); height: var(--space-6); border: 1px solid var(--muted-foreground); background: var(--background); }
+.gauge-zone { position: absolute; top: 0; bottom: 0; left: 0; background: var(--hatch); border-right: 2px solid var(--foreground); }
+.gauge-zone-l { position: absolute; top: calc(var(--space-1) * -1); transform: translateY(-100%); right: 0; translate: 50% 0; white-space: nowrap; }
+.gauge-fill { position: absolute; top: 25%; bottom: 25%; left: 0; background: var(--neutral-fill); }
+.gauge-dot { position: absolute; top: calc(var(--space-8) + var(--space-1-5)); width: var(--space-3); height: var(--space-3); transform: translateX(-50%); border: 2px solid var(--background); box-sizing: content-box; }
+.gauge-dot[data-tone='complete'] { background: var(--primary); }
+.gauge-dot[data-tone='in-flight'] { background: var(--in-flight-fill); }
+.gauge-mark { position: absolute; top: calc(var(--space-6) + var(--space-0-5)); width: 2px; height: calc(var(--space-6) + var(--space-3)); background: var(--foreground); }
+.gauge-ticks { position: absolute; left: 0; right: 0; top: calc(var(--space-8) + var(--space-6) + var(--space-1)); height: var(--space-6); }
+.gauge-ticks span { position: absolute; transform: translateX(-50%); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.gauge-ticks span:first-child { transform: none; }
+.gauge-ticks span:last-child { transform: translateX(-100%); }
+.gauge-empty { position: absolute; inset: 0 auto 0 0; display: grid; place-items: center start; padding-left: var(--space-3); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.dims { display: grid; gap: var(--space-2); }
+.dim { display: grid; grid-template-columns: calc(var(--space-8) * 5) minmax(0, 1fr) calc(var(--space-8) * 3) calc(var(--space-8) * 4.5); align-items: center; gap: var(--space-3); min-width: 0; }
+.dim-track { position: relative; height: var(--space-3); border: 1px solid var(--border); background: var(--background); }
+.dim-fill { position: absolute; inset: 0 auto 0 0; background: var(--neutral-fill); }
+.dim-fill[data-tone='in-flight'] { background: var(--in-flight-fill); }
+.dim-min { position: absolute; top: calc(var(--space-1) * -1); bottom: calc(var(--space-1) * -1); width: 2px; background: var(--foreground); }
+.dim-val { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); white-space: nowrap; }
+.dim-val b { color: var(--foreground); font-weight: var(--fw-semibold); }
+.dim-st { display: inline-flex; align-items: center; gap: var(--space-1-5); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; }
+.dim-st[data-tone='in-flight'] { color: var(--in-flight-fill); }
+.va-why { display: grid; gap: var(--space-2); max-width: 72ch; }
+@media (max-width: 42rem) {
+  .dim { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name val' 'track track' 'st st'; row-gap: var(--space-1); }
+  .dim > .micro-label { grid-area: name; } .dim-track { grid-area: track; } .dim-val { grid-area: val; } .dim-st { grid-area: st; }
+}
+.va-col { display: grid; gap: var(--space-8); width: min(var(--read), 100%); margin-inline: auto; min-width: 0; }
+.va-goal { display: grid; gap: var(--space-2); }
+.va-goal p:last-child { font-size: var(--fs-7); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.ladder-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); }
+.ladder { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--space-8) * 4.5), 1fr)); gap: var(--space-2); }
+.rung { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3); border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.rung:hover { background: var(--state-hover); }
+.rung[aria-pressed='true'] { border-color: var(--foreground); box-shadow: inset 0 0 0 1px var(--foreground); }
+.rung-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.ticks { display: inline-flex; gap: var(--space-1); }
+.tick { display: inline-grid; justify-items: center; gap: var(--space-0-5); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); line-height: 1; }
+.rung .status-chip { white-space: normal; }
+.rung-l { font-weight: var(--fw-semibold); line-height: var(--lh-snug); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.scope2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+.scope2 h3 { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
+.scope-list { display: grid; gap: var(--space-2); }
+.scope-list li { display: grid; justify-items: start; gap: var(--space-0-5); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-faint); }
+.scope-list .why { color: var(--muted-foreground); }
+@media (max-width: 42rem) { .scope2 { grid-template-columns: minmax(0, 1fr); } }
+
+/* =====================================================================
+   B: Lock matrix — a score strip of column gauges, the requirement × evidence grid, a scope fence
+   ===================================================================== */
+.vb-strip { display: grid; grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr)); border: 1px solid var(--border); }
+.vb-cell { display: grid; grid-template-rows: auto 1fr auto; gap: var(--space-2); padding: var(--space-4); min-width: 0; }
+.vb-cell + .vb-cell { border-left: 1px solid var(--border); }
+.vb-cell.lead { background: var(--card-veil); grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto 1fr; column-gap: var(--space-4); }
+.vb-cell.lead > :not(.col) { grid-column: 1; }
+.vb-cell.lead > .col { grid-column: 2; grid-row: 1 / -1; width: calc(var(--space-8) * 1.5); }
+.col { position: relative; height: calc(var(--space-8) * 3.5); border: 1px solid var(--border); background: var(--background); }
+.col-fill { position: absolute; left: 20%; right: 20%; bottom: 0; background: var(--neutral-fill); }
+.col-fill[data-tone='in-flight'] { background: var(--in-flight-fill); }
+.col-fill[data-tone='complete'] { background: var(--primary); }
+.col-line { position: absolute; left: calc(var(--space-1) * -1); right: calc(var(--space-1) * -1); height: 0; border-top: 2px solid var(--foreground); }
+.col-zone { position: absolute; left: 0; right: 0; bottom: 0; background: var(--hatch); }
+.col-empty { position: absolute; inset: 0; border: 1px dashed var(--muted-foreground); }
+.vb-val { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); }
+.vb-val .meta { white-space: nowrap; }
+.vb-lead-line { font-weight: var(--fw-semibold); }
+.vb-lead-line b { font-family: var(--font-mono); font-size: var(--fs-7); }
+.vb-st { display: inline-flex; gap: var(--space-1-5); align-items: center; font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.vb-st[data-tone='in-flight'] { color: var(--in-flight-fill); }
+@media (max-width: 42rem) {
+  .vb-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .vb-cell { padding: var(--space-2); }
+  .vb-cell.lead { grid-column: 1 / -1; border-bottom: 1px solid var(--border); padding: var(--space-4); }
+  .vb-cell:nth-child(2) { border-left: 0; }
+  .col { height: calc(var(--space-8) * 2.5); }
+  .vb-st span:last-child { display: none; }
+}
+.mx { display: grid; border: 1px solid var(--border); min-width: 0; }
+.mx-row { display: grid; grid-template-columns: var(--space-8) minmax(0, 1fr) repeat(3, calc(var(--space-8) * 2.5)) var(--mx-cov, calc(var(--space-8) * 4)) var(--mx-cov, calc(var(--space-8) * 3)); align-items: center; gap: 0 var(--space-3); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--border-faint); min-width: 0; text-align: left; width: 100%; }
+.mx[data-cov='false'] .mx-row { grid-template-columns: var(--space-8) minmax(0, 1fr) repeat(3, calc(var(--space-8) * 2.5)); }
+.mx-row.head { border-top: 0; background: var(--card-veil); padding-block: var(--space-2); }
+.mx-row.grp { border-top: 0; padding-bottom: 0; background: var(--card-veil); }
+.mx-row:not(.head):not(.grp):hover { background: var(--state-hover); }
+.mx-row[aria-expanded='true'] { background: var(--state-hover); }
+.mx-row .no { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); }
+.mx-row .lab { font-weight: var(--fw-semibold); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mx-cell { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); min-width: 0; }
+.mx-cell .sq { --sq: var(--space-4); }
+.mx-cell .status-chip { white-space: normal; }
+.mx-open { padding: var(--space-3) var(--space-3) var(--space-4) calc(var(--space-8) + var(--space-6)); border-top: 1px solid var(--border-faint); background: var(--card); }
+.mx-key { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--border); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.mx-key span { display: inline-flex; align-items: center; gap: var(--space-1-5); }
+@media (max-width: 42rem) {
+  .mx-row, .mx[data-cov='false'] .mx-row { grid-template-columns: var(--space-6) repeat(3, minmax(0, 1fr)); grid-template-areas: 'no lab lab lab' '. c t a' '. e e p'; row-gap: var(--space-2); }
+  .mx[data-cov='false'] .mx-row { grid-template-areas: 'no lab lab lab' '. c t a'; }
+  .mx-row .no { grid-area: no; font-size: var(--fs-4); } .mx-row .lab { grid-area: lab; white-space: normal; }
+  .mx-row > :nth-child(3) { grid-area: c; } .mx-row > :nth-child(4) { grid-area: t; } .mx-row > :nth-child(5) { grid-area: a; }
+  .mx-row > :nth-child(6) { grid-area: e; } .mx-row > :nth-child(7) { grid-area: p; }
+  .mx-row.head { display: none; } .mx-row.grp { display: none; }
+  .mx-cell::before { content: attr(data-l); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); text-transform: uppercase; letter-spacing: var(--ls-wider); width: 100%; }
+  .mx-open { padding-left: var(--space-3); }
+}
+.fence { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--space-6); align-items: start; }
+.fence-in { position: relative; display: grid; gap: var(--space-2); padding: var(--space-6) var(--space-4) var(--space-4); border: 2px solid var(--foreground); }
+.fence-in > .micro-label, .fence-out > .micro-label { display: inline-flex; gap: var(--space-1-5); align-items: center; }
+.fence-in > .micro-label { position: absolute; top: 0; left: var(--space-3); transform: translateY(-50%); padding-inline: var(--space-2); background: var(--background); color: var(--foreground); }
+.fence-tiles { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.fence-tile { padding: var(--space-1-5) var(--space-2-5); border: 1px solid var(--border); background: var(--card); max-width: 100%; }
+.fence-out { display: grid; gap: var(--space-3); padding-top: var(--space-3); }
+.fence-out li { display: grid; grid-template-columns: var(--space-4) minmax(0, 1fr); gap: var(--space-1) var(--space-2); }
+.fence-out li .sq { margin-top: 0.3em; }
+.fence-out .why { grid-column: 2; color: var(--muted-foreground); }
+@media (max-width: 42rem) { .fence { grid-template-columns: minmax(0, 1fr); } }
+
+/* =====================================================================
+   C: Reuse — 018 B radar scorecard + 041 B count tiles, 015 B square strip + pairs, 044 E piles
+   ===================================================================== */
+.vc-head { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-8); align-items: center; padding: var(--space-6); border: 1px solid var(--border); }
+.vc-head[data-radar='false'] { grid-template-columns: minmax(0, 1fr); }
+.radar svg { display: block; width: 100%; height: auto; overflow: visible; }
+.r-ring { fill: none; stroke: var(--border); stroke-width: 1; }
+.r-ring[data-outer='true'] { stroke: var(--muted-foreground); }
+.r-spoke { stroke: var(--border); stroke-width: 1; }
+.r-min { fill: none; stroke: var(--muted-foreground); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.r-shape { fill: var(--primary-tint); stroke: var(--primary); stroke-width: 2; stroke-linejoin: miter; }
+.r-shape[data-tone='in-flight'] { fill: color-mix(in oklch, var(--in-flight-fill) 14%, transparent); stroke: var(--in-flight-fill); }
+.r-dot { stroke: var(--background); stroke-width: 2; }
+.r-dot[data-tone='complete'] { fill: var(--primary); }
+.r-dot[data-tone='in-flight'] { fill: var(--in-flight-fill); }
+.r-t { font-family: var(--font-mono); fill: var(--muted-foreground); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.r-t.v { fill: var(--foreground); text-transform: none; letter-spacing: 0; }
+.r-c { font-family: var(--font-mono); fill: var(--foreground); font-size: var(--fs-7); font-weight: var(--fw-semibold); text-anchor: middle; }
+.vc-side { display: grid; gap: var(--space-4); min-width: 0; }
+.vc-side .line { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.vc-side .line b { font-family: var(--font-mono); }
+.vc-side .line span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc(var(--space-8) * 3.25), 1fr)); gap: var(--space-2); }
+.tile { display: grid; gap: var(--space-1); padding: var(--space-3); border: 1px solid var(--border); background: var(--card); text-align: left; }
+.tile:hover { background: var(--state-hover); }
+.tile-n { display: flex; align-items: center; gap: var(--space-2); }
+.tile[data-tone='quiet'] { border-style: dashed; }
+.strip { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-items: center; }
+.strip button { display: inline-grid; justify-items: center; gap: var(--space-1); padding: var(--space-1); border: 1px solid transparent; }
+.strip button:hover { border-color: var(--border); }
+.strip .sq { --sq: var(--space-6); }
+.strip .sq[data-tone='neutral'] { background: var(--neutral-fill); }
+.strip .key .sq { --sq: var(--space-2-5); }
+.strip span.l { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.cards { display: grid; border-top: 1px solid var(--border); }
+.card { border-bottom: 1px solid var(--border); }
+.card > summary { display: grid; grid-template-columns: var(--space-8) minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-2); cursor: pointer; list-style: none; }
+.card > summary::-webkit-details-marker { display: none; }
+.card > summary:hover { background: var(--state-hover); }
+.card > summary .no { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); }
+.card > summary b { font-weight: var(--fw-semibold); }
+.card-body { display: grid; gap: var(--space-3); padding: 0 var(--space-2) var(--space-6) calc(var(--space-8) + var(--space-5)); }
+.pairs { display: grid; grid-template-columns: minmax(0, 1fr) var(--space-6) minmax(0, 1fr); gap: var(--space-2); align-items: stretch; }
+.pair { display: grid; gap: var(--space-1); align-content: start; padding: var(--space-3); border: 1px solid var(--border); }
+.pairs .arrow { display: grid; place-items: center; color: var(--muted-foreground); }
+.pair.acc { grid-column: 1 / -1; border-left: 2px solid var(--foreground); }
+.pair.acc[data-none='true'] { border: 1px dashed var(--muted-foreground); }
+@media (max-width: 42rem) { .vc-head { grid-template-columns: minmax(0, 1fr); padding: var(--space-4); } .radar { max-width: calc(var(--space-8) * 10); margin-inline: auto; width: 100%; } .pairs { grid-template-columns: minmax(0, 1fr); } .pairs .arrow { transform: rotate(90deg); } .card-body { padding-left: var(--space-2); } }
+.pic { display: grid; border: 1px solid var(--border); min-width: 0; }
+.pic-bar { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--card-veil); }
+.pic-body { padding: var(--space-4); min-width: 0; }
+.pic-foot { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); padding: var(--space-2) var(--space-4); border-top: 1px solid var(--border); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.pic-foot span { display: inline-flex; align-items: center; gap: var(--space-1-5); }
+.piles { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, calc(var(--space-8) * 3.5))); justify-content: start; grid-template-rows: 1fr auto; gap: var(--space-2) var(--space-4); align-items: stretch; }
+.pile-names, .pl-i { display: none !important; }
+@media (max-width: 42rem) { .piles { grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: var(--space-2); } .pile-lab .pl { display: none; } .pl-i { display: block !important; } .pile-names { display: flex !important; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); margin-top: var(--space-3); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); } }
+.pile-col { display: grid; grid-row: span 2; grid-template-rows: subgrid; gap: var(--space-2); min-width: 0; }
+.pile-col > .pile { align-self: end; }
+.pile { display: flex; flex-direction: column-reverse; gap: var(--space-0-5); }
+.mk { display: block; width: 100%; height: var(--space-3); padding: 0; border: 1px solid var(--muted-foreground); background: var(--neutral-fill); cursor: pointer; }
+.mk[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.mk[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.mk[data-tone='quiet'] { background: transparent; border-style: dashed; }
+.mk:hover { outline: 2px solid var(--border); outline-offset: 1px; }
+.mk[data-on='true'] { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.pile-zero { height: var(--space-3); border: 1px dashed var(--muted-foreground); }
+.pile-lab { display: grid; gap: var(--space-1); justify-items: start; padding-top: var(--space-1-5); border-top: 1px solid var(--border); min-width: 0; }
+.pile-lab .pl { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); line-height: 1.25; overflow-wrap: normal; hyphens: auto; }
+.pdock { margin-top: var(--space-3); }
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">047 spec</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Gate gauge</a>
+    <a data-tab="b" href="#b">B: Lock matrix</a>
+    <a data-tab="c" href="#c">C: Reuse — radar, tiles, strip, piles</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="01">01 Locked</button><button data-state="02">02 Not locked</button><button data-state="03">03 Nine requirements</button><button data-state="none">No score</button></span>
+</nav>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+// The made-up Lendshed specs, verbatim (injected from test/fixtures/lendshed by the sketch's generator).
+const SRC = /*DATA*/{"01":"<!-- made-up example · derived from gsd-core/templates/spec.md · gsd-core 1.19.0 -->\n# Phase 1: Member Sign-In & Sessions — Specification\n\n**Created:** 2026-03-22\n**Ambiguity score:** 0.14 (gate: ≤ 0.20)\n**Requirements:** 5 locked\n\n## Goal\n\nA member signs in to Lendshed with a username and password Lendshed itself holds, and stays signed in across a server restart; the shared kiosk passcode stops gating anyone.\n\n## Background\n\nToday the reverse proxy asks for one shared kiosk passcode and the server trusts whatever name the proxy forwards. There is no `members` table, no `sessions` table and no sign-out. Every steward and member shares one door, so the loan log cannot say who borrowed a drill. This phase puts accounts and sessions inside Lendshed and leaves the proxy as plain network transport.\n\n## Requirements\n\n1. **Account sign-in**: A member with a username and password signs in and receives a session.\n   - Current: No member accounts exist; the kiosk passcode is the only gate\n   - Target: `POST /api/sign-in` checks a scrypt-hashed password and sets a session cookie; a wrong password answers 401 with the same body as an unknown username\n   - Acceptance: A seeded member signs in with the right password and gets a cookie; a wrong password and an unknown username return byte-identical 401 bodies\n\n2. **Session survives a restart**: A signed-in member stays signed in across a server restart or power cut.\n   - Current: There is no session, so nothing survives anything\n   - Target: Sessions are rows in a `sessions` table with a 21-day sliding idle expiry, read on every request\n   - Acceptance: Sign in, restart the server process, call `/api/whoami` with the same cookie and get the same member back\n\n3. **Sign-out**: A member can end their own session at once.\n   - Current: No sign-out exists\n   - Target: `POST /api/sign-out` deletes only the session that sent the request; the member's other sessions stay\n   - Acceptance: With two sessions open, signing out of one leaves `/api/whoami` working for the other and refusing the first\n\n4. **Forced first password change**: A member created with a temporary password must choose their own before doing anything else.\n   - Current: No temporary passwords exist\n   - Target: A member flagged `must_change_password` gets 409 from every route except the password-change route and sign-out\n   - Acceptance: A flagged member calling the loan list gets 409; after the change the same call returns 200\n\n5. **Sign-in rate limiting**: Repeated failed sign-ins from one source are slowed down.\n   - Current: Nothing limits attempts\n   - Target: Five failed sign-ins in ten minutes from one address and username pair answers 429 for the next ten minutes\n   - Acceptance: Six failed attempts in a minute return 429 on the sixth; a correct attempt after the window has passed returns 200\n\n## Boundaries\n\n**In scope:**\n- `members` and `sessions` tables with scrypt hashing\n- Sign-in, sign-out and the forced first password change\n- Swapping the `SessionReader` seam to read Lendshed sessions\n- Sign-in rate limiting\n- Removing the kiosk passcode check from the proxy configuration\n\n**Out of scope:**\n- Steward roles and per-shed permissions — that is Phase 2\n- An admin screen for accounts and live-session revocation — that is Phase 3\n- Mailing passwords or reset links — decided out for the whole milestone\n- Self-service sign-up — stewards create accounts by hand\n\n## Constraints\n\n- Passwords are hashed with scrypt from the standard library; no new hashing dependency\n- The live-status socket and the export download route must accept Lendshed sessions in place of the passcode\n- No credential may land in a config file or service unit\n\n## Acceptance Criteria\n\n- [ ] A seeded member signs in with the right password and receives a session cookie\n- [ ] A wrong password and an unknown username return identical 401 bodies\n- [ ] A session cookie still works after the server process restarts\n- [ ] Signing out ends only the session that sent the request\n- [ ] A member flagged `must_change_password` gets 409 everywhere but the password-change route and sign-out\n- [ ] The sixth failed sign-in inside ten minutes returns 429\n- [ ] The kiosk passcode no longer gates any route\n\n## Edge Coverage\n\n**Coverage:** 3/3 applicable edges resolved · 0 unresolved\n\n| Category | Requirement | Status | Resolution / Reason |\n|----------|-------------|--------|---------------------|\n| unknown username | R1 | ✅ covered | Acceptance Criteria 2: identical 401 bodies |\n| expired session | R2 | ✅ covered | Acceptance Criteria 3: cookie works after a restart; idle expiry is a unit test on the reader |\n| clock set backwards after a power cut | R2 | 🧪 backstop | Backstop test: a `last_seen` in the future is treated as just seen |\n| two members sharing one address | R5 | ⛔ dismissed | The limiter keys on address and username together, so a shared kiosk address cannot lock out other members |\n\n## Prohibitions (must-NOT)\n\n**Coverage:** 2/2 applicable prohibitions resolved · 0 unresolved\n\n| Prohibition (must-NOT statement) | Requirement | Status | Verification / Reason |\n|----------------------------------|-------------|--------|------------------------|\n| MUST NOT store or log a plain-text password at any point | R1 | resolved | verification: test (log capture during a sign-in contains no password) |\n| MUST NOT tell a caller whether a username exists | R1 | resolved | verification: test (identical 401 bodies and timing band) |\n| MUST NOT keep the kiosk passcode as a fallback gate | R1 | dismissed | Covered by the removal item in Boundaries and Acceptance Criteria 7 |\n\n## Ambiguity Report\n\n| Dimension          | Score | Min  | Status | Notes                              |\n|--------------------|-------|------|--------|------------------------------------|\n| Goal Clarity       | 0.90  | 0.75 | ✓      |                                    |\n| Boundary Clarity   | 0.88  | 0.70 | ✓      | Phase 2 and 3 items named out      |\n| Constraint Clarity | 0.78  | 0.65 | ✓      | Hashing and socket rules stated    |\n| Acceptance Criteria| 0.84  | 0.70 | ✓      | Seven pass/fail criteria           |\n| **Ambiguity**      | 0.14  | ≤0.20| ✓      |                                    |\n\nStatus: ✓ = met minimum, ⚠ = below minimum (planner treats as assumption)\n\n## Interview Log\n\n| Round | Perspective    | Question summary                | Decision locked                          |\n|-------|----------------|---------------------------------|------------------------------------------|\n| 1     | Researcher     | What gates the app today?       | One shared kiosk passcode at the proxy   |\n| 2     | Simplifier     | Smallest useful account model?  | Username and password, no email          |\n| 3     | Boundary Keeper| What waits for later phases?    | Roles to Phase 2, admin screens to Phase 3 |\n| 4     | Failure Analyst| What breaks on a power cut?     | Sessions live in the database, not memory |\n\n---\n\n*Phase: 01-member-sign-in-sessions*\n*Spec created: 2026-03-22*\n*Next step: /gsd-discuss-phase 1 — implementation decisions (cookie flags, hash cost, the reader seam)*\n","02":"<!-- made-up example · derived from gsd-core/templates/spec.md · gsd-core 1.19.0 -->\n# Phase 2: Roles & Permissions — Specification\n\n**Created:** 2026-03-27\n**Ambiguity score:** 0.31 (gate: <= 0.20)\n**Requirements:** 4 locked\n\n## Goal\n\nA steward decides what each member may do in each shed, and the server answers 403 to anything not granted.\n\n## Background\n\nAfter Phase 1 every signed-in member can do everything: borrow from any shed, edit stock, move tools between sheds and read the loan log. The `members` table has a `role` column that holds only `member` today. There is no grant storage, no gatekeeper function and no screen where a steward could change anything.\n\n## Requirements\n\n1. **Per-shed grants**: A steward can grant a member the right to lend from, or adjust stock in, each shed separately.\n   - Current: No grant storage exists; every member may act in every shed\n   - Target: A `member_grants` table keyed by member and grant name, one row per granted right, no row meaning no\n   - Acceptance: A member with only `lend:canal` can borrow from the canal shed and is refused at the ridge shed\n\n2. **Single gatekeeper**: Every handler asks one function before doing anything for a shed.\n   - Current: Handlers check nothing beyond the session\n   - Target: A `guard.check(identity, action, shed)` call at the top of each shed handler; a refusal answers 403\n   - Acceptance: A route table test lists every shed handler and fails when one does not call the gatekeeper first\n\n3. **Steward role**: A steward passes every check without owning grant rows.\n   - Current: The `role` column never holds `steward`\n   - Target: Role `steward` skips the lookup; a member promoted to steward has their grant rows removed\n   - Acceptance: A steward with an empty `member_grants` table can lend and adjust in all four sheds\n\n4. **Grants take effect while signed in**: A changed grant applies without the member signing out and in again.\n   - Current: Nothing changes while a session lives\n   - Target: The next request after a grant change sees the new grants\n   - Acceptance: Remove `lend:canal` from a signed-in member; their very next borrow at the canal shed answers 403\n\n## Boundaries\n\n**In scope:**\n- The `member_grants` table and the gatekeeper function\n- A steward-only grant grid on the member page\n- Promotion to and demotion from steward\n\n**Out of scope:**\n- Creating, disabling or deleting accounts — that is Phase 3\n- A live notice to an open page when its grants change — left to discussion, may land later\n- Per-tool permissions — not asked for by any steward\n\n## Constraints\n\nNot settled. Stewards disagree on whether a member may be allowed to browse a shed without being allowed to borrow from it, and nobody has said how many stewards the desk must always keep. Working guess, to be read as one: at least one enabled steward at all times.\n\n## Acceptance Criteria\n\n- [ ] A member with only `lend:canal` can borrow at the canal shed and gets 403 at the ridge shed\n- [ ] A route table test fails when a shed handler skips the gatekeeper\n- [ ] A steward with no grant rows can lend and adjust in every shed\n- [ ] A grant removed from a signed-in member takes effect on their next request\n\n## Edge Coverage\n\n**Coverage:** 2/3 applicable edges resolved · 1 unresolved\n\n| Category | Requirement | Status | Resolution / Reason |\n|----------|-------------|--------|---------------------|\n| member with no role | R1 | ✅ covered | Acceptance Criteria 1: no row means no |\n| last steward demotes themself | R3 | ⚠ UNRESOLVED | ⚠ Edge unresolved — planner must treat as assumption |\n| grant for a shed that is later closed | R1 | ⛔ dismissed | Sheds are never closed in this product; closure is not a supported event |\n| steward promoted while holding grants | R3 | 🧪 backstop | Backstop test: promotion leaves zero rows for that member |\n\n## Prohibitions (must-NOT)\n\n**Coverage:** 1/2 applicable prohibitions resolved · 1 unresolved\n\n| Prohibition (must-NOT statement) | Requirement | Status | Verification / Reason |\n|----------------------------------|-------------|--------|------------------------|\n| MUST NOT reveal which shed caused a refusal on a transfer | R2 | resolved | verification: test (both refusals return an identical body) |\n| MUST NOT let any route skip the gatekeeper | R2 | ⚠ UNRESOLVED | ⚠ Prohibition unresolved — planner must treat as assumption |\n\n## Ambiguity Report\n\n| Dimension          | Score | Min  | Status | Notes                              |\n|--------------------|-------|------|--------|------------------------------------|\n| Goal Clarity       | 0.80  | 0.75 | ✓      |                                    |\n| Boundary Clarity   | 0.72  | 0.70 | ✓      | Phase 3 items named out            |\n| Constraint Clarity | 0.46  | 0.65 | ⚠      | Below minimum — planner must treat as assumption |\n| Acceptance Criteria| 0.71  | 0.70 | ✓      | Four criteria, none for demotion   |\n| **Ambiguity**      | 0.31  | ≤0.20| ⚠      | Written anyway after six rounds    |\n\nStatus: ✓ = met minimum, ⚠ = below minimum (planner treats as assumption)\n\nWritten anyway: six interview rounds ended with one dimension still below its minimum, and the steward lead chose \"Write SPEC.md anyway — flag gaps\". The planner must treat the flagged rows as assumptions, not locked requirements.\n\n## Interview Log\n\n| Round | Perspective    | Question summary                   | Decision locked                              |\n|-------|----------------|------------------------------------|----------------------------------------------|\n| 1     | Researcher     | Who may do what today?             | Everyone may do everything                   |\n| 2     | Simplifier     | Smallest set of rights?            | Lend and adjust, per shed, plus steward      |\n| 3     | Boundary Keeper| What stays out of this phase?      | Account admin and per-tool rights            |\n| 4     | Failure Analyst| What if the last steward steps down? | Open — no answer reached                   |\n| 5     | Researcher     | Browse without borrow?             | Open — stewards disagree                     |\n| 6     | Simplifier     | How many stewards must remain?     | Open — working guess of one                  |\n\n---\n\n*Phase: 02-roles-and-permissions*\n*Spec created: 2026-03-27*\n*Next step: /gsd-discuss-phase 2 — implementation decisions (grant names, the guard seam, the grid)*\n","03":"<!-- made-up example · derived from gsd-core/templates/spec.md · gsd-core 1.19.0 -->\n# Phase 3: Account Admin & Sessions — Specification\n\n**Created:** 2026-03-31\n**Ambiguity score:** 0.18\n**Requirements:** 9 locked\n\n## Goal\n\nA steward looks after the whole life of a member account from one place, sees who is signed in right now, and can end anyone's access at once.\n\n## Background\n\nPhase 1 gave members accounts and Phase 2 gave stewards grants, but accounts can only be created with the `shedkeys` command line tool on the server. A steward who needs a password reset or a disabled account must ask the developer to run a command. The sessions table holds every live sign-in, with a `last_seen` stamp, yet nothing displays it. The loan log records borrowing and nothing about accounts.\n\n## Requirements\n\n1. **Create a member**: A steward creates an account from a dialog on the desk page.\n   - Current: Accounts exist only through `shedkeys create` on the server\n   - Target: A \"New member\" dialog on `/desk` takes a handle and a display name, generates a temporary password shown once, and flags the account `must_change_password`\n   - Acceptance: A created member signs in with the shown password and is sent to the password-change route first\n\n2. **Reset a password**: A steward resets a member's password and the old sessions end.\n   - Current: Only `shedkeys reset` can do this, and it leaves old sessions alive\n   - Target: A \"Reset password\" action on the member page issues a new temporary password shown once, flags the account, and deletes every session of that member\n   - Acceptance: After a reset, the member's old cookie answers 401 and the new temporary password signs in\n\n3. **Disable a member**: A steward switches an account off without deleting it, and its sessions and export tickets stop at once.\n   - Current: No disabled state exists; the only way to stop a member is to delete the row, which destroys the loan history that points at it, and a member who has been signed in for weeks keeps working until the idle expiry, because nothing looks at the account row again after sign-in, and a download ticket minted a minute earlier is still honoured by the export route\n   - Target: A `disabled_at` stamp; disabling deletes the member's sessions, revokes their unused export tickets and makes sign-in answer the same 401 as a wrong password\n   - Acceptance: With a live session and an unused ticket, disabling the member makes the next `/api/whoami` answer 401 and the ticket's download answer 410\n\n4. **Re-enable a member**: A steward switches a disabled account back on.\n   - Current: No disabled state exists\n   - Target: Clearing `disabled_at` lets the member sign in again with their old password; no old session returns\n   - Acceptance: After re-enabling, the member signs in with the old password and gets a new session id\n\n5. **Delete a member**: A steward removes an account for good.\n   - Current: Deleting means a database edit by hand\n   - Target: A confirmed \"Delete member\" action removes the account and its sessions; loan-log rows keep the handle as plain text\n   - Acceptance: After a delete, the handle is free to reuse and old loan-log rows still show the old handle\n\n6. **Live session list**: A steward sees every signed-in session of a member, with where it was last seen and how long ago, and the list stays correct while the page is open, because a steward who is about to disable an account needs to know whether anyone is on it right now, and a stale list is worse than none, since it says an account is quiet when somebody is using it.\n   - Current: The sessions table holds the data and nothing shows it\n   - Target: A \"Signed in now\" list on the member page, one row per session, newest first, refreshed whenever a session starts or ends\n\n7. **End one session**: A steward ends a single session from that list.\n   - Current: Only the member can sign out, and only the session they are using\n   - Target: An \"End session\" button per row deletes that session and closes its open socket\n   - Acceptance: Ending a row makes that cookie answer 401 within one second and leaves the member's other sessions alone\n\n8. **Account events in the loan log**: Account and permission changes appear in the log a steward already reads.\n   - Current: The loan log records loans only\n   - Target: Creation, reset, disable, re-enable, delete and grant changes each add a log row naming the acting steward and the member\n   - Acceptance: Each of the six actions adds exactly one row, and the log filter \"Account events\" shows only those rows\n\n9. **Last-steward rule**: The desk always keeps one enabled steward.\n   - Current: Phase 2 stops a steward demoting themself, but disable and delete are unguarded\n   - Target: Disable and delete are refused with 409 when they would leave no enabled steward, checked inside the same transaction as the write\n   - Acceptance: With one enabled steward, disabling or deleting that steward answers 409 and changes nothing\n\n## Boundaries\n\n**In scope:**\n- Member create, reset, disable, re-enable and delete from the desk\n- The live session list and per-session end\n- Log rows and a log filter for account events\n- The last-steward rule for disable and delete\n\n**Out of scope:**\n- Bulk loan export — that is Phase 4\n- Renaming a handle or display name after creation — decided out, a handle is permanent\n- A sign-everyone-out button — decided out for the milestone\n- Mailing passwords or reset links — decided out for the milestone\n\n## Constraints\n\n- Temporary passwords are shown once on screen and never stored in readable form or written to the log\n- Ending a session must close that session's open live-status socket, not only refuse its next request\n\n## Acceptance Criteria\n\n- [ ] A created member is forced through the password-change route on first sign-in\n- [ ] A reset password ends every session of that member\n- [ ] A disabled member's session answers 401 and their unused ticket answers 410\n- [ ] A re-enabled member signs in again and gets a new session\n- [ ] A deleted handle can be reused while old log rows still show it\n- [ ] Ending a listed session closes it within one second\n- [ ] Six account actions each add one log row\n- [ ] The last enabled steward cannot be disabled or deleted\n\n## Ambiguity Report\n\n| Dimension          | Score | Min  | Status | Notes                              |\n|--------------------|-------|------|--------|------------------------------------|\n| Goal Clarity       | 0.88  | 0.75 | ✓      |                                    |\n| Boundary Clarity   | 0.84  | 0.70 | ✓      | Decided-out items named            |\n| Constraint Clarity | 0.74  | 0.65 | ✓      |                                    |\n| Acceptance Criteria| 0.78  | 0.70 | ✓      | Requirement 6 has no check         |\n| **Ambiguity**      | 0.18  | ≤0.20| ✓      |                                    |\n\nStatus: ✓ = met minimum, ⚠ = below minimum (planner treats as assumption)\n\n## Interview Log\n\n| Round | Perspective    | Question summary                    | Decision locked                           |\n|-------|----------------|-------------------------------------|-------------------------------------------|\n| 1     | Researcher     | What does a steward do by hand now? | Ask the developer to run `shedkeys`       |\n| 2     | Simplifier     | Is disable enough, without delete?  | No — delete stays, loan history keeps the handle |\n| 3     | Boundary Keeper| What waits for the export phase?   | Everything about exports                  |\n| 4     | Failure Analyst| What if the only steward disables themself? | Refuse in the same transaction    |\n\n---\n\n*Phase: 03-account-admin-and-sessions*\n*Spec created: 2026-03-31*\n*Next step: /gsd-discuss-phase 3 — implementation decisions (dialog layout, socket teardown, log filter)*\n"}/*END*/;
+
+// ---------- tiny markdown readers (the page shows document text verbatim) ----------
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const stripEmoji = (s) => String(s).replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/gu, '').replace(/\s{2,}/g, ' ').trim();
+function inline(s) {
+  return esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, '$1<i>$2</i>');
+}
+function parseTable(lines) {
+  const rows = lines.filter((l) => /^\s*\|/.test(l)).map((l) => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim()));
+  if (rows.length < 2) return null;
+  return { head: rows[0], rows: rows.slice(2) };
+}
+function blocks(lines) {
+  // paragraphs, bullets, checkboxes, tables, bold-label lines; HTML comments dropped
+  const out = []; let para = [], list = null, tbl = [];
+  const flushP = () => { if (para.length) { out.push({ t: 'p', text: para.join(' ') }); para = []; } };
+  const flushL = () => { if (list) { out.push(list); list = null; } };
+  const flushT = () => { if (tbl.length) { const t = parseTable(tbl); if (t) out.push({ t: 'table', ...t }); tbl = []; } };
+  for (const raw of lines) {
+    const l = raw.replace(/<!--.*?-->/g, '');
+    if (/^\s*\|/.test(l)) { flushP(); flushL(); tbl.push(l); continue; } else flushT();
+    if (!l.trim() || /^---+\s*$/.test(l)) { flushP(); flushL(); continue; }
+    let m;
+    if ((m = l.match(/^\s*-\s+\[( |x)\]\s+(.*)$/))) { flushP(); if (!list || list.t !== 'chk') { flushL(); list = { t: 'chk', items: [] }; } list.items.push({ done: m[1] === 'x', text: m[2] }); continue; }
+    if ((m = l.match(/^\s*[-*]\s+(.*)$/))) { flushP(); if (!list || list.t !== 'ul') { flushL(); list = { t: 'ul', items: [] }; } list.items.push({ text: m[1] }); continue; }
+    if ((m = l.match(/^###\s+(.*)$/))) { flushP(); flushL(); out.push({ t: 'h3', text: m[1] }); continue; }
+    flushL(); para.push(l.trim());
+  }
+  flushP(); flushL(); flushT();
+  return out;
+}
+function blocksHtml(bs) {
+  return `<div class="blocks">${bs.map((b) => b.t === 'p' ? `<p class="prose">${inline(b.text)}</p>`
+    : b.t === 'h3' ? `<p class="sub-h">${inline(b.text)}</p>`
+    : b.t === 'ul' ? `<ul class="bul">${b.items.map((i) => `<li><span>${inline(i.text)}</span></li>`).join('')}</ul>`
+    : b.t === 'chk' ? `<ul class="bul chk">${b.items.map((i) => `<li><span>${inline(i.text)}</span></li>`).join('')}</ul>`
+    : b.t === 'table' ? `<div class="tbl-scroll"><table class="ptable"><thead><tr>${b.head.map((h) => `<th>${inline(stripEmoji(h))}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c) => `<td>${inline(stripEmoji(c))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '').join('')}</div>`;
+}
+
+// ---------- the Spec reader: every mark on the page comes from here ----------
+function parseSpec(md) {
+  const d = { title: '', created: '', scoreRaw: null, reqLocked: null, sections: [] };
+  let cur = null;
+  for (const line of md.split('\n')) {
+    if (/^<!--.*-->\s*$/.test(line.trim())) continue;
+    let m;
+    if (!cur && (m = line.match(/^# (.*)$/))) { d.title = m[1].trim(); continue; }
+    if ((m = line.match(/^## (.*)$/))) { cur = { h: m[1].trim(), lines: [] }; d.sections.push(cur); continue; }
+    if (!cur) {
+      if ((m = line.match(/^\*\*Created:\*\*\s*(.*)$/))) d.created = m[1].trim();
+      if ((m = line.match(/^\*\*Ambiguity score:\*\*\s*(.*)$/))) d.scoreRaw = m[1].trim();
+      if ((m = line.match(/^\*\*Requirements:\*\*\s*(\d+)\s+locked/))) d.reqLocked = Number(m[1]);
+      continue;
+    }
+    cur.lines.push(line);
+  }
+  // back matter after the last rule belongs to no section
+  const last = d.sections[d.sections.length - 1];
+  if (last) { const k = last.lines.findIndex((l) => /^---+\s*$/.test(l)); if (k >= 0) { d.back = last.lines.slice(k + 1).filter((l) => l.trim()); last.lines = last.lines.slice(0, k); } }
+  const tm = d.title.match(/^Phase\s+(\d+(?:\.\d+)*)\s*:\s*(.+?)\s+[—–-]\s+Specification$/i);
+  d.phase = tm ? tm[1] : null; d.name = tm ? tm[2] : d.title;
+  const sm = d.scoreRaw && d.scoreRaw.match(/^(\d+(?:\.\d+)?)/);
+  d.score = sm ? Number(sm[1]) : null;
+  const gm = d.scoreRaw && d.scoreRaw.match(/gate:\s*(?:≤|<=|<)\s*(\d+(?:\.\d+)?)/);
+  d.gate = gm ? Number(gm[1]) : (d.score != null ? 0.2 : null);
+  d.gateStated = Boolean(gm);
+  d.gateText = gm ? gm[1] : '0.20';
+  d.scoreText = sm ? sm[1] : null;
+  d.locked = d.score == null ? null : d.score <= d.gate;
+  const sec = (re) => d.sections.find((s) => re.test(s.h));
+  const goal = sec(/^goal$/i);
+  d.goal = goal ? goal.lines.filter((l) => l.trim()).join(' ') : '';
+  d.reqs = [];
+  const rs = sec(/^requirements$/i);
+  if (rs) for (const l of rs.lines) {
+    let m;
+    if ((m = l.match(/^(\d+)\.\s+\*\*(.+?)\*\*:?\s*:?\s*(.*)$/))) d.reqs.push({ n: Number(m[1]), label: m[2].replace(/:$/, ''), text: m[3], f: {} });
+    else if ((m = l.match(/^\s+-\s+(Current|Target|Acceptance):\s*(.*)$/)) && d.reqs.length) d.reqs[d.reqs.length - 1].f[m[1]] = m[2];
+  }
+  d.locked_n = d.reqLocked ?? d.reqs.length;
+  const bs = sec(/^boundaries$/i);
+  d.inScope = []; d.outScope = [];
+  if (bs) { let tgt = null; for (const l of bs.lines) { if (/^\*\*In scope:\*\*/i.test(l)) tgt = d.inScope; else if (/^\*\*Out of scope:\*\*/i.test(l)) tgt = d.outScope; else { const m = l.match(/^\s*-\s+(.*)$/); if (m && tgt) { const [text, ...why] = m[1].split(/\s+—\s+/); tgt.push({ text, why: why.join(' — ') }); } } } }
+  const ar = sec(/^ambiguity report$/i);
+  d.dims = []; d.arNotes = [];
+  if (ar) {
+    const t = parseTable(ar.lines);
+    if (t) t.rows.forEach((r) => { const name = r[0].replace(/\*\*/g, '').trim(); const row = { name, score: Number(r[1]), min: r[2], status: r[3].includes('⚠') ? 'below' : 'met', notes: r[4] || '' }; if (/^ambiguity$/i.test(name)) d.total = row; else d.dims.push(row); });
+    d.arNotes = blocks(ar.lines.filter((l) => !/^\s*\|/.test(l))).filter((b) => b.t === 'p' && !/^Status:/.test(b.text));
+  }
+  const cov = (re, statusCol) => { const s = sec(re); if (!s) return null; const t = parseTable(s.lines); if (!t) return null; return t.rows.map((r) => { const st = stripEmoji(r[statusCol]).toLowerCase(); return { name: stripEmoji(r[0]), req: Number((r[1].match(/R(\d+)/) || [])[1]), status: st, note: stripEmoji(r[statusCol + 1] || ''), tone: /unresolved/.test(st) ? 'in-flight' : /dismissed/.test(st) ? 'quiet' : 'complete', word: /unresolved/.test(st) ? 'Unresolved' : /dismissed/.test(st) ? 'Dismissed' : /backstop/.test(st) ? 'Backstop' : /covered/.test(st) ? 'Covered' : 'Resolved' }; }); };
+  d.edges = cov(/^edge coverage$/i, 2);
+  d.musts = cov(/^prohibitions/i, 2);
+  const cs = sec(/^constraints$/i);
+  d.constraints = cs ? blocks(cs.lines).flatMap((b) => b.t === 'ul' ? b.items.map((i) => i.text) : b.t === 'p' ? [b.text] : []) : [];
+  const ac = sec(/^acceptance criteria$/i);
+  d.criteria = ac ? blocks(ac.lines).flatMap((b) => b.t === 'chk' ? b.items.map((i) => i.text) : []) : [];
+  return d;
+}
+// The "No score" state: 01-SPEC with its score line set back to the template's placeholder and no Ambiguity Report.
+function noScore(md) {
+  return md.replace(/^\*\*Ambiguity score:\*\*.*$/m, '**Ambiguity score:** [score] (gate: ≤ 0.20)').replace(/## Ambiguity Report[\s\S]*?(?=## Interview Log)/, '');
+}
+
+// ---------- state ----------
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+const S = { state: params.get('state') || '01', sel: null, pick: null, why: false };
+const doc = () => parseSpec(S.state === 'none' ? noScore(SRC['01']) : SRC[S.state]);
+const ACTS = {};
+const VIEWS = {};
+
+// ---------- shared atoms ----------
+const ICON = { copy: '<rect x="9" y="9" width="13" height="13"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>', chevr: '<path d="m9 18 6-6-6-6"/>', arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>', x: '<path d="M18 6 6 18M6 6l12 12"/>' };
+const svg = (k, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`;
+const sq = (tone, label) => `<span class="sq" data-tone="${tone}"${label ? ` role="img" aria-label="${esc(label)}"` : ' aria-hidden="true"'}></span>`;
+const chip = (tone, text, cls = '') => `<span class="status-chip ${cls}" data-tone="${tone}">${sq(tone)}${esc(text)}</span>`;
+const verdict = (d, cls = '') => d.locked == null ? chip('quiet', 'Ambiguity not stated', cls) : d.locked ? chip('complete', 'Locked enough to plan', cls) : chip('in-flight', 'Not locked yet', cls);
+const numbersLine = (d) => d.score == null ? '' : `<b>${esc(d.scoreText)}</b> <span>against a gate of</span> <b>${esc(d.gateText)}</b>`;
+const gateNote = (d) => d.score != null && !d.gateStated ? `<span class="meta" title="The file states a score and no gate, so GSD's gate of 0.20 is used">Gate not stated in the file; GSD's 0.20</span>` : '';
+const noAcc = () => chip('quiet', 'No acceptance stated');
+const appHead = () => `<header class="app-head"><span class="app-brand"><i></i>Labelore <span>/ Lendshed</span></span><nav class="app-nav" aria-label="Project"><a href="#" data-act="noop">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Search</a></nav></header>`;
+function header(d) {
+  return `<nav class="crumbs" aria-label="Breadcrumb"><span>Lendshed</span><span aria-hidden="true">/</span><span>Phase ${esc(d.phase)}</span><span aria-hidden="true">/</span><span aria-current="page">Spec</span></nav>
+  <header class="heading-block"><p class="eyebrow">Phase ${esc(d.phase)} · Spec</p><h1>${esc(d.name)}</h1>
+  <div class="meta-row"><button class="btn-xs icon" type="button" data-act="noop" aria-label="Copy path" title="Copy path">${svg('copy')}</button><div class="seg" role="group" aria-label="Show"><button class="btn-xs" type="button" aria-pressed="true">View</button><button class="btn-xs" type="button" aria-pressed="false" data-act="noop">Source</button></div><span class="meta">Created ${esc(d.created)}</span><span class="meta">${d.locked_n} requirements locked</span></div></header>`;
+}
+const page = (d, inner) => `${appHead()}<main class="page">${header(d)}${inner}</main>`;
+// Sections the designed part does not claim: closed bars in document order.
+function bars(d, claimed) {
+  const rest = d.sections.filter((s) => !claimed.some((re) => re.test(s.h)) && !/^interview log$/i.test(s.h));
+  return `<div class="bars">${rest.map((s) => { const bs = blocks(s.lines); const n = bs.reduce((a, b) => a + (b.items ? b.items.length : b.rows ? b.rows.length : 0), 0); return `<details class="bar"><summary>${svg('chevr', 'i chev')}<span>${esc(s.h)}</span>${n ? `<span class="n">${n}</span>` : ''}</summary><div class="bar-body">${blocksHtml(bs)}</div></details>`; }).join('')}</div>`;
+}
+const onlyStrip = (d) => `<nav class="only" aria-label="In the source only"><span class="micro-label">In the source only</span>${d.sections.filter((s) => /^interview log$/i.test(s.h)).map((s) => `<a href="#" data-act="noop">${esc(s.h)}</a>`).join('')}</nav>`;
+function reqDock(d, i, close = true) {
+  const r = d.reqs[i];
+  if (!r) return '';
+  const f = (k) => r.f[k] ? `<div><dt class="micro-label">${k}</dt><dd>${inline(r.f[k])}</dd></div>` : k === 'Acceptance' ? `<div><dt class="micro-label">${k}</dt><dd>${noAcc()}</dd></div>` : '';
+  return `<div class="dock" role="region" aria-label="Requirement ${r.n}"><div class="dock-head"><span class="micro-label">Requirement ${r.n}</span><h3>${inline(r.label)}</h3>${close ? `<button class="text-link x" type="button" data-act="close">Close</button>` : ''}</div><p class="prose">${inline(r.text)}</p><dl class="fields">${f('Current')}${f('Target')}${f('Acceptance')}</dl></div>`;
+}
+const fmt = (n) => n.toFixed(2);
+
+// =====================================================================================
+// A: Gate gauge. The page's first screen is one scale: where the score sits against the gate.
+// =====================================================================================
+VIEWS.a = function () {
+  const d = doc();
+  const MAX = d.score != null && d.score > 0.5 ? 1 : 0.5;
+  const pct = (v) => `${(Math.min(v, MAX) / MAX * 100).toFixed(2)}%`;
+  const ticks = []; for (let v = 0; v <= MAX + 1e-9; v += 0.1) ticks.push(`<span style="left:${pct(v)}">${fmt(v)}</span>`);
+  const gate = d.gate ?? 0.2;
+  const tone = d.locked == null ? 'quiet' : d.locked ? 'complete' : 'in-flight';
+  const gauge = `<div class="gauge" role="img" aria-label="${d.score == null ? 'Ambiguity not stated; gate 0.20' : `Ambiguity ${d.scoreText} against a gate of ${d.gateText}`}">
+    <div class="gauge-track"><div class="gauge-zone" style="width:${pct(gate)}"><span class="gauge-zone-l micro-label">Gate ≤ ${esc(d.gateText ?? '0.20')}</span></div>${d.score != null ? `<div class="gauge-fill" data-tone="${tone}" style="width:${pct(d.score)}"></div>` : `<span class="gauge-empty">No score in the file</span>`}</div>
+    ${d.score != null ? `<span class="gauge-mark" style="left:calc(${pct(d.score)} - 1px)"></span><span class="gauge-dot" data-tone="${tone}" style="left:${pct(d.score)}"></span>` : ''}
+    <div class="gauge-ticks" aria-hidden="true">${ticks.join('')}</div></div>`;
+  const dims = d.dims.length ? `<div class="dims" role="list" aria-label="Dimension scores">${d.dims.map((x) => { const t = x.status === 'below' ? 'in-flight' : 'complete'; return `<div class="dim" role="listitem" title="${esc(x.notes)}"><span class="micro-label">${esc(x.name)}</span><span class="dim-track" aria-hidden="true"><span class="dim-fill" data-tone="${x.status === 'below' ? 'in-flight' : ''}" style="width:${x.score * 100}%"></span><span class="dim-min" style="left:calc(${Number(x.min) * 100}% - 1px)"></span></span><span class="dim-val"><b>${fmt(x.score)}</b> min ${esc(x.min)}</span><span class="dim-st" data-tone="${t}">${sq(t)}${x.status === 'below' ? 'Below minimum' : 'Met minimum'}</span></div>`; }).join('')}</div>` : '';
+  const why = d.arNotes.length ? (S.why ? `<div class="va-why">${d.arNotes.map((b) => `<p class="prose source-note">${inline(b.text)}</p>`).join('')}<button class="text-link" type="button" data-act="why" aria-expanded="true">Read less</button></div>` : `<button class="text-link" type="button" data-act="why" aria-expanded="false">Read why it was written anyway</button>`) : '';
+  const band = `<section class="va-band" aria-label="Locked enough to plan?"><div class="va-verdict">${verdict(d, 'big')}<p class="line">${numbersLine(d)}</p>${gateNote(d)}</div>${gauge}${dims}${why}</section>`;
+  const rungs = d.reqs.map((r, i) => `<button class="rung" type="button" data-act="req" data-i="${i}" aria-pressed="${S.sel === i}"><span class="rung-top"><span class="num">${r.n}</span><span class="ticks" aria-hidden="true">${['Current', 'Target', 'Acceptance'].map((k) => `<span class="tick">${sq(r.f[k] ? 'neutral' : 'quiet')}${k[0]}</span>`).join('')}</span></span><span class="rung-l">${inline(r.label)}</span>${r.f.Acceptance ? '' : noAcc()}</button>`).join('');
+  const missing = d.reqs.filter((r) => !r.f.Acceptance).length;
+  const ladder = `<section class="va-reqs" aria-labelledby="a-req"><div class="ladder-head"><h2 class="sh" id="a-req">Requirements</h2><span class="meta">${d.locked_n} locked${missing ? ` · ${missing} with no acceptance stated` : ''} · C Current · T Target · A Acceptance</span></div><div class="ladder" style="margin-top:var(--space-3)">${rungs}</div>${S.sel != null ? `<div style="margin-top:var(--space-3)">${reqDock(d, S.sel)}</div>` : ''}</section>`;
+  const scope = `<section aria-labelledby="a-scope" style="display:grid;gap:var(--space-4)"><h2 class="sh" id="a-scope">Boundaries</h2><div class="scope2"><div><h3 class="micro-label">${sq('complete')}In scope · ${d.inScope.length}</h3><ul class="scope-list">${d.inScope.map((x) => `<li><span>${inline(x.text)}</span></li>`).join('')}</ul></div><div><h3 class="micro-label">${sq('quiet')}Out of scope · ${d.outScope.length}</h3><ul class="scope-list">${d.outScope.map((x) => `<li><span>${inline(x.text)}</span>${x.why ? `<span class="why">— ${inline(x.why)}</span>` : ''}</li>`).join('')}</ul></div></div></section>`;
+  const goal = `<section class="va-goal" aria-label="Goal"><p class="micro-label">Goal</p><p>${inline(d.goal)}</p></section>`;
+  return page(d, `${band}<div class="va-col">${goal}${ladder}${scope}${bars(d, [/^goal$/i, /^requirements$/i, /^boundaries$/i, /^ambiguity report$/i])}${onlyStrip(d)}</div>`);
+};
+
+// =====================================================================================
+// B: Lock matrix. Five column gauges in a strip, then requirements × the evidence that pins each down.
+// =====================================================================================
+VIEWS.b = function () {
+  const d = doc();
+  const MAX = 0.5;
+  const tone = d.locked == null ? 'quiet' : d.locked ? 'complete' : 'in-flight';
+  const lead = `<div class="vb-cell lead">${verdict(d)}<p class="vb-lead-line">${d.score != null ? `<b>${esc(d.scoreText)}</b> against a gate of <b>${esc(d.gateText)}</b>` : '<span class="source-note">The file gives no ambiguity score, so there is no verdict.</span>'}</p><div>${gateNote(d)}<p class="micro-label">Ambiguity · lower is better</p></div>
+    <div class="col" role="img" aria-label="${d.score == null ? 'No score' : `Ambiguity ${d.scoreText}, gate ${d.gateText}`}"><span class="col-zone" style="height:${(d.gate ?? 0.2) / MAX * 100}%"></span>${d.score != null ? `<span class="col-fill" data-tone="${tone}" style="height:${Math.min(d.score, MAX) / MAX * 100}%"></span>` : '<span class="col-empty"></span>'}<span class="col-line" style="bottom:${(d.gate ?? 0.2) / MAX * 100}%"></span></div></div>`;
+  const cells = d.dims.length ? d.dims.map((x) => { const t = x.status === 'below' ? 'in-flight' : 'complete'; return `<div class="vb-cell" title="${esc(x.notes)}"><p class="micro-label">${esc(x.name.replace(/ Clarity$/, ''))}</p><div class="col" role="img" aria-label="${esc(x.name)} ${fmt(x.score)}, minimum ${esc(x.min)}"><span class="col-fill" data-tone="${x.status === 'below' ? 'in-flight' : ''}" style="height:${x.score * 100}%"></span><span class="col-line" style="bottom:${Number(x.min) * 100}%"></span></div><div class="vb-val"><span class="num">${fmt(x.score)}</span><span class="meta">min ${esc(x.min)}</span><span class="vb-st" data-tone="${t}">${sq(t)}<span>${x.status === 'below' ? 'Below minimum' : 'Met minimum'}</span></span></div></div>`; }).join('')
+    : ['Goal', 'Boundary', 'Constraint', 'Acceptance'].map((n) => `<div class="vb-cell"><p class="micro-label">${n}</p><div class="col"><span class="col-empty"></span></div><div class="vb-val"><span class="meta">Not scored</span></div></div>`).join('');
+  const strip = `<section class="vb-strip" aria-label="Locked enough to plan?">${lead}${cells}</section>`;
+  const hasCov = Boolean(d.edges || d.musts);
+  const covSq = (list, n) => { const hits = (list || []).filter((x) => x.req === n); return hits.length ? hits.map((x) => `<span class="sq" data-tone="${x.tone}" role="img" aria-label="${esc(x.word)}: ${esc(x.name)}" title="${esc(x.word)} · ${esc(x.name)}"></span>`).join('') : '<span class="meta">–</span>'; };
+  const rows = d.reqs.map((r, i) => {
+    const open = S.sel === i;
+    const fieldCell = (k) => `<span class="mx-cell" data-l="${k}">${r.f[k] ? sq('neutral', `${k} stated`) : k === 'Acceptance' ? noAcc() : sq('quiet', `${k} not stated`)}</span>`;
+    return `<button class="mx-row" type="button" data-act="req" data-i="${i}" aria-expanded="${open}"><span class="no">${r.n}</span><span class="lab" title="${esc(r.label)}">${inline(r.label)}</span>${fieldCell('Current')}${fieldCell('Target')}${fieldCell('Acceptance')}${hasCov ? `<span class="mx-cell" data-l="Edges">${covSq(d.edges, r.n)}</span><span class="mx-cell" data-l="Must-not">${covSq(d.musts, r.n)}</span>` : ''}</button>${open ? `<div class="mx-open">${reqDock(d, i)}</div>` : ''}`;
+  }).join('');
+  const key = `<div class="mx-key"><span>${sq('neutral')}field stated</span><span>${sq('quiet')}not stated</span>${hasCov ? `<span>${sq('complete')}edge or must-not covered, backstopped or resolved</span><span>${sq('in-flight')}unresolved: the planner treats it as an assumption</span><span>${sq('quiet')}dismissed</span>` : ''}</div>`;
+  const matrix = `<section aria-labelledby="b-req" style="display:grid;gap:var(--space-3)"><div class="ladder-head"><h2 class="sh" id="b-req">Requirements</h2><span class="meta">${d.locked_n} locked</span></div>
+    <div class="mx" data-cov="${hasCov}"><div class="mx-row grp" aria-hidden="true"><span></span><span></span><span class="micro-label" style="grid-column:span 3">Fields</span>${hasCov ? '<span class="micro-label" style="grid-column:span 2">Coverage</span>' : ''}</div><div class="mx-row head" aria-hidden="true"><span class="micro-label">#</span><span class="micro-label">Requirement</span><span class="micro-label">Current</span><span class="micro-label">Target</span><span class="micro-label">Acceptance</span>${hasCov ? '<span class="micro-label">Edges</span><span class="micro-label">Must-not</span>' : ''}</div>${rows}${key}</div></section>`;
+  const fence = `<section aria-labelledby="b-scope" style="display:grid;gap:var(--space-4)"><h2 class="sh" id="b-scope">Boundaries</h2><div class="fence"><div class="fence-in"><span class="micro-label">${sq('complete')}In scope · ${d.inScope.length}</span><div class="fence-tiles">${d.inScope.map((x) => `<span class="fence-tile">${inline(x.text)}</span>`).join('')}</div></div><div class="fence-out"><span class="micro-label">${sq('quiet')}Out of scope · ${d.outScope.length}</span><ul style="display:grid;gap:var(--space-3)">${d.outScope.map((x) => `<li>${sq('quiet')}<span>${inline(x.text)}</span>${x.why ? `<span class="why">— ${inline(x.why)}</span>` : ''}</li>`).join('')}</ul></div></div></section>`;
+  const goal = `<section class="va-goal" aria-label="Goal" style="max-width:72ch"><p class="micro-label">Goal</p><p>${inline(d.goal)}</p></section>`;
+  return page(d, `${strip}${goal}${matrix}${fence}${bars(d, [/^goal$/i, /^requirements$/i, /^boundaries$/i, /^ambiguity report$/i])}${onlyStrip(d)}`);
+};
+
+// =====================================================================================
+// C: Reuse. 018 B's radar (four dimensions, the minimums as a dashed shape) beside 041 B's count tiles;
+// 015 B's square strip over requirement cards with Current → Target pairs; 044 E's piles for what is pinned down.
+// =====================================================================================
+function radarSvg(d) {
+  const W = 320, cx = 160, cy = 160, R = 108;
+  const ang = (i) => -Math.PI / 2 + i * (Math.PI * 2 / d.dims.length);
+  const pt = (i, v) => [cx + Math.cos(ang(i)) * R * v, cy + Math.sin(ang(i)) * R * v];
+  const poly = (vals) => vals.map((v, i) => pt(i, v).map((n) => n.toFixed(1)).join(',')).join(' ');
+  const rings = [0.25, 0.5, 0.75, 1].map((r, k) => `<polygon class="r-ring"${k === 3 ? ' data-outer="true"' : ''} points="${poly(d.dims.map(() => r))}"/>`).join('');
+  const spokes = d.dims.map((_, i) => { const [x, y] = pt(i, 1); return `<line class="r-spoke" x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`; }).join('');
+  const tone = d.locked ? 'complete' : 'in-flight';
+  const dots = d.dims.map((x, i) => { const [px, py] = pt(i, x.score); return `<rect class="r-dot" data-tone="${x.status === 'below' ? 'in-flight' : 'complete'}" x="${(px - 5).toFixed(1)}" y="${(py - 5).toFixed(1)}" width="10" height="10"><title>${esc(x.name)} ${fmt(x.score)}, minimum ${esc(x.min)}</title></rect>`; }).join('');
+  const labels = d.dims.map((x, i) => { const [lx, ly] = pt(i, 1.2); const anchor = Math.abs(lx - cx) < 4 ? 'middle' : lx > cx ? 'start' : 'end'; const dy = ly < cy - 10 ? -14 : ly > cy + 10 ? 14 : 0; return `<text class="r-t" x="${lx.toFixed(1)}" y="${(ly + dy).toFixed(1)}" text-anchor="${anchor}">${esc(x.name.replace(/ Clarity$/, '').replace('Acceptance Criteria', 'Acceptance'))}</text><text class="r-t v" x="${lx.toFixed(1)}" y="${(ly + dy + 14).toFixed(1)}" text-anchor="${anchor}">${fmt(x.score)} / ${esc(x.min)}</text>`; }).join('');
+  return `<div class="radar"><svg viewBox="-40 -20 ${W + 80} ${W + 40}" role="img" aria-label="Dimension scores against their minimums; ambiguity ${esc(d.scoreText)}">${rings}${spokes}<polygon class="r-min" points="${poly(d.dims.map((x) => Number(x.min)))}"/><polygon class="r-shape" data-tone="${tone}" points="${poly(d.dims.map((x) => x.score))}"/>${dots}<text class="r-c" x="${cx}" y="${cy + 7}">${esc(d.scoreText)}</text>${labels}</svg></div>`;
+}
+VIEWS.c = function () {
+  const d = doc();
+  const missing = d.reqs.filter((r) => !r.f.Acceptance).length;
+  const hasRadar = d.dims.length > 0 && d.score != null;
+  const tile = (n, label, tone, target) => `<button class="tile" type="button" data-act="jump" data-to="${target}" data-tone="${tone}"><span class="tile-n">${sq(tone)}<span class="num">${n}</span></span><span class="micro-label">${label}</span></button>`;
+  const tiles = `<div class="tiles">${tile(d.locked_n, 'Requirements locked', 'neutral', 'c-req')}${tile(d.reqs.length - missing, 'With acceptance', 'neutral', 'c-req')}${missing ? tile(missing, 'No acceptance stated', 'quiet', 'c-req') : ''}${tile(d.inScope.length, 'In scope', 'complete', 'c-pin')}${tile(d.outScope.length, 'Out of scope', 'quiet', 'c-pin')}</div>`;
+  const head = `<section class="vc-head" data-radar="${hasRadar}" aria-label="Locked enough to plan?">${hasRadar ? radarSvg(d) : ''}<div class="vc-side"><div class="meta-row">${verdict(d, 'big')}</div>${d.score != null ? `<p class="line">${numbersLine(d)}</p>` : ''}${gateNote(d)}${hasRadar ? `<p class="meta">Shape: each dimension's score · dashed: its minimum</p>` : ''}<div class="va-goal"><p class="micro-label">Goal</p><p class="prose">${inline(d.goal)}</p></div>${tiles}</div></section>`;
+  const strip = `<div class="strip" role="group" aria-label="Requirements">${d.reqs.map((r, i) => `<button type="button" data-act="card" data-i="${i}" title="${esc(r.label)}${r.f.Acceptance ? '' : ' · No acceptance stated'}">${sq(r.f.Acceptance ? 'neutral' : 'quiet')}<span class="l">${r.n}</span></button>`).join('')}<span class="meta key">${sq('neutral')} acceptance stated · ${sq('quiet')} none</span></div>`;
+  const cards = `<div class="cards">${d.reqs.map((r, i) => `<details class="card" id="card-${i}"${S.pick === i ? ' open' : ''}><summary><span class="no">${r.n}</span><b>${inline(r.label)}</b>${r.f.Acceptance ? '' : noAcc()}</summary><div class="card-body"><p class="prose">${inline(r.text)}</p><div class="pairs"><div class="pair"><span class="micro-label">Current</span><span>${inline(r.f.Current || '')}</span></div><span class="arrow">${svg('arrow')}</span><div class="pair"><span class="micro-label">Target</span><span>${inline(r.f.Target || '')}</span></div><div class="pair acc"${r.f.Acceptance ? '' : ' data-none="true"'}><span class="micro-label">Acceptance</span>${r.f.Acceptance ? `<span>${inline(r.f.Acceptance)}</span>` : noAcc()}</div></div></div></details>`).join('')}</div>`;
+  const reqs = `<section id="c-req" aria-labelledby="c-req-h" style="display:grid;gap:var(--space-4)"><div class="ladder-head"><h2 class="sh" id="c-req-h">Requirements</h2><span class="meta">${d.locked_n} locked</span></div>${strip}${cards}</section>`;
+  // piles: one column per list the spec pins down, one segment per item
+  const cols = [
+    { label: 'In scope', items: d.inScope.map((x) => ({ t: x.text, tone: 'complete' })) },
+    { label: 'Out of scope', items: d.outScope.map((x) => ({ t: x.text + (x.why ? ` — ${x.why}` : ''), tone: 'quiet' })) },
+    { label: 'Constraints', items: d.constraints.map((t) => ({ t, tone: 'neutral' })) },
+    { label: 'Acceptance criteria', items: d.criteria.map((t) => ({ t, tone: 'neutral' })) },
+  ];
+  if (d.edges) cols.push({ label: 'Edges', items: d.edges.map((x) => ({ t: `${x.word} · R${x.req} · ${x.name}${x.note ? ` — ${x.note}` : ''}`, tone: x.tone })) });
+  if (d.musts) cols.push({ label: 'Must-not', items: d.musts.map((x) => ({ t: `${x.word} · R${x.req} · ${x.name}${x.note ? ` — ${x.note}` : ''}`, tone: x.tone })) });
+  const pick = S.pin && cols[S.pin[0]] && cols[S.pin[0]].items[S.pin[1]];
+  const piles = `<div class="piles" style="--cols:${cols.length}">${cols.map((c, ci) => `<div class="pile-col"><div class="pile">${c.items.length ? c.items.map((it, ii) => `<button class="mk" type="button" data-act="pin" data-c="${ci}" data-i="${ii}" data-tone="${it.tone}"${S.pin && S.pin[0] === ci && S.pin[1] === ii ? ' data-on="true"' : ''} title="${esc(it.t.replace(/`/g, ''))}"></button>`).join('') : '<span class="pile-zero"></span>'}</div><div class="pile-lab"><span class="num" title="${esc(c.label)}">${c.items.length}</span><span class="pl-i micro-label" aria-hidden="true">${ci + 1}.</span><span class="pl">${esc(c.label)}</span></div></div>`).join('')}</div><p class="pile-names" aria-hidden="true">${cols.map((c, ci) => `<span>${ci + 1}. ${esc(c.label)} ${c.items.length}</span>`).join('')}</p>`;
+  const dock = pick ? `<div class="dock pdock"><div class="dock-head"><span class="micro-label">${esc(cols[S.pin[0]].label)}</span><button class="text-link x" type="button" data-act="unpin">Close</button></div><p class="prose">${inline(pick.t)}</p></div>` : `<div class="dock-empty pdock">Select a segment to read that item.</div>`;
+  const pin = `<section id="c-pin" aria-labelledby="c-pin-h" style="display:grid;gap:var(--space-3)"><h2 class="sh" id="c-pin-h">What the spec pins down</h2><figure class="pic"><div class="pic-bar"><span class="micro-label">One segment per item, in the file's order</span></div><div class="pic-body">${piles}${dock}</div><div class="pic-foot"><span>${sq('complete')}In scope</span><span>${sq('quiet')}Out of scope, or dismissed</span><span>${sq('in-flight')}unresolved edge or must-not</span><span>${sq('neutral')}a constraint or criterion</span></div></figure></section>`;
+  const scopeBar = `<details class="bar"><summary>${svg('chevr', 'i chev')}<span>Boundaries</span><span class="n">${d.inScope.length + d.outScope.length}</span></summary><div class="bar-body"><div class="scope2"><div><h3 class="micro-label">${sq('complete')}In scope</h3><ul class="scope-list">${d.inScope.map((x) => `<li><span>${inline(x.text)}</span></li>`).join('')}</ul></div><div><h3 class="micro-label">${sq('quiet')}Out of scope</h3><ul class="scope-list">${d.outScope.map((x) => `<li><span>${inline(x.text)}</span>${x.why ? `<span class="why">— ${inline(x.why)}</span>` : ''}</li>`).join('')}</ul></div></div></div></details>`;
+  return page(d, `${head}${reqs}${pin}<div>${scopeBar.replace('class="bar"', 'class="bar" style="border-top:1px solid var(--border)"')}${bars(d, [/^goal$/i, /^requirements$/i, /^boundaries$/i, /^ambiguity report$/i])}</div>${onlyStrip(d)}`);
+};
+
+ACTS.req = (el) => { const i = Number(el.dataset.i); S.sel = S.sel === i ? null : i; render(); };
+ACTS.close = () => { S.sel = null; render(); };
+ACTS.why = () => { S.why = !S.why; render(); };
+ACTS.card = (el) => { S.pick = Number(el.dataset.i); render(); const c = document.getElementById(`card-${S.pick}`); if (c) c.scrollIntoView({ block: 'center' }); };
+ACTS.jump = (el) => { const t = document.getElementById(el.dataset.to); if (t) t.scrollIntoView({ block: 'start' }); };
+ACTS.pin = (el) => { const k = [Number(el.dataset.c), Number(el.dataset.i)]; S.pin = S.pin && S.pin[0] === k[0] && S.pin[1] === k[1] ? null : k; render(); };
+ACTS.unpin = () => { S.pin = null; render(); };
+
+// ---------- render orchestration ----------
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY;
+  const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  window.scrollTo(0, y);
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; S.sel = null; S.pick = null; S.pin = null; S.why = false; return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+window.addEventListener('hashchange', render);
+render();
+</script>
+</body>
+</html>
