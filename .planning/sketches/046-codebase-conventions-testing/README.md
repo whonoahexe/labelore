@@ -2,7 +2,7 @@
 sketch: 046
 name: codebase-conventions-testing
 question: "Inside 042 A's Rail + column frame, how should the Conventions panel (quiet reference rules per heading) and the Testing panel (framework and runner first, run commands as copyable rows, then organisation, mocking, fixtures, coverage and test types) open on a picture rather than a list?"
-winner: null
+winner: "B"
 tags: [codebase, conventions, testing, run-commands]
 ---
 
@@ -165,3 +165,19 @@ warning or missing tone anywhere. No colour literal in the file.
 
 All content is Labelore's own public map, the made-up Tidemark fixture, or five Tidemark commands invented here in
 the fixture's own form; no other repository's map is drawn from. The repository is public.
+
+## Winner
+**B: Reuse: rule piles + test tree**, chosen by the user at the 10-11 checkpoint ("B for 46"), no synthesis. The
+tab is marked "★ Selected"; A and C stay in this folder as the record and are not built.
+
+Build B as drawn, from shipped or already-chosen parts inside 042 A's frame:
+
+| Part of the panel | Build against | Sketch it came from |
+|-------------------|---------------|---------------------|
+| Conventions: a column per section, a segment per rule, the count under each column, the section chips that filter, a selected rule in the dock | the Risk piles 10-12 builds for the Concerns panel (044 E); not in `src/` at this sketch's commit, so 10-14 takes the component from 10-12's output | 044 E |
+| Conventions: segment opacity by strength, the accent ring on a checked rule | this sketch's rules (hard, plain, observed; checked by a test or the linter) in place of 044 E's Priority steps and most-dangerous ring | this sketch (B) |
+| Testing: runner plates (runner, e2e runner, assertion library, coverage) | first, a strip of small plates | this sketch (B) |
+| Testing: the test folder | `CleanTreeFigure({ text, title, caption })` / `CleanTree` in `src/web/components/clean-tree.tsx` on the Test File Organization Structure fence, with test-type badges in the notes column | 009 B |
+| Testing: run commands | `CopyCommand({ command })` in `src/web/components/copy-command.tsx` (the shared `copy-command` row), one per command, its comment as the caption | 10-10 |
+
+The sections the picture does not draw stay as the closed section bars. Open items are in 10-11-SUMMARY.md.
