@@ -13,6 +13,7 @@ import {
   MAPPED_NOT_STARTED_LEAD,
   NOT_MAPPED,
   composeCodebase,
+  linkMapMentions,
 } from '../../src/web/views/codebase-page.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { loadProject } from '../helpers/fixture-project.ts';
@@ -22,6 +23,7 @@ const TIDEMARK_ROOT = fileURLToPath(new URL('../fixtures/tidemark', import.meta.
 const KINDS = new Map([
   ['STACK', 'codebase-stack'],
   ['ARCHITECTURE', 'codebase-architecture'],
+  ['STRUCTURE', 'codebase-structure'],
   ['CONCERNS', 'codebase-concerns'],
   ['CONVENTIONS', 'codebase-conventions'],
 ]);
@@ -312,6 +314,74 @@ describe('composeCodebase - the Architecture panel (10-12)', () => {
       const model = composeCodebase({ ...input, structured: { codebase: { doc: 'architecture', architecture } } });
       expect(model?.active.lifted ?? null).toBeNull();
     }
+  });
+});
+
+describe('composeCodebase - the Structure panel (10-12)', () => {
+  it('lifts the Tidemark tree for the shipped clean tree and counts directories', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'STRUCTURE'));
+    const lifted = model?.active.lifted;
+    expect(lifted?.kind).toBe('structure');
+    if (lifted?.kind !== 'structure') return;
+    expect(lifted.tree?.text.split('\n')[0]).toBe('tidemark/');
+    expect(model?.active.keyPhrase).toBe('11 directories');
+  });
+
+  it('draws only the Directory Layout and keeps every other section plain, Where to Add New Code included', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'STRUCTURE'));
+    expect(model?.active.plainSections).toEqual([
+      'Directory Purposes',
+      'Key File Locations',
+      'Naming Conventions',
+      'Where to Add New Code',
+      'Special Directories',
+    ]);
+  });
+
+  it('lifts nothing when the document has no tree to draw', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'STRUCTURE');
+    const model = composeCodebase({
+      ...input,
+      structured: { codebase: { doc: 'structure', sections: [], structure: { tree: null, directories: 0 } } },
+    });
+    expect(model?.active.lifted).toBeNull();
+    expect(model?.active.plainSections).toContain('Directory Layout');
+  });
+});
+
+describe('linkMapMentions - cross-links between map panels (10-12)', () => {
+  const urls = new Map([
+    ['STRUCTURE.md', '/p/codebase/structure'],
+    ['ARCHITECTURE.md', '/p/codebase/architecture'],
+  ]);
+
+  it('links a see-STRUCTURE.md mention to the mapped panel and leaves the rest as text', () => {
+    expect(linkMapMentions('Layout: see STRUCTURE.md for folders.', urls)).toEqual([
+      { text: 'Layout: see ', to: null },
+      { text: 'STRUCTURE.md', to: '/p/codebase/structure' },
+      { text: ' for folders.', to: null },
+    ]);
+  });
+
+  it('links a .planning/codebase path whole', () => {
+    expect(linkMapMentions('in `.planning/codebase/ARCHITECTURE.md`.', urls)).toEqual([
+      { text: 'in `', to: null },
+      { text: '.planning/codebase/ARCHITECTURE.md', to: '/p/codebase/architecture' },
+      { text: '`.', to: null },
+    ]);
+  });
+
+  it('stays text when the target is not mapped, for any of the seven names', () => {
+    expect(linkMapMentions('see TESTING.md and CONCERNS.md', urls)).toEqual([{ text: 'see TESTING.md and CONCERNS.md', to: null }]);
+    expect(linkMapMentions('see STRUCTURE.md', new Map())).toEqual([{ text: 'see STRUCTURE.md', to: null }]);
+  });
+
+  it('matches the seven exact names only, on a word edge, and builds no href from the text', () => {
+    expect(linkMapMentions('MYSTRUCTURE.md structure.md STRUCTURE.mdx ../STRUCTURE.md', urls).every((part) => part.to === null)).toBe(true);
+    const parts = linkMapMentions('STRUCTURE.md STRUCTURE.md', urls);
+    expect(parts.filter((part) => part.to !== null)).toHaveLength(2);
+    for (const part of parts) expect(part.to === null || [...urls.values()].includes(part.to)).toBe(true);
+    expect(linkMapMentions('', urls)).toEqual([]);
   });
 });
 
