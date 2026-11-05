@@ -31649,3 +31649,469 @@ button.view-codebase-mark:hover {
   color: var(--foreground);
 }
 /* phase-10-user-setup:end */
+
+/* phase-10-eval-review:start */
+/* Phase 10 (10-20): the Eval review page, sketch 050 winner B (Gap -> fix ledger). The page renders four font sizes: the
+   h1 as ArtifactHeader draws it (--fs-display-3), the score, the verdict chip and the tally (--fs-7), Body (--fs-4) and
+   Label (--fs-2). Where a shared class sets a size outside that set, the page takes it inside with a page-scoped rule
+   below, so no shared class is edited. Every colour is a theme token: MISSING is the `missing` tone, never destructive. */
+.view-eval-review-page {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-eval-review-page > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-eval-review-page) .status-chip,
+.artifact-page:has(.view-eval-review-page) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.artifact-page:has(.view-eval-review-page) .source-note,
+.artifact-page:has(.view-eval-review-page) .empty-note {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-eval-review-page code {
+  font-size: inherit;
+}
+
+.view-eval-review-meta {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-eval-review-key {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-eval-review-sq {
+  --status-square-size: var(--space-2-5);
+}
+
+.view-eval-review-score {
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+/* The ruled head: the score and the verdict first, the tally and meter, then the file's own sub-scores. */
+.view-eval-review-head {
+  display: grid;
+  gap: var(--space-3);
+  padding-bottom: var(--space-5);
+  border-bottom: 2px solid var(--foreground);
+}
+
+.view-eval-review-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.artifact-page:has(.view-eval-review-page) .view-eval-review-verdict.status-chip {
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--fs-7);
+  letter-spacing: var(--ls-tight);
+}
+
+.view-eval-review-verdict .view-eval-review-sq {
+  --status-square-size: var(--space-3);
+}
+
+.view-eval-review-tally {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-6);
+}
+
+.view-eval-review-tally-line {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+}
+
+.view-eval-review-tally-line b {
+  font-family: var(--font-mono);
+}
+
+.view-eval-review-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+}
+
+.view-eval-review-facts span {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-eval-review-facts b {
+  color: var(--foreground);
+  font-weight: var(--fw-semibold);
+}
+
+/* The ledger: what the audit found on the left, the plan in the author's order on the right, a wire between a row and
+   the step that opens with its name. */
+.view-eval-review-ledger-wrap {
+  min-width: 0;
+}
+
+.view-eval-review-ledger {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) calc(var(--space-8) * 3) minmax(0, 7fr);
+  align-items: start;
+  min-width: 0;
+}
+
+.view-eval-review-wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.view-eval-review-wires path {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.view-eval-review-wires path[data-tone='missing'] {
+  stroke: var(--missing-fill);
+}
+
+.view-eval-review-wires path[data-tone='in-flight'] {
+  stroke: var(--in-flight-fill);
+}
+
+.view-eval-review-wires path[data-tone='complete'] {
+  stroke: var(--primary);
+}
+
+.view-eval-review-wires path[data-on='false'] {
+  opacity: 0.35;
+}
+
+.view-eval-review-wires path[data-on='true'] {
+  stroke-width: 2.5;
+}
+
+.view-eval-review-col {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-eval-review-colhead {
+  margin: 0;
+}
+
+.view-eval-review-colhead[data-gap='true'] {
+  margin-top: var(--space-4);
+}
+
+.view-eval-review-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  width: 100%;
+  min-width: 0;
+  min-height: var(--space-10);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.view-eval-review-row:hover {
+  background: var(--state-hover);
+}
+
+.view-eval-review-row[aria-pressed='true'] {
+  border-color: var(--foreground);
+}
+
+.view-eval-review-row[data-size='small'] {
+  min-height: var(--space-8);
+  padding: var(--space-1-5) var(--space-3);
+  background: transparent;
+}
+
+.view-eval-review-row[data-size='small']:hover {
+  background: var(--state-hover);
+}
+
+.view-eval-review-name {
+  min-width: 0;
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-eval-review-row[data-size='small'] .view-eval-review-name {
+  font-weight: var(--fw-medium);
+}
+
+.view-eval-review-word {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-eval-review-sub {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+}
+
+.view-eval-review-sub:empty {
+  display: none;
+}
+
+.view-eval-review-finding {
+  grid-column: 1 / -1;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-faint);
+  overflow-wrap: anywhere;
+}
+
+.view-eval-review-gut {
+  min-width: 0;
+}
+
+.view-eval-review-group {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.view-eval-review-group + .view-eval-review-group {
+  margin-top: var(--space-4);
+}
+
+.view-eval-review-ghead {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-eval-review-fix {
+  display: grid;
+  grid-template-columns: var(--space-6) minmax(0, 1fr);
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-left: 2px solid var(--border);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.view-eval-review-fix:hover {
+  background: var(--state-hover);
+}
+
+.view-eval-review-fix[aria-pressed='true'] {
+  border-left-color: var(--foreground);
+  background: var(--state-hover);
+}
+
+.view-eval-review-no {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-weight: var(--fw-semibold);
+}
+
+.view-eval-review-tx {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-eval-review-tgt-line {
+  display: block;
+  margin-top: var(--space-1);
+}
+
+.view-eval-review-tgt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: 0 var(--space-1-5);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  white-space: nowrap;
+}
+
+.view-eval-review-zero {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 52rem) {
+  .view-eval-review-ledger {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+
+  .view-eval-review-wires,
+  .view-eval-review-gut {
+    display: none;
+  }
+}
+
+/* Critical Gaps, Files Found and any other section: closed bars holding the section as the document renders it. */
+.view-eval-review-bars {
+  display: grid;
+  border-top: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-eval-review-bar {
+  border-bottom: 1px solid var(--border);
+}
+
+.view-eval-review-bar-sum {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-10);
+  padding-inline: var(--space-2);
+  font-weight: var(--fw-semibold);
+  list-style: none;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.view-eval-review-bar-sum::-webkit-details-marker {
+  display: none;
+}
+
+.view-eval-review-bar-sum:hover {
+  background: var(--state-hover);
+}
+
+.view-eval-review-bar-chev {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--muted-foreground);
+}
+
+.view-eval-review-bar[open] .view-eval-review-bar-chev {
+  transform: rotate(90deg);
+}
+
+.view-eval-review-bar-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-eval-review-bar-count {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.view-eval-review-bar-body {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--space-4) + var(--space-4));
+  min-width: 0;
+}
+
+@media (max-width: 42rem) {
+  .view-eval-review-bar-body {
+    padding-left: var(--space-2);
+  }
+}
+
+/* The bars render the shared document markup, whose own sizes are fluid and larger than this page's scale. They are
+   taken inside the four sizes here (Body for prose, lists, cells and code, Label for figure text and the heading copy
+   marks), so no shared document class is edited. */
+.view-eval-review-plain-section .artifact-document {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-eval-review-plain-section .artifact-document > :first-child {
+  margin-top: 0;
+}
+
+.view-eval-review-plain-section .artifact-document :is(h3, h4, h5, h6) {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+.view-eval-review-plain-section .artifact-document :is(h3, h4, h5, h6) .heading-copy {
+  font-size: var(--fs-2);
+}
+
+.view-eval-review-plain-section .artifact-document table,
+.view-eval-review-plain-section .artifact-document pre:not([data-figure-island] *) {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-eval-review-plain-section .artifact-document :not(pre) > code {
+  font-size: var(--fs-4);
+}
+
+.view-eval-review-plain-section .artifact-document [data-figure-island] * {
+  font-size: var(--fs-2);
+}
+/* phase-10-eval-review:end */
