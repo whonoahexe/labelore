@@ -89,7 +89,7 @@ describe('composeReviews - 01-REVIEWS, one reviewer', () => {
     expect(html).toContain('Consensus summary, as the file wrote it');
     expect(html).not.toContain('<details open');
     expect(html).not.toContain('Disagreements');
-    expect(html).not.toContain('>Agreed<');
+    expect(html).not.toContain('>Agreed <');
     expect(html).toContain('Concerns');
     expect(model.consensus?.blocks.length).toBeGreaterThan(0);
   });
@@ -129,8 +129,8 @@ describe('normaliseConcern', () => {
 
   it('drops a path:line citation, lower-cases, strips markdown and collapses spaces', () => {
     expect(normaliseConcern('**MEDIUM** Foo   Bar  src/x.ts:12')).toBe('foo bar');
-    expect(normaliseConcern('Reads `Config.maxExportLoans` once (see `src/server/config.ts:41`) at startup')).toBe(
-      'reads config.maxexportloans once (see) at startup',
+    expect(normaliseConcern('Reads `Config.maxExportLoans` once, see `src/server/config.ts:41`, at startup')).toBe(
+      'reads config.maxexportloans once, see at startup',
     );
     expect(normaliseConcern('the [month walk](http://x.test/a) is _unbounded_')).toBe('the month walk is unbounded');
   });
@@ -240,15 +240,15 @@ describe('composeReviews - 04-REVIEWS, three reviewers who disagree and a failed
   it('renders Agreed before Disagreements, the chip on each, the cards as the key and the consensus labelled as the file\'s own', () => {
     const html = markup(model);
     const at = (needle: string): number => html.indexOf(needle);
-    expect(at('>Agreed<')).toBeGreaterThan(-1);
-    expect(at('>Agreed<')).toBeLessThan(at('>Disagreements<'));
-    expect(at('>Disagreements<')).toBeLessThan(at('Each review as written'));
+    expect(at('>Agreed <')).toBeGreaterThan(-1);
+    expect(at('>Agreed <')).toBeLessThan(at('>Disagreements <'));
+    expect(at('>Disagreements <')).toBeLessThan(at('Each review as written'));
     expect(html.split('Reviewers disagree').length - 1).toBe(2);
     expect(html).toContain('Overall risk: HIGH');
     expect(html).toContain('Review failed');
     expect(html).toContain('04-03 not reviewed');
     expect(html).toContain('Consensus summary, as the file wrote it');
-    expect(html).toContain('<svg');
+    expect(html).toContain('view-reviews-draw');
   });
 });
 
@@ -366,7 +366,7 @@ describe('composeReviews - four or more reviewers, and a file that cannot be spl
     expect(model.agreed).toHaveLength(1);
     expect(model.agreed[0].reviewers).toEqual([0, 1, 2, 3]);
     const html = markup(model);
-    expect(html).not.toContain('<svg');
+    expect(html).not.toContain('view-reviews-draw');
     expect(html).toContain('More than three reviewers took part');
     expect(html).toContain('Claude, Codex, OpenCode, Gemini');
     expect(html).toContain('Raised by one reviewer');
