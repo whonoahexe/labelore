@@ -149,6 +149,8 @@ export interface ComposedEvalReview {
   /** One tone per dimension in file order, and the meter's one accessible name. */
   meter: { items: EvalReviewTone[]; covered: number; label: string } | null;
   facts: ComposedEvalFact[];
+  /** The file's Infrastructure Score line as written, shown on the infrastructure group's heading too; null when absent. */
+  infrastructureScore: string | null;
   /** Dimensions then components. */
   targets: ComposedEvalTarget[];
   dimensions: number[];
@@ -361,6 +363,7 @@ export function composeEvalReview(input: ViewInput): ComposedEvalReview | null {
             label: `${covered} of ${dimensions.length} dimensions covered`,
           },
     facts,
+    infrastructureScore: infraLine,
     targets,
     dimensions,
     components,

@@ -98,6 +98,7 @@ function Head({ model }: { model: ComposedEvalReview }): React.JSX.Element {
             total={model.meter.items.length}
             items={model.meter.items}
             label={model.meter.label}
+            size="large"
             caption={
               <>
                 <b>
@@ -313,7 +314,7 @@ function Ledger({ model }: { model: ComposedEvalReview }): React.JSX.Element | n
           {model.components.length > 0 ? (
             <>
               <h2 className="view-eval-review-key view-eval-review-colhead" data-gap="true">
-                Infrastructure audit
+                Infrastructure audit{model.infrastructureScore !== null ? ` · ${model.infrastructureScore}` : ''}
               </h2>
               {model.components.map((id) => (
                 <TargetRow
