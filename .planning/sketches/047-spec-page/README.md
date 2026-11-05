@@ -2,7 +2,7 @@
 sketch: 047
 name: spec-page
 question: "How should the Spec page put the ambiguity score against the gate first (is this spec locked enough to plan?), with the dimension scores, the goal, every requirement's Current, Target and Acceptance, and the boundaries, as a picture rather than a wall of text?"
-winner: null
+winner: "B"
 tags: [spec, specification, ambiguity, requirements, phase-10]
 ---
 
@@ -159,3 +159,23 @@ sketch bar are outside the page): exactly four sizes in every variant. At 390 th
 
 All text is the made-up Lendshed specs (test/fixtures/lendshed, 10-04), verbatim; the No score state is
 01-SPEC with the template's own placeholder. The repository is public.
+
+## Winner
+**B: Lock matrix**, chosen by the user at the 10-13 checkpoint: "B for 47 and C for 48". No synthesis.
+
+Build B as drawn in its tab (marked "★ Selected"; the sketch now opens on it):
+- **The score strip:** five column gauges in one bordered strip. The verdict cell comes first: the verdict
+  chip, "{score} against a gate of {gate}", and the ambiguity column (lower is better, hatched up to the gate
+  line, the fill toned by the verdict). Then one column per Ambiguity Report dimension, with the score as the
+  fill, the minimum as a line, the value in mono and a Met minimum / Below minimum square. When there is no
+  score, the cells are dashed and read "Not scored".
+- **The goal sentence** at Heading size.
+- **The requirements × evidence matrix:** the number, the label, then Current, Target and Acceptance as
+  untoned field squares, and "No acceptance stated" in place of a missing Acceptance. Then Edges and Must-not
+  squares from the Edge Coverage and Prohibitions rows that name the requirement. The two coverage columns are
+  dropped when the spec has neither table. A row opens in place to the statement and the three labelled fields.
+- **The scope fence:** In scope as tiles inside a hard-ruled box, Out of scope outside it with the "— reason"
+  kept.
+- **Below:** the other sections as closed bars, and Interview Log in "In the source only".
+- **At 390px:** the verdict cell takes the strip's first row and the four dimension cells share the second.
+  A matrix row stacks to number and label, then the three fields, then Edges and Must-not. The fence stacks.
