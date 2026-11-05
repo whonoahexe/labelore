@@ -2,7 +2,7 @@
 sketch: 049
 name: user-setup-page
 question: "How should the User setup page show how many setup steps are done and where you are, where each variable goes and where to get it (never its value), and the file's own Status line when it disagrees with its boxes, as a picture rather than a checklist of text?"
-winner: null
+winner: "B"
 tags: [user-setup, steps, env-vars, phase-10]
 ---
 
@@ -159,4 +159,21 @@ value written beside `LOANNOTE_MODEL_KEY`, replaced before embedding, and the sk
 repository is public.
 
 ## Winner
-Pending the user's choice at the 10-15 checkpoint.
+**B: Where everything goes**, chosen by the user at the 10-15 checkpoint: "B for both". No synthesis.
+
+Build B as drawn in its tab (marked "★ Selected"; the sketch now opens on it):
+- **The ruled head:** the lead "{d} of {t} steps done" at Heading size over the `status-meter` (one square per
+  step, done `complete`, pending `in-flight`, not stated `quiet`; no caption, since the lead says it), and, when
+  the file's `**Status:**` line disagrees with its boxes, the quiet dashed block beside it: "The Status line says
+  {word}" ≠ "The boxes say {d} of {t} ticked", with one line under it. When they agree: a plain "Status line"
+  chip. With no steps: the quiet chip "Steps not stated" in place of the lead and meter.
+- **The map, "Where everything goes":** "Get it from" on the left is a clean tree of the dashboard paths (each
+  variable's Source and each item's Location split at " → "; the service is the root, the last segment is shown
+  muted on the step's leaf, a one-child folder chain is joined, a URL-only item joins the root whose steps share
+  its host, anything else sits under "No place stated"). Each leaf has the step's status square, its title (a
+  variable's name in mono plus "→ {file}") and its status word. "Goes in" on the right is one card per
+  destination file ("{d} of {t} set") with one numbered line per variable: square, name, the quiet "Value not
+  shown" mark when the file writes a value, the status word. The selected step's dock sits under the file cards.
+- **Below:** the steps as closed bars grouped by section (title and status always visible), then Local
+  Development and Verification as plain bars with copy-command rows, then "In the source only".
+- **At 390px:** the head stacks, the map stacks (tree, then the file card, then the dock), with no arrow.
