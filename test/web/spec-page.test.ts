@@ -88,7 +88,9 @@ describe('composeSpec - 01-SPEC, locked', () => {
     expect(model.requirements).toHaveLength(5);
     expect(model.requirements.every((r) => !r.noAcceptance)).toBe(true);
     expect(model.requirements[0].fields.map((f) => f.label)).toEqual(['Current', 'Target', 'Acceptance']);
-    expect(model.hasCoverage).toBe(false);
+    expect(model.hasCoverage).toBe(true);
+    expect(model.requirements[0].edges.map((m) => m.word)).toEqual(['Covered']);
+    expect(model.requirements[0].prohibitions.map((m) => m.word)).toEqual(['Resolved', 'Resolved', 'Dismissed']);
   });
 });
 

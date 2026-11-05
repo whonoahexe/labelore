@@ -498,6 +498,134 @@ function readDimensions(lines: readonly string[], from: number, to: number): Spe
   return out;
 }
 
+/** The text with every code point at or above U+2000 removed (emoji, arrows, dashes), spaces collapsed. */
+function stripSymbols(text: string): string {
+  let out = '';
+  let lastSpace = true;
+  for (const ch of text) {
+    const cp = ch.codePointAt(0) ?? 0;
+    if (cp >= 0x2000) continue;
+    if (ch === ' ' || ch === '\t') {
+      if (!lastSpace) out += ' ';
+      lastSpace = true;
+    } else {
+      out += ch;
+      lastSpace = false;
+    }
+  }
+  return out.trim();
+}
+
+/** Every `R{n}` token in a cell: an R not preceded by a letter or digit, then digits. */
+function readRequirementRefs(cell: string): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < cell.length; i += 1) {
+    const ch = cell[i];
+    if (ch !== 'R' && ch !== 'r') continue;
+    const before = i === 0 ? '' : cell[i - 1];
+    const beforeCode = before === '' ? 0 : before.charCodeAt(0);
+    const letterBefore =
+      (beforeCode >= 65 && beforeCode <= 90) ||
+      (beforeCode >= 97 && beforeCode <= 122) ||
+      isDigit(beforeCode);
+    if (letterBefore) continue;
+    let j = i + 1;
+    while (j < cell.length && isDigit(cell.charCodeAt(j))) j += 1;
+    if (j === i + 1 || j - i > 7) continue;
+    const n = Number(cell.slice(i + 1, j));
+    if (!out.includes(n)) out.push(n);
+    i = j - 1;
+  }
+  return out;
+}
+
+function coverageKind(statusText: string): SpecCoverageKind {
+  const lower = statusText.toLowerCase();
+  if (lower.includes('unresolved')) return 'unresolved';
+  if (lower.includes('dismissed')) return 'dismissed';
+  if (lower.includes('backstop')) return 'backstop';
+  if (lower.includes('covered')) return 'covered';
+  if (lower.includes('resolved')) return 'resolved';
+  return 'other';
+}
+
+function readCoverage(
+  lines: readonly string[],
+  from: number,
+  to: number,
+): SpecCoverageRow[] | null {
+  const table = readTable(lines, from, to);
+  if (table === null) return null;
+  const reqCol = columnOf(
+    table.header,
+    (n) => n.includes('requirement') && !n.includes('statement'),
+    1,
+  );
+  const statusCol = columnOf(table.header, (n) => n.includes('status'), 2);
+  const out: SpecCoverageRow[] = [];
+  for (const cells of table.rows) {
+    const label = stripBold(cells[0] ?? '').trim();
+    if (label === '') continue;
+    const statusText = stripSymbols(stripBold(cells[statusCol] ?? ''));
+    const reason = stripSymbols(stripBold(cells[statusCol + 1] ?? ''));
+    out.push({
+      label: capText(label),
+      requirements: readRequirementRefs(cells[reqCol] ?? ''),
+      kind: coverageKind(statusText),
+      statusText: capText(statusText),
+      reason: reason === '' ? null : capText(reason),
+    });
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Boundaries
+// ---------------------------------------------------------------------------
+
+function splitAtEmDash(text: string): SpecOutOfScope {
+  const at = text.indexOf(' — ');
+  if (at < 0) return { item: capText(text.trim()), reason: null };
+  const reason = text.slice(at + 3).trim();
+  return {
+    item: capText(text.slice(0, at).trim()),
+    reason: reason === '' ? null : capText(reason),
+  };
+}
+
+function readBoundaries(
+  lines: readonly string[],
+  from: number,
+  to: number,
+): { inScope: string[]; outOfScope: SpecOutOfScope[] } {
+  const inScope: string[] = [];
+  const outOfScope: SpecOutOfScope[] = [];
+  let target: 'in' | 'out' | null = null;
+  eachLineOutsideFences(lines, from, to, (line) => {
+    const t = line.trim();
+    if (t === '') return;
+    let marker = stripBold(t);
+    while (marker.startsWith('#')) marker = marker.slice(1);
+    marker = marker.trim().toLowerCase();
+    if (marker.startsWith('in scope')) {
+      target = 'in';
+      return;
+    }
+    if (marker.startsWith('out of scope')) {
+      target = 'out';
+      return;
+    }
+    const body = bulletBody(t);
+    if (body === null || target === null || body === '') return;
+    if (target === 'in') {
+      if (inScope.length < SPEC_ROW_CAP) inScope.push(capText(body));
+    } else if (outOfScope.length < SPEC_ROW_CAP) {
+      outOfScope.push(splitAtEmDash(body));
+    }
+  });
+  return { inScope, outOfScope };
+}
+
 // ---------------------------------------------------------------------------
 // The entry point
 // ---------------------------------------------------------------------------
@@ -546,14 +674,32 @@ export function extractSpec(body: string): SpecBody {
       ? { items: [] as SpecRequirement[], omitted: 0 }
       : readRequirements(lines, requirementsSection.startLine + 1, requirementsSection.endLine);
 
+  const boundariesSection = findSection(sections, (k) => k === 'boundaries');
+  const boundaries =
+    boundariesSection === null
+      ? { inScope: [] as string[], outOfScope: [] as SpecOutOfScope[] }
+      : readBoundaries(lines, boundariesSection.startLine + 1, boundariesSection.endLine);
+
   const reportSection = findSection(sections, (k) => k === 'ambiguity report');
   const dimensions =
     reportSection === null
       ? []
       : readDimensions(lines, reportSection.startLine + 1, reportSection.endLine);
 
+  const edgeSection = findSection(sections, (k) => k === 'edge coverage');
+  const edges =
+    edgeSection === null
+      ? null
+      : readCoverage(lines, edgeSection.startLine + 1, edgeSection.endLine);
+  const prohibitionSection = findSection(sections, (k) => k.startsWith('prohibitions'));
+  const prohibitions =
+    prohibitionSection === null
+      ? null
+      : readCoverage(lines, prohibitionSection.startLine + 1, prohibitionSection.endLine);
+
   const drawsGoal = goal !== null;
   const drawsRequirements = read.items.length > 0;
+  const drawsBoundaries = boundaries.inScope.length + boundaries.outOfScope.length > 0;
   const listed: SpecSection[] = [];
   for (const section of sections) {
     if (section.level !== 2 || listed.length >= SPEC_SECTION_CAP) continue;
@@ -562,7 +708,8 @@ export function extractSpec(body: string): SpecBody {
       heading: section.heading,
       claimed:
         (key === 'goal' && drawsGoal && section === goalSection) ||
-        (key === 'requirements' && drawsRequirements && section === requirementsSection),
+        (key === 'requirements' && drawsRequirements && section === requirementsSection) ||
+        (key === 'boundaries' && drawsBoundaries && section === boundariesSection),
     });
   }
 
@@ -573,11 +720,11 @@ export function extractSpec(body: string): SpecBody {
     lockedCount: lockedNumber === null ? null : lockedNumber.value,
     requirements: read.items,
     requirementsOmitted: read.omitted,
-    inScope: [],
-    outOfScope: [],
+    inScope: boundaries.inScope,
+    outOfScope: boundaries.outOfScope,
     dimensions,
-    edges: null,
-    prohibitions: null,
+    edges: edges === null ? null : edges,
+    prohibitions: prohibitions === null ? null : prohibitions,
     sections: listed,
   };
 }
