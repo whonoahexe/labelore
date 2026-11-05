@@ -2,7 +2,9 @@
 // Folder/File icons, a --space-6 indent step with faint indent guides, collapsible folders (a
 // single-child folder chain shows as one row), `# comments` as a notes column, NEW / EXTEND /
 // MODIFIED / EXISTING chips (active / in-flight / in-flight / quiet), a "Changed only" filter shown
-// only when changed markers exist, and file/folder counts. CleanTreeFigure frames the tree in the
+// only when changed markers exist, and file/folder counts. A page that builds its own rows (10-19: the User setup
+// page's dashboard paths, with a clickable leaf and a status word on each) passes `rows` instead of an ASCII `text`;
+// the row styling, indentation, guides and folder collapsing are the same. CleanTreeFigure frames the tree in the
 // same FigureFrame shell as the diagram, with Changed only and the counts in the frame bar. The model
 // comes from src/rendering/ascii-tree.ts. View-agnostic: no research-specific import; notes render
 // only through tokenizeInline-mapped React nodes.
@@ -56,20 +58,55 @@ function isHidden(rows: TreeRow[], index: number, collapsed: ReadonlySet<number>
   return false;
 }
 
+/**
+ * A row a page builds itself instead of parsing an ASCII tree (10-19): the shared tree's row-input path. `node` is a
+ * leaf's own content, drawn in place of the file icon and name (an interactive leaf, say). A folder row is still drawn by the shared collapsible folder button. Rows are in draw order, each
+ * naming its nearest shallower row above as `parent` (null for a root), and are drawn as given: no folder chain is
+ * joined, so the page joins the chains it wants joined.
+ */
+export interface CleanTreeRow {
+  depth: number;
+  name: string;
+  dir: boolean;
+  parent: number | null;
+  note?: string;
+  node?: React.ReactNode;
+}
+
+type DrawnRow = TreeRow & { node?: React.ReactNode };
+
+function drawnRowsOf(rows: readonly CleanTreeRow[]): DrawnRow[] {
+  return rows.map((row) => ({
+    depth: row.depth,
+    prefix: '',
+    name: row.name,
+    note: row.note ?? '',
+    dir: row.dir,
+    badge: null,
+    parent: row.parent,
+    node: row.node,
+  }));
+}
+
 /** Folder path (as the tree draws it, "test/rendering/") to the labels shown as quiet chips on that row (10-14: the test
  * types that name the folder). */
 export type TreeLabels = ReadonlyMap<string, readonly string[]>;
 
 export function CleanTree({
-  text,
+  text = '',
+  rows: inputRows,
   changedOnly = false,
   labels,
 }: {
-  text: string;
+  text?: string;
+  rows?: readonly CleanTreeRow[];
   changedOnly?: boolean;
   labels?: TreeLabels;
 }): React.JSX.Element {
-  const rows = useMemo(() => collapseFolderChains(parseTree(text)), [text]);
+  const rows = useMemo<DrawnRow[]>(
+    () => (inputRows !== undefined ? drawnRowsOf(inputRows) : collapseFolderChains(parseTree(text))),
+    [inputRows, text],
+  );
   // Each row's path: its name after its ancestors', so a label can name a folder by path.
   const paths = useMemo(() => {
     const out: string[] = [];
@@ -118,6 +155,8 @@ export function CleanTree({
                   {closed ? <Folder aria-hidden="true" /> : <FolderOpen aria-hidden="true" />}
                   <span>{row.name}</span>
                 </button>
+              ) : row.node !== undefined ? (
+                row.node
               ) : (
                 <>
                   <File aria-hidden="true" />

@@ -29443,21 +29443,6 @@ button.view-codebase-mark:hover {
   border-style: dashed;
 }
 
-.view-codebase-vns {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 var(--space-1-5);
-  border: 1px dashed var(--muted-foreground);
-  color: var(--muted-foreground);
-  font-family: var(--font-mono);
-  font-size: var(--fs-2);
-  font-weight: var(--fw-semibold);
-  letter-spacing: var(--ls-wider);
-  line-height: var(--lh-snug);
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
 .view-codebase-env {
   display: grid;
   gap: var(--space-2);
@@ -30356,6 +30341,25 @@ button.view-codebase-mark:hover {
 }
 /* phase-10-spec:end */
 
+/* value-not-shown:start */
+/* The shared "Value not shown" mark (10-14, promoted in 10-19): the quiet dashed word a page draws where a document wrote a
+   value beside a variable's name. Drawn by components/value-not-shown.tsx and nowhere else. */
+.value-not-shown {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-1-5);
+  border: 1px dashed var(--muted-foreground);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+/* value-not-shown:end */
+
 /* status-meter:start */
 /* The shared status-meter (Phase 10, 10-18): one square per item, filled ones toned, the rest quiet. Drawn by
    components/status-meter.tsx and nowhere else; a page never styles its own meter. */
@@ -30947,3 +30951,701 @@ button.view-codebase-mark:hover {
     min-height: var(--space-10);
   }
 }
+
+/* phase-10-user-setup:start */
+/* Phase 10 (10-19): the User setup page, sketch 049 winner B (Where everything goes). The page renders four font sizes:
+   the h1 as ArtifactHeader draws it (--fs-display-3), the section headings, the lead and the two Status values
+   (--fs-7), Body (--fs-4) and Label (--fs-2). Where a shared class sets a size outside that set, the page takes it
+   inside with a page-scoped rule below, so no shared class is edited. */
+.view-user-setup-page {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-user-setup-page > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-user-setup-page) .status-chip,
+.artifact-page:has(.view-user-setup-page) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.artifact-page:has(.view-user-setup-page) .source-note,
+.artifact-page:has(.view-user-setup-page) .empty-note {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-user-setup-page code {
+  font-size: inherit;
+}
+
+.view-user-setup-meta {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-user-setup-key {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-user-setup-mono {
+  font-family: var(--font-mono);
+}
+
+.view-user-setup-name {
+  font-family: var(--font-mono);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-user-setup-sq {
+  --status-square-size: var(--space-2-5);
+}
+
+/* The ruled head: the lead over the meter, the Status line beside it. */
+.view-user-setup-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-8);
+  padding-bottom: var(--space-4);
+  border-bottom: 2px solid var(--foreground);
+}
+
+.view-user-setup-lead {
+  display: grid;
+  flex: 1 1 22rem;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.view-user-setup-lead-line {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+}
+
+.view-user-setup-lead-line b {
+  font-family: var(--font-mono);
+}
+
+.view-user-setup-agree {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+/* The Status line that disagrees with the boxes: a quiet dashed pair, never merged, never an alarm. */
+.view-user-setup-disagree {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  flex: 1 1 22rem;
+  align-items: stretch;
+  border: 1px dashed var(--muted-foreground);
+  min-width: 0;
+}
+
+.view-user-setup-disagree > div {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-3) var(--space-4);
+  min-width: 0;
+}
+
+.view-user-setup-ne {
+  display: grid;
+  place-items: center;
+  padding: 0 var(--space-2);
+  border-inline: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+}
+
+.view-user-setup-val {
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+.view-user-setup-foot {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px dashed var(--border);
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 42rem) {
+  .view-user-setup-disagree > div {
+    padding: var(--space-2) var(--space-3);
+  }
+}
+
+/* The map: the tree of places on the left, the files they feed on the right. */
+.view-user-setup-block {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-user-setup-block-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  min-width: 0;
+}
+
+.view-user-setup-h {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+}
+
+.view-user-setup-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-user-setup-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.view-user-setup-map {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) var(--space-10) minmax(0, 5fr);
+  align-items: start;
+  min-width: 0;
+}
+
+.view-user-setup-col {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-user-setup-arrow {
+  display: grid;
+  place-items: center;
+  padding-top: var(--space-10);
+  color: var(--muted-foreground);
+}
+
+.view-user-setup-arrow svg {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+@media (max-width: 52rem) {
+  .view-user-setup-map {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+
+  .view-user-setup-arrow {
+    display: none;
+  }
+}
+
+/* The shared clean tree, drawn at this page's scale: a row is one leaf button (or a folder) and the status word. */
+.view-user-setup-tree {
+  padding: var(--space-2) 0;
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-user-setup-tree .clean-tree-row {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  min-height: var(--space-8);
+  padding: 0;
+  border-bottom: 0;
+}
+
+.view-user-setup-tree .clean-tree-name {
+  align-items: center;
+  padding-right: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: var(--fs-4);
+}
+
+.view-user-setup-tree .clean-tree-name svg {
+  transform: none;
+  color: var(--muted-foreground);
+}
+
+.view-user-setup-tree .clean-tree-folder {
+  color: var(--foreground);
+  align-items: center;
+}
+
+.view-user-setup-tree .clean-tree-folder svg {
+  color: var(--muted-foreground);
+}
+
+.view-user-setup-tree .clean-tree-note {
+  display: none;
+}
+
+.view-user-setup-leaf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  width: 100%;
+  min-height: var(--space-8);
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.view-user-setup-leaf:hover {
+  background: var(--state-hover);
+}
+
+.view-user-setup-leaf[aria-pressed='true'] {
+  background: var(--state-hover);
+  box-shadow: inset 2px 0 0 var(--foreground);
+}
+
+.view-user-setup-what {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-user-setup-at {
+  color: var(--muted-foreground);
+}
+
+.view-user-setup-at::after {
+  content: ' ·';
+}
+
+.view-user-setup-to {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  white-space: nowrap;
+}
+
+.view-user-setup-tray {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) 0;
+  border: 1px dashed var(--border);
+}
+
+.view-user-setup-tray > p {
+  padding-inline: var(--space-3);
+}
+
+.view-user-setup-tray ul {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* "Goes in": one card per destination file, one numbered line per variable. */
+.view-user-setup-filecard {
+  border: 1px solid var(--border);
+  background: var(--card);
+  min-width: 0;
+}
+
+.view-user-setup-filecard-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.view-user-setup-filecard-head svg {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--muted-foreground);
+}
+
+.view-user-setup-filecard-head .view-user-setup-mono {
+  font-weight: var(--fw-semibold);
+}
+
+.view-user-setup-filecard-head .view-user-setup-meta {
+  margin-left: auto;
+}
+
+.view-user-setup-fline {
+  display: grid;
+  grid-template-columns: var(--space-6) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--space-10);
+  padding: var(--space-1) var(--space-3) var(--space-1) 0;
+  border: 0;
+  border-bottom: 1px solid var(--border-faint);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.view-user-setup-fline:last-child {
+  border-bottom: 0;
+}
+
+.view-user-setup-fline:hover {
+  background: var(--state-hover);
+}
+
+.view-user-setup-fline[aria-pressed='true'] {
+  box-shadow: inset 2px 0 0 var(--foreground);
+}
+
+.view-user-setup-ln {
+  justify-self: end;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-user-setup-fname {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-user-setup-fright {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+
+@media (max-width: 42rem) {
+  .view-user-setup-fline {
+    grid-template-columns: var(--space-5) minmax(0, 1fr);
+  }
+
+  .view-user-setup-fright {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+}
+
+/* The selected step's dock: its facts as written, with the quiet mark where the file wrote a value. */
+.view-user-setup-dock {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+  min-width: 0;
+}
+
+.view-user-setup-dock-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.view-user-setup-dock-title {
+  margin: 0;
+  font-size: inherit;
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-user-setup-dock-empty {
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+}
+
+.view-user-setup-close {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-underline-offset: var(--space-0-5);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.view-user-setup-close:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+}
+
+.view-user-setup-facts {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-user-setup-facts li {
+  display: grid;
+  grid-template-columns: var(--space-4) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-user-setup-facts svg {
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--muted-foreground);
+}
+
+.view-user-setup-fields {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.view-user-setup-fields > div {
+  display: grid;
+  grid-template-columns: calc(var(--space-8) * 3.5) minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.view-user-setup-fields dt {
+  padding-top: var(--space-0-5);
+}
+
+.view-user-setup-fields dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 42rem) {
+  .view-user-setup-fields > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-0-5);
+  }
+}
+
+/* The steps below as closed bars by section: the title and the status word always visible. */
+.view-user-setup-bars {
+  display: grid;
+  border-top: 1px solid var(--border);
+}
+
+.view-user-setup-bar-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-8);
+  padding: var(--space-3) var(--space-2) var(--space-1);
+  border-bottom: 1px solid var(--border-faint);
+}
+
+.view-user-setup-bar-group .view-user-setup-meta {
+  margin-left: auto;
+}
+
+.view-user-setup-bar {
+  border-bottom: 1px solid var(--border);
+}
+
+.view-user-setup-bar-sum {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-10);
+  padding-inline: var(--space-2);
+  font-weight: var(--fw-semibold);
+  list-style: none;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.view-user-setup-bar-sum::-webkit-details-marker {
+  display: none;
+}
+
+.view-user-setup-bar-sum:hover {
+  background: var(--state-hover);
+}
+
+.view-user-setup-bar-chev {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--muted-foreground);
+}
+
+.view-user-setup-bar[open] .view-user-setup-bar-chev {
+  transform: rotate(90deg);
+}
+
+.view-user-setup-bar-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-user-setup-bar-word {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.view-user-setup-bar-body {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--space-4) + var(--space-4));
+  min-width: 0;
+}
+
+@media (max-width: 42rem) {
+  .view-user-setup-bar-body {
+    padding-left: var(--space-2);
+  }
+}
+/* The plain sections: Local Development, Verification and any other section with no step, as paragraphs and the shared
+   copy rows; a file with no recognisable step draws every section this way, as headed text. */
+.view-user-setup-plain {
+  display: grid;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.view-user-setup-blocks {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 72ch;
+  min-width: 0;
+}
+
+.view-user-setup-text {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-user-setup-text[data-bullet='true'] {
+  padding-left: var(--space-4);
+  text-indent: calc(-1 * var(--space-3));
+}
+
+.view-user-setup-text[data-bullet='true']::before {
+  content: '·';
+  display: inline-block;
+  width: var(--space-3);
+  color: var(--muted-foreground);
+  text-indent: 0;
+}
+
+.view-user-setup-subhead {
+  margin: 0;
+  font-size: inherit;
+  font-weight: var(--fw-semibold);
+}
+
+.view-user-setup-cmd {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  background: var(--muted);
+  min-width: 0;
+}
+
+.view-user-setup-cmd code {
+  background: none;
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-user-setup-cmd-note {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+/* "In the source only": what the page does not draw, each a way to Source. */
+.view-user-setup-only {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--border);
+}
+
+.view-user-setup-source {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: var(--space-0-5);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.view-user-setup-source:hover {
+  color: var(--foreground);
+}
+/* phase-10-user-setup:end */
