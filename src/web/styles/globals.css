@@ -29403,6 +29403,13 @@ button.view-codebase-mark:hover {
   font-size: var(--fs-2);
 }
 
+/* The lane diagram's compact layout (a narrow page) sets its labels one step larger than the rule above, a fifth size on
+   the Codebase page; this rule is as specific and later, so the page keeps its four (10-23). */
+.view-codebase-lanes .lane-diagram .lane-diagram-label,
+.view-codebase-lanes .lane-diagram .lane-diagram-sub {
+  font-size: var(--fs-2);
+}
+
 .view-codebase-strip {
   display: grid;
   gap: var(--space-1-5);
@@ -29467,6 +29474,7 @@ button.view-codebase-mark:hover {
   display: grid;
   gap: var(--space-0-5);
   margin: 0;
+  font-size: var(--fs-4);
   overflow-wrap: anywhere;
 }
 
@@ -29479,6 +29487,7 @@ button.view-codebase-mark:hover {
   gap: var(--space-1);
   margin: 0;
   padding: 0;
+  font-size: var(--fs-4);
   list-style: none;
 }
 
