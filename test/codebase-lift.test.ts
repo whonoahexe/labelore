@@ -435,6 +435,155 @@ describe('the Integrations lift (10-14)', () => {
   });
 });
 
+const conventions = (body: string) => lift('conventions', `# Coding Conventions\n\n${body}`).conventions!;
+const testing = (body: string) => lift('testing', `# Testing Patterns\n\n${body}`).testing!;
+
+describe('the Conventions lift (10-14)', () => {
+  it('gives Tidemark eight rule groups in the template order, and the older-form stamp from its Analysis Date line', () => {
+    const result = lift('conventions');
+    expect(result.keyNumber).toBe(8);
+    expect(result.conventions!.groups.map((g) => [g.key, g.count])).toEqual([
+      ['naming-patterns', 5],
+      ['code-style', 4],
+      ['import-organization', 1],
+      ['error-handling', 2],
+      ['logging', 3],
+      ['comments', 2],
+      ['function-design', 3],
+      ['module-design', 2],
+    ]);
+    expect(result.stamp).toEqual({ mappedAt: '2026-10-27', commit: null, source: 'analysis-date' });
+  });
+
+  it('reads a bullet as a rule, a bold label with its value as "Label: value", and leaves ordered steps and the footer out', () => {
+    const groups = lift('conventions').conventions!.groups;
+    expect(groups[0].rules[0]).toBe('Server modules are lower-case, one noun per file (`clash.ts`, `window.ts`)');
+    expect(groups[4].rules[0]).toBe('Framework: pino');
+    expect(groups[2].rules).toEqual(['None']);
+    expect(JSON.stringify(groups)).not.toContain('Node built-ins');
+    expect(JSON.stringify(groups)).not.toContain('Last updated');
+  });
+
+  it('appends a nested bullet to the rule above it, and takes a plain line under a label as a rule', () => {
+    const found = conventions('## Naming Patterns\n\n**Files:**\n- kebab-case\n  - never `camelCase` files\nplain line under the label\n');
+    expect(found.groups[0].rules).toEqual(['kebab-case never `camelCase` files', 'plain line under the label']);
+  });
+
+  it('ignores a bullet inside a fence and a table row, and keeps a section with no rule as a group of zero', () => {
+    const found = conventions('## Naming Patterns\n\n```\n- fenced\n```\n| a | b |\n|---|---|\n\n## Logging\n\n- one\n');
+    expect(found.groups.map((g) => [g.heading, g.count])).toEqual([['Naming Patterns', 0], ['Logging', 1]]);
+  });
+
+  it('caps the groups at 20, the rules at 30 and each rule at 400 characters, keeping the true count', () => {
+    const groups = Array.from({ length: 30 }, (_, i) => `## S${i}\n\n- r`).join('\n\n');
+    expect(conventions(groups).groups).toHaveLength(20);
+    const many = Array.from({ length: 50 }, (_, i) => `- rule ${i}`).join('\n');
+    const group = conventions(`## Naming Patterns\n\n${many}\n`).groups[0];
+    expect(group.rules).toHaveLength(30);
+    expect(group.count).toBe(50);
+    expect(conventions(`## Naming Patterns\n\n- ${'x'.repeat(900)}\n`).groups[0].rules[0]).toHaveLength(400);
+    expect(lift('stack').conventions).toBeUndefined();
+  });
+});
+
+describe('the Testing lift (10-14)', () => {
+  const lifted = lift('testing').testing!;
+
+  it('gives Tidemark the framework, the runner plate with its config, the assertion plate and the coverage requirement', () => {
+    expect(lift('testing').keyLabel).toBe('Vitest');
+    expect(lift('testing').keyNumber).toBeNull();
+    expect(lifted.framework).toBe('Vitest');
+    expect(lifted.runner).toBe('Vitest');
+    expect(lifted.plates).toEqual([
+      { label: 'Runner', name: 'Vitest', version: '3.2', config: 'vitest.config.ts' },
+      { label: 'Assertion Library', name: 'Vitest built-ins', version: null, config: null },
+    ]);
+    expect(lifted.coverage).toBe('None enforced');
+  });
+
+  it('gives Tidemark three run commands, the comment lines above them as captions and not as commands', () => {
+    expect(lifted.commands).toEqual([
+      { command: 'npm test', caption: 'Run every unit and route test once' },
+      { command: 'npm run test:watch', caption: 'Watch mode while editing' },
+      { command: 'npm run test:coverage', caption: 'Coverage report' },
+    ]);
+  });
+
+  it('takes a comment beside a command as its caption, keeps a # inside quotes, and shows a repeated command once', () => {
+    const found = testing(
+      [
+        '## Test Framework',
+        '',
+        '**Run Commands:**',
+        '```bash',
+        'npm test            # vitest run',
+        'npx playwright test -g "a # b"   # one spec',
+        'npm test',
+        '$ npm run lint',
+        '```',
+        '',
+        '## Coverage',
+        '',
+        '**View Coverage:**',
+        '```bash',
+        'npm run test:coverage',
+        '```',
+      ].join('\n'),
+    );
+    expect(found.commands).toEqual([
+      { command: 'npm test', caption: 'vitest run' },
+      { command: 'npx playwright test -g "a # b"', caption: 'one spec' },
+      { command: 'npm run lint', caption: null },
+      { command: 'npm run test:coverage', caption: null },
+    ]);
+  });
+
+  it('removes a control character from a run command, so the command copied is the command shown', () => {
+    const found = testing('## Test Framework\n\n**Run Commands:**\n```bash\nnpm\u0007 test‮ --all\n```\n');
+    expect(found.commands).toEqual([{ command: 'npm test --all', caption: null }]);
+  });
+
+  it('reads commands only from a fence under a Run Commands label or in Coverage, not from a code sample', () => {
+    const found = testing('## Test Structure\n\n```bash\nrm -rf /\n```\n\n## Test Framework\n\n**Run Commands:**\n```ts\nconst x = 1;\n```\n');
+    expect(found.commands).toEqual([]);
+  });
+
+  it('caps the commands at 30 and each at 400 characters', () => {
+    const many = Array.from({ length: 60 }, (_, i) => `cmd-${i}`).join('\n');
+    expect(testing(`## Test Framework\n\n**Run Commands:**\n\`\`\`bash\n${many}\n\`\`\`\n`).commands).toHaveLength(30);
+    expect(testing(`## Test Framework\n\n**Run Commands:**\n\`\`\`bash\n${'c'.repeat(900)}\n\`\`\`\n`).commands[0].command).toHaveLength(400);
+  });
+
+  it('lifts the test folder tree and the Test Types with the folders their parenthesis names', () => {
+    expect(lifted.tree?.text).toContain('clash.test.ts');
+    expect(lifted.types.map((t) => t.name)).toEqual(['Unit', 'Integration', 'E2E']);
+    const found = testing(
+      [
+        '## Test Types',
+        '',
+        '**Unit tests (`test/rendering/`, `test/*.test.ts`):**',
+        '- pure',
+        '**HTTP / server tests (`test/server/`):**',
+        '- app.request',
+        '**Golden tests:**',
+        '- snapshot',
+      ].join('\n'),
+    );
+    expect(found.types).toEqual([
+      { name: 'Unit', paths: ['test/rendering/', 'test/*.test.ts'] },
+      { name: 'HTTP / server', paths: ['test/server/'] },
+      { name: 'Golden', paths: [] },
+    ]);
+  });
+
+  it('gives a document with no recognised section an empty lift and no key label', () => {
+    const result = lift('testing', '# T\n\n## Something\n\n- x\n');
+    expect(result.testing).toEqual({ framework: null, runner: null, plates: [], coverage: null, commands: [], tree: null, types: [] });
+    expect(result.keyLabel).toBeUndefined();
+    expect(lift('stack').testing).toBeUndefined();
+  });
+});
+
 describe('the Concerns lift', () => {
   it('counts Tidemark CONCERNS per section, in template order: 3, 1, 2, 2, 3, 2, 0, 1, 0', () => {
     const result = lift('concerns').concerns!;

@@ -16,6 +16,7 @@ import { ChevronRight } from 'lucide-react';
 import { Link } from '../nav.tsx';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import { classifyFence } from '../../rendering/figure-detect.ts';
+import { CleanTreeFigure } from '../components/clean-tree.tsx';
 import { CopyCommand } from '../components/copy-command.tsx';
 import { FigureFor } from '../components/fenced-figure.tsx';
 import { FigureFrame } from '../components/figure-frame.tsx';
@@ -23,7 +24,7 @@ import { LaneDiagram } from '../components/lane-diagram.tsx';
 import { PlainDiagram } from '../components/lifted-diagram.tsx';
 import { ResearchInline, SwapRows } from '../pages/research-atoms.tsx';
 import { stripLeadingHeading } from './document-sections.ts';
-import { NOT_MAPPED, linkMapMentions } from './codebase-page.ts';
+import { NEVER_RUNS_NOTE, NOT_MAPPED, linkMapMentions } from './codebase-page.ts';
 import type {
   ComposedArchitecture,
   ComposedCodebase,
@@ -35,11 +36,15 @@ import type {
   ComposedConcernRow,
   ComposedConcerns,
   ComposedConcernSection,
+  ComposedConventions,
   ComposedIntegrations,
+  ComposedRule,
   ComposedStack,
   ComposedStackGroup,
   ComposedStackSet,
   ComposedStructure,
+  ComposedTesting,
+  RuleStrength,
 } from './codebase-page.ts';
 
 /** Every field optional on purpose: the page spreads this over ArtifactHeader's own props. */
@@ -575,6 +580,145 @@ function ConcernFields({
   );
 }
 
+/** One mark of a pile: a segment. `pri` is the opacity step (high, med, low, or '' for the plain one) and `ring` the accent
+ * ring; each panel that draws piles supplies both from its own rule (Concerns: the stated Priority and the most dangerous
+ * concern; Conventions: the rule's strength and whether a test or the linter checks it). */
+interface PileMark {
+  id: string;
+  title: string;
+  pri: string;
+  security: boolean;
+  ring: boolean;
+}
+
+interface PileColumn {
+  key: string;
+  label: string;
+  count: number;
+  tone: ComposedConcernSection['tone'];
+  marks: PileMark[];
+}
+
+/** The pile picture (sketch 044 E, shared by Concerns and Conventions): a column per section, a segment per item stacked
+ * from the baseline, the count and the section's name under each column. Selecting a segment tells the panel; the labels
+ * filter the columns. The foot is the panel's own key. */
+function PilePicture({
+  title,
+  countText,
+  columns,
+  selected,
+  onSelect,
+  filter,
+  onFilter,
+  foot,
+}: {
+  title: string;
+  countText: string;
+  columns: PileColumn[];
+  selected: string | null;
+  onSelect: (id: string | null) => void;
+  filter: number | null;
+  onFilter: (at: number | null) => void;
+  foot: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <figure className="view-codebase-pic">
+      <div className="view-codebase-pic-bar">
+        <span className="view-codebase-pic-title">{title}</span>
+        <span className="view-codebase-pic-count">{countText}</span>
+      </div>
+      <div className="view-codebase-pic-body">
+        <div
+          className="view-codebase-piles"
+          style={{ '--view-codebase-pile-cols': columns.length } as React.CSSProperties}
+        >
+          {columns.map((column, at) => {
+            const tone = column.tone ?? undefined;
+            return (
+              <div
+                className="view-codebase-pile-col"
+                key={column.key}
+                data-dim={filter !== null && filter !== at ? 'true' : undefined}
+              >
+                <div className="view-codebase-pile">
+                  {column.marks.length > 0 ? (
+                    column.marks.map((mark) => (
+                      <button
+                        key={mark.id}
+                        type="button"
+                        className="view-codebase-mark"
+                        data-security={mark.security ? 'true' : undefined}
+                        data-pri={mark.pri}
+                        data-top={mark.ring ? 'true' : undefined}
+                        data-on={selected === mark.id ? 'true' : undefined}
+                        data-dim={filter !== null && filter !== at ? 'true' : undefined}
+                        aria-pressed={selected === mark.id}
+                        aria-label={mark.title}
+                        title={mark.title}
+                        onClick={() => onSelect(selected === mark.id ? null : mark.id)}
+                      />
+                    ))
+                  ) : (
+                    <span className="view-codebase-pile-zero">0</span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="view-codebase-pile-lab"
+                  aria-pressed={filter === at}
+                  aria-label={`${column.label}: ${column.count}`}
+                  onClick={() => onFilter(filter === at ? null : at)}
+                >
+                  <b>{column.count}</b>
+                  <i className="status-square view-codebase-square" data-tone={tone} aria-hidden="true" />
+                  <span className="view-codebase-pile-name">
+                    <ResearchInline text={column.label} />
+                  </span>
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div className="view-codebase-pic-foot">{foot}</div>
+    </figure>
+  );
+}
+
+/** The section chips under a pile picture: they filter the columns, and stand in for the column names at 390px. */
+function PileChips({
+  columns,
+  filter,
+  onFilter,
+}: {
+  columns: PileColumn[];
+  filter: number | null;
+  onFilter: (at: number | null) => void;
+}): React.JSX.Element {
+  return (
+    <div className="view-codebase-legend" role="group" aria-label="Sections">
+      {columns.map((column, at) => {
+        const tone = column.tone ?? undefined;
+        return (
+          <button
+            key={column.key}
+            type="button"
+            className="view-codebase-sec-chip"
+            aria-pressed={filter === at}
+            onClick={() => onFilter(filter === at ? null : at)}
+          >
+            <i className="status-square view-codebase-square" data-tone={tone} aria-hidden="true" />
+            <span>
+              <ResearchInline text={column.label} />
+            </span>
+            <b>{column.count}</b>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Sketch 044 E, "Risk piles": nine columns, one per section (Security first), each concern one segment stacked from
  * the baseline, so a dense section piles up. A segment's opacity follows its Priority when it states one, a zero is a
  * dashed box, and the most dangerous mark carries an accent ring. Selecting a mark opens that concern in a dock under
@@ -599,121 +743,58 @@ function ConcernsPanel({
   };
   const chosen = findConcern(sections, selected);
   const nine = sections.length === 9;
+  // Concerns' opacity rule is the concern's Priority and its ring marks the most dangerous one.
+  const columns: PileColumn[] = sections.map((section, at) => ({
+    key: `${at}-${section.heading}`,
+    label: section.label,
+    count: section.count,
+    tone: section.tone,
+    marks: section.items.map((item) => ({
+      id: item.id,
+      title: item.title,
+      pri: item.priority,
+      security: section.key === SECURITY_SECTION,
+      ring: lifted.top === item.id,
+    })),
+  }));
   return (
     <div className="view-codebase-lifted view-codebase-concerns-panel">
-      <figure className="view-codebase-pic">
-        <div className="view-codebase-pic-bar">
-          <span className="view-codebase-pic-title">
-            {nine ? 'The nine sections as piles' : 'The sections as piles'}
-          </span>
-          <span className="view-codebase-pic-count">{lifted.totalText}</span>
-        </div>
-        <div className="view-codebase-pic-body">
-          <div
-            className="view-codebase-piles"
-            style={{ '--view-codebase-pile-cols': sections.length } as React.CSSProperties}
-          >
-            {sections.map((section, at) => {
-              const tone = section.tone ?? undefined;
-              return (
-                <div
-                  className="view-codebase-pile-col"
-                  key={`${at}-${section.heading}`}
-                  data-dim={filter !== null && filter !== at ? 'true' : undefined}
-                >
-                  <div className="view-codebase-pile">
-                    {section.items.length > 0 ? (
-                      section.items.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          className="view-codebase-mark"
-                          data-security={section.key === SECURITY_SECTION ? 'true' : undefined}
-                          data-pri={item.priority}
-                          data-top={lifted.top === item.id ? 'true' : undefined}
-                          data-on={selected === item.id ? 'true' : undefined}
-                          data-dim={filter !== null && filter !== at ? 'true' : undefined}
-                          aria-pressed={selected === item.id}
-                          aria-label={item.title}
-                          title={item.title}
-                          onClick={() => setSelected(selected === item.id ? null : item.id)}
-                        />
-                      ))
-                    ) : (
-                      <span className="view-codebase-pile-zero">0</span>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    className="view-codebase-pile-lab"
-                    aria-pressed={filter === at}
-                    aria-label={`${section.label}: ${section.count}`}
-                    onClick={() => setFilter(filter === at ? null : at)}
-                  >
-                    <b>{section.count}</b>
-                    <i
-                      className="status-square view-codebase-square"
-                      data-tone={tone}
-                      aria-hidden="true"
-                    />
-                    <span className="view-codebase-pile-name">
-                      <ResearchInline text={section.label} />
-                    </span>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <div className="view-codebase-pic-foot">
-          <span className="view-codebase-key">
-            <span className="view-codebase-mark" data-security="true" data-pri="" />a Security
-            concern
-          </span>
-          <span className="view-codebase-key">
-            <span className="view-codebase-mark" data-pri="" />
-            any other section
-          </span>
-          <span className="view-codebase-key">
-            <span className="view-codebase-mark" data-pri="high" />
-            <span className="view-codebase-mark" data-pri="med" />
-            <span className="view-codebase-mark" data-pri="low" />
-            Priority High, Medium, Low when the concern states one
-          </span>
-          <span className="view-codebase-key">
-            <span className="view-codebase-mark" data-pri="" data-top="true" />
-            the most dangerous: first Security item, else first Tech debt
-          </span>
-          <span>
-            Each segment is one concern; columns are the {nine ? 'nine ' : ''}sections, Security
-            first, the rest in the document&apos;s order; a column&apos;s height is its count.
-          </span>
-        </div>
-      </figure>
-      <div className="view-codebase-legend" role="group" aria-label="Sections">
-        {sections.map((section, at) => {
-          const tone = section.tone ?? undefined;
-          return (
-            <button
-              key={`${at}-${section.heading}`}
-              type="button"
-              className="view-codebase-sec-chip"
-              aria-pressed={filter === at}
-              onClick={() => setFilter(filter === at ? null : at)}
-            >
-              <i
-                className="status-square view-codebase-square"
-                data-tone={tone}
-                aria-hidden="true"
-              />
-              <span>
-                <ResearchInline text={section.label} />
-              </span>
-              <b>{section.count}</b>
-            </button>
-          );
-        })}
-      </div>
+      <PilePicture
+        title={nine ? 'The nine sections as piles' : 'The sections as piles'}
+        countText={lifted.totalText}
+        columns={columns}
+        selected={selected}
+        onSelect={setSelected}
+        filter={filter}
+        onFilter={setFilter}
+        foot={
+          <>
+            <span className="view-codebase-key">
+              <span className="view-codebase-mark" data-security="true" data-pri="" />a Security
+              concern
+            </span>
+            <span className="view-codebase-key">
+              <span className="view-codebase-mark" data-pri="" />
+              any other section
+            </span>
+            <span className="view-codebase-key">
+              <span className="view-codebase-mark" data-pri="high" />
+              <span className="view-codebase-mark" data-pri="med" />
+              <span className="view-codebase-mark" data-pri="low" />
+              Priority High, Medium, Low when the concern states one
+            </span>
+            <span className="view-codebase-key">
+              <span className="view-codebase-mark" data-pri="" data-top="true" />
+              the most dangerous: first Security item, else first Tech debt
+            </span>
+            <span>
+              Each segment is one concern; columns are the {nine ? 'nine ' : ''}sections, Security
+              first, the rest in the document&apos;s order; a column&apos;s height is its count.
+            </span>
+          </>
+        }
+      />
+      <PileChips columns={columns} filter={filter} onFilter={setFilter} />
       {chosen !== null ? (
         <div className="view-codebase-dock" role="region" aria-label="Selected concern">
           <div className="view-codebase-dock-head">
@@ -824,6 +905,185 @@ function ConcernBar({
   );
 }
 
+/** A rule's strength as the opacity step the shared pile reads: hard is full, plain is the middle step, an observed habit the lightest. */
+const STRENGTH_STEP: Readonly<Record<RuleStrength, string>> = { hard: 'high', plain: 'med', observed: 'low' };
+
+const STRENGTH_WORDS: Readonly<Record<RuleStrength, string>> = {
+  hard: 'a hard rule (never, must, only, no)',
+  plain: 'a plain rule',
+  observed: 'an observed habit (observed, usually, rare)',
+};
+
+function findRule(
+  groups: ComposedConventions['groups'],
+  id: string | null,
+): { rule: ComposedRule; heading: string } | null {
+  if (id === null) return null;
+  for (const group of groups) {
+    const rule = group.rules.find((candidate) => candidate.id === id);
+    if (rule !== undefined) return { rule, heading: group.heading };
+  }
+  return null;
+}
+
+/** The Conventions panel (10-14, sketch 046 winner B, "Reuse"): sketch 044 E's piles, the same picture the Concerns
+ * panel draws, one column per section and one segment per rule. The opacity rule is the rule's strength and the ring
+ * marks a rule a test or the linter checks. Selecting a segment reads that rule in a dock; every section stays below as
+ * the plain section, so nothing is cut. */
+function ConventionsPanel({ lifted }: { lifted: ComposedConventions }): React.JSX.Element {
+  const [selected, setSelected] = useState<string | null>(null);
+  const [filter, setFilter] = useState<number | null>(null);
+  const columns: PileColumn[] = lifted.groups.map((group, at) => ({
+    key: `${at}-${group.heading}`,
+    label: group.label,
+    count: group.count,
+    tone: group.count === 0 ? 'quiet' : null,
+    marks: group.rules.map((rule) => ({
+      id: rule.id,
+      title: rule.text.length > 120 ? `${rule.text.slice(0, 120)}...` : rule.text,
+      pri: STRENGTH_STEP[rule.strength],
+      security: false,
+      ring: rule.checked,
+    })),
+  }));
+  const chosen = findRule(lifted.groups, selected);
+  return (
+    <div className="view-codebase-lifted view-codebase-concerns-panel view-codebase-conventions-panel">
+      <PilePicture
+        title="How much each section asks"
+        countText={`${lifted.total} rules · ${lifted.hard} hard · ${lifted.checked} checked`}
+        columns={columns}
+        selected={selected}
+        onSelect={setSelected}
+        filter={filter}
+        onFilter={setFilter}
+        foot={
+          <>
+            <span className="view-codebase-key">
+              <span className="view-codebase-mark" data-pri="high" />a hard rule: never, must, only, no
+            </span>
+            <span className="view-codebase-key">
+              <span className="view-codebase-mark" data-pri="med" />a plain rule
+            </span>
+            <span className="view-codebase-key">
+              <span className="view-codebase-mark" data-pri="low" />an observed habit
+            </span>
+            <span className="view-codebase-key">
+              <span className="view-codebase-mark" data-pri="med" data-top="true" />
+              checked by a test or the linter
+            </span>
+            <span>One column per section in the document&apos;s order, one segment per rule.</span>
+          </>
+        }
+      />
+      <PileChips columns={columns} filter={filter} onFilter={setFilter} />
+      {chosen !== null ? (
+        <div className="view-codebase-dock" role="region" aria-label="Selected rule">
+          <div className="view-codebase-dock-head">
+            <h4>
+              <ResearchInline text={chosen.heading} />
+            </h4>
+            <span className="source-note">
+              {STRENGTH_WORDS[chosen.rule.strength]}
+              {chosen.rule.checked ? ' · checked by a test or the linter' : ''}
+            </span>
+            <button type="button" className="view-codebase-text-link" onClick={() => setSelected(null)}>
+              Close
+            </button>
+          </div>
+          <p className="view-codebase-rule-text">
+            <ResearchInline text={chosen.rule.text} />
+          </p>
+        </div>
+      ) : (
+        <div className="view-codebase-dock-empty">Select a rule to read it in full.</div>
+      )}
+      {lifted.groups.some((group) => group.omitted > 0) ? (
+        <p className="source-note">Some sections hold more rules than the picture draws; all of them are in the sections below.</p>
+      ) : null}
+    </div>
+  );
+}
+
+/** The Testing panel (10-14, sketch 046 winner B, "Reuse"): a strip of runner plates (runner, end-to-end runner,
+ * assertion library, and a hatched coverage plate), the test folder as the shipped clean tree with a quiet badge on each
+ * folder a test type names, then each run command on the shared copy-command row, its comment as the caption. The copied
+ * text is exactly the visible command, control characters removed; the button never runs it. */
+function TestingPanel({ lifted }: { lifted: ComposedTesting }): React.JSX.Element {
+  const labels = useMemo(() => new Map(lifted.badges.map((badge) => [badge.path, badge.labels] as const)), [lifted.badges]);
+  const tree = lifted.tree;
+  const isTree = tree !== null && classifyFence(tree.info, tree.text) === 'tree';
+  return (
+    <div className="view-codebase-lifted view-codebase-testing">
+      {lifted.plates.length > 0 || lifted.coverage !== null ? (
+        <div className="view-codebase-plates">
+          {lifted.plates.map((plate, index) => (
+            <div className="view-codebase-plate" key={`${index}-${plate.label}`}>
+              <span className="view-codebase-micro">
+                <ResearchInline text={plate.label} />
+              </span>
+              <span>
+                <b>
+                  <ResearchInline text={plate.name} />
+                </b>
+                {plate.version !== null ? <code>{plate.version}</code> : null}
+              </span>
+              {plate.config !== null ? <code>{plate.config}</code> : null}
+            </div>
+          ))}
+          {lifted.coverage !== null ? (
+            <div className="view-codebase-plate" data-kind="coverage">
+              <span className="view-codebase-micro">Coverage</span>
+              <span>
+                <b>
+                  <ResearchInline text={lifted.coverage} />
+                </b>
+              </span>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+      {tree !== null ? (
+        <section className="view-codebase-figure">
+          {isTree ? (
+            <CleanTreeFigure text={tree.text} title="Test folders" labels={labels} />
+          ) : (
+            <FenceFigure fence={tree} title="Test folders" />
+          )}
+          {lifted.unplaced.length > 0 ? (
+            <p className="source-note">
+              Test types with no folder on this tree: {lifted.unplaced.join(', ')}.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+      {lifted.commands.length > 0 ? (
+        <figure className="view-codebase-pic">
+          <div className="view-codebase-pic-bar">
+            <span className="view-codebase-pic-title">Run commands</span>
+            <span className="view-codebase-pic-count">{lifted.commands.length} commands</span>
+          </div>
+          <ul className="view-codebase-pic-body view-codebase-cmds">
+            {lifted.commands.map((entry, index) => (
+              <li className="view-codebase-cmd" key={`${index}-${entry.command}`}>
+                <CopyCommand command={entry.command} />
+                {entry.caption !== null ? (
+                  <span className="view-codebase-cap">
+                    <ResearchInline text={entry.caption} />
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          <div className="view-codebase-pic-foot">
+            <span>{NEVER_RUNS_NOTE}</span>
+          </div>
+        </figure>
+      ) : null}
+    </div>
+  );
+}
+
 function Lifted({
   lifted,
   urls,
@@ -837,6 +1097,8 @@ function Lifted({
   if (lifted.kind === 'architecture') return <ArchitecturePanel lifted={lifted} urls={urls} />;
   if (lifted.kind === 'structure') return <StructurePanel lifted={lifted} />;
   if (lifted.kind === 'integrations') return <IntegrationsPanel lifted={lifted} />;
+  if (lifted.kind === 'conventions') return <ConventionsPanel lifted={lifted} />;
+  if (lifted.kind === 'testing') return <TestingPanel lifted={lifted} />;
   return <StackPanel lifted={lifted} />;
 }
 

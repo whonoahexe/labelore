@@ -56,8 +56,28 @@ function isHidden(rows: TreeRow[], index: number, collapsed: ReadonlySet<number>
   return false;
 }
 
-export function CleanTree({ text, changedOnly = false }: { text: string; changedOnly?: boolean }): React.JSX.Element {
+/** Folder path (as the tree draws it, "test/rendering/") to the labels shown as quiet chips on that row (10-14: the test
+ * types that name the folder). */
+export type TreeLabels = ReadonlyMap<string, readonly string[]>;
+
+export function CleanTree({
+  text,
+  changedOnly = false,
+  labels,
+}: {
+  text: string;
+  changedOnly?: boolean;
+  labels?: TreeLabels;
+}): React.JSX.Element {
   const rows = useMemo(() => collapseFolderChains(parseTree(text)), [text]);
+  // Each row's path: its name after its ancestors', so a label can name a folder by path.
+  const paths = useMemo(() => {
+    const out: string[] = [];
+    rows.forEach((row, index) => {
+      out[index] = `${row.parent === null ? '' : out[row.parent]}${row.name}`;
+    });
+    return out;
+  }, [rows]);
   const keep = useMemo(() => changedOnlySet(rows), [rows]);
   const [collapsed, setCollapsed] = useState<ReadonlySet<number>>(() => new Set());
 
@@ -106,6 +126,13 @@ export function CleanTree({ text, changedOnly = false }: { text: string; changed
               )}
             </span>
             <span className="clean-tree-note">
+              {row.dir
+                ? (labels?.get(paths[index]) ?? []).map((label) => (
+                    <span key={label} className="status-chip" data-tone="quiet">
+                      {label}
+                    </span>
+                  ))
+                : null}
               {row.badge ? (
                 <span className="status-chip" data-tone={BADGE_TONE[row.badge]}>
                   {row.badge.toLowerCase()}
@@ -129,10 +156,12 @@ export function CleanTreeFigure({
   text,
   title,
   caption,
+  labels,
 }: {
   text: string;
   title: string;
   caption?: React.ReactNode;
+  labels?: TreeLabels;
 }): React.JSX.Element {
   const counts = useMemo(() => treeCounts(parseTree(text)), [text]);
   const [changedOnly, setChangedOnly] = useState(false);
@@ -159,7 +188,7 @@ export function CleanTreeFigure({
         </>
       }
     >
-      {() => <CleanTree text={text} changedOnly={changedOnly} />}
+      {() => <CleanTree text={text} changedOnly={changedOnly} labels={labels} />}
     </FigureFrame>
   );
 }

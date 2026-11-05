@@ -7,10 +7,12 @@ import { copyText } from './copy-path-button.tsx';
 export const COPIED_RESET_MS = 1500;
 
 /**
- * Writes `command` to the clipboard and nothing else (D-06). The caller passes one of the constant commands,
- * never text taken from a file, and this function issues no request and runs nothing: Labelore never runs the
- * command, the person pastes it in their terminal. `copy` is the clipboard writer, replaceable so a test can
- * record what is written; it resolves `false` when the clipboard refuses, and the caller stays silent then.
+ * Writes `command` to the clipboard and nothing else (D-06). The head passes one of the constant commands; the Testing
+ * panel (10-14) passes a run command taken from the map document, shown as the row's text with control and
+ * bidirectional override characters already removed, so what is copied is exactly what is on screen. This function
+ * issues no request and runs nothing: Labelore never runs the command, the person pastes it in their terminal. `copy`
+ * is the clipboard writer, replaceable so a test can record what is written; it resolves `false` when the clipboard
+ * refuses, and the caller stays silent then.
  */
 export async function copyCommandToClipboard(
   command: string,

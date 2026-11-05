@@ -865,10 +865,27 @@ element is actually written, regardless of class name:
   nothing is truncated without a way to read it. A zero section shows its own words when it has any. At 390px the nine columns stay (the
   segments narrow) and the column labels give way to section chips under the picture. No concern and no section is ever toned `missing`,
   `destructive` or `warning`: a concern is a finding shown as content. The text before the first heading follows the bars.
+- **The Stack, Integrations, Conventions and Testing panels complete the seven, each built from shipped parts.** (Phase 10, 10-14, sketches 045 C
+  and 046 B, both "Reuse") *Stack* is the chip groups of 10-08 - Languages (Primary, Secondary), Runtime, Frameworks (Core, Testing, Build and dev) -
+  with Key Dependencies in the same chip set, one set per label, inside the picture frame: untoned chips, the version in mono, the purpose as the
+  title, a package the document says is not present a dashed hatched ghost, a lifted sentence left out of the chips as a dashed "+N notes" (it stays
+  in the sections below). *Integrations* is the shipped lane diagram handed a graph of the app wired to one node per group in use, the lane from the
+  group's section (Authentication edge, CI/CD worker, Monitoring and Webhooks channel, Data Storage data, APIs and services external, any other
+  section with the app), the groups that say None as quiet chips under the lanes, a known section the document lacks as "not in this document", and
+  the variable names as a strip of tags. A value the document writes beside a variable name is never in the page or the structured record: the tag
+  carries the quiet dashed "Value not shown" mark; the Environment Configuration section is drawn by the panel (its names and its other lines, values
+  removed) only when it holds nothing else, else it stays a plain section as written. A tool named in both Stack and Integrations carries a quiet
+  arrow link to the other panel, only where that panel is mapped. *Conventions* draws the Concerns piles (one component, two rules): a column per
+  section, a segment per rule, the opacity step from the rule's strength (a hard rule says never, must, only, always, do not, or no or not before a
+  name; an observed habit says observed, usually, common, rare, prefer) and the accent ring on a rule a test or the linter checks. *Testing* opens on
+  a strip of runner plates (a hatched plate for coverage), then the test folder as the shipped clean tree with a quiet chip on each folder a test
+  type names, then each run command on the shared `copy-command` row with its comment as the caption. The accent is spent only on the rail's active
+  entry, the checked ring and the cross-read arrows. No tone is used for content; nothing is toned `missing`, `destructive` or `warning`.
 - **A copied command confirms inside its button, not in a toast.** (Phase 10, 10-10) `copy-command` reuses the copy-path clipboard writer
   (`copyText`); on success the button reads "Copied" with a Check icon for 1.5 s and an `sr-only` `role="status"` says "Command copied".
   The shared Toast is not used: it renders `destructive`, which no content in this phase uses. The component imports no api module and
-  issues no request; the copied text is always one of the constant commands, never text from a file.
+  issues no request. The head's command is one of the constant commands; the Testing panel's run commands (10-14) are document text,
+  shown as the row's selectable text with control and bidirectional override characters removed, so the copied text is exactly what is on screen.
 
 ## Surface-scoped registered names
 

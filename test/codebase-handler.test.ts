@@ -177,10 +177,10 @@ describe('the sections of a map document', () => {
     ]);
   });
 
-  it('never ships a section body in structured.codebase', () => {
+  it('never ships a variable value in structured.codebase; since 10-14 the lift names the variable (the name only)', () => {
     const json = JSON.stringify(parse('integrations').structured);
     expect(json).not.toContain('PLACEHOLDER-NOT-A-REAL-KEY');
-    expect(json).not.toContain('TIDEMARK_TIDE_FEED_KEY');
+    expect(json).toContain('TIDEMARK_TIDE_FEED_KEY');
   });
 });
 

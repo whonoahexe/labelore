@@ -29508,6 +29508,82 @@ button.view-codebase-mark:hover {
   color: var(--muted-foreground);
   text-decoration: none;
 }
+
+/* The Conventions panel (10-14, sketch 046 winner B, "Reuse") draws the Concerns piles with its own opacity rule (a rule's
+   strength) and ring rule (a rule a test or the linter checks); it adds no pile CSS. The rule in the dock reads in Body. */
+.view-codebase-rule-text {
+  max-width: 78ch;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The Testing panel (10-14, sketch 046 winner B): the runner plates, the shipped clean tree with test-type chips, then the
+   run commands on the shared copy-command row. The plates are bordered boxes with a heavy top rule; coverage is hatched. */
+.view-codebase-testing {
+  gap: var(--space-5);
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-codebase-plates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.view-codebase-plate {
+  display: grid;
+  gap: var(--space-0-5);
+  min-width: 0;
+  padding: var(--space-1-5) var(--space-2-5);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--foreground);
+}
+
+.view-codebase-plate[data-kind='coverage'] {
+  border-style: dashed;
+  border-top-width: 1px;
+  background: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px 6px);
+}
+
+.view-codebase-plate b {
+  font-weight: var(--fw-semibold);
+}
+
+.view-codebase-plate code {
+  margin-left: var(--space-1-5);
+  background: none;
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+}
+
+.view-codebase-plate > code {
+  margin-left: 0;
+}
+
+.view-codebase-testing .clean-tree-note .status-chip {
+  margin-right: var(--space-1);
+}
+
+.view-codebase-cmds {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  list-style: none;
+}
+
+.view-codebase-cmd {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.view-codebase-cap {
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
 /* phase-10-codebase:end */
 
 /* copy-command (10-10, shared): a command as selectable mono text that wraps, outside its Copy command button. The
