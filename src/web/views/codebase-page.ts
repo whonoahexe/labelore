@@ -121,9 +121,16 @@ export interface ComposedArchitecture {
   swaps: SwapItem[];
 }
 
+/** The Structure panel's designed part (10-12): the Directory Layout fence for the shipped clean tree. */
+export interface ComposedStructure {
+  kind: 'structure';
+  tree: { info: string; text: string };
+}
+
 export type ComposedCodebaseLifted =
   | { kind: 'stack'; groups: ComposedStackGroup[] }
   | ComposedArchitecture
+  | ComposedStructure
   | { kind: 'concerns'; total: number; noun: 'concern' | 'concerns'; totalText: string; counts: ComposedConcernRow[] };
 
 export interface ComposedCodebasePlain {
@@ -416,9 +423,17 @@ function liftArchitecture(codebase: Record<string, unknown>): ComposedArchitectu
   return diagram === null && swaps.length === 0 ? null : { kind: 'architecture', diagram, swaps };
 }
 
+function liftStructure(codebase: Record<string, unknown>): ComposedStructure | null {
+  const structure = isRecord(codebase.structure) ? codebase.structure : null;
+  const tree = structure !== null && isRecord(structure.tree) ? structure.tree : null;
+  if (tree === null || textOrNull(tree.text) === null) return null;
+  return { kind: 'structure', tree: { info: typeof tree.info === 'string' ? tree.info : '', text: String(tree.text) } };
+}
+
 function liftOf(key: string, codebase: Record<string, unknown>): ComposedCodebaseLifted | null {
   if (key === 'stack') return liftStack(codebase);
   if (key === 'architecture') return liftArchitecture(codebase);
+  if (key === 'structure') return liftStructure(codebase);
   if (key === 'concerns') return liftConcerns(codebase);
   return null;
 }
@@ -430,6 +445,7 @@ function consumedKeys(lifted: ComposedCodebaseLifted | null): ReadonlySet<string
     if (lifted.diagram !== null) keys.add('system-overview');
     if (lifted.swaps.length > 0) keys.add('anti-patterns');
   }
+  if (lifted?.kind === 'structure') keys.add('directory-layout');
   return keys;
 }
 
@@ -457,6 +473,78 @@ function consumedGroups(
     if (byHeading !== undefined && typeof byHeading.key === 'string' && keys.has(byHeading.key)) consumed.add(groupIndex);
   });
   return consumed;
+}
+
+// --- cross-links between map panels (10-12) -------------------------------------------------------------------
+
+const MAP_FILE_NAMES: ReadonlySet<string> = new Set([
+  'STACK.md',
+  'ARCHITECTURE.md',
+  'STRUCTURE.md',
+  'CONVENTIONS.md',
+  'TESTING.md',
+  'INTEGRATIONS.md',
+  'CONCERNS.md',
+]);
+const MAP_PATH_PREFIX = '.planning/codebase/';
+/** The longest map file name ("ARCHITECTURE" and its suffix); the walk back from ".md" never goes further. */
+const MAP_NAME_MAX = 'ARCHITECTURE'.length;
+
+export interface MentionPart {
+  text: string;
+  /** The in-app address of a mapped panel, taken from `urls`; null for plain text. Never built from `text`. */
+  to: string | null;
+  /** Present (true) when the mention sat in backticks: the link is shown as code. */
+  code?: true;
+}
+
+function isWordChar(ch: string | undefined): boolean {
+  return ch !== undefined && ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch === '_');
+}
+
+/**
+ * Cuts `text` into plain parts and links to another map panel. A mention is one of the seven exact file names
+ * (STACK.md ... CONCERNS.md), alone or after `.planning/codebase/`, on a word edge, and links only when `urls` holds
+ * that name, that is, when the document is mapped; the address always comes from `urls`, never from the text.
+ * A character scan from each ".md", bounded per hit, so the cost is linear in the text.
+ */
+export function linkMapMentions(text: string, urls: ReadonlyMap<string, string>): MentionPart[] {
+  if (text === '') return [];
+  const parts: MentionPart[] = [];
+  let cursor = 0;
+  let from = 0;
+  for (;;) {
+    const dot = text.indexOf('.md', from);
+    if (dot < 0) break;
+    from = dot + 3;
+    if (isWordChar(text[dot + 3])) continue;
+    let start = dot;
+    while (start > 0 && dot - start < MAP_NAME_MAX && text[start - 1] >= 'A' && text[start - 1] <= 'Z') start -= 1;
+    const name = text.slice(start, dot + 3);
+    if (!MAP_FILE_NAMES.has(name)) continue;
+    const url = urls.get(name);
+    if (url === undefined) continue;
+    let linkStart = start;
+    if (start >= MAP_PATH_PREFIX.length && text.slice(start - MAP_PATH_PREFIX.length, start) === MAP_PATH_PREFIX) {
+      linkStart = start - MAP_PATH_PREFIX.length;
+    }
+    const before = text[linkStart - 1];
+    if (linkStart > cursor && (isWordChar(before) || before === '-' || before === '/' || before === '.')) continue;
+    if (linkStart < cursor) continue;
+    let linkEnd = dot + 3;
+    const wrapped = before === '`' && text[linkEnd] === '`' && linkStart > cursor;
+    if (wrapped) {
+      linkStart -= 1;
+      linkEnd += 1;
+    }
+    if (linkStart > cursor) parts.push({ text: text.slice(cursor, linkStart), to: null });
+    const label = text.slice(wrapped ? linkStart + 1 : linkStart, wrapped ? linkEnd - 1 : linkEnd);
+    parts.push(wrapped ? { text: label, to: url, code: true } : { text: label, to: url });
+    cursor = linkEnd;
+    from = linkEnd;
+  }
+  if (cursor < text.length) parts.push({ text: text.slice(cursor), to: null });
+  return parts;
 }
 
 export function composeCodebase(input: ViewInput): ComposedCodebase | null {

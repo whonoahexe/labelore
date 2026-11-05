@@ -21,7 +21,7 @@ import { FigureFrame } from '../components/figure-frame.tsx';
 import { PlainDiagram } from '../components/lifted-diagram.tsx';
 import { ResearchInline, SwapRows } from '../pages/research-atoms.tsx';
 import { stripLeadingHeading } from './document-sections.ts';
-import { NOT_MAPPED } from './codebase-page.ts';
+import { NOT_MAPPED, linkMapMentions } from './codebase-page.ts';
 import type {
   ComposedArchitecture,
   ComposedCodebase,
@@ -32,6 +32,7 @@ import type {
   ComposedConcernRow,
   ComposedStackGroup,
   ComposedStackSet,
+  ComposedStructure,
 } from './codebase-page.ts';
 
 /** Every field optional on purpose: the page spreads this over ArtifactHeader's own props. */
@@ -207,10 +208,49 @@ function FenceFigure({ fence, title }: { fence: { info: string; text: string }; 
   return <FigureFrame title={title}>{() => <PlainDiagram text={fence.text} />}</FigureFrame>;
 }
 
+/** Author text with a mention of another mapped document (`see STRUCTURE.md`, `.planning/codebase/NAME.md`) linked to
+ * that panel through the page's Link. The address comes from the composed panel list, never from the text; a
+ * document that is not mapped has no address, so its mention stays text. */
+function MappedText({ text, urls }: { text: string; urls: ReadonlyMap<string, string> }): React.JSX.Element {
+  const parts = useMemo(() => linkMapMentions(text, urls), [text, urls]);
+  if (parts.every((part) => part.to === null)) return <ResearchInline text={text} />;
+  return (
+    <>
+      {parts.map((part, index) =>
+        part.to === null ? (
+          <ResearchInline key={index} text={part.text} />
+        ) : (
+          <Link key={index} to={part.to} className="view-codebase-xref">
+            {part.code ? <code>{part.text}</code> : part.text}
+          </Link>
+        ),
+      )}
+    </>
+  );
+}
+
+/** The Structure panel's designed part (10-12; sketch 043 reuses the Research figures): the Directory Layout as the
+ * shipped clean tree in a figure frame titled "Directory structure". Every other section stays plain. */
+function StructurePanel({ lifted }: { lifted: ComposedStructure }): React.JSX.Element {
+  return (
+    <div className="view-codebase-lifted view-codebase-structure">
+      <section className="view-codebase-figure">
+        <FenceFigure fence={lifted.tree} title="Directory structure" />
+      </section>
+    </div>
+  );
+}
+
 /** The Architecture panel's designed parts (10-12; sketch 043 reuses the Research figures): the System Overview as
  * the shipped lane diagram figure (its "Shown as drawn" fallback included), then the Anti-Patterns as the
  * shipped swap rows. Every other section stays a plain section below. */
-function ArchitecturePanel({ lifted }: { lifted: ComposedArchitecture }): React.JSX.Element {
+function ArchitecturePanel({
+  lifted,
+  urls,
+}: {
+  lifted: ComposedArchitecture;
+  urls: ReadonlyMap<string, string>;
+}): React.JSX.Element {
   return (
     <div className="view-codebase-lifted view-codebase-architecture">
       {lifted.diagram !== null ? (
@@ -224,15 +264,22 @@ function ArchitecturePanel({ lifted }: { lifted: ComposedArchitecture }): React.
             <span>Anti-patterns</span>
             <span className="view-codebase-tally">{lifted.swaps.length} to avoid</span>
           </h3>
-          <SwapRows items={lifted.swaps} />
+          <SwapRows items={lifted.swaps} renderText={(text) => <MappedText text={text} urls={urls} />} />
         </section>
       ) : null}
     </div>
   );
 }
 
-function Lifted({ lifted }: { lifted: ComposedCodebaseLifted }): React.JSX.Element {
-  if (lifted.kind === 'architecture') return <ArchitecturePanel lifted={lifted} />;
+function Lifted({
+  lifted,
+  urls,
+}: {
+  lifted: ComposedCodebaseLifted;
+  urls: ReadonlyMap<string, string>;
+}): React.JSX.Element {
+  if (lifted.kind === 'architecture') return <ArchitecturePanel lifted={lifted} urls={urls} />;
+  if (lifted.kind === 'structure') return <StructurePanel lifted={lifted} />;
   if (lifted.kind === 'stack') {
     return (
       <div className="view-codebase-lifted">
@@ -272,6 +319,16 @@ export function CodebaseView({
   renderHtml: (html: string) => React.ReactNode;
 }): React.JSX.Element {
   const { facts, panels, active } = model;
+  // Another mapped panel's address by its file name, for a mention in the active panel's text (never the current one).
+  const urls = useMemo(
+    () =>
+      new Map(
+        model.panels.flatMap((panel) =>
+          panel.url !== null && !panel.current ? [[`${panel.key.toUpperCase()}.md`, panel.url] as const] : [],
+        ),
+      ),
+    [model.panels],
+  );
   return (
     <div className="view-codebase-page">
       <aside className="view-codebase-rail">
@@ -292,7 +349,7 @@ export function CodebaseView({
             <h2 id="view-codebase-panel-title">{active.label}</h2>
             {active.keyPhrase !== null ? <span className="view-codebase-panel-key">{active.keyPhrase}</span> : null}
           </header>
-          {active.lifted !== null ? <Lifted lifted={active.lifted} /> : null}
+          {active.lifted !== null ? <Lifted lifted={active.lifted} urls={urls} /> : null}
           {active.plain.length > 0 ? (
             <div className="view-codebase-plain">
               {active.plain.map((section, index) => (

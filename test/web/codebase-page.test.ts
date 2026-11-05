@@ -364,10 +364,18 @@ describe('linkMapMentions - cross-links between map panels (10-12)', () => {
   });
 
   it('links a .planning/codebase path whole', () => {
-    expect(linkMapMentions('in `.planning/codebase/ARCHITECTURE.md`.', urls)).toEqual([
-      { text: 'in `', to: null },
+    expect(linkMapMentions('in .planning/codebase/ARCHITECTURE.md.', urls)).toEqual([
+      { text: 'in ', to: null },
       { text: '.planning/codebase/ARCHITECTURE.md', to: '/p/codebase/architecture' },
-      { text: '`.', to: null },
+      { text: '.', to: null },
+    ]);
+  });
+
+  it('takes the backticks around a mention into the link, shown as code', () => {
+    expect(linkMapMentions('see `STRUCTURE.md`.', urls)).toEqual([
+      { text: 'see ', to: null },
+      { text: 'STRUCTURE.md', to: '/p/codebase/structure', code: true },
+      { text: '.', to: null },
     ]);
   });
 

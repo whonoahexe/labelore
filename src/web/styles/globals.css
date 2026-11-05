@@ -28868,6 +28868,22 @@ a.view-codebase-entry:hover {
   color: var(--muted-foreground);
   letter-spacing: var(--ls-wider);
 }
+
+/* A mention of another mapped document inside a panel's text: an in-page link, quiet until hovered. */
+.view-codebase-xref {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: var(--space-0-5);
+}
+
+.view-codebase-xref:hover {
+  text-decoration-color: currentcolor;
+}
+
+.view-codebase-xref code {
+  background: none;
+}
 /* phase-10-codebase:end */
 
 /* copy-command (10-10, shared): a command as selectable mono text that wraps, outside its Copy command button. The
