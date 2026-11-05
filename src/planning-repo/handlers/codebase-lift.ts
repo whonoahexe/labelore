@@ -13,6 +13,7 @@
 // the browser (T-10-10).
 import { eachLineOutsideFences, fenceMarker, scanFencedLines, splitBodyLines } from './fenced-sections.ts';
 import type { FencedSection } from './fenced-sections.ts';
+import { parseTree, treeCounts } from '../../rendering/ascii-tree.ts';
 
 // ---------------------------------------------------------------------------------------------------------
 // Heading normalisation and keys
@@ -308,6 +309,8 @@ export interface CodebaseBody {
   concerns?: ConcernsLift;
   /** The System Overview diagram, the Anti-Patterns entries and the component count (document architecture only). */
   architecture?: ArchitectureLift;
+  /** The Directory Layout tree and its directory count (document structure only). */
+  structure?: StructureLift;
   /** What `keyNumber` counts when it is not the panel's usual unit: Architecture counts layers when the
    * document has no component table. */
   keyUnit?: 'layer';
@@ -899,6 +902,24 @@ export function liftArchitecture(sections: readonly KeyedSection[], lines: reado
   return lift;
 }
 
+export interface StructureLift {
+  /** The Directory Layout's fenced block, when that section holds nothing else; else null. */
+  tree: FigureFence | null;
+  /** Directories in that tree. */
+  directories: number;
+}
+
+/** The Directory Layout tree and how many directories it names. */
+export function liftStructure(sections: readonly KeyedSection[], lines: readonly string[]): StructureLift {
+  const lift: StructureLift = { tree: null, directories: 0 };
+  for (const section of sections) {
+    if (section.level !== 2 || section.key !== 'directory-layout') continue;
+    lift.tree = soleFence(lines, section);
+    if (lift.tree !== null) lift.directories = treeCounts(parseTree(lift.tree.text)).folders;
+  }
+  return lift;
+}
+
 export function extractCodebase(doc: string, frontmatter: Record<string, unknown>, body: string): CodebaseBody {
   const lines = splitBodyLines(body);
   const keyed = keySections(doc, scanFencedLines(lines));
@@ -921,6 +942,10 @@ export function extractCodebase(doc: string, frontmatter: Record<string, unknown
       result.keyNumber = architecture.layers;
       result.keyUnit = 'layer';
     }
+  } else if (doc === 'structure') {
+    const structure = liftStructure(keyed, lines);
+    result.structure = structure;
+    if (structure.tree !== null && structure.directories > 0) result.keyNumber = structure.directories;
   } else if (doc === 'concerns') {
     const concerns = countConcerns(keyed, lines);
     result.concerns = concerns;

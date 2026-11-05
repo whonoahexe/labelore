@@ -152,8 +152,17 @@ export function ChipSwitch({
 }
 
 /** 032 A's swaps: the thing struck through, then what to do instead; a click opens the why. */
-export function SwapRows({ items }: { items: readonly SwapItem[] }): React.JSX.Element {
+export function SwapRows({
+  items,
+  renderText,
+}: {
+  items: readonly SwapItem[];
+  /** How a row's text reaches the DOM; defaults to ResearchInline. The Codebase page passes one that links a
+   * mention of another map document. */
+  renderText?: (text: string) => React.ReactNode;
+}): React.JSX.Element {
   const [open, setOpen] = useState<number | null>(null);
+  const text = renderText ?? ((value: string) => <ResearchInline text={value} />);
   return (
     <ol className="research-swaps">
       {items.map((item, index) => {
@@ -168,13 +177,13 @@ export function SwapRows({ items }: { items: readonly SwapItem[] }): React.JSX.E
             >
               <span className="research-swap-n">{String(index + 1).padStart(2, '0')}</span>
               <span className="research-swap-bad">
-                <ResearchInline text={item.bad} />
+                {text(item.bad)}
               </span>
               <span className="research-swap-arrow" aria-hidden="true">
                 →
               </span>
               <span className="research-swap-good">
-                <ResearchInline text={item.good} />
+                {text(item.good)}
               </span>
               <Chev />
             </button>
@@ -184,7 +193,7 @@ export function SwapRows({ items }: { items: readonly SwapItem[] }): React.JSX.E
                   <Fragment key={detail.label}>
                     <p className="research-label">{detail.label}</p>
                     <p>
-                      <ResearchInline text={detail.text} />
+                      {text(detail.text)}
                     </p>
                   </Fragment>
                 ))}
