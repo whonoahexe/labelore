@@ -289,7 +289,7 @@ h2.sh { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: va
   <span class="lbl">050 eval review</span>
   <span class="grp" id="tabs">
     <a data-tab="a" href="#a">A: Score waffle</a>
-    <a data-tab="b" href="#b">B: Gap → fix ledger</a>
+    <a data-tab="b" href="#b">B: Gap → fix ledger ★ Selected</a>
     <a data-tab="c" href="#c">C: Reuse — datasheet, matrix, piles</a>
   </span>
   <span class="grp">
@@ -493,7 +493,7 @@ ACTS.close = () => { S.sel = null; render(); };
 document.addEventListener('toggle', (e) => { const el = e.target; if (el.matches && el.matches('details.bar') && el.dataset.k) { if (el.open) S.open.add(el.dataset.k); else S.open.delete(el.dataset.k); } }, true);
 
 // ---------- render orchestration ----------
-const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'b'; };
 function render() {
   const y = window.scrollY; const v = pickVariant();
   document.documentElement.classList.toggle('dark', theme === 'dark');

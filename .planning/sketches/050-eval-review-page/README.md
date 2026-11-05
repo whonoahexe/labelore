@@ -2,7 +2,7 @@
 sketch: 050
 name: eval-review-page
 question: "How should the Eval review page put the score and GSD's verdict first, then the dimension coverage (Covered, Partial, Missing) with how each is measured, the infrastructure audit, and the remediation plan in the author's order, as a picture rather than three tables?"
-winner: null
+winner: "B"
 tags: [eval-review, score, dimensions, remediation, phase-10]
 ---
 
@@ -157,4 +157,18 @@ All text is the made-up Lendshed EVAL-REVIEW files (test/fixtures/lendshed, 10-0
 state is 04 with two head lines removed. The repository is public.
 
 ## Winner
-Pending the user's choice at the 10-15 checkpoint.
+**B: Gap → fix ledger**, chosen by the user at the 10-15 checkpoint: "B for both". No synthesis.
+
+Build B as drawn in its tab (marked "★ Selected"; the sketch now opens on it):
+- **The ruled head:** "Score" with "{n} of {of}" (mono, Heading) and "Verdict" with the large verdict chip;
+  with no score only the quiet "Verdict not stated" chip. Under it the tally "{c} covered, {p} partial,
+  {m} missing" beside the `status-meter`, then the file's Coverage Score, Infrastructure Score and AI-SPEC
+  Present as written.
+- **The ledger:** left, "Dimension coverage" rows (square, name, the state word, the measurement, "Fix: {group}
+  {n}") and then smaller "Infrastructure audit" rows (square, name, the file's own word); a row opens its finding
+  in place. Right, the "Remediation plan" in the author's order: group heads with counts (an empty group a dashed
+  "0"), numbered steps verbatim, a target tag (square + name) on a step that opens with a dimension's or
+  component's name. An SVG wire runs from each named row to its step, stroked in the target's tone; selecting
+  either end brings its wires forward.
+- **Below:** Critical Gaps, Files Found and anything unclaimed as closed bars.
+- **At 390px (under 52rem):** no wires; the two sides stack and the tags and "Fix:" references carry the link.
