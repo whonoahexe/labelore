@@ -22,6 +22,7 @@ import { FigureFor } from '../components/fenced-figure.tsx';
 import { FigureFrame } from '../components/figure-frame.tsx';
 import { LaneDiagram } from '../components/lane-diagram.tsx';
 import { PlainDiagram } from '../components/lifted-diagram.tsx';
+import { ValueNotShown } from '../components/value-not-shown.tsx';
 import { ResearchInline, SwapRows } from '../pages/research-atoms.tsx';
 import { stripLeadingHeading } from './document-sections.ts';
 import { NEVER_RUNS_NOTE, NOT_MAPPED, linkMapMentions } from './codebase-page.ts';
@@ -417,7 +418,7 @@ function IntegrationsPanel({ lifted }: { lifted: ComposedIntegrations }): React.
                     title={variable.kind === 'named' ? 'named in the document' : variable.kind}
                   >
                     <code>{variable.name}</code>
-                    {variable.hadValue ? <span className="view-codebase-vns">Value not shown</span> : null}
+                    {variable.hadValue ? <ValueNotShown /> : null}
                   </li>
                 ))}
               </ul>

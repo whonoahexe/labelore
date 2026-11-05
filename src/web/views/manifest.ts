@@ -70,6 +70,8 @@ import type { CodebaseContext } from '../../presentation/codebase-map.ts';
 import type { ComposedSpec } from './spec-page.ts';
 // Type-only import - same reason as `specPage` above (Phase 10, 10-18, sketch-048 winner C, the AI spec page).
 import type { ComposedAiSpec } from './ai-spec-page.ts';
+// Type-only import - same reason as `specPage` above (Phase 10, 10-19, sketch-049 winner B, the User setup page).
+import type { ComposedUserSetup } from './user-setup-page.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -172,6 +174,10 @@ export interface ViewManifest {
    * section, field, dimension or checklist item), and the page falls back to the promoted-section view, which the
    * manifest keeps as `promote`, with no notice (RESEARCH C1). */
   aiSpecPage?: (input: ViewInput) => ComposedAiSpec | null;
+  /** Phase 10 (10-19, sketch-049 winner B): the User setup page a manifest opts into in View mode - currently only
+   * `user-setup`. Returns `null` only when the input has no `structured.userSetup` (the page then shows the sanctioned
+   * empty note, never the document: the manifest sets `withholdDocumentInView`, CONTEXT D-11). */
+  userSetupPage?: (input: ViewInput) => ComposedUserSetup | null;
   /** Phase 10 (10-08): true for a kind whose document text must never reach View mode through the generic
    * fallback (promoted sections or the whole document) - `user-setup`, whose file can hold a pasted value
    * (CONTEXT D-11). The Source toggle stays the way to the text. See `documentHtmlAllowedInView`. */

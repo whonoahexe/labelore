@@ -11,6 +11,10 @@ export const STATUS_METER_MAX_CELLS = 40;
 
 export type StatusMeterTone = 'complete' | 'in-flight';
 
+/** One item's own state: `true` is done (the meter's tone), `false` is quiet, or a tone named outright (a page whose
+ * items are done, pending and not stated draws `complete`, `in-flight` and `quiet`). */
+export type StatusMeterItem = boolean | StatusMeterTone | 'quiet';
+
 export interface StatusMeterProps {
   /** How many items are done, 0 to `total`. */
   filled: number;
@@ -18,7 +22,7 @@ export interface StatusMeterProps {
   total: number;
   /** Each item's own state in order, when the order matters (a checklist ticked out of order). With up to 40 items
    * the squares follow it; otherwise the squares are the first `filled` ones. */
-  items?: readonly boolean[];
+  items?: readonly StatusMeterItem[];
   /** The tone of the filled squares; the rest are `quiet`. */
   tone?: StatusMeterTone;
   /** The meter's one accessible name, exact, e.g. "6 of 16 checklist items done". */
@@ -49,6 +53,12 @@ export function StatusMeter({
 }: StatusMeterProps): React.JSX.Element {
   const { cells, filledCells } = statusMeterCells(filled, total);
   const perItem = items !== undefined && items.length === total && total <= STATUS_METER_MAX_CELLS;
+  const toneAt = (index: number): StatusMeterTone | 'quiet' => {
+    if (!perItem) return index < filledCells ? tone : 'quiet';
+    const item = items?.[index];
+    if (typeof item === 'string') return item;
+    return item ? tone : 'quiet';
+  };
   return (
     <div className="status-meter" data-size={size} role="img" aria-label={label}>
       {caption !== undefined ? (
@@ -61,7 +71,7 @@ export function StatusMeter({
           <i
             key={index}
             className="status-square status-meter-sq"
-            data-tone={(perItem ? items[index] : index < filledCells) ? tone : 'quiet'}
+            data-tone={toneAt(index)}
           />
         ))}
       </span>
