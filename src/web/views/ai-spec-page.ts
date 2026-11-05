@@ -63,6 +63,8 @@ export interface ComposedAiSpecProgress {
   label: string;
   done: number;
   total: number;
+  /** Each checklist item's own state in file order, or null when the file's list is not the count. */
+  items: boolean[] | null;
 }
 
 export interface ComposedAiSpecStripItem {
@@ -330,8 +332,10 @@ export function composeAiSpec(input: ViewInput): ComposedAiSpec | null {
   const checklist = isRecord(raw.checklist) ? raw.checklist : {};
   const total = Math.max(0, Math.floor(numberOr(checklist.total, 0)));
   const done = Math.min(total, Math.max(0, Math.floor(numberOr(checklist.done, 0))));
+  const rawItems = listOf(checklist.items);
+  const items = rawItems.length === total ? rawItems.map((item) => item === true) : null;
   const progress: ComposedAiSpecProgress | null =
-    total === 0 ? null : { label: `${done} of ${total} checklist items done`, done, total };
+    total === 0 ? null : { label: `${done} of ${total} checklist items done`, done, total, items };
 
   if (
     sections.length === 0 &&

@@ -47,7 +47,7 @@ describe('AiSpecHandler', () => {
     const result = AiSpecHandler.parse(raw(HALF), ref());
     expect(result.title).toBe('AI-SPEC — Phase 4: Bulk Loan Export');
     expect(result.body).toContain('## 1. System Classification');
-    expect((result.structured?.aiSpec as AiSpecBody).checklist).toEqual({ done: 6, total: 16 });
+    expect((result.structured?.aiSpec as AiSpecBody).checklist).toMatchObject({ done: 6, total: 16 });
   });
 
   it('keeps the title, body and frontmatter when the extractor throws', async () => {
@@ -95,8 +95,12 @@ describe('extractAiSpec - 04-AI-SPEC (half filled)', () => {
     expect(spec.dimensions[0].rubric).toBe('Pass when every figure equals the batch total');
   });
 
-  it('counts 6 of 16 checklist items done', () => {
-    expect(spec.checklist).toEqual({ done: 6, total: 16 });
+  it('counts 6 of 16 checklist items done, each item keeping its own place', () => {
+    expect(spec.checklist).toMatchObject({ done: 6, total: 16 });
+    expect(spec.checklist.items).toEqual([
+      true, true, true, true, false, true, true, false,
+      false, false, false, false, false, false, false, false,
+    ]);
   });
 
   it('lists the nine numbered sections in file order, and not the Checklist', () => {
@@ -115,7 +119,7 @@ describe('extractAiSpec - 02-AI-SPEC (the template body)', () => {
     expect(spec.stakes).toBeNull();
     expect(spec.vendorLockIn).toBeNull();
     expect(spec.dimensions).toEqual([]);
-    expect(spec.checklist).toEqual({ done: 0, total: 16 });
+    expect(spec.checklist).toMatchObject({ done: 0, total: 16 });
   });
 
   it('lists the same nine numbered sections', () => {
@@ -129,7 +133,7 @@ describe('extractAiSpec - tolerance', () => {
       const spec = extractAiSpec(body);
       expect(spec.sections).toEqual([]);
       expect(spec.dimensions).toEqual([]);
-      expect(spec.checklist).toEqual({ done: 0, total: 0 });
+      expect(spec.checklist).toMatchObject({ done: 0, total: 0 });
       expect(spec.systemType).toBeNull();
     }
   });
@@ -240,7 +244,7 @@ describe('the unfilled-slot rule - what is scaffolding', () => {
   });
 
   it('a heading line inside a fence does not start a section', () => {
-    const spec = extractAiSpec('## 1. A\n\n```md\n## 2. Fake\n```\n');
+    const spec = extractAiSpec('## 1. A\n\n```md\n## 2. Fake\nreal line\n```\n');
     expect(spec.sections.map((s) => s.number)).toEqual(['1']);
     expect(spec.sections[0].slot).toBe(false);
   });

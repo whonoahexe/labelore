@@ -16,6 +16,9 @@ export interface StatusMeterProps {
   filled: number;
   /** How many items there are. */
   total: number;
+  /** Each item's own state in order, when the order matters (a checklist ticked out of order). With up to 40 items
+   * the squares follow it; otherwise the squares are the first `filled` ones. */
+  items?: readonly boolean[];
   /** The tone of the filled squares; the rest are `quiet`. */
   tone?: StatusMeterTone;
   /** The meter's one accessible name, exact, e.g. "6 of 16 checklist items done". */
@@ -38,12 +41,14 @@ export function statusMeterCells(filled: number, total: number): { cells: number
 export function StatusMeter({
   filled,
   total,
+  items,
   tone = 'complete',
   label,
   caption,
   size = 'default',
 }: StatusMeterProps): React.JSX.Element {
   const { cells, filledCells } = statusMeterCells(filled, total);
+  const perItem = items !== undefined && items.length === total && total <= STATUS_METER_MAX_CELLS;
   return (
     <div className="status-meter" data-size={size} role="img" aria-label={label}>
       {caption !== undefined ? (
@@ -56,7 +61,7 @@ export function StatusMeter({
           <i
             key={index}
             className="status-square status-meter-sq"
-            data-tone={index < filledCells ? tone : 'quiet'}
+            data-tone={(perItem ? items[index] : index < filledCells) ? tone : 'quiet'}
           />
         ))}
       </span>
