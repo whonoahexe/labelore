@@ -50,10 +50,13 @@ function composeFile(content: string, groups: ViewInput['groups'] = []): Compose
 }
 
 /** A stand-in for the page's renderHtml: the section html shows as escaped text, so a test can find it. */
-const renderHtml = (html: string) => createElement('section', { 'data-plain': 'true' }, `HTML:${html}`);
+const renderHtml = (html: string) =>
+  createElement('section', { 'data-plain': 'true' }, `HTML:${html}`);
 
 function markup(model: ComposedSpec): string {
-  return renderToStaticMarkup(createElement(SpecView, { model, renderHtml, onShowSource: () => undefined }));
+  return renderToStaticMarkup(
+    createElement(SpecView, { model, renderHtml, onShowSource: () => undefined }),
+  );
 }
 
 const LOCKED = fxRead('phases/01-member-sign-in-sessions/01-SPEC.md');
@@ -73,8 +76,18 @@ describe('composeSpec - 01-SPEC, locked', () => {
     expect(model.ambiguity.lowerIsBetter).toBe(true);
     expect(model.ambiguity.fill).toBe(28);
     expect(model.ambiguity.mark).toBe(40);
-    expect(model.dimensions.map((d) => d.label)).toEqual(['Goal', 'Boundary', 'Constraint', 'Acceptance Criteria']);
-    expect(model.dimensions.map((d) => d.statusLabel)).toEqual(['Met minimum', 'Met minimum', 'Met minimum', 'Met minimum']);
+    expect(model.dimensions.map((d) => d.label)).toEqual([
+      'Goal',
+      'Boundary',
+      'Constraint',
+      'Acceptance Criteria',
+    ]);
+    expect(model.dimensions.map((d) => d.statusLabel)).toEqual([
+      'Met minimum',
+      'Met minimum',
+      'Met minimum',
+      'Met minimum',
+    ]);
     expect(model.dimensions[2].mark).toBe(65);
     expect(model.dimensions[2].fill).toBe(78);
   });
@@ -87,10 +100,18 @@ describe('composeSpec - 01-SPEC, locked', () => {
   it('lays out five requirements with all three fields and no "No acceptance stated"', () => {
     expect(model.requirements).toHaveLength(5);
     expect(model.requirements.every((r) => !r.noAcceptance)).toBe(true);
-    expect(model.requirements[0].fields.map((f) => f.label)).toEqual(['Current', 'Target', 'Acceptance']);
+    expect(model.requirements[0].fields.map((f) => f.label)).toEqual([
+      'Current',
+      'Target',
+      'Acceptance',
+    ]);
     expect(model.hasCoverage).toBe(true);
     expect(model.requirements[0].edges.map((m) => m.word)).toEqual(['Covered']);
-    expect(model.requirements[0].prohibitions.map((m) => m.word)).toEqual(['Resolved', 'Resolved', 'Dismissed']);
+    expect(model.requirements[0].prohibitions.map((m) => m.word)).toEqual([
+      'Resolved',
+      'Resolved',
+      'Dismissed',
+    ]);
   });
 });
 
@@ -113,7 +134,13 @@ describe('SpecView - the first screen', () => {
   });
 
   it('lists every requirement as a numbered row in author order, with a closed panel', () => {
-    for (const label of ['Account sign-in', 'Session survives a restart', 'Sign-out', 'Forced first password change', 'Sign-in rate limiting']) {
+    for (const label of [
+      'Account sign-in',
+      'Session survives a restart',
+      'Sign-out',
+      'Forced first password change',
+      'Sign-in rate limiting',
+    ]) {
       expect(html).toContain(label);
     }
     expect(html.indexOf('Account sign-in')).toBeLessThan(html.indexOf('Sign-in rate limiting'));
@@ -127,7 +154,9 @@ describe('SpecView - the first screen', () => {
   });
 
   it('writes the goal under the strip', () => {
-    expect(html).toContain('A member signs in to Lendshed with a username and password Lendshed itself holds');
+    expect(html).toContain(
+      'A member signs in to Lendshed with a username and password Lendshed itself holds',
+    );
   });
 
   it('renders no destructive, warning or missing tone', () => {
@@ -168,7 +197,11 @@ function groupsOf(md: string): ViewInput['groups'] {
   const close = (): void => {
     if (current === null) return;
     const id = current.heading.toLowerCase().split(' ').join('-');
-    groups.push({ id, heading: current.heading, html: `<h2 id="${id}">${current.heading}</h2><p>${current.lines.join(' ')}</p>` });
+    groups.push({
+      id,
+      heading: current.heading,
+      html: `<h2 id="${id}">${current.heading}</h2><p>${current.lines.join(' ')}</p>`,
+    });
   };
   for (const line of md.split('\n')) {
     if (line.startsWith('## ')) {
@@ -196,7 +229,12 @@ describe('composeSpec - 02-SPEC, above the gate', () => {
   });
 
   it('marks Constraint below its minimum, in-flight, and the rest met', () => {
-    expect(model.dimensions.map((d) => d.statusLabel)).toEqual(['Met minimum', 'Met minimum', 'Below minimum', 'Met minimum']);
+    expect(model.dimensions.map((d) => d.statusLabel)).toEqual([
+      'Met minimum',
+      'Met minimum',
+      'Below minimum',
+      'Met minimum',
+    ]);
     expect(model.dimensions[2].statusTone).toBe('in-flight');
     expect(model.dimensions[2].title).toBe('Below minimum — planner must treat as assumption');
   });
@@ -204,14 +242,26 @@ describe('composeSpec - 02-SPEC, above the gate', () => {
   it('puts one mark on each requirement an edge or prohibition names, toned by status', () => {
     const [r1, r2, r3] = model.requirements;
     expect(model.hasCoverage).toBe(true);
-    expect(r1.edges.map((m) => [m.word, m.tone])).toEqual([['Covered', 'complete'], ['Dismissed', 'quiet']]);
-    expect(r2.prohibitions.map((m) => [m.word, m.tone])).toEqual([['Resolved', 'complete'], ['Unresolved', 'in-flight']]);
-    expect(r3.edges.map((m) => [m.word, m.tone])).toEqual([['Unresolved', 'in-flight'], ['Backstop', 'complete']]);
+    expect(r1.edges.map((m) => [m.word, m.tone])).toEqual([
+      ['Covered', 'complete'],
+      ['Dismissed', 'quiet'],
+    ]);
+    expect(r2.prohibitions.map((m) => [m.word, m.tone])).toEqual([
+      ['Resolved', 'complete'],
+      ['Unresolved', 'in-flight'],
+    ]);
+    expect(r3.edges.map((m) => [m.word, m.tone])).toEqual([
+      ['Unresolved', 'in-flight'],
+      ['Backstop', 'complete'],
+    ]);
   });
 
   it('draws the boundaries: three in scope, three out with their reasons', () => {
     expect(model.boundaries?.inScope).toHaveLength(3);
-    expect(model.boundaries?.outOfScope[0]).toEqual({ item: 'Creating, disabling or deleting accounts', reason: 'that is Phase 3' });
+    expect(model.boundaries?.outOfScope[0]).toEqual({
+      item: 'Creating, disabling or deleting accounts',
+      reason: 'that is Phase 3',
+    });
   });
 
   it('keeps every other section as a bar in file order and the Interview Log in the source-only strip', () => {
@@ -285,7 +335,9 @@ describe('composeSpec - the verdict at the gate and without a score', () => {
   it('still renders the requirements without a score, with dashed Not scored columns', () => {
     const html = renderToStaticMarkup(
       createElement(SpecView, {
-        model: composeFile(`${head('**Ambiguity score:** [score]')}\n## Requirements\n\n1. **A**: s\n   - Current: c\n`)!,
+        model: composeFile(
+          `${head('**Ambiguity score:** [score]')}\n## Requirements\n\n1. **A**: s\n   - Current: c\n`,
+        )!,
         renderHtml,
         onShowSource: () => undefined,
       }),
@@ -298,7 +350,11 @@ describe('composeSpec - the verdict at the gate and without a score', () => {
 
   it('shows no Requirements heading for a spec with none', () => {
     const html = renderToStaticMarkup(
-      createElement(SpecView, { model: composeFile(head('**Ambiguity score:** 0.1'))!, renderHtml, onShowSource: () => undefined }),
+      createElement(SpecView, {
+        model: composeFile(head('**Ambiguity score:** 0.1'))!,
+        renderHtml,
+        onShowSource: () => undefined,
+      }),
     );
     expect(html).not.toContain('Requirements');
   });
@@ -342,7 +398,9 @@ describe('SpecView - the rest of the page', () => {
   });
 
   it('shows a requirement with no Current or Target as the fields it has', () => {
-    const model = composeFile('# S\n\n## Requirements\n\n1. **A**: s\n   - Acceptance: only this\n')!;
+    const model = composeFile(
+      '# S\n\n## Requirements\n\n1. **A**: s\n   - Acceptance: only this\n',
+    )!;
     expect(model.requirements[0].fields.map((f) => [f.label, f.value])).toEqual([
       ['Current', null],
       ['Target', null],
@@ -366,10 +424,19 @@ const END = '/* phase-10-spec:end */';
 const COMPOSER = 'src/web/views/spec-page.ts';
 const COMPONENTS = 'src/web/views/spec-page-components.tsx';
 const EXTRACTOR = 'src/planning-repo/handlers/spec-body.ts';
-const ALLOWED_SIZES = ['var(--fs-2)', 'var(--fs-4)', 'var(--fs-7)', 'var(--fs-display-3)', 'inherit'];
+const ALLOWED_SIZES = [
+  'var(--fs-2)',
+  'var(--fs-4)',
+  'var(--fs-7)',
+  'var(--fs-display-3)',
+  'inherit',
+];
 
 function stripSourceComments(text: string): string {
-  return text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
+  return text
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '')
+    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
 }
 
 function stripCssComments(text: string): string {
@@ -446,7 +513,9 @@ describe('spec view contract - helpers catch planted violations', () => {
     expect(usesRegexLiteral("text.replace(/a/g, '')")).toBe(true);
     expect(importsFilesystem("import { readFileSync } from 'node:fs';")).toBe(true);
     expect(hasModuleLevelLet('let cache = null;\nexport const x = 1;')).toBe(true);
-    expect(cssViolations('a { color: color-mix(in oklch, red, blue); }')).toContain('color-mix recipe');
+    expect(cssViolations('a { color: color-mix(in oklch, red, blue); }')).toContain(
+      'color-mix recipe',
+    );
     expect(fontSizes('a { font-size: var(--fs-5); }')).toEqual(['var(--fs-5)']);
   });
 
@@ -464,7 +533,10 @@ describe('spec view contract - the real sources', () => {
     expect(writesLink(code)).toBe(false);
     expect(writesForbiddenTone(code)).toBe(false);
     for (const expression of new Set(toneExpressions(code))) {
-      expect(['"complete"', '"quiet"', '"in-flight"'].includes(expression) || expression.startsWith('{'), expression).toBe(true);
+      expect(
+        ['"complete"', '"quiet"', '"in-flight"'].includes(expression) || expression.startsWith('{'),
+        expression,
+      ).toBe(true);
     }
     expect(code).toContain('aria-hidden="true"');
   });
@@ -508,7 +580,14 @@ describe('spec view contract - the real sources', () => {
     const block = specBlock(css);
     expect(cssViolations(stripCssComments(block))).toEqual([]);
     expect(css.replace(block, '')).not.toMatch(/\.view-spec-/);
-    for (const selector of ['.view-spec-page', '.view-spec-strip', '.view-spec-col', '.view-spec-row', '.view-spec-fence', '.view-spec-bar']) {
+    for (const selector of [
+      '.view-spec-page',
+      '.view-spec-strip',
+      '.view-spec-col',
+      '.view-spec-row',
+      '.view-spec-fence',
+      '.view-spec-bar',
+    ]) {
       expect(block, selector).toContain(selector);
     }
   });

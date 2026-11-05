@@ -38,9 +38,15 @@ const LOCKED = fxRead('phases/01-member-sign-in-sessions/01-SPEC.md');
 describe('SpecHandler', () => {
   it('claims a SPEC ref ahead of the generic handler, and no UI-SPEC or AI-SPEC', () => {
     expect(SpecHandler.match(ref())).toBe(true);
-    expect(SpecHandler.match(ref('.planning/phases/01-member-sign-in-sessions/01-AI-SPEC.md'))).toBe(false);
-    expect(SpecHandler.match(ref('.planning/phases/01-member-sign-in-sessions/01-UI-SPEC.md'))).toBe(false);
-    expect(SpecHandler.match(ref('.planning/phases/01-member-sign-in-sessions/01-CONTEXT.md'))).toBe(false);
+    expect(
+      SpecHandler.match(ref('.planning/phases/01-member-sign-in-sessions/01-AI-SPEC.md')),
+    ).toBe(false);
+    expect(
+      SpecHandler.match(ref('.planning/phases/01-member-sign-in-sessions/01-UI-SPEC.md')),
+    ).toBe(false);
+    expect(
+      SpecHandler.match(ref('.planning/phases/01-member-sign-in-sessions/01-CONTEXT.md')),
+    ).toBe(false);
     expect(HANDLERS.find((h) => h.match(ref()))).toBe(SpecHandler);
     expect(HANDLERS.indexOf(SpecHandler)).toBeLessThan(HANDLERS.indexOf(GenericMarkdownHandler));
     expect(HANDLERS[HANDLERS.length - 1]).toBe(GenericMarkdownHandler);
@@ -74,10 +80,16 @@ describe('extractSpec - 01-SPEC (locked)', () => {
   const spec = extractSpec(LOCKED);
 
   it('reads the score 0.14 against the stated gate 0.20', () => {
-    expect(spec.ambiguity).toEqual({ score: 0.14, scoreText: '0.14', gate: 0.2, gateText: '0.20', gateStated: true });
+    expect(spec.ambiguity).toEqual({
+      score: 0.14,
+      scoreText: '0.14',
+      gate: 0.2,
+      gateText: '0.20',
+      gateStated: true,
+    });
   });
 
-  it('reads the created date and the file\'s locked count', () => {
+  it("reads the created date and the file's locked count", () => {
     expect(spec.created).toBe('2026-03-22');
     expect(spec.lockedCount).toBe(5);
   });
@@ -90,7 +102,9 @@ describe('extractSpec - 01-SPEC (locked)', () => {
   it('reads five requirements, each with Current, Target and Acceptance', () => {
     expect(spec.requirements.map((r) => r.n)).toEqual([1, 2, 3, 4, 5]);
     expect(spec.requirements[0].label).toBe('Account sign-in');
-    expect(spec.requirements[0].statement).toBe('A member with a username and password signs in and receives a session.');
+    expect(spec.requirements[0].statement).toBe(
+      'A member with a username and password signs in and receives a session.',
+    );
     for (const requirement of spec.requirements) {
       expect(requirement.current).not.toBeNull();
       expect(requirement.target).not.toBeNull();
@@ -129,13 +143,19 @@ describe('extractSpec - 01-SPEC (locked)', () => {
       'Ambiguity Report',
       'Interview Log',
     ]);
-    expect(spec.sections.filter((s) => s.claimed).map((s) => s.heading)).toEqual(['Goal', 'Requirements', 'Boundaries']);
+    expect(spec.sections.filter((s) => s.claimed).map((s) => s.heading)).toEqual([
+      'Goal',
+      'Requirements',
+      'Boundaries',
+    ]);
   });
 });
 
 describe('extractSpec - the head lines', () => {
   it('reads no score from a placeholder, even when a gate number follows it (Pitfall 14)', () => {
-    const spec = extractSpec('# Phase 1: X — Specification\n\n**Ambiguity score:** [score] (gate: ≤ 0.20)\n');
+    const spec = extractSpec(
+      '# Phase 1: X — Specification\n\n**Ambiguity score:** [score] (gate: ≤ 0.20)\n',
+    );
     expect(spec.ambiguity.score).toBeNull();
     expect(spec.ambiguity.scoreText).toBeNull();
     expect(spec.ambiguity.gate).toBe(0.2);
@@ -184,7 +204,9 @@ describe('extractSpec - requirements', () => {
   });
 
   it('ignores a heading-like line inside a code fence', () => {
-    const spec = extractSpec(body('1. **A**: s\n   - Current: c\n\n```\n## Goal\n2. **Fake**: no\n```\n'));
+    const spec = extractSpec(
+      body('1. **A**: s\n   - Current: c\n\n```\n## Goal\n2. **Fake**: no\n```\n'),
+    );
     expect(spec.requirements.map((r) => r.label)).toEqual(['A']);
     expect(spec.sections.map((s) => s.heading)).toEqual(['Requirements', 'Boundaries']);
   });
@@ -209,7 +231,13 @@ describe('extractSpec - 02-SPEC (above the gate)', () => {
   const spec = extractSpec(NOT_LOCKED);
 
   it('reads the score 0.31 and the gate 0.20 from the two-character ASCII form', () => {
-    expect(spec.ambiguity).toEqual({ score: 0.31, scoreText: '0.31', gate: 0.2, gateText: '0.20', gateStated: true });
+    expect(spec.ambiguity).toEqual({
+      score: 0.31,
+      scoreText: '0.31',
+      gate: 0.2,
+      gateText: '0.20',
+      gateStated: true,
+    });
     expect(spec.lockedCount).toBe(4);
   });
 
@@ -229,7 +257,9 @@ describe('extractSpec - 02-SPEC (above the gate)', () => {
       [[3], 'backstop', 'backstop'],
     ]);
     expect(spec.edges?.[1].label).toBe('last steward demotes themself');
-    expect(spec.edges?.[2].reason).toBe('Sheds are never closed in this product; closure is not a supported event');
+    expect(spec.edges?.[2].reason).toBe(
+      'Sheds are never closed in this product; closure is not a supported event',
+    );
   });
 
   it('reads the Prohibitions rows, one resolved and one unresolved', () => {
@@ -237,20 +267,29 @@ describe('extractSpec - 02-SPEC (above the gate)', () => {
       [[2], 'resolved'],
       [[2], 'unresolved'],
     ]);
-    expect(spec.prohibitions?.[0].label).toBe('MUST NOT reveal which shed caused a refusal on a transfer');
+    expect(spec.prohibitions?.[0].label).toBe(
+      'MUST NOT reveal which shed caused a refusal on a transfer',
+    );
   });
 
   it('reads In scope and Out of scope, splitting each out-of-scope item at the first spaced em dash', () => {
     expect(spec.inScope).toHaveLength(3);
     expect(spec.outOfScope).toEqual([
       { item: 'Creating, disabling or deleting accounts', reason: 'that is Phase 3' },
-      { item: 'A live notice to an open page when its grants change', reason: 'left to discussion, may land later' },
+      {
+        item: 'A live notice to an open page when its grants change',
+        reason: 'left to discussion, may land later',
+      },
       { item: 'Per-tool permissions', reason: 'not asked for by any steward' },
     ]);
   });
 
   it('claims Goal, Requirements and Boundaries and leaves the rest, in file order', () => {
-    expect(spec.sections.filter((s) => s.claimed).map((s) => s.heading)).toEqual(['Goal', 'Requirements', 'Boundaries']);
+    expect(spec.sections.filter((s) => s.claimed).map((s) => s.heading)).toEqual([
+      'Goal',
+      'Requirements',
+      'Boundaries',
+    ]);
     expect(spec.sections.filter((s) => !s.claimed).map((s) => s.heading)).toEqual([
       'Background',
       'Constraints',
@@ -267,7 +306,13 @@ describe('extractSpec - 03-SPEC (nine requirements, no gate)', () => {
   const spec = extractSpec(NINE);
 
   it("uses GSD's gate of 0.20 and says it was not stated", () => {
-    expect(spec.ambiguity).toEqual({ score: 0.18, scoreText: '0.18', gate: 0.2, gateText: '0.20', gateStated: false });
+    expect(spec.ambiguity).toEqual({
+      score: 0.18,
+      scoreText: '0.18',
+      gate: 0.2,
+      gateText: '0.20',
+      gateStated: false,
+    });
   });
 
   it('reads nine requirements, the sixth with no Acceptance', () => {
@@ -302,7 +347,11 @@ describe('extractSpec - the gate and the count as written', () => {
   });
 
   it('uses 0.20 when a score has no gate', () => {
-    expect(score('**Ambiguity score:** 0.12')).toMatchObject({ score: 0.12, gate: 0.2, gateStated: false });
+    expect(score('**Ambiguity score:** 0.12')).toMatchObject({
+      score: 0.12,
+      gate: 0.2,
+      gateStated: false,
+    });
   });
 
   it("shows the file's own count when it disagrees with the numbered items (5 locked, seven items)", () => {
@@ -341,7 +390,8 @@ describe('extractSpec - the gate and the count as written', () => {
 describe('extractSpec - stays linear (T-10-28)', () => {
   it('in numbered requirements, past the 200 it keeps', () => {
     const growth = measureGrowth({
-      make: (n) => `# S\n\n## Requirements\n\n${'1. **R**: statement\n   - Current: c\n'.repeat(n)}`,
+      make: (n) =>
+        `# S\n\n## Requirements\n\n${'1. **R**: statement\n   - Current: c\n'.repeat(n)}`,
       run: (input) => {
         extractSpec(input);
       },

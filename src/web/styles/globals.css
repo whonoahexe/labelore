@@ -29606,10 +29606,12 @@ button.view-codebase-mark:hover {
 
 /* phase-10-spec:start */
 /* Phase 10 (10-16): the Spec page, sketch 047 winner B (Lock matrix). The page renders four font sizes: the h1 as
-   ArtifactHeader draws it (--fs-display-3), the section headings, the verdict chip, the lead numbers and the
-   requirement numbers (--fs-7), Body (--fs-4) and Label (--fs-2). Where a shared class sets a size outside that set,
-   the page takes it inside with a page-scoped rule below, so no shared class is edited. */
+   ArtifactHeader draws it (--fs-display-3), the section headings, the goal, the lead numbers, the dimension values
+   and the requirement numbers (--fs-7), Body (--fs-4) and Label (--fs-2). Where a shared class sets a size outside
+   that set, the page takes it inside with a page-scoped rule below, so no shared class is edited. */
 .view-spec-page {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
   display: grid;
   gap: var(--space-8);
   align-content: start;
@@ -29702,20 +29704,10 @@ button.view-codebase-mark:hover {
   align-content: end;
 }
 
-/* The verdict chip is the one chip set at Heading size, in sentence case (UI-SPEC: the verdict chip text). */
-.artifact-page:has(.view-spec-page) .view-spec-verdict {
+/* The verdict chip is drawn as the sketch draws it in this variant: the shared chip at Label size, allowed to wrap. */
+.view-spec-verdict {
   max-width: 100%;
-  padding: var(--space-1-5) var(--space-3);
-  font-family: var(--font-sans);
-  font-size: var(--fs-7);
-  letter-spacing: var(--ls-tight);
-  line-height: var(--lh-tight);
-  text-transform: none;
   white-space: normal;
-}
-
-.view-spec-sq-m {
-  --status-square-size: var(--space-3);
 }
 
 .view-spec-numbers {
@@ -29894,7 +29886,7 @@ button.view-codebase-mark:hover {
 .view-spec-matrix-head,
 .view-spec-row {
   display: grid;
-  grid-template-columns: var(--space-8) minmax(0, 1fr) repeat(3, calc(var(--space-8) * 2.5));
+  grid-template-columns: var(--space-8) minmax(0, 1fr) repeat(2, calc(var(--space-8) * 2.5)) calc(var(--space-8) * 4);
   align-items: center;
   gap: 0 var(--space-3);
   min-width: 0;
@@ -30120,7 +30112,7 @@ button.view-codebase-mark:hover {
    dismissed quiet). */
 .view-spec-matrix[data-coverage='true'] :is(.view-spec-matrix-head, .view-spec-row) {
   grid-template-columns:
-    var(--space-8) minmax(0, 1fr) repeat(3, calc(var(--space-8) * 2.5)) calc(var(--space-8) * 4)
+    var(--space-8) minmax(0, 1fr) repeat(2, calc(var(--space-8) * 2.5)) calc(var(--space-8) * 4) calc(var(--space-8) * 4)
     calc(var(--space-8) * 3);
 }
 
