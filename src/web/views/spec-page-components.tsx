@@ -85,7 +85,7 @@ function VerdictCell({ model }: { model: ComposedSpec }): React.JSX.Element {
   return (
     <div className="view-spec-cell view-spec-lead">
       <span className="status-chip view-spec-verdict" data-tone={verdict.tone}>
-        <i className="status-square view-spec-sq-m" data-tone={verdict.tone} aria-hidden="true" />
+        <i className="status-square" data-tone={verdict.tone} aria-hidden="true" />
         {verdict.label}
       </span>
       {verdict.numbers !== null ? (
