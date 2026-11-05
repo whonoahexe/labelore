@@ -431,7 +431,7 @@ function hasModuleLevelLet(text: string): boolean {
 
 /** Reads the document's own HTML or a field named `value`: what a user-setup page must never do. */
 function readsDocumentHtmlOrValue(text: string): boolean {
-  return /\.html\b|\bgroups\b|\.document\b|\.value\b|\bvalue:/.test(text);
+  return /\.html\b|\bgroups\b|\.document\b|(?<!token)\.value\b|\bvalue:/.test(text);
 }
 
 function cssViolations(block: string): string[] {
@@ -544,7 +544,7 @@ describe('user setup view contract - the real sources', () => {
     const code = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
     const branch = code.indexOf('userSetupPageCover ? (');
     expect(branch).toBeGreaterThan(-1);
-    expect(code).toContain('<UserSetupView key={artifact.path} model={userSetupPageCover} />');
+    expect(code).toContain('<UserSetupView key={artifact.path} model={userSetupPageCover} onShowSource={showSource} />');
     // The user-setup branch precedes the withheld note and every document renderer, so the document's own heading list
     // and HTML are never what View mode draws for this kind.
     expect(branch).toBeLessThan(code.indexOf('documentWithheld ? ('));

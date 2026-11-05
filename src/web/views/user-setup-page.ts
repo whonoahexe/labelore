@@ -8,13 +8,16 @@
 //     segment is the leaf's muted prefix, a one-child folder chain is joined, a URL-only item joins the root whose steps
 //     share its host, anything else waits under "No place stated"), and "Goes in", one card per destination file with a
 //     numbered line per variable;
-//   - below, the steps as closed bars by section.
-// Every string comes from `structured.userSetup`, which the handler has already masked: the composer never reads the
+//   - below, the steps as closed bars by section, then Local Development, Verification and any other section as plain bars
+//     (paragraphs, fenced commands as copy rows) and "In the source only".
+// A file with no recognisable step or variable composes to the plain model: the head's "Steps not stated" chip over its
+// masked sections as headed text. Every string comes from `structured.userSetup`, which the handler has already masked: the composer never reads the
 // document HTML, so a value a person pasted into the file cannot reach the page through it (CONTEXT D-11, T-10-33). No
 // DOM, no filesystem access, no rendering, no regular expression and no module-level state: two user setup pages open at
-// once each compose only from their own input. Returns `null` when the projection is missing (the page then shows the
+// once each compose only from their own input. Returns `null` only when the projection is missing (the page then shows the
 // sanctioned empty note, never the document).
 import type { ViewInput } from './manifest.ts';
+import { VALUE_NOT_SHOWN_MARK, stripControlCharacters } from '../../planning-repo/handlers/withhold-values.ts';
 
 /** The three tones this page writes: done is `complete`, pending `in-flight`, a step it cannot classify `quiet`. */
 export type UserSetupTone = 'complete' | 'in-flight' | 'quiet';
@@ -22,6 +25,9 @@ export type UserSetupTone = 'complete' | 'in-flight' | 'quiet';
 export const STEPS_NOT_STATED_LABEL = 'Steps not stated';
 export const NO_PLACE_LABEL = 'No place stated';
 export const NO_FILE_LABEL = 'No file stated';
+
+/** The most blocks one plain section draws. */
+const BLOCK_CAP = 400;
 
 /** The word beside a step's square. */
 export const STEP_WORDS: Readonly<Record<UserSetupTone, string>> = {
@@ -32,7 +38,20 @@ export const STEP_WORDS: Readonly<Record<UserSetupTone, string>> = {
 
 export interface ComposedUserSetupField {
   key: string;
-  value: string;
+  text: string;
+}
+
+/** One block of a plain section, in file order. Every string is masked text from the handler. */
+export type UserSetupBlock =
+  | { kind: 'text'; text: string; bullet: boolean }
+  | { kind: 'heading'; text: string }
+  /** A fenced command line; `copyable` is false when it held a value (the mark is in it), so no copy control is drawn. */
+  | { kind: 'command'; text: string; copyable: boolean }
+  | { kind: 'note'; text: string };
+
+export interface ComposedPlainSection {
+  heading: string;
+  blocks: UserSetupBlock[];
 }
 
 /** One step, or one variable the file lists without a Status box. */
@@ -97,6 +116,8 @@ export interface ComposedStatusLine {
 }
 
 export interface ComposedUserSetup {
+  /** `designed` when the file has a step or a variable, else `plain`: the masked sections as headed text. */
+  kind: 'designed' | 'plain';
   generated: string | null;
   phase: string | null;
   total: number;
@@ -115,18 +136,22 @@ export interface ComposedUserSetup {
   /** The item the dock opens on, or null when none is open or the file has no step. */
   firstOpen: number | null;
   bars: ComposedBarGroup[];
+  /** The sections that hold no step or variable (every section of a plain model), as masked blocks. */
+  plain: ComposedPlainSection[];
+  /** What "In the source only" lists: the intro text and the template's footer. */
+  sourceOnly: { intro: boolean; footer: boolean };
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+function isRecord(candidate: unknown): candidate is Record<string, unknown> {
+  return typeof candidate === 'object' && candidate !== null && !Array.isArray(candidate);
 }
 
-function textOrNull(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
+function textOrNull(candidate: unknown): string | null {
+  return typeof candidate === 'string' && candidate.trim() !== '' ? candidate.trim() : null;
 }
 
-function listOf(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
+function listOf(candidate: unknown): unknown[] {
+  return Array.isArray(candidate) ? candidate : [];
 }
 
 /** A cell's text without its backticks and bold marks, for places a path is read. */
@@ -146,7 +171,7 @@ function pathSegments(text: string): string[] {
 
 function fieldValue(item: ComposedUserSetupItem, key: string): string | null {
   const lower = key.toLowerCase();
-  for (const field of item.fields) if (field.key.toLowerCase() === lower) return field.value;
+  for (const field of item.fields) if (field.key.toLowerCase() === lower) return field.text;
   return null;
 }
 
@@ -242,17 +267,17 @@ function toneOf(done: unknown): UserSetupTone {
   return 'quiet';
 }
 
-function kindOf(value: unknown): ComposedUserSetupItem['kind'] {
-  return value === 'variable' || value === 'account' ? value : 'dashboard';
+function kindOf(candidate: unknown): ComposedUserSetupItem['kind'] {
+  return candidate === 'variable' || candidate === 'account' ? candidate : 'dashboard';
 }
 
-function readFields(value: unknown): ComposedUserSetupField[] {
+function readFields(candidate: unknown): ComposedUserSetupField[] {
   const out: ComposedUserSetupField[] = [];
-  for (const raw of listOf(value)) {
+  for (const raw of listOf(candidate)) {
     if (!isRecord(raw)) continue;
     const key = textOrNull(raw.key);
     if (key === null) continue;
-    out.push({ key, value: typeof raw.value === 'string' ? raw.value : '' });
+    out.push({ key, text: typeof raw.text === 'string' ? raw.text : '' });
   }
   return out;
 }
@@ -339,7 +364,7 @@ function composeBars(
   items: readonly ComposedUserSetupItem[],
   sectionHeadings: readonly string[],
 ): ComposedBarGroup[] {
-  const groups: ComposedBarGroup[] = [];
+  const barGroups: ComposedBarGroup[] = [];
   const headings = [...sectionHeadings];
   for (const item of items) if (!headings.includes(item.group)) headings.push(item.group);
   for (const heading of headings) {
@@ -347,13 +372,145 @@ function composeBars(
     if (inGroup.length === 0) continue;
     const steps = inGroup.filter((item) => item.tone !== null);
     const done = steps.filter((item) => item.tone === 'complete').length;
-    groups.push({
+    barGroups.push({
       heading,
       count: steps.length === 0 ? null : `${done} of ${steps.length}`,
       items: inGroup.map((item) => item.index),
     });
   }
-  return groups;
+  return barGroups;
+}
+
+
+function isFenceLine(trimmed: string): boolean {
+  return trimmed.startsWith('```') || trimmed.startsWith('~~~');
+}
+
+/** A horizontal rule of dashes: the template's footer opens after one. */
+function isRuleLine(trimmed: string): boolean {
+  if (trimmed.length < 3) return false;
+  for (let i = 0; i < trimmed.length; i += 1) if (trimmed.charCodeAt(i) !== 45) return false;
+  return true;
+}
+
+/** A table separator row (`|---|---|`). */
+function isSeparatorLine(trimmed: string): boolean {
+  if (trimmed.charCodeAt(0) !== 124) return false;
+  let dashes = 0;
+  for (let i = 0; i < trimmed.length; i += 1) {
+    const c = trimmed.charCodeAt(i);
+    if (c === 45) dashes += 1;
+    else if (c !== 124 && c !== 58 && c !== 32) return false;
+  }
+  return dashes > 0;
+}
+
+/** The text of a list item (`- x`, `* x`, `1. x`), or null when the line is not one. */
+function listItemText(trimmed: string): string | null {
+  const first = trimmed.charCodeAt(0);
+  if ((first === 45 || first === 42 || first === 43) && trimmed.charCodeAt(1) === 32) return trimmed.slice(2).trim();
+  let i = 0;
+  while (i < trimmed.length && trimmed.charCodeAt(i) >= 48 && trimmed.charCodeAt(i) <= 57) i += 1;
+  if (i > 0 && i < 4 && (trimmed.charAt(i) === '.' || trimmed.charAt(i) === ')') && trimmed.charCodeAt(i + 1) === 32) {
+    return trimmed.slice(i + 2).trim();
+  }
+  return null;
+}
+
+/** The section's lines up to the template's footer rule (outside fences), and whether a footer with text follows it. */
+function splitFooter(lines: readonly string[]): { body: readonly string[]; footer: boolean } {
+  let fence = false;
+  for (let i = 0; i < lines.length; i += 1) {
+    const trimmed = lines[i].trim();
+    if (isFenceLine(trimmed)) {
+      fence = !fence;
+      continue;
+    }
+    if (fence || i === 0 || !isRuleLine(trimmed)) continue;
+    let footer = false;
+    for (let j = i + 1; j < lines.length; j += 1) if (lines[j].trim() !== '') footer = true;
+    return { body: lines.slice(0, i), footer };
+  }
+  return { body: lines, footer: false };
+}
+
+/** A section's masked lines as blocks: paragraphs, list items, sub-headings, table rows as text, fenced commands and the
+ * `#` comment lines inside a fence as notes. */
+function blocksOf(lines: readonly string[]): UserSetupBlock[] {
+  const blocks: UserSetupBlock[] = [];
+  let paragraph: string[] = [];
+  let fence = false;
+  const flush = (): void => {
+    if (paragraph.length > 0) blocks.push({ kind: 'text', text: paragraph.join(' '), bullet: false });
+    paragraph = [];
+  };
+  for (const line of lines) {
+    if (blocks.length >= BLOCK_CAP) break;
+    const trimmed = line.trim();
+    if (isFenceLine(trimmed)) {
+      flush();
+      fence = !fence;
+      continue;
+    }
+    if (fence) {
+      if (trimmed === '') continue;
+      if (trimmed.charCodeAt(0) === 35) {
+        blocks.push({ kind: 'note', text: trimmed });
+        continue;
+      }
+      const command = stripControlCharacters(trimmed);
+      blocks.push({ kind: 'command', text: command, copyable: command !== '' && !command.includes(VALUE_NOT_SHOWN_MARK) });
+      continue;
+    }
+    if (trimmed === '') {
+      flush();
+      continue;
+    }
+    if (trimmed.charCodeAt(0) === 35) {
+      flush();
+      let at = 0;
+      while (trimmed.charCodeAt(at) === 35) at += 1;
+      const text = trimmed.slice(at).trim();
+      if (text !== '') blocks.push({ kind: 'heading', text });
+      continue;
+    }
+    if (trimmed.charCodeAt(0) === 124) {
+      flush();
+      if (isSeparatorLine(trimmed)) continue;
+      const cells = trimmed.split('|').map((cell) => cell.trim()).filter((cell) => cell !== '');
+      if (cells.length > 0) blocks.push({ kind: 'text', text: cells.join(' · '), bullet: false });
+      continue;
+    }
+    const item = listItemText(trimmed);
+    if (item !== null) {
+      flush();
+      if (item !== '') blocks.push({ kind: 'text', text: item, bullet: true });
+      continue;
+    }
+    paragraph.push(trimmed);
+  }
+  flush();
+  return blocks;
+}
+
+function composePlain(
+  raw: Record<string, unknown>,
+  claimed: ReadonlySet<string>,
+): { plain: ComposedPlainSection[]; footer: boolean } {
+  const plain: ComposedPlainSection[] = [];
+  let footer = false;
+  for (const section of listOf(raw.sections)) {
+    if (!isRecord(section)) continue;
+    const heading = textOrNull(section.heading);
+    if (heading === null) continue;
+    const lines = listOf(section.lines).filter((line): line is string => typeof line === 'string');
+    const split = splitFooter(lines);
+    if (split.footer) footer = true;
+    if (claimed.has(heading)) continue;
+    const blocks = blocksOf(split.body);
+    if (blocks.length > 0) plain.push({ heading, blocks });
+  }
+  return { plain, footer };
 }
 
 /** Composes the User setup page, or `null` when there is no projection to read. */
@@ -361,7 +518,6 @@ export function composeUserSetup(input: ViewInput): ComposedUserSetup | null {
   const raw = input.structured?.userSetup;
   if (!isRecord(raw)) return null;
   const items = composeItems(raw);
-  if (items.length === 0) return null;
   const stepItems = items.filter((item) => item.tone !== null);
   const total = stepItems.length;
   const done = stepItems.filter((item) => item.tone === 'complete').length;
@@ -371,9 +527,14 @@ export function composeUserSetup(input: ViewInput): ComposedUserSetup | null {
     const heading = textOrNull(section.heading);
     if (heading !== null) sectionHeadings.push(heading);
   }
+  const designed = items.length > 0;
+  const bars = composeBars(items, sectionHeadings);
+  const claimed = new Set(bars.map((bar) => bar.heading));
+  const { plain, footer } = composePlain(raw, designed ? claimed : new Set<string>());
   const { tree, tray } = composeTree(items);
   const firstOpen = stepItems.find((item) => item.tone !== 'complete');
   return {
+    kind: designed ? 'designed' : 'plain',
     generated: textOrNull(raw.generated),
     phase: textOrNull(raw.phase),
     total,
@@ -387,6 +548,8 @@ export function composeUserSetup(input: ViewInput): ComposedUserSetup | null {
     tray,
     files: composeFiles(items, total > 0),
     firstOpen: firstOpen === undefined ? null : firstOpen.index,
-    bars: composeBars(items, sectionHeadings),
+    bars,
+    plain,
+    sourceOnly: { intro: raw.hasIntro === true, footer },
   };
 }

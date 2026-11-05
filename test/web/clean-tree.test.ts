@@ -55,7 +55,7 @@ describe('CleanTree (roles fixture)', () => {
 
 // 10-19: the row-input path. A page that builds its own rows (the User setup page's dashboard paths) passes `rows`
 // instead of an ASCII text; the rows are drawn as given (no folder chain is joined), a leaf's own node replaces the
-// file icon and name, and a trail sits in the note column.
+// file icon and name.
 describe('CleanTree (row input)', () => {
   const rows = [
     { depth: 0, name: 'Host', dir: true, parent: null },
@@ -66,7 +66,6 @@ describe('CleanTree (row input)', () => {
       dir: false,
       parent: 1,
       node: createElement('button', { type: 'button', className: 'a-leaf' }, 'Endpoint address'),
-      trail: createElement('span', { className: 'a-trail' }, 'Done'),
     },
     { depth: 1, name: 'Plain leaf', dir: false, parent: 0 },
   ];
@@ -78,9 +77,8 @@ describe('CleanTree (row input)', () => {
     expect(html).toContain('<button type="button" class="clean-tree-folder" aria-expanded="true">');
   });
 
-  it("draws a leaf's own node instead of the file icon and name, and its trail in the note column", () => {
+  it("draws a leaf's own node instead of the file icon and name", () => {
     expect(html).toContain('<button type="button" class="a-leaf">Endpoint address</button>');
-    expect(html).toContain('<span class="a-trail">Done</span>');
     expect(html).not.toContain('<span>Endpoint</span>');
     expect(html).toContain('<span>Plain leaf</span>');
   });
