@@ -369,7 +369,7 @@ testing such pages against made-up examples that are clearly labelled as made up
    and falls back to a readable generic page when a real file differs from what the design expected.
    *(VIEW-21, VIEW-11, VIEW-12, VIEW-13)*
 
-**Plans**: 12/24 plans executed
+**Plans**: 13/24 plans executed
 
 Plans:
 **Wave 1**
@@ -389,7 +389,7 @@ Plans:
 **Wave 4** *(blocked on Wave 3 completion)*
 - [x] 10-07-PLAN.md — Made-up eval review, browser check and cross-AI review examples on Lendshed
 - [x] 10-08-PLAN.md — Codebase page frame from 042: one view kind, panels by address, Not mapped entries, readiness; the six spec and check kinds registered, user setup never showing its document HTML in View mode
-- [ ] 10-11-PLAN.md — Sketches 045 (Stack and Integrations) and 046 (Conventions and Testing) (user picks the winners)
+- [x] 10-11-PLAN.md — Sketches 045 (Stack and Integrations) and 046 (Conventions and Testing) (user picks the winners)
 
 **Wave 5** *(blocked on Wave 4 completion)*
 - [x] 10-10-PLAN.md — The map-only head from 042: state, stamp, readiness, stack and concerns lifted, GSD's next step as a copyable command
@@ -535,7 +535,7 @@ file, ID or project.
 | 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
 | 8. Several Projects and a Switcher | v2.1 | 18/18 | Complete    | 2026-11-02 |
 | 9. Review, Audit and Root Document Pages | v2.1 | 16/16 | In Progress | - |
-| 10. Codebase Map, Specification and Check Pages | v2.1 | 12/24 | In Progress | - |
+| 10. Codebase Map, Specification and Check Pages | v2.1 | 13/24 | In Progress | - |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |
 | 12. Project Settings, Source Mode and Reading Polish | v2.1 | 0/TBD | Not started | - |
 | 13. Search and Quick-Jump Palette | v2.1 | 0/TBD | Not started | - |
