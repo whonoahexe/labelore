@@ -1,0 +1,152 @@
+---
+sketch: 043
+name: codebase-architecture-structure
+question: "Inside 042's winning Rail + column frame, how should the Architecture and Structure panels arrange the system diagram, the component table, the anti-pattern swaps, the directory tree and the 'Where to add new code' lookup?"
+winner: null
+tags: [codebase, architecture, structure, diagram, tree]
+---
+
+# Sketch 043: Architecture and Structure panels
+
+## Design Question
+Phase 10 D-01, D-14 and D-15, UI-SPEC section 2. Architecture and Structure are the cross-read pair on the
+Codebase page. Architecture lifts the System Overview diagram first (the lifted-diagram figure, with the
+"Shown as drawn" rule), the Component Responsibilities table, Pattern Overview, Entry Points and
+Anti-Patterns as swaps (what happens, why it is wrong, do this instead); everything else stays a plain
+section after the lifted part. Structure lifts the Directory Layout as the clean tree titled "Directory
+structure" and "Where to add new code" as a lookup list; the rest stays plain. This sketch decides how
+those parts are arranged inside the panel. The page frame is not up for choice: it is 042 A, drawn
+identically in every variant.
+
+## How to View
+open .planning/sketches/043-codebase-architecture-structure/index.html
+
+- Tabs `#a`, `#b`, `#c` pick the variant. Light and Dark switch theme (`?theme=dark` works too).
+- The State bar (`?state=arch|plain|tidemark|tree|deep`) switches five states:
+  - **Architecture**: Labelore's own Architecture (about 290 lines in the source: a 76-column diagram, 24
+    components, six plain sections below the lifted part).
+  - **Diagram not lifted**: the same panel with a System Overview the lift rejects (no closed boxes), shown
+    as plain text in the same figure frame, no cards behind it and no "Shown as drawn" line.
+  - **Tidemark headings**: the made-up Tidemark Architecture fixture, whose headings differ (an added "API
+    Architecture" section that stays plain below the lifted part, five components, two anti-patterns, a
+    diagram holding a line that starts with two hashes inside the fence). The rail shows its own counts;
+    entries without a number there are not drawn in this sketch.
+  - **Structure**: Labelore's own Structure (the real 37-line tree with trailing comments, ten Where-to-add
+    entries, eleven Directory Purposes).
+  - **Deep tree**: an invented tree in Labelore's own words, seven levels down in places, to show how a
+    deep tree and the shipped folder-chain collapse (`test/fixtures/dashboard/` and `ledger/.planning/`
+    become one row each) read.
+- Click Architecture or Structure in the rail to change panel; the other rail entries are 044 to 046 and
+  show "Sketch only". Expand, Actual size, Grid, View and Source are drawn, not wired.
+- A 390px-wide window shows the phone layout; none of the three scrolls sideways at 390px in either theme
+  (the diagram and the tree scroll inside their own frame).
+
+## Shared across all three
+- The 042 A frame: sticky left rail (facts line, seven entries), the panel head (number, name, key number),
+  the lifted part, then the plain sections in document order. Normal project, so no "Mapped, not started"
+  head.
+- **System overview** is the shipped figure frame: title bar with Actual size, Grid and Expand chips, the
+  author's text with cards behind it (the lifted diagram). The quiet "Shown as drawn" chip and "This figure
+  keeps the author's layout." sit over it. The lane diagram is not drawn: its graph test (at least four
+  nodes, enough wires) is a build-time judgement, so the sketch shows the fallback that every diagram can
+  always show.
+- **Anti-patterns** are swaps: the mistake struck through, an arrow, what to do instead; the row opens to
+  "What happens" and "Why it's wrong" (the 032 A treatment, no warning colours).
+- **Directory structure** is the shipped clean tree: folder and file icons, indent guides, folder chains
+  collapsed to one row, folders fold, the trailing `# comment` in a second column, a "folders · files" count
+  in the frame bar.
+- **Where to add new code** keeps the document's own labels ("New page", "New view (composed UI section)")
+  and every bullet under each, so nothing is cut.
+- Tokens only. No destructive, warning or missing tone anywhere: nothing on these panels is a failed read.
+  Accent is spent on the panel number, the active rail entry, the tree's folder icons, and in B and C the
+  active tab's top rule, the lit card and the selected row (the figure accent uses of UI-SPEC Color).
+- Four font sizes in every variant at 1280 and 390 (display `--fs-display-3` on the `h1` only, heading
+  `--fs-7`, body `--fs-4`, label `--fs-2`), measured in headless Chrome. No typography exception is needed.
+- Text is Labelore's own public map. The Integrations line the 10-03 summary flags is not used here and no
+  other repository's map is drawn from.
+
+## Variants
+- **A: Diagram first.** One reading column in document order. System overview at full width, then
+  Component responsibilities (six rows, "Show all 24" opens the rest in place), Pattern overview (the
+  overall sentence large, the characteristics under it), Entry points, Anti-patterns, then the plain
+  sections. Structure: the tree full width, Where to add new code, Directory purposes, then plain. Longest
+  panel (Architecture is about 8000px tall at 1280), shortest path to any one thing by scrolling.
+- **B: Lens switch.** A row of four tabs under the panel head, one part at a time. Architecture: Overview
+  (diagram, pattern, entry points), Components (all 24 with a chip filter by area: `src/server`, `src/web`
+  and so on, taken from the file path), Anti-patterns, Other sections (the plain ones). Structure: Directory
+  structure, Where to add new code, Directory purposes, Other sections. Each tab carries its count. The
+  panel is one screen or two; nothing is seen unless it is opened.
+- **C: Map + legend.** Two panes under the panel head. Architecture: the diagram on the left (it sticks while
+  the legend scrolls), the 24 components as a numbered legend on the right; choosing a component lights its
+  box in the diagram, opens its responsibility in the legend row and shows any anti-pattern that names its
+  file. Pattern, entry points, anti-patterns and the plain sections follow full width. Structure: the tree
+  on the left, "Where to add new code" on the right as buttons that light the folders they name in the tree,
+  plus a "Selected folder" card (its Directory Purposes entry) when a folder is clicked. Directory purposes
+  and the plain sections follow full width.
+
+## Layout contract
+Measured in headless Chrome from the file; widths are CSS pixels of the box, content column 838px at 1280.
+
+**A: Diagram first**
+- 1280px: the rail is 288px at x=51 and the column 838px at x=390; the diagram frame is the full 838px,
+  753px tall, its 76-column text about 510px wide inside it (the frame body scrolls only if the text is wider).
+- 1280px: component rows are three columns (name 11rem, responsibility, file 13rem); six rows by default,
+  24 after "Show all 24"; the Architecture panel is about 7950px tall with all plain sections.
+- 1280px: the Directory structure frame is 838px wide and 917px tall (37 rows at 24px, notes in a second
+  column); Where to add new code has the label at 13rem and every bullet beside it.
+- 390px: one 358px column under the rail; component rows stack name, responsibility, file; the diagram frame
+  is 358px wide and its body scrolls sideways inside the frame, not the page.
+
+**B: Lens switch**
+- 1280px: the tab row is 838px wide and 37px tall (four tabs on one line); the Architecture panel on the
+  Overview tab is about 2050px tall, Components and Anti-patterns tabs are shorter.
+- 1280px: the Components tab holds all 24 rows and a chip row (All plus eight areas); the chip row wraps.
+- 1280px: the Directory structure tab is the tree frame alone, 838px wide.
+- 390px: the tabs wrap to two lines (78px tall); the active tab keeps its accent top rule.
+
+**C: Map + legend**
+- 1280px: the figure pane is 546px wide at x=390 and the legend 272px at x=957, gap 21px; the 76-column diagram
+  (510px plus 32px of frame padding) just fits the 544px frame body, so it does not scroll at this width.
+- 1280px: legend rows are 58px tall (name over file), a row with two files 75px, the open row grows by its
+  responsibility text; the 24-row legend is about 1620px tall, so the diagram frame (753px, sticky) stays in
+  view while the legend scrolls.
+- 1280px: in Structure the tree pane is 546px (notes scroll inside the frame) and the lookup column 272px with
+  ten buttons of 120 to 142px; the Selected folder card sits above the lookup when a folder is clicked.
+- 390px: under 75rem the panes stack: diagram frame first (358px wide), then the legend as 358px rows.
+
+## Font sizes
+Measured in light theme, text of the page only. Same four in all variants; at 390 the display size falls to
+44.8px and the other three are unchanged.
+
+| Role | Token | Size at 1280 | Renders |
+|------|-------|--------------|---------|
+| Display | `--fs-display-3` | 76.8px | the `h1` only |
+| Heading | `--fs-7` | 20.8px | panel `h2`, the Pattern overview sentence |
+| Body | `--fs-4` | 13.12px | names, prose, rows, tree names |
+| Label | `--fs-2` | 11.2px | group labels, chips, tab counts, diagram text, tree notes, files |
+
+## What to Look For
+- Architecture is the longest panel in the product. Does A's single column earn its length, or is B's one-part-
+  at-a-time (nothing hidden, but one click each) the better way to meet 24 components and six plain sections?
+- Is C's link between a component, its box in the diagram and its anti-pattern worth a second pane, given the
+  diagram is no longer full width (546px)?
+- For Structure: tree first and the lookup below (A), the lookup on its own tab (B), or the lookup as a way to
+  light the tree (C)?
+- When the diagram is not lifted (second state) the plain frame must still read as a figure, not an error:
+  does it?
+- The Tidemark state: does the heading variant look like a panel with one extra section, not a broken one?
+
+## Open points for the build
+- The lane diagram (shipped for the Research panel) is not drawn here. Whether Labelore's own diagram earns
+  lanes is the graph test's call at build time; the "Shown as drawn" fallback shown here is always available.
+- C's component-to-box link is by the file path in the component row (the Labelore diagram names the files it
+  boxes); a document whose diagram names no files lights nothing. B's area chips are read from the same file
+  column. Neither is invented text.
+- The "folders · files" count in the tree's frame bar is the shipped clean tree's; "Selected folder" and the
+  rail's "–" for entries not drawn are sketch words.
+
+All content is Labelore's own public map, the made-up Tidemark fixture, or invented here in Labelore's own
+words. The repository is public.
+
+## Winner
+Not chosen yet. The choice is the 10-09 checkpoint (Task 3), together with sketch 044.

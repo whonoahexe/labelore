@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 043 — Architecture and Structure panels</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 043: the Architecture and Structure panels inside the 042 frame, three arrangements.
+   Drawn inside the 042 A frame (Rail + column), which is identical in every variant. Text comes from
+   Labelore's own public map (.planning/codebase/) and from the made-up Tidemark fixture; the longest
+   real Architecture, Structure and Concerns documents set the shapes. Tokens come from ../themes/default.css;
+   nothing here defines a colour of its own: every colour is a theme token or a colour-mix of tokens.
+   Squared corners, spacing from --space-* tokens, four font sizes (display h1, --fs-7, --fs-4, --fs-2). */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+  --rail: calc(var(--space-8) * 9);
+}
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+  --rail: calc(var(--space-8) * 9);
+  --side: calc(var(--space-8) * 10);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); }
+h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.dark .moon, .sun { display: none; }
+.dark .sun { display: block; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.app-brand span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.app-nav a[aria-current] { color: var(--foreground); box-shadow: inset 0 -2px 0 var(--primary); }
+
+/* ---------- page atoms (all four sizes: display h1, heading fs-7, body fs-4, label fs-2) ---------- */
+.page { display: grid; gap: var(--space-6); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.micro-label, .grp-h { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+.btn-xs.icon { padding-inline: 0; width: var(--space-7); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } .btn-xs.icon { width: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--muted); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); font-size: var(--fs-4); overflow-wrap: anywhere; }
+.facts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); min-width: 0; }
+.facts-count { font-weight: var(--fw-semibold); }
+.facts-date { color: var(--muted-foreground); }
+.status-chip.mono { text-transform: none; letter-spacing: var(--ls-wider); }
+/* ---------- the panel list (entries) ---------- */
+.list ol { display: grid; }
+.entry { position: relative; display: grid; align-items: center; min-width: 0; padding: var(--space-2-5) var(--space-3); border: 1px solid var(--border); background: transparent; }
+a.entry:hover { background: var(--state-hover); }
+.entry-li + .entry-li .entry { border-top-color: var(--border-faint); }
+.entry-no { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); color: var(--muted-foreground); }
+.entry-name { min-width: 0; font-weight: var(--fw-semibold); }
+.entry-gist { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted-foreground); }
+.entry-key { display: flex; align-items: baseline; gap: var(--space-1-5); min-width: 0; font-family: var(--font-mono); }
+.entry-key b { font-size: var(--fs-4); font-weight: var(--fw-semibold); }
+.entry-key i { font-style: normal; font-size: var(--fs-2); color: var(--muted-foreground); }
+.entry-ghost { display: inline-flex; align-items: center; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+[data-ghost='true'] .entry { border-style: dashed; color: var(--muted-foreground); }
+[data-ghost='true'] .entry-name { font-weight: var(--fw-medium); }
+.entry[aria-current='page'] { border-color: var(--primary-border); background: var(--primary-tint); }
+.entry[aria-current='page'] .entry-no { color: var(--primary); }
+
+/* ---------- the panel ---------- */
+.panel { display: grid; gap: var(--space-6); min-width: 0; align-content: start; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+.panel-no { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); color: var(--primary); }
+.panel-head h2 { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.panel-key { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); color: var(--muted-foreground); text-transform: uppercase; }
+/* =============== Variant A: rail + reading column =============== */
+.fr .a-grid { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); gap: var(--space-fluid-9); align-items: start; }
+.fr .a-rail { position: sticky; top: calc(var(--space-10) + var(--space-4)); display: grid; gap: var(--space-4); min-width: 0; max-height: calc(100vh - var(--space-28)); overflow-y: auto; }
+.fr .facts { flex-direction: column; align-items: flex-start; gap: var(--space-2); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); }
+.fr .entry { grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); grid-template-areas: 'no name key'; }
+.fr .entry-no { grid-area: no; } .fr .entry-name { grid-area: name; } .fr .entry-key { grid-area: key; }
+.fr .entry-gist { display: none; }
+.fr .entry-key i { display: none; }
+.fr [data-ghost='true'] .entry { grid-template-areas: 'no name' '. ghost'; grid-template-columns: auto minmax(0, 1fr); }
+.fr .entry-ghost { grid-area: ghost; }
+.fr .a-main { display: grid; gap: var(--space-8); min-width: 0; }
+
+@media (max-width: 62rem) {
+  .fr .a-grid { grid-template-columns: minmax(0, 1fr); }
+  .fr .a-rail { position: static; max-height: none; overflow: visible; }
+}
+
+/* ---------- panel atoms shared by the variants (four sizes only: fs-7, fs-4, fs-2 and the h1) ---------- */
+.lifted, .plain { display: grid; gap: var(--space-6); min-width: 0; }
+.lifted > .grp:first-child > .grp-h { padding-top: 0; border-top: 0; }
+.grp { display: grid; gap: var(--space-3); min-width: 0; align-content: start; }
+.grp-h { padding-top: var(--space-3); border-top: 1px solid var(--border); display: flex; align-items: baseline; gap: var(--space-2); }
+.grp-h .n { color: var(--foreground); }
+.prose { max-width: 72ch; line-height: var(--lh-normal); overflow-wrap: anywhere; }
+code { overflow-wrap: anywhere; }
+.prose code, .leads code, .steps code, .ledger code, .swap code, .lookup code, .bul code, .t-note code, .pick code, .ptable code { padding: 0 var(--space-0-5); background: var(--muted); }
+.lede { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); max-width: 46ch; overflow-wrap: anywhere; }
+.lede code { font-size: inherit; background: none; padding: 0; }
+.leads { display: grid; gap: var(--space-2-5); max-width: 78ch; }
+.leads dt { font-weight: var(--fw-semibold); }
+.leads dd { color: var(--muted-foreground); overflow-wrap: anywhere; }
+.steps { display: grid; gap: var(--space-1-5); max-width: 78ch; padding-left: var(--space-5); list-style: decimal; }
+.steps li { overflow-wrap: anywhere; }
+.steps ul { margin-top: var(--space-1); padding-left: var(--space-4); color: var(--muted-foreground); list-style: square; }
+.bul { display: grid; gap: var(--space-1-5); max-width: 78ch; }
+.bul > li { display: grid; grid-template-columns: var(--space-2-5) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; overflow-wrap: anywhere; }
+.bul > li::before { content: ''; width: var(--space-1-5); height: var(--space-1-5); background: var(--muted-foreground); transform: translateY(-0.1em); justify-self: center; }
+.bul .f { color: var(--muted-foreground); font-weight: var(--fw-semibold); }
+.bul ul { grid-column: 2; margin-top: var(--space-1); color: var(--muted-foreground); display: grid; gap: var(--space-1); }
+.sub-h { font-weight: var(--fw-semibold); }
+.plain-sec { display: grid; gap: var(--space-3); min-width: 0; align-content: start; }
+.plain-sec .g-label { font-weight: var(--fw-semibold); }
+.plain-sec .g { display: grid; gap: var(--space-1-5); min-width: 0; }
+.ptable { width: 100%; border-collapse: collapse; }
+.ptable th { text-align: left; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; padding: var(--space-1-5) var(--space-3) var(--space-1-5) 0; border-bottom: 1px solid var(--border); }
+.ptable td { vertical-align: top; padding: var(--space-2) var(--space-3) var(--space-2) 0; border-bottom: 1px solid var(--border-faint); overflow-wrap: anywhere; }
+.tbl-scroll { overflow-x: auto; }
+pre.plain-pre { margin: 0; padding: var(--space-3); border: 1px solid var(--border); background: var(--muted); font-family: var(--font-mono); font-size: var(--fs-2); line-height: var(--lh-snug); overflow-x: auto; }
+
+/* the component / entry ledger */
+.ledger { display: grid; }
+.ledger > li { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-0-5) var(--space-4); padding: var(--space-2) 0; border-bottom: 1px solid var(--border-faint); }
+.ledger .l-name { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.ledger .l-body { color: var(--muted-foreground); overflow-wrap: anywhere; }
+.ledger .l-file { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); overflow-wrap: anywhere; }
+@media (min-width: 42rem) { .ledger > li { grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) minmax(0, 13rem); align-items: baseline; } }
+.more-row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; color: var(--muted-foreground); }
+
+/* swaps: the mistake struck through, the fix beside it, the rest on open */
+.swaps { display: grid; }
+.swap { border-bottom: 1px solid var(--border-faint); }
+.swap > summary { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-1); padding: var(--space-3) 0; cursor: pointer; list-style: none; }
+.swap > summary::-webkit-details-marker { display: none; }
+.swap > summary:hover { background: var(--state-hover); }
+.swap s { color: var(--muted-foreground); overflow-wrap: anywhere; }
+.swap .do { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.swap .arr { display: none; color: var(--muted-foreground); }
+@media (min-width: 42rem) {
+  .swap > summary { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.25fr); align-items: baseline; gap: var(--space-4); }
+  .swap .arr { display: block; }
+}
+.swap-more { display: grid; gap: var(--space-2); padding: 0 0 var(--space-4); max-width: 78ch; }
+.swap-more dt { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; color: var(--muted-foreground); }
+.swap-more dd { overflow-wrap: anywhere; }
+
+/* the figure frame (shipped FigureFrame: title, chips, body that scrolls inside the frame) */
+.figure-frame { border: 1px solid var(--border); min-width: 0; display: grid; }
+.ff-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); background: var(--veil); }
+.ff-title { margin-right: auto; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.ff-bar button.status-chip { cursor: pointer; }
+.ff-bar button.status-chip[aria-pressed='true'] { background: var(--muted); }
+.ff-body { overflow: auto; padding: var(--space-4); min-width: 0; max-width: 100%; }
+.ff-note { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin: 0 0 var(--space-3); color: var(--muted-foreground); }
+.ff-cap { padding: var(--space-2) var(--space-3); border-top: 1px solid var(--border); color: var(--muted-foreground); }
+.lift { position: relative; width: max-content; font-family: var(--font-mono); font-size: var(--fs-2); line-height: 1.5; }
+.lift-card { position: absolute; left: calc((var(--c) + 0.5) * 1ch); top: calc((var(--r) + 0.5) * 1.5em); width: calc(var(--w) * 1ch); height: calc(var(--h) * 1.5em); border: 1px solid var(--border); background: color-mix(in oklch, var(--muted) 75%, transparent); }
+.lift-card[data-hot='true'] { border-color: var(--primary); background: var(--primary-tint); box-shadow: 0 0 0 1px var(--primary); }
+.lift pre { position: relative; margin: 0; font: inherit; white-space: pre; color: var(--foreground); }
+.plain-text { margin: 0; width: max-content; font-family: var(--font-mono); font-size: var(--fs-2); line-height: 1.5; white-space: pre; }
+
+/* the clean tree (shipped CleanTree: folder chains collapse, folders fold, notes in a second column) */
+.tree { display: grid; grid-template-columns: max-content max-content; justify-content: start; align-items: center; width: max-content; }
+.tree > li { display: contents; }
+.t-name { position: relative; display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-6); padding-left: calc(var(--d) * var(--space-6)); font-family: var(--font-mono); white-space: nowrap; text-align: left; }
+.t-name::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--d) * var(--space-6)); background: repeating-linear-gradient(to right, var(--border-faint) 0 1px, transparent 1px var(--space-6)); pointer-events: none; }
+.t-name .nm { font-size: var(--fs-4); }
+.t-name[data-folder] .nm { font-weight: var(--fw-semibold); }
+.t-name svg { color: var(--muted-foreground); }
+.t-name[data-folder] svg { color: var(--primary); }
+.t-note { min-height: var(--space-6); display: flex; align-items: center; padding-left: var(--space-5); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); white-space: nowrap; }
+button.t-name:hover .nm { text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.t-name[data-hot='true'] .nm, .t-name[data-sel='true'] .nm { background: var(--primary-tint); outline: 1px solid var(--primary-border); outline-offset: 2px; }
+.counts-line { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); color: var(--muted-foreground); text-transform: uppercase; }
+
+/* the lookup: Where to add new code */
+.lookup { display: grid; }
+.lookup > li { display: grid; gap: var(--space-1); padding: var(--space-3) 0; border-bottom: 1px solid var(--border-faint); }
+@media (min-width: 42rem) { .lookup > li { grid-template-columns: minmax(0, 13rem) minmax(0, 1fr); gap: var(--space-4); } }
+.lookup .when { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.lookup .where { display: grid; gap: var(--space-1); min-width: 0; overflow-wrap: anywhere; }
+.lookup .where li { color: var(--muted-foreground); }
+.lookup .where li:first-child { color: var(--foreground); }
+
+/* ---------- 043 specifics ---------- */
+.swaps.purp .swap > summary { grid-template-columns: minmax(0, 1fr); }
+.swaps.purp .arr { display: none; }
+@media (min-width: 42rem) { .swaps.purp .swap > summary { grid-template-columns: minmax(0, 14rem) minmax(0, 1fr); } }
+.swaps.purp code.nm { font-weight: var(--fw-semibold); background: none; padding: 0; }
+.chips-row { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.chips-row .btn-xs { text-transform: none; letter-spacing: var(--ls-wider); font-family: var(--font-mono); font-weight: var(--fw-medium); }
+.chips-row .btn-xs[aria-pressed='true'] { background: var(--primary-tint); border-color: var(--primary-border); }
+.source-note { color: var(--muted-foreground); overflow-wrap: anywhere; }
+
+/* B: lens switch */
+.lens { display: flex; flex-wrap: wrap; gap: var(--space-1); border-bottom: 1px solid var(--border); }
+.lens button { display: inline-flex; align-items: baseline; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid transparent; border-bottom: 0; margin-bottom: -1px; font-weight: var(--fw-semibold); text-align: left; }
+.lens button b { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); color: var(--muted-foreground); }
+.lens button:hover { background: var(--state-hover); }
+.lens button[aria-selected='true'] { border-color: var(--border); background: var(--background); box-shadow: inset 0 2px 0 var(--primary); }
+.lens button[aria-selected='false'] { color: var(--muted-foreground); }
+.lens + [role='tabpanel'] { padding-top: var(--space-5); }
+
+/* C: map and legend */
+.map { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-5); align-items: start; min-width: 0; }
+.map > * { min-width: 0; }
+@media (min-width: 75rem) {
+  .map { grid-template-columns: minmax(0, 1fr) minmax(15rem, 17rem); }
+  .map-fig.sticky { position: sticky; top: calc(var(--space-28) - var(--space-2)); }
+}
+.map-leg { display: grid; gap: var(--space-3); align-content: start; }
+.legend { display: grid; }
+.leg { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-0-5) var(--space-2); width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--border); text-align: left; }
+.legend > li + li .leg { border-top-color: var(--border-faint); }
+.leg:hover { background: var(--state-hover); }
+.leg[aria-pressed='true'] { border-color: var(--primary-border); background: var(--primary-tint); }
+.leg-no { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); color: var(--muted-foreground); padding-top: var(--space-0-5); }
+.leg[aria-pressed='true'] .leg-no { color: var(--primary); }
+.leg-name { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.leg-file { grid-column: 2; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.leg-body { grid-column: 2; color: var(--foreground); margin-top: var(--space-1); overflow-wrap: anywhere; }
+.leg-rel { padding: var(--space-2) var(--space-3) var(--space-3); border: 1px solid var(--primary-border); border-top: 0; display: grid; gap: var(--space-1); }
+.pick { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--primary-border); background: var(--primary-tint); }
+.lookup-list { display: grid; }
+.lookup-btn { display: grid; gap: var(--space-0-5); width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--border); text-align: left; }
+.lookup-list > li + li .lookup-btn { border-top-color: var(--border-faint); }
+.lookup-btn:hover { background: var(--state-hover); }
+.lookup-btn[aria-pressed='true'] { border-color: var(--primary-border); background: var(--primary-tint); }
+.lookup-btn .when { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.lookup-btn .where-line { color: var(--muted-foreground); overflow-wrap: anywhere; }
+
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">043 architecture + structure</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Diagram first</a>
+    <a data-tab="b" href="#b">B: Lens switch</a>
+    <a data-tab="c" href="#c">C: Map + legend</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="arch">Architecture</button><button data-state="plain">Diagram not lifted</button><button data-state="tidemark">Tidemark headings</button><button data-state="tree">Structure</button><button data-state="deep">Deep tree</button></span>
+</nav>
+
+<section data-variant="a" class="variant fr"></section>
+<section data-variant="b" class="variant fr" hidden></section>
+<section data-variant="c" class="variant fr" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+const DATA = {"labelore":{"arch":{"preamble":[{"t":"p","text":"# Architecture"},{"t":"p","text":"**Analysis Date:** 2026-11-04"}],"sections":[{"h":"System Overview","blocks":[{"t":"fence","lang":"text","text":"┌──────────────────────────────────────────────────────────────────────────┐\n│  Browser SPA (React 19 + react-router + TanStack Query)                  │\n│  `src/web/main.tsx` → `src/web/app-router.tsx` → lazy route pages        │\n└───────────────┬──────────────────────────────────────────────────────────┘\n                │ fetch /api/projects[/:slug]/…  (apiFetch in `src/web/api.ts`)\n                ▼\n┌──────────────────────────────────────────────────────────────────────────┐\n│  HTTP server (Hono on @hono/node-server)                                 │\n│  `src/server/index.ts` (startServer)  →  `src/server/registry-api.ts`     │\n│  request guard `src/server/request-guard.ts`  (Host + JSON content type) │\n│  Dev: Vite middleware mounted for non-API URLs; Prod: serveStatic ./dist │\n└───────┬─────────────────────────────┬────────────────────────────────────┘\n        │ /api/projects…              │ /api/projects/:slug/*\n        ▼                             ▼\n┌──────────────────────────┐   ┌──────────────────────────────────────────┐\n│ ProjectRegistry          │   │ Per-project read API                     │\n│ `project-registry.ts`    │──▶│ `src/server/project-api.ts`              │\n│ settings + slug + scan   │   │ resolves ProjectRuntime per request      │\n└──────────┬───────────────┘   └───────────────┬──────────────────────────┘\n           │ one ProjectRuntime per slug       │ reads DerivedViews\n           ▼                                   ▼\n┌──────────────────────────────────────────────────────────────────────────┐\n│  ProjectRuntime `src/server/project-runtime.ts`                          │\n│  DerivedViews: routeTable · presentation · artifactIndex ·               │\n│  referenceRegistry · searchIndexState  (swapped as one bundle)           │\n└───────────────┬──────────────────────────────────────────────────────────┘\n                │ SnapshotSource.getSnapshot()/refresh()\n                ▼\n┌──────────────────────────────────────────────────────────────────────────┐\n│  Parsing core `src/planning-repo/` (PlanningRepository in snapshot.ts)   │\n│  discover → parseWithRegistry (HANDLERS) → assembleDomainModel          │\n└───────────────┬──────────────────────────────────────────────────────────┘\n                │ PlanningFilesystem port (`src/planning-fs/types.ts`)\n                ▼\n┌──────────────────────────────────────────────────────────────────────────┐\n│  Filesystem adapter `src/planning-fs/local-fs.ts` (only node:fs user)    │\n│  or ssh mirror: `src/server/remote-source.ts` copies .planning to tmp    │\n└──────────────────────────────────────────────────────────────────────────┘"}]},{"h":"Component Responsibilities","blocks":[{"t":"table","head":["Component","Responsibility","File"],"rows":[["CLI / server entry","Parses argv (`--port`, `--smoke`, positional paths), starts the Hono server, prints startup lines","`src/server/index.ts`"],["Target path resolution","Turns a CLI argument into a local folder or remote target, checks for `.planning/`","`src/cli/target-path.ts`, `src/cli/remote-target.ts`"],["Project registry","Keeps the remembered project list, allocates slugs, builds runtimes lazily, handles add/forget/scan","`src/server/project-registry.ts`"],["Settings store","Persists Labelore's own project list outside any target project (file or memory)","`src/server/settings-store.ts`"],["Registry HTTP app","Mounts the guard, body-size limits, project list routes and `/api/projects/:slug`","`src/server/registry-api.ts`"],["Request guard","Host allow-list and JSON content-type check on `/api/*`","`src/server/request-guard.ts`"],["Project runtime","Owns one project's `DerivedViews`, coalesces refreshes, disposes sources","`src/server/project-runtime.ts`"],["Per-project API","Read-only JSON endpoints (dashboard, roadmap, tree, search, documents, sketches, refresh)","`src/server/project-api.ts`"],["Snapshot source (local / remote)","Builds a `SnapshotSource` for a folder, or mirrors a remote `.planning/` into a temp dir","`src/server/project-registry.ts` (`createSnapshotSource`), `src/server/remote-source.ts`"],["Filesystem port","Interface every layer above depends on; all paths are project-relative","`src/planning-fs/types.ts`"],["Local filesystem adapter","Node-backed, containment-checked reads (`PathEscapeError`)","`src/planning-fs/local-fs.ts`"],["Discovery","Finds artifacts by filename and directory position only","`src/planning-repo/discovery.ts`"],["Handler registry","Ordered list of typed parsers; generic markdown is the final fallback","`src/planning-repo/handlers/index.ts`"],["Assembly","Builds the milestone-qualified domain graph (`Project`) and resolves cross-references","`src/planning-repo/assemble.ts`, `src/planning-repo/crossref.ts`"],["Snapshot (load/refresh seam)","Returns a new immutable `ProjectSnapshot`; never throws","`src/planning-repo/snapshot.ts`"],["Domain model","Shared entity types (`Project`, `Phase`, `Plan`, `Artifact`, …) with no parsing imports","`src/domain/model.ts`"],["Presentation builders","Pure functions turning the domain model into view models per page","`src/presentation/*.ts`"],["Route table & URL grammar","One clean address per file, `file/` fallback for collisions, alias redirects","`src/presentation/route-table.ts`, `src/presentation/routes.ts`"],["Rendering","Unified/remark/rehype markdown pipeline, shiki highlighting, ASCII diagram lifting","`src/rendering/markdown.ts` and siblings"],["Search","MiniSearch index built per derived bundle, scheduled off the request path","`src/server/search-index.ts`, `src/presentation/search.ts`"],["Web shell & routing","Root render, router, project layout, route dispatch to pages","`src/web/main.tsx`, `src/web/app-router.tsx`, `src/web/route-dispatch.ts`"],["Client API","`apiFetch`, typed fetchers, error kinds (refused / unreachable / http)","`src/web/api.ts`"],["Pages","Route-level React components (lazy-loaded)","`src/web/pages/*.tsx`"],["Views","Pure view composition (`*.ts`) paired with presentational React (`*-components.tsx`)","`src/web/views/*.ts`, `src/web/views/*-components.tsx`"]]}]},{"h":"Pattern Overview","blocks":[{"t":"p","text":"**Overall:** Layered read-only pipeline with a filesystem port, a pure parse-and-assemble core, derived immutable view bundles per project, and a thin Hono JSON API consumed by a React SPA."},{"t":"label","text":"Key Characteristics"},{"t":"ul","items":[{"text":"Strictly read-only: no write paths exist. `PlanningFilesystem.write?` and `watch?` are declared as optional hooks for future use (`src/planning-fs/types.ts`); `src/server/project-registry.ts` never writes inside a target project (SEC-05).","sub":[]},{"text":"One `PlanningFilesystem` interface is the only seam between disk and the rest of the code. `src/planning-fs/local-fs.ts` is the only file that imports `node:fs` (the boundary is also enforced by grep in its header comment). `src/server/remote-source.ts` mirrors remote `.planning/` into a local temp directory and then reuses the same local adapter.","sub":[]},{"text":"Derived views are replaced atomically: `ProjectRuntime.derived` is assigned once per refresh, built from a single snapshot (`src/server/project-runtime.ts`, D-05).","sub":[]},{"text":"Multi-project from the start: every request resolves its own `ProjectRuntime` by slug; there is no server-wide \"active project\" (`src/server/project-api.ts`, D-08).","sub":[]},{"text":"Parsing is driven by filename and directory position, never by frontmatter presence (DATA-02, `src/planning-repo/discovery.ts`), so unknown GSD artifacts fall through to `GenericMarkdownHandler` and degrade rather than break.","sub":[]},{"text":"Failures are values, not exceptions: `PlanningRepository.refresh()` resolves with a `LoadStatus` (D-12); `parseWithRegistry` converts handler throws into warnings (`src/planning-repo/registry.ts`).","sub":[]}]}]},{"h":"Layers","blocks":[{"t":"label","text":"Filesystem port and adapters (Layer A)"},{"t":"ul","items":[{"text":"Purpose: Read files under a project root, enforce containment, never write.","sub":[]},{"text":"Location: `src/planning-fs/`","sub":[]},{"text":"Contains: `types.ts` (interface, `PathEscapeError`), `local-fs.ts` (Node adapter, temp-dir helpers), `in-memory-fs.ts` (test double).","sub":[]},{"text":"Depends on: Node built-ins (`local-fs.ts` only).","sub":[]},{"text":"Used by: `src/planning-repo/*`, `src/server/project-registry.ts`, `src/server/remote-source.ts`, `src/server/sketch-files.ts`.","sub":[]}]},{"t":"label","text":"Domain model"},{"t":"ul","items":[{"text":"Purpose: Shared vocabulary of entities and identities.","sub":[]},{"text":"Location: `src/domain/model.ts`","sub":[]},{"text":"Contains: `Project`, `Milestone`, `Phase`, `Plan`, `Artifact`, `Requirement`, `QuickTask`, `PhaseIdentity`, `ArtifactLocation`. Status fields are open strings.","sub":[]},{"text":"Depends on: nothing (its header states zero imports from `planning-fs/` or `planning-repo/`).","sub":[]},{"text":"Used by: nearly every layer above.","sub":[]}]},{"t":"label","text":"Parsing core (`planning-repo`)"},{"t":"ul","items":[{"text":"Purpose: Turn a `.planning/` tree into a `ProjectSnapshot`.","sub":[]},{"text":"Location: `src/planning-repo/`","sub":[]},{"text":"Contains: `snapshot.ts` (`PlanningRepository`), `discovery.ts`, `registry.ts` (`parseWithRegistry`), `handlers/` (54 files; one handler per artifact family), `assemble.ts`, `crossref.ts`, `mentions.ts`, `warnings.ts`, `theme-tokens.ts`, `naming.ts`, `folders.ts`, `file-class.ts`.","sub":[]},{"text":"Depends on: `planning-fs/types.ts`, `domain/model.ts`.","sub":[]},{"text":"Used by: `src/server/*`, `src/presentation/*` (via `ProjectSnapshot` and `Project` types).","sub":[]}]},{"t":"label","text":"Presentation (view-model builders, server-side, pure)"},{"t":"ul","items":[{"text":"Purpose: Build JSON-ready view models and the URL grammar for every page.","sub":[]},{"text":"Location: `src/presentation/`","sub":[]},{"text":"Contains: `route-table.ts` (one address per file), `routes.ts` (`parseRoutePath`, `buildUrl`), `dashboard.ts`, `roadmap.ts`, `traceability.ts`, `search.ts`, `tree.ts`, `drawer.ts`, `reserved.ts`, `legacy-routes.ts`, `*-context.ts` and `*-page` builders, `references.ts`.","sub":[]},{"text":"Depends on: `planning-repo` types and naming helpers; some modules import types and helpers from `src/server/project-presentation.ts` and `src/server/dashboard-ledger.ts`, so this layer is not fully isolated from `server/`.","sub":[]},{"text":"Used by: `src/server/project-runtime.ts` (`buildRouteTable`, `toProjectPresentation`), `src/server/project-api.ts`, and the web route dispatcher (`src/web/route-dispatch.ts`).","sub":[]}]},{"t":"label","text":"Rendering (server-side markdown)"},{"t":"ul","items":[{"text":"Purpose: Convert artifact markdown to HTML once and cache by consumer.","sub":[]},{"text":"Location: `src/rendering/`","sub":[]},{"text":"Contains: `markdown.ts` (`createArtifactRenderer`: unified → remark-parse → remark-gfm → remark-rehype → rehype-raw → rehype-sanitize → rehype-slug → shiki/linkify), `linkify.ts` (`rehypeResolvedReferences`), `ascii-lift.ts`, `ascii-tree.ts`, `ascii-graph.ts`, `lane-layout.ts`, `build-order-layout.ts`, `plan-segments.ts`, `figure-detect.ts`, `slug.ts`.","sub":[]},{"text":"Depends on: unified ecosystem, `hast-util-sanitize`, shiki, its own `slug.ts`/`plan-segments.ts`, and type-only `ReferenceRegistry` from `src/presentation/references.ts`.","sub":[]},{"text":"Used by: `src/server/project-api.ts` (artifact renderer instance created per API factory).","sub":[]}]},{"t":"label","text":"Server (project and registry)"},{"t":"ul","items":[{"text":"Purpose: HTTP, project lifecycle, caching of per-project state, search state, commit times and file dates.","sub":[]},{"text":"Location: `src/server/`","sub":[]},{"text":"Contains: `index.ts` (entry), `registry-api.ts`, `project-api.ts`, `project-registry.ts`, `project-runtime.ts`, `project-presentation.ts`, `search-index.ts`, `commit-times.ts` (git history reads), `file-dates.ts`, `file-bytes.ts`, `sketch-files.ts`, `artifact-index.ts`, `dashboard-ledger.ts`, `folder-scan.ts`, `request-guard.ts`, `settings-store.ts`, `settings-model.ts`, `remote-source.ts`, `project-title.ts`, `document-sources.ts`.","sub":[]},{"text":"Depends on: all layers below plus `hono`, `@hono/node-server`, `vite` (dev only; dynamically imported in `src/server/index.ts`).","sub":[]},{"text":"Used by: the CLI entry and the browser.","sub":[]}]},{"t":"label","text":"Web client"},{"t":"ul","items":[{"text":"Purpose: Render every page from the JSON API, with client routing and cache.","sub":[]},{"text":"Location: `src/web/`","sub":[]},{"text":"Contains: `main.tsx` (root render), `app-router.tsx` (`createBrowserRouter`, lazy page routes, `ProjectRoute`), `route-dispatch.ts` (pure address → outcome), `api.ts`, `query-keys.ts` (`projectKey`, `projectsKey`), `components/` (shell, sidebar, switcher, add-project dialog, `ui/` primitives), `pages/` (37 route pages), `views/` (59 files: pure composers plus `-components.tsx`), `styles/globals.css`.","sub":[]},{"text":"Depends on: `src/presentation/*` and `src/server/project-presentation.ts` as **type-only** imports (e.g. `src/web/app-router.tsx`), plus `react`, `react-router`, `@tanstack/react-query`, `mermaid` (dynamic).","sub":[]},{"text":"Used by: the browser via `index.html` → `src/web/main.tsx`.","sub":[]}]}]},{"h":"Data Flow","blocks":[{"t":"h3","text":"Primary Request Path (page load of a project)"},{"t":"ol","items":[{"text":"Browser requests `/<slug>/…`; `src/web/app-router.tsx` matches `/:project/*` and renders `ProjectRoute` → `ProjectLayout` (`src/web/pages/project-layout.tsx`).","sub":[]},{"text":"`fetchPresentation(slug)` calls `GET /api/projects/:slug/presentation` through `apiFetch` (`src/web/api.ts`).","sub":[]},{"text":"`createRegistryApp` applies `createRequestGuard` to `/api/*` (`src/server/registry-api.ts`, `src/server/request-guard.ts`), then `app.route('/api/projects/:slug', projectApi)`.","sub":[]},{"text":"`createProjectApi`'s first middleware resolves the `ProjectRuntime` for the slug via `ProjectRegistry` (`src/server/project-registry.ts`), which lazily builds it on first use. The runtime's in-flight count is held for the request (Pitfall 9 comment in `project-api.ts`).","sub":[]},{"text":"The `/presentation` handler returns `runtime.derived.presentation` (`src/server/project-api.ts`, around line 205).","sub":[]},{"text":"The client runs `resolveProjectRoute` (`src/web/route-dispatch.ts`) against the payload, then mounts the page lazily.","sub":[]}]},{"t":"h3","text":"Load / Refresh Path (server side)"},{"t":"ol","items":[{"text":"`ProjectRegistry` builds a `SnapshotSource` via `createSnapshotSource` (`src/server/project-registry.ts`): a `LocalFsPlanningFilesystem` for a folder, or a mirror from `src/server/remote-source.ts` for `sftp://`, `ssh://`, or scp-style targets.","sub":[]},{"text":"`new PlanningRepository(fs, rootPath).refresh()` (`src/planning-repo/snapshot.ts`):","sub":["`checkTargetIsGsdProject()` checks `.planning/` exists; otherwise returns a failed `LoadStatus` with `project: null`.","`discover(fs)` walks `.planning/` and returns `refs` plus `exclusions` (`src/planning-repo/discovery.ts`).","`parseWithRegistry` per ref (`src/planning-repo/registry.ts`) picks the first `HANDLERS` entry whose `match(ref)` is true, falling back to `GenericMarkdownHandler`. Only `fileClass === 'text'` is read.","`withUiSpecTheme` attaches project theme tokens to UI-spec artifacts (`src/planning-repo/theme-tokens.ts`).","`assembleDomainModel` (`src/planning-repo/assemble.ts`) groups by milestone-qualified phase identity, builds plans and summaries, then runs `resolveCrossReferences` (`src/planning-repo/crossref.ts`).","`scanMentions` sets `project.mentions` (`src/planning-repo/mentions.ts`)."]},{"text":"`ProjectRuntime.refresh()` (`src/server/project-runtime.ts`) coalesces concurrent calls, rejects non-`ok` load status without touching `derived`, then swaps `derived` in one assignment via `buildDerivedViews` (route table → presentation → artifact index → reference registry → search state).","sub":[]},{"text":"The search index is built asynchronously off this path by `createSearchIndexState().buildFrom` (`src/server/search-index.ts`); requests never wait on it.","sub":[]}]},{"t":"h3","text":"Secondary Flow: Sketch and image files"},{"t":"ol","items":[{"text":"Client requests a file-backed route; project API mounts `createSketchFileMiddleware` and `createFileBytesHandler` (`src/server/sketch-files.ts`, `src/server/file-bytes.ts`).","sub":[]},{"text":"Handlers read through `runtime.planningFilesystem()` → `readBytesWithin`, which enforces containment (`src/planning-fs/local-fs.ts`). Sources without a filesystem answer 404.","sub":[]}]},{"t":"h3","text":"Add-project flow"},{"t":"ol","items":[{"text":"`POST /api/projects` or `POST /api/projects/scan` (`src/server/registry-api.ts`) → `ProjectRegistry.register` / `scanForProjects` (`src/server/folder-scan.ts`).","sub":[]},{"text":"Registry records the target through `SettingsStore.mutate`, which re-reads the settings file first (`src/server/settings-store.ts`), so two Labelore instances do not mint the same slug.","sub":[]}]},{"t":"label","text":"State Management"},{"t":"ul","items":[{"text":"Server: per-project state lives only in `ProjectRuntime` instances keyed by slug inside `ProjectRegistry`; the list of remembered projects lives in `settings.json` (`defaultSettingsDir()`) or memory for smoke runs and tests.","sub":[]},{"text":"Client: server state is cached through TanStack Query with keys from `src/web/query-keys.ts`; UI state uses React built-ins. Nav state lives in `src/web/nav.tsx` and `src/presentation/project-map-state.ts`.","sub":[]}]}]},{"h":"Key Abstractions","blocks":[{"t":"label","text":"`PlanningFilesystem`"},{"t":"ul","items":[{"text":"Purpose: Read-only, project-relative file access with containment.","sub":[]},{"text":"Examples: `src/planning-fs/types.ts`, `src/planning-fs/local-fs.ts`, `src/planning-fs/in-memory-fs.ts`","sub":[]},{"text":"Pattern: Port/adapter. Optional members (`watch?`, `write?`, `readBytesWithin?`, `readHead?`) reserve future capabilities without signature changes.","sub":[]}]},{"t":"label","text":"`ArtifactHandler`"},{"t":"ul","items":[{"text":"Purpose: Typed parser for one GSD artifact family.","sub":[]},{"text":"Examples: `src/planning-repo/handlers/plan.ts`, `src/planning-repo/handlers/roadmap.ts`, `src/planning-repo/handlers/generic.ts`","sub":[]},{"text":"Pattern: Registry array (`HANDLERS` in `src/planning-repo/handlers/index.ts`). First match wins; `GenericMarkdownHandler` must remain last (see the load-bearing comment in its file).","sub":[]}]},{"t":"label","text":"`SnapshotSource` and `ProjectRuntime`"},{"t":"ul","items":[{"text":"Purpose: Uniform source of a project's snapshot plus the derived view bundle served from it.","sub":[]},{"text":"Examples: `src/server/project-runtime.ts`, `src/server/project-registry.ts` (`failedSource`, `createSnapshotSource`)","sub":[]},{"text":"Pattern: Runtime holds `derived: DerivedViews`; replacement is whole-bundle (D-05).","sub":[]}]},{"t":"label","text":"`RouteTable` and address grammar"},{"t":"ul","items":[{"text":"Purpose: Guarantee each file exactly one readable URL.","sub":[]},{"text":"Examples: `src/presentation/route-table.ts`, `src/presentation/routes.ts`, `src/web/route-dispatch.ts`","sub":[]},{"text":"Pattern: Clean address per file where unique; collisions get `file/` addresses; aliases redirect (e.g. live-milestone roadmap). Client resolution is pure: `resolveProjectRoute(rest, search, presentation)`.","sub":[]}]},{"t":"label","text":"View composition (web)"},{"t":"ul","items":[{"text":"Purpose: Separate testable layout logic from React rendering.","sub":[]},{"text":"Examples: `src/web/views/manifest.ts` (`composeView`), `src/web/views/layout.ts`, `src/web/views/review-ledger.ts` with `src/web/views/review-ledger-components.tsx`","sub":[]},{"text":"Pattern: Each view has a pure `.ts` composer and a `-components.tsx` presenter. `.ts` files use type-only imports to avoid runtime cycles (stated in `manifest.ts`).","sub":[]}]},{"t":"label","text":"`ProjectRegistry` and `SettingsStore`"},{"t":"ul","items":[{"text":"Purpose: Multi-project list, slug allocation, identity de-duplication, scan.","sub":[]},{"text":"Examples: `src/server/project-registry.ts`, `src/server/settings-store.ts`, `src/server/settings-model.ts`","sub":[]},{"text":"Pattern: Lazy runtime construction with coalesced loads; list is memory-only until a runtime is needed.","sub":[]}]}]},{"h":"Entry Points","blocks":[{"t":"label","text":"Server / CLI"},{"t":"ul","items":[{"text":"Location: `src/server/index.ts` (`package.json` scripts `dev`, `start`, `smoke`; `snapshot` uses `src/cli/snapshot.ts`)","sub":[]},{"text":"Triggers: `node src/server/index.ts [paths…] [--port N]`; `npm start` runs with `NODE_ENV=production` against `./dist`.","sub":[]},{"text":"Responsibilities: parse argv, register CLI targets, create the guarded registry app, start listening on `127.0.0.1` (auto-port from 4173 unless `--port` is given), attach Vite middleware in dev.","sub":[]}]},{"t":"label","text":"Snapshot CLI"},{"t":"ul","items":[{"text":"Location: `src/cli/snapshot.ts`","sub":[]},{"text":"Triggers: `npm run snapshot`","sub":[]},{"text":"Responsibilities: one-off read of a target to a snapshot.","sub":[]}]},{"t":"label","text":"Browser"},{"t":"ul","items":[{"text":"Location: `index.html` → `src/web/main.tsx` → `createRoot(...).render(...)` with `appRouter` from `src/web/app-router.tsx`.","sub":[]},{"text":"Triggers: navigation to any URL the server does not own (`isServerOwnedUrl` in `src/presentation/reserved.ts` decides the split).","sub":[]},{"text":"Responsibilities: shell rendering, lazy page loading (`trackRouteChunk`), project switching.","sub":[]}]},{"t":"label","text":"Tests / e2e"},{"t":"ul","items":[{"text":"Location: `test/**/*.test.ts` (vitest, `vitest.config.ts`), `test/e2e/*.spec.ts` (Playwright, `playwright.config.ts`), `test/helpers/` for shared fixtures.","sub":[]}]}]},{"h":"Architectural Constraints","blocks":[{"t":"ul","items":[{"text":"**Threading:** Single Node event loop. Heavy work is async (`Promise.all` over handler parses in `src/planning-repo/snapshot.ts`); the MiniSearch build is scheduled off the request path (`src/server/search-index.ts`). The ssh mirror spawns `ssh`/`tar` through `node:child_process` in `src/server/remote-source.ts`; commit times are read from the target's git history via `src/server/commit-times.ts`.","sub":[]},{"text":"**Global state:** Module-level `HANDLERS` array (`src/planning-repo/handlers/index.ts`), module-level `LOCATION_ORDER` (`src/planning-repo/discovery.ts`), and the `searchIndex` export imported by `src/server/project-api.ts` from `src/server/search-index.ts`. Per-project state is otherwise held in `ProjectRuntime` instances, not in module scope.","sub":[]},{"text":"**Circular imports:** The web view layer avoids runtime cycles by using type-only imports (`src/web/views/manifest.ts` header comment). The presentation layer imports types from `src/server/project-presentation.ts`, which in turn imports from `src/planning-repo/*`; no runtime cycle was verified beyond what those comments state.","sub":[]},{"text":"**Dev/prod split:** `src/server/index.ts` dynamically imports `vite` only in dev mode; production serves `./dist` through `serveStatic`. The browser bundle is split per route (`vite.config.ts`, `chunkSizeWarningLimit: 680`) so mermaid loads only when needed.","sub":[]},{"text":"**Layering boundary:** `src/domain/model.ts` has no parsing imports. `src/planning-fs/local-fs.ts` is the only file under `src/` that imports `node:fs` for reads; `discovery.ts` mentions `node:fs` only in a comment. `src/web/` must not import Node modules (none found by grep).","sub":[]}]}]},{"h":"Anti-Patterns","blocks":[{"t":"h3","text":"Reading a project through a server-wide \"active\" pointer"},{"t":"p","text":"**What happens:** Shared state keyed to \"the current project\" would let one request observe another project. **Why it's wrong:** The registry supports several projects at once (D-08, PLAT-02). A global pointer would race across requests. **Do this instead:** Resolve the runtime per request from the slug (`createProjectApi`'s `resolve` argument in `src/server/project-api.ts`) and read only `runtime.derived`."},{"t":"h3","text":"Mutating a derived bundle field by field"},{"t":"p","text":"**What happens:** Updating only `presentation` or `artifactIndex` after a refresh. **Why it's wrong:** A route table built from one snapshot could resolve against another snapshot's index, so URLs would point at the wrong files (D-05, `src/server/project-runtime.ts`). **Do this instead:** Build a whole new `DerivedViews` with `buildDerivedViews(snapshot)` and assign `this.derived` once."},{"t":"h3","text":"Calling `gray-matter` or handler parsers without a guard"},{"t":"p","text":"**What happens:** A handler that throws escapes the parse. **Why it's wrong:** A single malformed file would fail the whole refresh. **Do this instead:** Let the handler throw; `parseWithRegistry` (`src/planning-repo/registry.ts`) converts it to a warning and an empty artifact. Frontmatter problems are handled in `src/planning-repo/frontmatter.ts`."},{"t":"h3","text":"Importing `node:fs` outside the adapter"},{"t":"p","text":"**What happens:** Code under `src/planning-repo/` or `src/presentation/` reads disk directly. **Why it's wrong:** It bypasses containment checks and breaks the port, which the remote mirror and the test doubles depend on. **Do this instead:** Accept a `PlanningFilesystem` argument. The Node disk and process imports outside the adapter are confined to `src/server/file-dates.ts`, `src/server/settings-store.ts` (settings file) and `src/server/remote-source.ts` (ssh mirror, `node:child_process`); new disk access should follow the same placement."}]},{"h":"Error Handling","blocks":[{"t":"p","text":"**Strategy:** Results and status values over thrown exceptions at the core; HTTP errors as JSON at the edge."},{"t":"label","text":"Patterns"},{"t":"ul","items":[{"text":"`PlanningRepository.refresh()` resolves a `LoadStatus` (`ok`, `not-a-gsd-project`, `permission-denied`, …) and never throws (`src/planning-repo/snapshot.ts`).","sub":[]},{"text":"`ProjectRuntime.refresh()` returns a `RefreshOutcome` (`unsupported` | `refreshed` | `failed`) and keeps the previous bundle on failure (`src/server/project-runtime.ts`).","sub":[]},{"text":"Path escapes raise `PathEscapeError` (`src/planning-fs/types.ts`) and are caught as warnings during parsing.","sub":[]},{"text":"API responds `{ error: 'API route not found' }` with 404 for unknown `/api/*` routes (`src/server/registry-api.ts`); `src/web/api.ts` maps failures to `ApiError` kinds `refused`, `unreachable`, `http`.","sub":[]}]}]},{"h":"Cross-Cutting Concerns","blocks":[{"t":"p","text":"**Logging:** `console.log` / `console.warn` in `src/server/index.ts` for startup lines only; no logging framework detected. **Validation:** Path validation in `src/planning-fs/local-fs.ts` and `src/cli/remote-target.ts`; request validation in `src/server/request-guard.ts` (Host allow-list, JSON content type, body limit `GUARD_BODY_LIMIT = 4096`). **Authentication:** None. The server binds to `127.0.0.1` (`HOSTNAME` in `src/server/index.ts`) and relies on the Host guard against DNS rebinding; extra hosts come from `LABELORE_ALLOWED_HOSTS`."}]}]},"struct":{"preamble":[{"t":"p","text":"# Codebase Structure"},{"t":"p","text":"**Analysis Date:** 2026-11-04"}],"sections":[{"h":"Directory Layout","blocks":[{"t":"fence","lang":"","text":"labelore/\n├── src/                      # All application source (TypeScript, one tree for server + web)\n│   ├── cli/                  # Target argument parsing (local path, sftp/ssh/scp remote)\n│   ├── domain/               # Shared entity types (model.ts) — no parsing imports\n│   ├── planning-fs/          # Filesystem port + Node adapter (the only node:fs reader)\n│   ├── planning-repo/        # Discovery, parsing, handlers, assembly, snapshot\n│   │   └── handlers/         # One parser per GSD artifact family (54 files)\n│   ├── presentation/         # Pure view-model builders and URL grammar (server-side)\n│   ├── rendering/            # Markdown → HTML pipeline, diagram lifting/layout\n│   ├── server/               # Hono app, project registry/runtime, search, settings\n│   └── web/                  # React SPA\n│       ├── components/       # Shell, switcher, dialogs, shared widgets\n│       │   └── ui/           # Base primitives (button, dialog, toast)\n│       ├── pages/            # Route-level components (lazy-loaded)\n│       ├── views/            # Pure view composers (*.ts) + presenters (*-components.tsx)\n│       └── styles/           # globals.css (oklch tokens, Tailwind v4 @theme)\n├── test/                     # Vitest unit/integration tests, goldens, e2e specs\n│   ├── __golden__/           # Golden JSON snapshots (dense, sparse-empty, sparse-started)\n│   ├── e2e/                  # Playwright specs and shared e2e helpers\n│   ├── fixtures/             # Fixture .planning trees used by tests (dashboard, debug, lendshed…)\n│   ├── helpers/              # Shared test setup, corpora builders, vitest-gate.mjs\n│   └── web/                  # Web-side tests (class-vocabulary, css-source-order, …)\n├── fixtures/                 # Top-level fixture projects (e.g. dense/.planning) and README\n├── docs/                     # design-language.md (visual and naming conventions)\n├── public/                   # favicon.svg, self-hosted woff2 fonts\n├── .claude/                  # Claude Code settings, project CLAUDE.md, cloud helper scripts\n├── .planning/                # This project's own GSD planning state (not read by the app at runtime)\n├── index.html                # Vite entry HTML (loads /src/web/main.tsx)\n├── vite.config.ts            # Vite + React + Tailwind plugins, '@' → src/web alias\n├── vitest.config.ts          # Test include: test/**/*.test.ts\n├── playwright.config.ts      # e2e configuration\n├── tsconfig.json             # Base TS config\n├── tsconfig.server.json      # Server typecheck (excludes src/web)\n├── tsconfig.web.json         # Web typecheck\n├── eslint.config.js          # Flat ESLint config\n├── components.json           # shadcn configuration (base-sera style)\n└── package.json              # Scripts: dev, build, start, smoke, test, test:e2e, typecheck, lint"}]},{"h":"Directory Purposes","blocks":[{"t":"label","text":"`src/cli/` (3 files)"},{"t":"ul","items":[{"text":"Purpose: Turn raw CLI arguments into a local folder or remote target, before any filesystem read.","sub":[]},{"text":"Contains: `target-path.ts` (folder check, `LOAD_STATUS_MESSAGES`), `remote-target.ts` (pure parsing of `sftp://`, `ssh://`, `[user@]host:/path`), `snapshot.ts` (one-off snapshot CLI).","sub":[]},{"text":"Key files: `src/cli/target-path.ts`, `src/cli/remote-target.ts`","sub":[]}]},{"t":"label","text":"`src/domain/` (1 file)"},{"t":"ul","items":[{"text":"Purpose: Shared vocabulary; safe for any layer to import.","sub":[]},{"text":"Key files: `src/domain/model.ts`","sub":[]}]},{"t":"label","text":"`src/planning-fs/` (3 files)"},{"t":"ul","items":[{"text":"Purpose: Read-only filesystem port.","sub":[]},{"text":"Contains: `types.ts` (`PlanningFilesystem`, `PathEscapeError`, `DirEntry`, `FileRead`), `local-fs.ts` (Node adapter, `canonicalizePath`, temp-dir helpers), `in-memory-fs.ts` (test double).","sub":[]},{"text":"Key files: `src/planning-fs/types.ts`, `src/planning-fs/local-fs.ts`","sub":[]}]},{"t":"label","text":"`src/planning-repo/` (71 files including handlers)"},{"t":"ul","items":[{"text":"Purpose: Parse a `.planning/` tree into a `ProjectSnapshot`.","sub":[]},{"text":"Contains: `discovery.ts`, `registry.ts`, `assemble.ts`, `crossref.ts`, `snapshot.ts`, `naming.ts`, `folders.ts`, `file-class.ts`, `frontmatter.ts`, `mentions.ts`, `warnings.ts`, `theme-tokens.ts`, `css-color.ts`, `codebase-files.ts`, `secret-mask.ts`, `serialize.ts`, `types.ts`.","sub":[]},{"text":"Key files: `src/planning-repo/snapshot.ts` (entry: `PlanningRepository`), `src/planning-repo/handlers/index.ts` (`HANDLERS`), `src/planning-repo/assemble.ts`","sub":[]}]},{"t":"label","text":"`src/planning-repo/handlers/` (54 files)"},{"t":"ul","items":[{"text":"Purpose: One parser per artifact family. Each exports a handler matching by filename and location.","sub":[]},{"text":"Examples: `plan.ts`, `summary.ts`, `roadmap.ts`, `state.ts`, `requirements.ts`, `project.ts`, `milestones.ts`, `review.ts`, `review-disposition.ts`, `research.ts`, `security.ts`, `uat.ts`, `verification.ts`, `todo.ts`, `note.ts`, `debug.ts`, `learnings.ts`, `windows.ts`, `coverage.ts`, `json-config.ts`, `generic.ts` (fallback — must stay last in `HANDLERS`).","sub":[]},{"text":"Shared helpers: `markdown-sections.ts`, `section-projection.ts`, `frontmatter-only.ts`, `plan-structure.ts`.","sub":[]}]},{"t":"label","text":"`src/presentation/` (37 files)"},{"t":"ul","items":[{"text":"Purpose: Build view models and addresses; pure functions of a `Project` or `ProjectPresentation`.","sub":[]},{"text":"Key files: `route-table.ts`, `routes.ts`, `reserved.ts` (server-owned URL check), `dashboard.ts`, `roadmap.ts`, `traceability.ts`, `search.ts`, `tree.ts`, `drawer.ts`, `references.ts`, `legacy-routes.ts`, `root-redirects.ts`, `sketches.ts`, `project-research.ts`, `*-context.ts` (review, todo, note, project).","sub":[]}]},{"t":"label","text":"`src/rendering/` (11 files)"},{"t":"ul","items":[{"text":"Purpose: Server-side markdown rendering and diagram handling.","sub":[]},{"text":"Key files: `markdown.ts` (`createArtifactRenderer`), `linkify.ts`, `ascii-lift.ts`, `ascii-tree.ts`, `ascii-graph.ts`, `lane-layout.ts`, `build-order-layout.ts`, `plan-segments.ts`, `figure-detect.ts`, `slug.ts`.","sub":[]}]},{"t":"label","text":"`src/server/` (20 files)"},{"t":"ul","items":[{"text":"Purpose: HTTP surface, project lifecycle, derived state per project.","sub":[]},{"text":"Key files: `index.ts` (entry and CLI parsing), `registry-api.ts` (`createRegistryApp`), `project-api.ts` (`createProjectApi`), `project-registry.ts` (`ProjectRegistry`), `project-runtime.ts` (`ProjectRuntime`), `request-guard.ts`, `settings-store.ts`, `search-index.ts`, `remote-source.ts`, `folder-scan.ts`, `commit-times.ts`, `file-dates.ts`, `file-bytes.ts`, `sketch-files.ts`, `artifact-index.ts`, `dashboard-ledger.ts`, `document-sources.ts`, `project-presentation.ts`, `project-title.ts`, `settings-model.ts`.","sub":[]}]},{"t":"label","text":"`src/web/` (140 files)"},{"t":"ul","items":[{"text":"Purpose: Browser application.","sub":[]},{"text":"Key files: `main.tsx` (root), `app-router.tsx` (route table and `ProjectRoute`), `route-dispatch.ts` (pure address resolution), `api.ts`, `query-keys.ts`, `nav.tsx`, `project-path.ts`, `opened-ago.ts`.","sub":[]},{"text":"`components/` (35 files): `app-shell.tsx`, `project-switcher.tsx`, `project-add-dialog.tsx`, `artifact-header.tsx`, `sidebar-drawer.tsx`, `theme-toggle.tsx`, `lane-diagram.tsx`, `fenced-figure.tsx`, `route-progress.tsx`, `route-chunk-store.ts`.","sub":[]},{"text":"`components/ui/` (3 files): `button.tsx`, `dialog.tsx`, `toast.tsx` — base-sera primitives on `@base-ui/react`.","sub":[]},{"text":"`pages/` (37 files): one `*-page.tsx` per route family (`dashboard-page.tsx`, `roadmap-page.tsx`, `traceability-page.tsx`, `research-page.tsx`, `sketches-page.tsx`, `search-page.tsx`, `document-route.tsx`, `plan-pair-page.tsx`, `artifact-page.tsx`, `projects-page.tsx`, `project-layout.tsx`, `not-found-page.tsx`), plus pure helpers such as `document-title.ts`, `roadmap-deep-link.ts`, `traceability-rollup.ts`, `strip-markdown.ts`.","sub":[]},{"text":"`views/` (59 files): paired files per view, e.g. `review-ledger.ts` (pure) with `review-ledger-components.tsx` (React); shared `manifest.ts` (`composeView`), `layout.ts`, `blocks.tsx`, `facts.ts`, `inline-markdown.ts`.","sub":[]},{"text":"`styles/globals.css`: oklch tokens and `@theme` mapping.","sub":[]}]},{"t":"label","text":"`test/` (553 files, mostly fixtures)"},{"t":"ul","items":[{"text":"Unit and integration tests are `test/**/*.test.ts` (e.g. `test/discovery.test.ts`, `test/assemble.test.ts`, `test/crossref.test.ts`, `test/context-brief.test.ts`). Web tests live under `test/web/`.","sub":[]},{"text":"e2e: `test/e2e/*.spec.ts` (34 files) with `test/e2e/fixture-server.ts`, `test/e2e/projects-server.ts`, `test/e2e/pages.ts`.","sub":[]},{"text":"Goldens: `test/__golden__/*.json`.","sub":[]},{"text":"Fixtures: `test/fixtures/` (235 files) organised by scenario (`dashboard/ledger`, `dashboard/synthetic`, `lendshed`, `debug`, `learnings`).","sub":[]}]},{"t":"label","text":"`fixtures/` (64 files)"},{"t":"ul","items":[{"text":"Purpose: Top-level sample GSD projects (`fixtures/dense/.planning/…`) and `fixtures/README.md`. Distinct from `test/fixtures/`.","sub":[]}]}]},{"h":"Key File Locations","blocks":[{"t":"label","text":"Entry Points"},{"t":"ul","items":[{"text":"`src/server/index.ts`: server and CLI start (`startServer`, `parseCli`)","sub":[]},{"text":"`src/web/main.tsx`: browser entry, referenced from `index.html`","sub":[]},{"text":"`src/cli/snapshot.ts`: `npm run snapshot`","sub":[]}]},{"t":"label","text":"Configuration"},{"t":"ul","items":[{"text":"`package.json`: scripts and dependency versions (Node `>=22.18.0`)","sub":[]},{"text":"`vite.config.ts`: build alias `@` → `src/web`; `chunkSizeWarningLimit: 680`","sub":[]},{"text":"`tsconfig.server.json` / `tsconfig.web.json`: split typechecks; web excluded from server config","sub":[]},{"text":"`eslint.config.js`, `.prettierrc`, `components.json`","sub":[]},{"text":"`.claude/settings.json`, `.claude/CLAUDE.md`: agent instructions (not app config)","sub":[]}]},{"t":"label","text":"Core Logic"},{"t":"ul","items":[{"text":"`src/planning-repo/snapshot.ts`: load and refresh pipeline","sub":[]},{"text":"`src/planning-repo/handlers/index.ts`: handler dispatch order","sub":[]},{"text":"`src/planning-repo/assemble.ts`: milestone, phase, plan graph","sub":[]},{"text":"`src/server/project-runtime.ts`: per-project derived bundle","sub":[]},{"text":"`src/presentation/route-table.ts`: address ownership","sub":[]},{"text":"`src/web/app-router.tsx`: web route table","sub":[]}]},{"t":"label","text":"Testing"},{"t":"ul","items":[{"text":"`vitest.config.ts`: unit test runner, setup `test/helpers/config-dir-setup.ts`","sub":[]},{"text":"`playwright.config.ts`: e2e runner","sub":[]},{"text":"`test/helpers/`: 23 shared helpers, including `fixture-project.ts`, `from-directory.ts`, `dashboard-sources.ts`","sub":[]}]}]},{"h":"Naming Conventions","blocks":[{"t":"label","text":"Files"},{"t":"ul","items":[{"text":"kebab-case for all TypeScript modules: `project-registry.ts`, `route-table.ts`, `review-ledger-components.tsx`","sub":[]},{"text":"React components in `.tsx`; pure logic in `.ts`. A view's presenter has the `-components.tsx` suffix (`src/web/views/*-components.tsx`).","sub":[]},{"text":"Pages end in `-page.tsx` (`src/web/pages/roadmap-page.tsx`); some pages use `-route` or `-layout` (`document-route.tsx`, `project-layout.tsx`).","sub":[]},{"text":"Test files: `test/<area>.test.ts`; e2e: `test/e2e/<feature>.spec.ts`.","sub":[]},{"text":"Handlers: `src/planning-repo/handlers/<artifact-family>.ts`, exporting `<Name>Handler` (e.g. `PlanHandler`, `UiReviewHandler`).","sub":[]}]},{"t":"label","text":"Directories"},{"t":"ul","items":[{"text":"Lowercase, hyphenated (`planning-repo`, `planning-fs`, `project-research`); no index barrels except `handlers/index.ts`.","sub":[]}]},{"t":"label","text":"Identifiers and constants"},{"t":"ul","items":[{"text":"Functions: camelCase (`buildRouteTable`, `parseWithRegistry`).","sub":[]},{"text":"Module constants: SCREAMING_SNAKE (`HANDLERS`, `LOCATION_ORDER`, `GUARD_BODY_LIMIT`, `SKETCH_FILES_SEGMENT`).","sub":[]},{"text":"Types and interfaces: PascalCase, with `Snapshot`, `Source`, `Outcome`, `Context`, `ViewModel` suffixes used as the codebase's convention.","sub":[]},{"text":"Imports use `.ts` / `.tsx` extensions (`import … from '../domain/model.ts'`).","sub":[]}]},{"t":"p","text":"**Files under `.planning/` in a target project** (what the app reads): `PROJECT.md`, `ROADMAP.md`, `STATE.md`, `REQUIREMENTS.md`, `milestones/`, `phases/`, `quick/`, `research/`, `todos/`, `notes/`, `debug/`, `codebase/`. Naming parsers live in `src/planning-repo/naming.ts`."}]},{"h":"Where to Add New Code","blocks":[{"t":"label","text":"New artifact type (a GSD file the app should understand)"},{"t":"ul","items":[{"text":"Parser: `src/planning-repo/handlers/<name>.ts` exporting a handler with `match(ref)` and `parse(raw, ref)`.","sub":[]},{"text":"Register it in `HANDLERS` in `src/planning-repo/handlers/index.ts`, before `GenericMarkdownHandler`.","sub":[]},{"text":"Domain shape if needed: `src/domain/model.ts`.","sub":[]},{"text":"Tests: `test/<name>.test.ts`; fixture under `test/fixtures/`.","sub":[]}]},{"t":"label","text":"New view model or page data"},{"t":"ul","items":[{"text":"Builder: `src/presentation/<name>.ts` (pure; takes `Project` or `ProjectPresentation`).","sub":[]},{"text":"Endpoint: add `api.get('/<name>', …)` in `src/server/project-api.ts` and read `runtime.derived`.","sub":[]},{"text":"Client fetcher: `src/web/api.ts`; query key via `src/web/query-keys.ts`.","sub":[]}]},{"t":"label","text":"New page"},{"t":"ul","items":[{"text":"Component: `src/web/pages/<name>-page.tsx` (default export not used; named export such as `DashboardPage`).","sub":[]},{"text":"Route: add a lazy import and entry in `src/web/app-router.tsx`, wrapped with `trackRouteChunk`.","sub":[]},{"text":"Address grammar, if new: `src/presentation/routes.ts` and dispatch in `src/web/route-dispatch.ts`.","sub":[]},{"text":"Reserved first segments: `src/presentation/reserved.ts` (`PROJECT_PAGES`, `LEGACY_FIRST_SEGMENTS`).","sub":[]}]},{"t":"label","text":"New view (composed UI section)"},{"t":"ul","items":[{"text":"Pure composer: `src/web/views/<name>.ts`","sub":[]},{"text":"Presenter: `src/web/views/<name>-components.tsx`","sub":[]},{"text":"Register in `src/web/views/manifests.ts` if it participates in the document layout.","sub":[]}]},{"t":"label","text":"New UI component"},{"t":"ul","items":[{"text":"Shared widget: `src/web/components/<name>.tsx`","sub":[]},{"text":"Base primitive from shadcn: `src/web/components/ui/` (set `\"rsc\": false` in `components.json`, per the project design rules).","sub":[]},{"text":"Styles: tokens in `src/web/styles/globals.css`; visual rules in `docs/design-language.md` (enforced by `test/web/class-vocabulary.test.ts`).","sub":[]}]},{"t":"label","text":"New rendering behaviour"},{"t":"ul","items":[{"text":"`src/rendering/markdown.ts` (pipeline order: sanitize before highlight and linkify plugins).","sub":[]}]},{"t":"label","text":"New filesystem capability"},{"t":"ul","items":[{"text":"Extend `src/planning-fs/types.ts` (optional member first), implement in `src/planning-fs/local-fs.ts`, and in-memory double in `src/planning-fs/in-memory-fs.ts`.","sub":[]}]},{"t":"label","text":"New project-level CLI option"},{"t":"ul","items":[{"text":"`parseCli` in `src/server/index.ts`. Unknown flags throw (no `--scan` flag by design, D-16).","sub":[]}]},{"t":"label","text":"Utilities"},{"t":"ul","items":[{"text":"Pure string and URL helpers: `src/presentation/identity-keys.ts`, `src/web/project-path.ts`, `src/web/pages/strip-markdown.ts` (client-side only).","sub":[]},{"text":"Server helpers: `src/server/project-title.ts`, `src/server/file-bytes.ts`.","sub":[]}]},{"t":"label","text":"Tests"},{"t":"ul","items":[{"text":"Unit: `test/<area>.test.ts`; web: `test/web/<name>.test.ts`; e2e: `test/e2e/<feature>.spec.ts`.","sub":[]},{"text":"Shared fixtures and builders: `test/helpers/`.","sub":[]}]}]},{"h":"Special Directories","blocks":[{"t":"label","text":"`dist/`"},{"t":"ul","items":[{"text":"Purpose: Vite production bundle served by `npm start`.","sub":[]},{"text":"Generated: Yes (`npm run build`)","sub":[]},{"text":"Committed: No (listed in `.gitignore`)","sub":[]}]},{"t":"label","text":"`test-results/`, `playwright-report/`, `test/e2e/screenshots/`"},{"t":"ul","items":[{"text":"Purpose: Playwright output and screenshots.","sub":[]},{"text":"Generated: Yes","sub":[]},{"text":"Committed: No (`.gitignore`)","sub":[]}]},{"t":"label","text":"`node_modules/`"},{"t":"ul","items":[{"text":"Generated: Yes","sub":[]},{"text":"Committed: No","sub":[]}]},{"t":"label","text":"`.claude/worktrees/`"},{"t":"ul","items":[{"text":"Purpose: Agent worktrees created by Claude Code isolation.","sub":[]},{"text":"Generated: Yes","sub":[]},{"text":"Committed: No (`.gitignore`); excluded from this analysis.","sub":[]}]},{"t":"label","text":"`.planning/`"},{"t":"ul","items":[{"text":"Purpose: GSD planning state for this repository (roadmap, milestones, phases, debug notes, this codebase map).","sub":[]},{"text":"Generated: Partly (by GSD workflows)","sub":[]},{"text":"Committed: Yes","sub":[]}]},{"t":"label","text":"`fixtures/` and `test/fixtures/`"},{"t":"ul","items":[{"text":"Purpose: Sample GSD projects used for tests and screenshots. Test data, never read by the app at runtime unless a path is supplied.","sub":[]},{"text":"Generated: No","sub":[]},{"text":"Committed: Yes","sub":[]}]},{"t":"label","text":"`.gsd/`, `.playwright-mcp/`"},{"t":"ul","items":[{"text":"Purpose: Per-run GSD scratch and Playwright MCP state.","sub":[]},{"text":"Generated: Yes","sub":[]},{"text":"Committed: No (`.gitignore`)","sub":[]}]}]}]}},"tidemark":{"arch":{"preamble":[{"t":"p","text":"# Architecture"},{"t":"p","text":"**Analysis Date:** 2026-10-30"}],"sections":[{"h":"System Overview","blocks":[{"t":"fence","lang":"text","text":"┌─────────────────────────────────────────────────────────────┐\n│                       Berth board (browser)                  │\n│                         `board/`                             │\n└────────────────────────────┬────────────────────────────────┘\n                             │ JSON over HTTP\n                             ▼\n┌──────────────────┬──────────────────┬───────────────────────┐\n│   Berth routes   │  Office routes   │    Tide window job    │\n│ `server/berths/` │ `server/office/` │    `server/tides/`    │\n└────────┬─────────┴────────┬─────────┴──────────┬────────────┘\n         │                  │                     │\n         ▼                  ▼                     ▼\n┌─────────────────────────────────────────────────────────────┐\n│                      Slot store module                       │\n│        `server/store/` over the file `data/tidemark.db`      │\n└─────────────────────────────────────────────────────────────┘\n## the three route groups above share one process"}]},{"h":"Component Responsibilities","blocks":[{"t":"table","head":["Component","Responsibility","File"],"rows":[["Berth board","Shows free berths and the owner's own requests","`board/App.tsx`"],["Berth routes","Accept a request, list berths for a date range","`server/berths/routes.ts`"],["Office routes","Confirm, move or refuse a request","`server/office/routes.ts`"],["Tide window job","Turns the tide feed into usable windows per berth","`server/tides/refresh.ts`"],["Slot store","The only module that touches the database file","`server/store/index.ts`"]]}]},{"h":"Pattern Overview","blocks":[{"t":"p","text":"**Overall:** Layered monolith with a thin browser client"},{"t":"label","text":"Key Characteristics"},{"t":"ul","items":[{"text":"One process serves the API and the built board","sub":[]},{"text":"Route groups never call each other; they share the slot store","sub":[]},{"text":"A berth is usable only inside a tide window, and the window is data, not code","sub":[]}]}]},{"h":"API Architecture","blocks":[{"t":"p","text":"**Style:** JSON resources under `/api`, one router per resource group."},{"t":"p","text":"**Versioning:** None. The board and the server ship together."},{"t":"p","text":"**Authentication:** Owners sign in with an emailed code; the office uses a shared staff login."}]},{"h":"Data Flow","blocks":[{"t":"h3","text":"Primary Request Path"},{"t":"ol","items":[{"text":"The owner picks dates on the board (`board/RequestForm.tsx`)","sub":[]},{"text":"The berth route parses the body and checks the tide window (`server/berths/routes.ts`)","sub":[]},{"text":"The slot store writes a pending request (`server/store/index.ts`)","sub":[]},{"text":"The board refetches the berth list and shows the request as pending (`board/useBerths.ts`)","sub":[]}]},{"t":"h3","text":"Tide Refresh"},{"t":"ol","items":[{"text":"The scheduled job fetches the tide feed (`server/tides/refresh.ts`)","sub":[]},{"text":"Each row is parsed and turned into a window per berth depth","sub":[]},{"text":"The slot store replaces the windows for the next fourteen days","sub":[]}]},{"t":"label","text":"State Management"},{"t":"ul","items":[{"text":"Server state lives in the database file; the board keeps only form state","sub":[]}]}]},{"h":"Key Abstractions","blocks":[{"t":"label","text":"Window"},{"t":"ul","items":[{"text":"Purpose: A span of time during which a berth of a given depth has enough water","sub":[]},{"text":"Examples: `server/tides/window.ts`","sub":[]},{"text":"Pattern: Plain value object, rebuilt on every refresh","sub":[]}]}]},{"h":"Entry Points","blocks":[{"t":"label","text":"Server"},{"t":"ul","items":[{"text":"Location: `server/main.ts`","sub":[]},{"text":"Triggers: `npm start`","sub":[]},{"text":"Responsibilities: Reads config, opens the store, mounts routes, starts the refresh job","sub":[]}]},{"t":"label","text":"Board"},{"t":"ul","items":[{"text":"Location: `board/main.tsx`","sub":[]},{"text":"Triggers: Page load","sub":[]},{"text":"Responsibilities: Mounts the app and the query client","sub":[]}]}]},{"h":"Anti-Patterns","blocks":[{"t":"h3","text":"Reading the database from a route"},{"t":"p","text":"**What happens:** The office confirm route opens the database file directly to check a clash. **Why it's wrong:** Two modules now know the table layout, and the clash rule exists twice. **Do this instead:** Ask the slot store for the clash check (`server/store/clash.ts`)."},{"t":"h3","text":"Hard-coded depth in the board"},{"t":"p","text":"**What happens:** The board filters berths by a depth constant copied from the harbour chart. **Why it's wrong:** A dredged berth keeps its old depth on screen until the next release. **Do this instead:** Send the depth from the server with each berth (`server/berths/routes.ts`)."}]},{"h":"Error Handling","blocks":[{"t":"p","text":"**Strategy:** Routes throw typed errors; one handler turns them into JSON with a status code."},{"t":"label","text":"Patterns"},{"t":"ul","items":[{"text":"Parse failures answer 400 with the first zod issue","sub":[]},{"text":"A clash answers 409 and names the berth","sub":[]}]}]}]}}};
+// ---------- icons (lucide paths, 24px grid) ----------
+const ICON = {
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  chevr: '<path d="m9 6 6 6-6 6"/>',
+  chevd: '<path d="m6 9 6 6 6-6"/>',
+  arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  folderOpen: '<path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>',
+};
+const svg = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// inline markdown: `code`, **bold**, *italic*. Code spans are lifted out first so their contents stay literal.
+const inline = (s) => {
+  const codes = [];
+  let t = String(s).replace(/`([^`]+)`/g, (_, c) => { codes.push(c); return `\u0000${codes.length - 1}\u0000`; });
+  t = esc(t).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<i>$2</i>');
+  return t.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${esc(codes[Number(i)])}</code>`);
+};
+const sq = (tone) => `<span class="sq" data-tone="${tone}" aria-hidden="true"></span>`;
+const chip = (tone, text, title) => `<span class="status-chip" data-tone="${tone}"${title ? ` title="${esc(title)}"` : ''}>${sq(tone)}${esc(text)}</span>`;
+
+// ---------- the seven documents (labelore's own counts, 10-03 rule) ----------
+const ALL = ['stack', 'architecture', 'structure', 'conventions', 'testing', 'integrations', 'concerns'];
+const DOC = {
+  stack: { name: 'Stack', key: '22' },
+  architecture: { name: 'Architecture', key: '24' },
+  structure: { name: 'Structure', key: '11' },
+  conventions: { name: 'Conventions', key: '8' },
+  testing: { name: 'Testing', key: 'Vitest' },
+  integrations: { name: 'Integrations', key: '3' },
+  concerns: { name: 'Concerns', key: '30' },
+};
+const PROJ = {
+  labelore: { name: 'labelore', date: 'Nov 4, 2026', commit: '717c8d7', keys: {} },
+  tidemark: { name: 'tidemark', date: 'Oct 30, 2026', commit: 'c4e91ab', keys: { architecture: '5', structure: '3', concerns: '14' } },
+};
+
+// ---------- state ----------
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+const ACTS = {};
+const VIEWS = {};
+
+// ---------- the 042 A frame, drawn identically in every variant ----------
+const crumbs = () => `<nav class="crumbs" aria-label="Breadcrumb"><span>Labelore</span><span aria-hidden="true">/</span><span aria-current="page">Codebase</span></nav>`;
+const copyPath = () => `<button class="btn-xs icon" type="button" data-act="noop" aria-label="Copy path" title="Copy path">${svg('copy')}</button>`;
+const viewSource = () => `<div class="seg" role="group" aria-label="Show"><button class="btn-xs" type="button" aria-pressed="true">View</button><button class="btn-xs" type="button" aria-pressed="false" data-act="noop">Source</button></div>`;
+const appHead = (pname) => `<header class="app-head" data-shell><span class="app-brand"><i></i>Labelore <span>/ ${esc(pname)}</span></span>
+  <nav class="app-nav" aria-label="Project"><a href="#" data-act="noop" aria-current="page">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Search</a></nav></header>`;
+function factsHtml(proj) {
+  const p = PROJ[proj];
+  return `<div class="facts"><span class="facts-count">7 of 7 documents mapped</span>${chip('complete', 'Complete map')}<span class="facts-date">Mapped ${p.date}</span><span class="status-chip mono" data-tone="quiet" title="Commit the map was made at">Commit ${p.commit}</span></div>`;
+}
+const keyOf = (proj, k) => PROJ[proj].keys[k] ?? (proj === 'tidemark' ? '–' : DOC[k].key);
+function listHtml(proj, cur) {
+  return `<nav class="list" aria-label="Codebase map"><ol>${ALL.map((k, i) => {
+    const d = DOC[k], no = String(i + 1).padStart(2, '0');
+    const on = k === cur;
+    return `<li class="entry-li"><a class="entry" href="#" data-act="panel" data-panel="${k}"${on ? ' aria-current="page"' : ''}><span class="entry-no">${no}</span><span class="entry-name">${d.name}</span><span class="entry-key"><b>${esc(keyOf(proj, k))}</b></span></a></li>`;
+  }).join('')}</ol></nav>`;
+}
+function pageHtml(proj, cur, main) {
+  return `${appHead(PROJ[proj].name)}<main class="page">${crumbs()}
+    <header class="heading-block"><p class="eyebrow">Codebase</p><h1>Codebase</h1><div class="meta-row">${copyPath()}${viewSource()}</div></header>
+    <div class="a-grid"><aside class="a-rail">${factsHtml(proj)}${listHtml(proj, cur)}</aside><div class="a-main">${main}</div></div></main>`;
+}
+const panelHead = (k, proj, unit) => `<header class="panel-head"><span class="panel-no">${String(ALL.indexOf(k) + 1).padStart(2, '0')}</span><h2 id="panel-h">${DOC[k].name}</h2><span class="panel-key">${esc(keyOf(proj, k))} ${unit}</span></header>`;
+
+// ---------- generic readers for the plain form (what the app's generic document rendering shows) ----------
+const norm = (h) => h.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const findSec = (doc, re) => doc.sections.find((s) => re.test(norm(s.h)));
+const splitField = (t) => { const m = String(t).match(/^([^:`]{1,48}):\s+([\s\S]*)$/); return m ? [m[1], m[2]] : ['', t]; };
+function ulHtml(items) {
+  return `<ul class="bul">${items.map((it) => {
+    const [f, v] = splitField(it.text);
+    return `<li><span>${f ? `<span class="f">${inline(f)}:</span> ${inline(v)}` : inline(it.text)}${it.sub.length ? `<ul>${it.sub.map((s) => `<li>${inline(s)}</li>`).join('')}</ul>` : ''}</span></li>`;
+  }).join('')}</ul>`;
+}
+function blocksHtml(blocks) {
+  const out = [];
+  let group = null;
+  const closeGroup = () => { if (group) { out.push(`<div class="g">${group.join('')}</div>`); group = null; } };
+  for (const b of blocks) {
+    if (b.t === 'label') { closeGroup(); group = [`<p class="g-label">${inline(b.text)}</p>`]; continue; }
+    const html = b.t === 'p' ? `<p class="prose">${inline(b.text)}</p>`
+      : b.t === 'h3' ? `<p class="sub-h">${inline(b.text)}</p>`
+      : b.t === 'ul' ? ulHtml(b.items)
+      : b.t === 'ol' ? `<ol class="steps">${b.items.map((it) => `<li>${inline(it.text)}${it.sub.length ? `<ul>${it.sub.map((s) => `<li>${inline(s)}</li>`).join('')}</ul>` : ''}</li>`).join('')}</ol>`
+      : b.t === 'table' ? `<div class="tbl-scroll"><table class="ptable"><thead><tr>${b.head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`
+      : b.t === 'fence' ? `<pre class="plain-pre">${esc(b.text)}</pre>` : '';
+    if (group && (b.t === 'ul' || b.t === 'p' || b.t === 'ol')) group.push(html); else { closeGroup(); out.push(html); }
+  }
+  closeGroup();
+  return out.join('');
+}
+const plainSec = (h, blocks) => `<section class="plain-sec"><h3 class="grp-h">${esc(h)}</h3>${blocksHtml(blocks)}</section>`;
+const grp = (h, body, n) => `<section class="grp"><h3 class="grp-h">${esc(h)}${n != null ? `<span class="n">${esc(n)}</span>` : ''}</h3>${body}</section>`;
+const rowsHtml = (items, cls = '') => `<ul class="ledger ${cls}">${items.map(([a, b, c]) => `<li><span class="l-name">${inline(a)}</span><span class="l-body">${inline(b)}</span>${c ? `<span class="l-file">${inline(c)}</span>` : '<span></span>'}</li>`).join('')}</ul>`;
+
+// ---------- render orchestration ----------
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY;
+  const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  if (typeof afterRender === 'function') afterRender(v);
+  window.scrollTo(0, y);
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; if (typeof onState === 'function') onState(); return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+window.addEventListener('hashchange', render);
+
+// ---------- sketch 043 state ----------
+const REJECTED_DIAGRAM = [
+  'request',
+  '  └─▶ guard (Host + JSON content type) ─▶ project-api',
+  '                                            │',
+  '            ┌───── resolve the runtime by slug',
+  '            ▼',
+  '       ProjectRuntime ──reads──▶ DerivedViews',
+  '            │',
+  '            └─refresh─▶ snapshot ─▶ handlers ─▶ assemble ─▶ swap',
+  '                           ▲',
+  '                  PlanningFilesystem port',
+  '                           ▲',
+  '            local-fs.ts · ssh mirror (a temp copy)',
+].join('\n');
+const STATES = {
+  arch: { proj: 'labelore', panel: 'architecture', diagram: 'drawn' },
+  plain: { proj: 'labelore', panel: 'architecture', diagram: 'plain' },
+  tidemark: { proj: 'tidemark', panel: 'architecture', diagram: 'drawn' },
+  tree: { proj: 'labelore', panel: 'structure', deep: false },
+  deep: { proj: 'labelore', panel: 'structure', deep: true },
+};
+const S = { state: STATES[params.get('state')] ? params.get('state') : 'arch', lens: { architecture: 'overview', structure: 'tree' }, more: false, sel: null, area: 'all', fold: new Set(), hl: [], dsel: null };
+const st = () => STATES[S.state];
+const proj = () => st().proj;
+function onState() { S.more = false; S.sel = null; S.area = 'all'; S.fold = new Set(); S.hl = []; S.dsel = null; S.hlIdx = null; S.lens = { architecture: 'overview', structure: 'tree' }; }
+ACTS.panel = (el) => {
+  const k = el.dataset.panel;
+  if (k === 'architecture' && st().panel !== 'architecture') { S.state = 'arch'; onState(); }
+  else if (k === 'structure' && st().panel !== 'structure') { S.state = 'tree'; onState(); }
+  else if (k !== 'architecture' && k !== 'structure') return toast('043 draws Architecture and Structure');
+  render();
+};
+ACTS.more = () => { S.more = !S.more; render(); };
+ACTS.lens = (el) => { S.lens[st().panel] = el.dataset.lens; render(); };
+ACTS.area = (el) => { S.area = el.dataset.area; render(); };
+ACTS.pick = (el) => { S.sel = S.sel === Number(el.dataset.i) ? null : Number(el.dataset.i); render(); };
+ACTS.fold = (el) => { const i = Number(el.dataset.i); S.fold.has(i) ? S.fold.delete(i) : S.fold.add(i); S.dsel = el.dataset.path || null; render(); };
+ACTS.hl = (el) => { const i = Number(el.dataset.i); S.hl = S.hlIdx === i ? [] : LOOKUP_DIRS(i); S.hlIdx = S.hlIdx === i ? null : i; render(); };
+
+// ---------- the architecture model, read from the map document by heading ----------
+function archModel() {
+  const d = DATA[proj()].arch;
+  const so = findSec(d, /^system overview/);
+  let diagram = so && so.blocks.find((b) => b.t === 'fence') ? so.blocks.find((b) => b.t === 'fence').text : null;
+  if (st().diagram === 'plain') diagram = REJECTED_DIAGRAM;
+  const cs = findSec(d, /^component responsibilit/);
+  const components = cs ? cs.blocks.find((b) => b.t === 'table').rows : [];
+  const po = findSec(d, /^pattern overview/);
+  let overall = '', chars = [];
+  if (po) {
+    for (const b of po.blocks) {
+      if (b.t === 'p') { const m = b.text.match(/^\*\*Overall:\*\*\s*(.*)$/); if (m) overall = m[1]; }
+      if (b.t === 'ul') chars = b.items;
+    }
+  }
+  const es = findSec(d, /^entry point/);
+  const entries = [];
+  if (es) {
+    let cur = null;
+    for (const b of es.blocks) {
+      if (b.t === 'label') { cur = { name: b.text, f: {} }; entries.push(cur); }
+      else if (b.t === 'ul' && cur) b.items.forEach((it) => { const [k, v] = splitField(it.text); cur.f[k] = v; });
+    }
+  }
+  const as = findSec(d, /^anti pattern/);
+  const antis = [];
+  if (as) {
+    for (const b of as.blocks) {
+      if (b.t === 'h3') antis.push({ title: b.text, what: '', why: '', doit: '' });
+      else if (b.t === 'p' && antis.length) {
+        const a = antis[antis.length - 1];
+        const re = /\*\*(What happens|Why it's wrong|Do this instead):\*\*\s*([\s\S]*?)(?=\*\*(?:What happens|Why it's wrong|Do this instead):\*\*|$)/gi;
+        for (const m of b.text.matchAll(re)) { const k = m[1].toLowerCase(); const v = m[2].trim(); if (k.startsWith('what')) a.what = v; else if (k.startsWith('why')) a.why = v; else a.doit = v; }
+      }
+    }
+  }
+  const lifted = [/^system overview/, /^component responsibilit/, /^pattern overview/, /^entry point/, /^anti pattern/];
+  const plain = d.sections.filter((s) => !lifted.some((re) => re.test(norm(s.h))));
+  return { diagram, components, overall, chars, entries, antis, plain, intro: d.preamble };
+}
+
+// ---------- the lifted diagram: author's text with cards behind it (the shipped LiftedDiagram) ----------
+function liftDiagram(text, hotKey) {
+  const grid = text.split('\n').map((l) => [...l]);
+  const cards = [];
+  for (let r = 0; r < grid.length; r++) {
+    for (let c = 0; c < grid[r].length; c++) {
+      if (grid[r][c] !== '┌') continue;
+      let c2 = c + 1;
+      while (c2 < grid[r].length && '─┬┴┼'.includes(grid[r][c2])) c2++;
+      if (grid[r][c2] !== '┐') continue;
+      let r2 = r + 1;
+      while (r2 < grid.length && grid[r2][c] && '│├'.includes(grid[r2][c])) r2++;
+      if (r2 >= grid.length || grid[r2][c] !== '└' || grid[r2][c2] !== '┘') continue;
+      const inner = grid.slice(r + 1, r2).map((row) => row.slice(c + 1, c2).join('')).join(' ');
+      cards.push({ r, c, r2, c2, inner });
+    }
+  }
+  cards.forEach((k) => {
+    for (let c = k.c; c <= k.c2; c++) { grid[k.r][c] = ' '; grid[k.r2][c] = ' '; }
+    for (let r = k.r; r <= k.r2; r++) { grid[r][k.c] = ' '; grid[r][k.c2] = ' '; }
+  });
+  const cardsHtml = cards.map((k, i) => `<div class="lift-card" data-card="${i}" data-key="${cardKey(k.inner)}"${hotKey && cardKey(k.inner) === hotKey ? ' data-hot="true"' : ''} style="--c:${k.c};--r:${k.r};--w:${k.c2 - k.c};--h:${k.r2 - k.r}"></div>`).join('');
+  return `<div class="lift">${cardsHtml}<pre>${esc(grid.map((r) => r.join('')).join('\n'))}</pre></div>`;
+}
+function cardKey(inner) {
+  const t = inner.replace(/`/g, '');
+  const tests = [[/Browser SPA|Berth board/, 'spa'], [/HTTP server/, 'http'], [/ProjectRegistry/, 'registry'], [/Per-project read API/, 'api'], [/ProjectRuntime/, 'runtime'], [/Parsing core/, 'parsing'], [/Filesystem adapter/, 'adapter'], [/Berth routes/, 'berth'], [/Office routes/, 'office'], [/Tide window/, 'tide'], [/Slot store/, 'store']];
+  const hit = tests.find(([re]) => re.test(t));
+  return hit ? hit[1] : t.trim().slice(0, 12).toLowerCase().replace(/\W+/g, '-');
+}
+function compKey(c) {
+  const f = c[2];
+  if (proj() === 'tidemark') {
+    if (/board\//.test(f)) return 'spa';
+    if (/berths\//.test(f)) return 'berth';
+    if (/office\//.test(f)) return 'office';
+    if (/tides\//.test(f)) return 'tide';
+    if (/store\//.test(f)) return 'store';
+    return '';
+  }
+  if (/src\/web\//.test(f)) return 'spa';
+  if (/project-registry|settings-store/.test(f)) return 'registry';
+  if (/project-api/.test(f)) return 'api';
+  if (/src\/rendering/.test(f)) return 'api';
+  if (/project-runtime|src\/presentation|search-index/.test(f)) return 'runtime';
+  if (/src\/planning-repo|src\/domain/.test(f)) return 'parsing';
+  if (/src\/planning-fs|remote-source/.test(f)) return 'adapter';
+  if (/src\/server|src\/cli/.test(f)) return 'http';
+  return '';
+}
+const filesOf = (s) => [...String(s).matchAll(/`([^`]+)`/g)].map((m) => m[1]);
+
+// ---------- figures ----------
+const figure = (title, body, tools = '') => `<figure class="figure-frame"><div class="ff-bar"><span class="ff-title">${esc(title)}</span>${tools}<button class="status-chip" type="button" aria-pressed="false" data-act="noop">Actual size</button><button class="status-chip" type="button" aria-pressed="false" data-act="noop">Grid</button><button class="status-chip" type="button" data-act="noop">Expand</button></div><div class="ff-body">${body}</div></figure>`;
+function diagramFigure(m, hotKey) {
+  if (!m.diagram) return '';
+  if (st().diagram === 'plain') return figure('System overview', `<pre class="plain-text">${esc(m.diagram)}</pre>`);
+  return figure('System overview', `<p class="ff-note"><span class="status-chip" data-tone="quiet">Shown as drawn</span><span>This figure keeps the author's layout.</span></p>${liftDiagram(m.diagram, hotKey)}`);
+}
+
+// ---------- lifted parts ----------
+function componentRows(m, all, filter) {
+  const rows = m.components.map((c, i) => [c, i]).filter(([c]) => !filter || filter === 'all' || areaOf(c[2]) === filter);
+  const shown = all ? rows : rows.slice(0, 6);
+  return rowsHtml(shown.map(([c]) => c)) + (all || rows.length <= 6 ? '' : '');
+}
+function areaOf(file) { const m = String(file).match(/`((?:src\/)?[a-z-]+)\//); return m ? m[1] : 'other'; }
+const patternHtml = (m) => `${m.overall ? `<p class="lede">${inline(m.overall)}</p>` : ''}<dl class="leads">${m.chars.map((it) => { const [f, v] = splitField(it.text); return f && f.length < 40 ? `<div><dt>${inline(f)}</dt><dd>${inline(v)}</dd></div>` : `<div><dd style="color:var(--foreground)">${inline(it.text)}</dd></div>`; }).join('')}</dl>`;
+const entryRows = (m) => `<ul class="ledger">${m.entries.map((e) => `<li><span class="l-name">${inline(e.name)}</span><span class="l-body">${inline(e.f.Responsibilities || '')}${e.f.Triggers ? `<br>Triggers: ${inline(e.f.Triggers)}` : ''}</span><span class="l-file">${inline(e.f.Location || '')}</span></li>`).join('')}</ul>`;
+const swapRow = (a) => `<details class="swap"><summary><s>${inline(a.title)}</s><span class="arr">${svg('arrow')}</span><span class="do">${inline(a.doit || 'No fix stated')}</span></summary><dl class="swap-more">${a.what ? `<div><dt>What happens</dt><dd>${inline(a.what)}</dd></div>` : ''}${a.why ? `<div><dt>Why it's wrong</dt><dd>${inline(a.why)}</dd></div>` : ''}</dl></details>`;
+const swapsHtml = (list) => `<div class="swaps">${list.map(swapRow).join('')}</div>`;
+const moreNote = (m, all) => `<p class="more-row"><span>${all ? `All ${m.components.length} components shown.` : `6 of ${m.components.length} components shown.`}</span><button class="text-link" type="button" data-act="more">${all ? 'Show fewer' : `Show all ${m.components.length}`}</button></p>`;
+const plainSections = (m) => m.plain.map((s) => plainSec(s.h, s.blocks)).join('');
+
+// ---------- the structure model ----------
+function structModel() {
+  const d = DATA.labelore.struct;
+  const layout = findSec(d, /^directory layout/).blocks.find((b) => b.t === 'fence').text;
+  const pur = findSec(d, /^directory purpose/);
+  const purposes = [];
+  if (pur) { let cur = null; for (const b of pur.blocks) { if (b.t === 'label') { const m = b.text.match(/^`([^`]+)`\s*(?:\((.*)\))?/); cur = { path: m ? m[1] : b.text, count: m && m[2] ? m[2] : '', f: [] }; purposes.push(cur); } else if (b.t === 'ul' && cur) cur.f = b.items.map((it) => splitField(it.text)); } }
+  const wh = findSec(d, /^where to add new code/);
+  const where = [];
+  if (wh) { let cur = null; for (const b of wh.blocks) { if (b.t === 'label') { cur = { when: b.text, lines: [] }; where.push(cur); } else if (b.t === 'ul' && cur) cur.lines = b.items.map((it) => it.text); } }
+  const lifted = [/^directory layout/, /^directory purpose/, /^where to add new code/];
+  const plain = d.sections.filter((s) => !lifted.some((re) => re.test(norm(s.h))));
+  return { layout: st().deep ? DEEP_TREE : layout, purposes, where, plain };
+}
+const LOOKUP_DIRS = (i) => {
+  const m = structModel();
+  const dirs = new Set();
+  m.where[i].lines.forEach((l) => filesOf(l).forEach((p) => { if (p.includes('/')) { const dir = p.replace(/[^/]*$/, '').replace(/<[^>]*>.*$/, ''); if (dir) dirs.add(dir); } }));
+  return [...dirs];
+};
+
+// ---------- the clean tree ----------
+function buildTree(text) {
+  const root = { name: '', children: [], folder: true, depth: -1 };
+  const stack = [root];
+  for (const line of text.split('\n')) {
+    if (!line.trim()) continue;
+    const m = line.match(/^((?:│   |    )*)(?:├── |└── )(.*)$/);
+    const depth = m ? m[1].length / 4 + 1 : 0;
+    const rest = m ? m[2] : line.trim();
+    const hash = rest.search(/\s+#\s/);
+    const name = (hash >= 0 ? rest.slice(0, hash) : rest).trim();
+    const note = hash >= 0 ? rest.slice(hash).replace(/^\s+#\s+/, '').trim() : '';
+    const node = { name, note, folder: name.endsWith('/'), children: [], depth };
+    while (stack[stack.length - 1].depth >= depth) stack.pop();
+    stack[stack.length - 1].children.push(node);
+    stack.push(node);
+  }
+  return root.children[0];
+}
+function collapseChains(n, top = true) {
+  if (!top) while (n.folder && n.children.length === 1 && n.children[0].folder) { const ch = n.children[0]; n.name += ch.name; n.note = ch.note || n.note; n.children = ch.children; }
+  n.children.forEach((c) => collapseChains(c, false));
+  return n;
+}
+function flatten(n, depth = 0, path = '', out = []) {
+  const p = n === ROOT_TREE ? '' : path + n.name;
+  out.push({ n, depth, path: p, i: out.length });
+  n.children.forEach((c) => flatten(c, depth + 1, p, out));
+  return out;
+}
+let ROOT_TREE = null;
+function treeRows() {
+  ROOT_TREE = collapseChains(buildTree(structModel().layout));
+  return flatten(ROOT_TREE);
+}
+function treeHtml(rows) {
+  const hidden = new Set();
+  const out = [];
+  const folded = [];
+  rows.forEach((r) => {
+    while (folded.length && folded[folded.length - 1] >= r.depth) folded.pop();
+    if (folded.length) return;
+    const n = r.n;
+    const hot = S.hl.includes(r.path), sel = S.dsel === r.path && n.folder;
+    const attrs = `style="--d:${r.depth}"${n.folder ? ' data-folder' : ''}${hot ? ' data-hot="true"' : ''}${sel ? ' data-sel="true"' : ''}`;
+    const isFolded = S.fold.has(r.i);
+    const icon = n.folder ? svg(isFolded ? 'folder' : 'folderOpen') : svg('file');
+    const name = n.folder && n.children.length ? `<button class="t-name" type="button" ${attrs} data-act="fold" data-i="${r.i}" data-path="${esc(r.path)}" aria-expanded="${!isFolded}">${icon}<span class="nm">${esc(n.name)}</span></button>` : `<span class="t-name" ${attrs}>${icon}<span class="nm">${esc(n.name)}</span></span>`;
+    out.push(`<li>${name}<span class="t-note">${n.note ? inline(n.note) : ''}</span></li>`);
+    if (n.folder && isFolded) folded.push(r.depth);
+  });
+  return `<ul class="tree">${out.join('')}</ul>`;
+}
+function treeFigure(rows) {
+  const folders = rows.filter((r) => r.n.folder).length, files = rows.length - folders;
+  return figure('Directory structure', treeHtml(rows), `<span class="counts-line">${folders} folders · ${files} files</span>`);
+}
+const lookupHtml = (m) => `<ul class="lookup">${m.where.map((w) => `<li><span class="when">${inline(w.when)}</span><ul class="where">${w.lines.map((l) => `<li>${inline(l)}</li>`).join('')}</ul></li>`).join('')}</ul>`;
+const purposeRows = (m) => `<div class="swaps purp">${m.purposes.map((p) => { const purpose = (p.f.find(([k]) => k === 'Purpose') || ['', ''])[1]; const rest = p.f.filter(([k]) => k !== 'Purpose'); return `<details class="swap"><summary><code class="nm">${esc(p.path)}</code><span class="arr"></span><span class="do" style="font-weight:var(--fw-medium)">${inline(purpose)}${p.count ? ` <span style="color:var(--muted-foreground)">(${esc(p.count)})</span>` : ''}</span></summary>${rest.length ? `<dl class="swap-more">${rest.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${inline(v)}</dd></div>`).join('')}</dl>` : ''}</details>`; }).join('')}</div>`;
+
+// ---------- the three variants ----------
+const art = (k, unit, inner) => `<article class="panel" aria-labelledby="panel-h">${panelHead(k, proj(), unit)}${inner}</article>`;
+
+// A: diagram first, one reading column
+function archA() {
+  const m = archModel();
+  return art('architecture', 'components', `<div class="lifted">
+    ${grp('System overview', diagramFigure(m))}
+    ${grp('Component responsibilities', componentRows(m, S.more) + (m.components.length > 6 ? moreNote(m, S.more) : ''), m.components.length)}
+    ${grp('Pattern overview', patternHtml(m))}
+    ${grp('Entry points', entryRows(m), m.entries.length)}
+    ${grp('Anti-patterns', swapsHtml(m.antis), m.antis.length)}
+  </div><div class="plain">${plainSections(m)}</div>`);
+}
+function structA() {
+  const m = structModel();
+  return art('structure', 'directories', `<div class="lifted">
+    ${grp('Directory structure', treeFigure(treeRows()))}
+    ${grp('Where to add new code', lookupHtml(m), m.where.length)}
+    ${grp('Directory purposes', purposeRows(m), m.purposes.length)}
+  </div><div class="plain">${m.plain.map((s) => plainSec(s.h, s.blocks)).join('')}</div>`);
+}
+
+// B: lens switch, one part of the panel at a time
+const lensBar = (items, cur) => `<div class="lens" role="tablist" aria-label="Parts of the panel">${items.map(([id, label, n]) => `<button type="button" role="tab" aria-selected="${id === cur}" data-act="lens" data-lens="${id}">${esc(label)}${n != null ? `<b>${n}</b>` : ''}</button>`).join('')}</div>`;
+function archB() {
+  const m = archModel();
+  const cur = S.lens.architecture;
+  const areas = [...new Set(m.components.map((c) => areaOf(c[2])))];
+  const items = [['overview', 'Overview'], ['components', 'Components', m.components.length], ['anti', 'Anti-patterns', m.antis.length], ['other', 'Other sections', m.plain.length]];
+  let body = '';
+  if (cur === 'overview') body = `<div class="lifted">${grp('System overview', diagramFigure(m))}${grp('Pattern overview', patternHtml(m))}${grp('Entry points', entryRows(m), m.entries.length)}</div>`;
+  if (cur === 'components') body = `<div class="lifted">${grp('Component responsibilities', `<div class="chips-row"><button class="btn-xs" type="button" aria-pressed="${S.area === 'all'}" data-act="area" data-area="all">All ${m.components.length}</button>${areas.map((a) => `<button class="btn-xs" type="button" aria-pressed="${S.area === a}" data-act="area" data-area="${esc(a)}">${esc(a)} ${m.components.filter((c) => areaOf(c[2]) === a).length}</button>`).join('')}</div>` + componentRows(m, true, S.area), m.components.length)}</div>`;
+  if (cur === 'anti') body = `<div class="lifted">${grp('Anti-patterns', swapsHtml(m.antis), m.antis.length)}</div>`;
+  if (cur === 'other') body = `<div class="plain">${plainSections(m)}</div>`;
+  return art('architecture', 'components', `${lensBar(items, cur)}<div role="tabpanel">${body}</div>`);
+}
+function structB() {
+  const m = structModel();
+  const cur = S.lens.structure;
+  const rows = treeRows();
+  const items = [['tree', 'Directory structure'], ['where', 'Where to add new code', m.where.length], ['purposes', 'Directory purposes', m.purposes.length], ['other', 'Other sections', m.plain.length]];
+  let body = '';
+  if (cur === 'tree') body = `<div class="lifted">${grp('Directory structure', treeFigure(rows))}</div>`;
+  if (cur === 'where') body = `<div class="lifted">${grp('Where to add new code', lookupHtml(m), m.where.length)}</div>`;
+  if (cur === 'purposes') body = `<div class="lifted">${grp('Directory purposes', purposeRows(m), m.purposes.length)}</div>`;
+  if (cur === 'other') body = `<div class="plain">${m.plain.map((s) => plainSec(s.h, s.blocks)).join('')}</div>`;
+  return art('structure', 'directories', `${lensBar(items, cur)}<div role="tabpanel">${body}</div>`);
+}
+
+// C: map and legend, the figure beside a list that lights it up
+function archC() {
+  const m = archModel();
+  const sel = S.sel;
+  const selKey = sel != null ? compKey(m.components[sel]) : null;
+  const leg = m.components.map((c, i) => {
+    const on = sel === i;
+    const related = on ? m.antis.filter((a) => filesOf(c[2]).some((f) => `${a.title} ${a.what} ${a.why} ${a.doit}`.includes(f))) : [];
+    return `<li><button class="leg" type="button" data-act="pick" data-i="${i}" aria-pressed="${on}"><span class="leg-no">${String(i + 1).padStart(2, '0')}</span><span class="leg-name">${inline(c[0])}</span><span class="leg-file">${inline(c[2])}</span>${on ? `<span class="leg-body">${inline(c[1])}</span>` : ''}</button>${related.length ? `<div class="leg-rel"><p class="micro-label">Anti-pattern on this file</p>${swapsHtml(related)}</div>` : ''}</li>`;
+  }).join('');
+  return art('architecture', 'components', `<div class="map"><div class="map-fig sticky">${diagramFigure(m, selKey)}</div><div class="map-leg"><h3 class="grp-h">Component responsibilities<span class="n">${m.components.length}</span></h3><ol class="legend">${leg}</ol></div></div>
+    <div class="lifted">${grp('Pattern overview', patternHtml(m))}${grp('Entry points', entryRows(m), m.entries.length)}${grp('Anti-patterns', swapsHtml(m.antis), m.antis.length)}</div>
+    <div class="plain">${plainSections(m)}</div>`);
+}
+function structC() {
+  const m = structModel();
+  const rows = treeRows();
+  const p = S.dsel ? m.purposes.find((x) => x.path === S.dsel) : null;
+  const card = S.dsel ? `<div class="pick"><p class="micro-label">Selected folder</p><p class="sub-h"><code>${esc(S.dsel)}</code></p>${p ? `<dl class="leads">${p.f.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${inline(v)}</dd></div>`).join('')}</dl>${p.count ? `<p class="source-note">${esc(p.count)}</p>` : ''}` : `<p class="source-note">No entry under Directory Purposes for this folder.</p>`}</div>` : '';
+  const lk = m.where.map((w, i) => `<li><button class="lookup-btn" type="button" data-act="hl" data-i="${i}" aria-pressed="${S.hlIdx === i}"><span class="when">${inline(w.when)}</span><span class="where-line">${inline(w.lines[0] || '')}</span></button></li>`).join('');
+  return art('structure', 'directories', `<div class="map"><div class="map-fig">${treeFigure(rows)}</div><div class="map-leg">${card}<h3 class="grp-h">Where to add new code<span class="n">${m.where.length}</span></h3><ul class="lookup-list">${lk}</ul></div></div>
+    <div class="lifted">${grp('Directory purposes', purposeRows(m), m.purposes.length)}</div>
+    <div class="plain">${m.plain.map((s) => plainSec(s.h, s.blocks)).join('')}</div>`);
+}
+
+const view = (a, b, c) => () => {
+  const isArch = st().panel === 'architecture';
+  const v = pickVariant();
+  const main = isArch ? { a: archA, b: archB, c: archC }[v]() : { a: structA, b: structB, c: structC }[v]();
+  return pageHtml(proj(), st().panel, main);
+};
+VIEWS.a = view(); VIEWS.b = view(); VIEWS.c = view();
+
+const DEEP_TREE = [
+  'labelore/',
+  '├── src/                          # All application source',
+  '│   ├── server/                   # Hono app, project registry/runtime, search, settings',
+  '│   └── web/                      # React SPA',
+  '│       ├── components/           # Shell, switcher, dialogs, shared widgets',
+  '│       └── views/                # Pure view composers and presenters',
+  '│           ├── review-ledger.ts              # Pure composer for the review ledger',
+  '│           └── review-ledger-components.tsx  # Presenter paired with it',
+  '├── test/                         # Vitest tests, goldens, e2e specs',
+  '│   ├── helpers/                  # Shared test setup and corpora builders',
+  '│   └── fixtures/                 # Fixture .planning trees used by tests',
+  '│       ├── lendshed/             # A fixture project with many shapes',
+  '│       └── dashboard/            # Dashboard scenarios',
+  '│           ├── synthetic/        # A generated dense project',
+  '│           │   └── .planning/    # Its planning state',
+  '│           │       └── ROADMAP.md  # Twelve phases across two milestones',
+  '│           └── ledger/           # A project with a windows ledger',
+  '│               └── .planning/    # The fixture project\'s planning state',
+  '│                   ├── WINDOWS.md                  # The cross-phase defect register',
+  '│                   └── phases/   # One folder per phase',
+  '│                       └── 09-windows-ledger-and-milestone-audit/   # Phase 9 plans and summaries',
+  '│                           ├── 09-12-PLAN.md       # Plan for the review ledger',
+  '│                           ├── 09-12-SUMMARY.md    # What shipped',
+  '│                           └── 09-12-REVIEW.md     # Review findings',
+  '└── docs/                         # design-language.md',
+].join('\n');
+
+render();
+
+</script>
+</body>
+</html>
