@@ -76,6 +76,20 @@ describe('StatusMeter', () => {
     ]);
   });
 
+  it('draws a missing item as the missing tone (a dimension the audit did not find covered)', () => {
+    const out = markup({
+      filled: 1,
+      total: 3,
+      items: ['complete', 'in-flight', 'missing'],
+      label: '1 of 3 dimensions covered',
+    });
+    expect(out.match(/data-tone="[a-z-]+"/g)).toEqual([
+      'data-tone="complete"',
+      'data-tone="in-flight"',
+      'data-tone="missing"',
+    ]);
+  });
+
   it('ignores an items list that does not match the total', () => {
     const out = markup({ filled: 1, total: 3, items: [false], label: '1 of 3 done' });
     expect(out.match(/data-tone="[a-z-]+"/g)).toEqual([
