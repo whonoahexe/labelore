@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 046 — Conventions and Testing panels</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 046: the Conventions and Testing panels inside the 042 A frame (Rail + column), identical in
+   every variant. Text comes from Labelore's own public map (.planning/codebase/) and from the made-up
+   Tidemark fixture (its older-form Conventions: no frontmatter, an Analysis Date line and a Last updated
+   footer). The eight-command state is Tidemark's TESTING with five more commands written in its own
+   comment-above form. A value written beside a variable name, even in a code sample, is withheld before
+   the text reaches this file. Tokens come from ../themes/default.css; every colour is a theme token, a
+   colour-mix of tokens, an opacity step or a hatch. Squared corners, --space-* spacing, four font sizes. */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+  --rail: calc(var(--space-8) * 9);
+  --fill-1: color-mix(in oklch, var(--foreground) 4%, transparent);
+  --fill-2: color-mix(in oklch, var(--foreground) 8%, transparent);
+  --fill-3: color-mix(in oklch, var(--foreground) 13%, transparent);
+  --fill-4: color-mix(in oklch, var(--foreground) 19%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px 6px);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+h3, h4 { font-size: inherit; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.app-brand span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.app-nav a[aria-current] { color: var(--foreground); box-shadow: inset 0 -2px 0 var(--primary); }
+@media (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- page atoms (four sizes: display h1, heading fs-7, body fs-4, label fs-2) ---------- */
+.page { display: grid; gap: var(--space-6); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.micro-label, .grp-h { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+.btn-xs.icon { padding-inline: 0; width: var(--space-7); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } .btn-xs.icon { width: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; }
+.status-chip.mono { text-transform: none; letter-spacing: var(--ls-wider); }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--muted); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); font-size: var(--fs-4); overflow-wrap: anywhere; }
+.facts { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); min-width: 0; }
+.facts-count { font-weight: var(--fw-semibold); }
+.facts-date { color: var(--muted-foreground); }
+/* the quiet "Value not shown" mark: a withheld value is never in the page */
+.vns { display: inline-flex; align-items: center; gap: var(--space-1); margin-left: var(--space-1); padding: 0 var(--space-1-5); border: 1px dashed var(--muted-foreground); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; vertical-align: baseline; line-height: var(--lh-snug); }
+
+/* ---------- the 042 A frame: rail + reading column ---------- */
+.a-grid { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); gap: var(--space-fluid-9); align-items: start; }
+.a-rail { position: sticky; top: calc(var(--space-10) + var(--space-4)); display: grid; gap: var(--space-4); min-width: 0; max-height: calc(100vh - var(--space-28)); overflow-y: auto; }
+.a-main { display: grid; gap: var(--space-8); min-width: 0; }
+.list ol { display: grid; }
+.entry { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); align-items: center; min-width: 0; padding: var(--space-2-5) var(--space-3); border: 1px solid var(--border); }
+a.entry:hover { background: var(--state-hover); }
+.entry-li + .entry-li .entry { border-top-color: var(--border-faint); }
+.entry-no { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); color: var(--muted-foreground); }
+.entry-name { min-width: 0; font-weight: var(--fw-semibold); }
+.entry-key { font-family: var(--font-mono); font-weight: var(--fw-semibold); }
+.entry[aria-current='page'] { border-color: var(--primary-border); background: var(--primary-tint); }
+.entry[aria-current='page'] .entry-no { color: var(--primary); }
+@media (max-width: 62rem) { .a-grid { grid-template-columns: minmax(0, 1fr); } .a-rail { position: static; max-height: none; overflow: visible; } }
+
+/* ---------- the panel ---------- */
+.panel { display: grid; gap: var(--space-6); min-width: 0; align-content: start; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+.panel-no { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); color: var(--primary); }
+.panel-head h2 { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.panel-key { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); color: var(--muted-foreground); text-transform: uppercase; }
+.panel-stamp { flex-basis: 100%; color: var(--muted-foreground); }
+.lifted { display: grid; gap: var(--space-6); min-width: 0; }
+
+/* plain form (the generic document rendering of a section) */
+.prose { max-width: 72ch; overflow-wrap: anywhere; }
+.prose code, .bul code, .ptable code, .dock code, .steps code { padding: 0 var(--space-0-5); background: var(--muted); }
+.bul { display: grid; gap: var(--space-1-5); max-width: 78ch; }
+.bul > li { display: grid; grid-template-columns: var(--space-2-5) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; overflow-wrap: anywhere; }
+.bul > li::before { content: ''; width: var(--space-1-5); height: var(--space-1-5); background: var(--muted-foreground); transform: translateY(-0.1em); justify-self: center; }
+.bul ul { grid-column: 2; margin-top: var(--space-1); color: var(--muted-foreground); display: grid; gap: var(--space-1); }
+.steps { display: grid; gap: var(--space-1-5); max-width: 78ch; padding-left: var(--space-5); list-style: decimal; }
+.g { display: grid; gap: var(--space-1-5); min-width: 0; }
+.g-label { font-weight: var(--fw-semibold); }
+.g-label .v { font-weight: var(--fw-medium); }
+.ptable { width: 100%; border-collapse: collapse; }
+.ptable th { text-align: left; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; padding: var(--space-1-5) var(--space-3) var(--space-1-5) 0; border-bottom: 1px solid var(--border); }
+.ptable td { vertical-align: top; padding: var(--space-2) var(--space-3) var(--space-2) 0; border-bottom: 1px solid var(--border-faint); overflow-wrap: anywhere; }
+.tbl-scroll { overflow-x: auto; }
+pre.plain-pre { margin: 0; padding: var(--space-3); border: 1px solid var(--border); background: var(--muted); font-family: var(--font-mono); font-size: var(--fs-2); line-height: var(--lh-snug); overflow-x: auto; max-width: 100%; }
+.foot-line { color: var(--muted-foreground); font-style: italic; }
+
+/* the picture frame, dock and the closed section bars */
+.pic { border: 1px solid var(--border); min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); }
+.pic-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); background: var(--veil); }
+.ff-title { margin-right: auto; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.counts-line { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); color: var(--muted-foreground); text-transform: uppercase; }
+.pic-body { overflow: auto; padding: var(--space-4); min-width: 0; max-width: 100%; }
+.pic-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--border); color: var(--muted-foreground); font-size: var(--fs-2); }
+.pic-foot .key { display: inline-flex; align-items: center; gap: var(--space-1-5); }
+.pan-note { display: none; }
+@media (max-width: 42rem) { .pan-note { display: inline; } }
+.dock { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--primary-border); background: var(--primary-tint); min-width: 0; }
+.dock-empty { padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); color: var(--muted-foreground); }
+.dock-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); }
+.dock-head h4 { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.dock .d-x { margin-left: auto; }
+.dock .xref { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; padding-top: var(--space-2); border-top: 1px solid var(--primary-border); }
+.acc-list { display: grid; }
+.acc { border-top: 1px solid var(--border); }
+.acc:last-child { border-bottom: 1px solid var(--border); }
+.acc > summary { display: flex; align-items: center; gap: var(--space-3); min-height: var(--space-10); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); }
+.acc > summary::-webkit-details-marker { display: none; }
+.acc > summary:hover { background: var(--state-hover); }
+.acc > summary .n { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); text-transform: uppercase; letter-spacing: var(--ls-wider); }
+.acc > summary svg { color: var(--muted-foreground); }
+.acc[open] > summary svg { transform: rotate(90deg); }
+.acc > .acc-body { display: grid; gap: var(--space-4); padding: 0 0 var(--space-5) var(--space-7); min-width: 0; }
+@media (max-width: 42rem) { .acc > .acc-body { padding-left: 0; } }
+.sec-legend { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.sec-chip { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--background); font-size: var(--fs-2); }
+.sec-chip b { font-family: var(--font-mono); font-weight: var(--fw-semibold); }
+.sec-chip:hover { background: var(--state-hover); }
+.sec-chip[aria-pressed='true'] { border-color: var(--primary-border); background: var(--primary-tint); }
+/* the shipped copy-command row (10-10): selectable mono command, then the button; Copied in the button */
+.copy-command { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); min-width: 0; }
+.copy-command-text { padding: var(--space-1-5) var(--space-2-5); background: var(--muted); font-family: var(--font-mono); font-size: var(--fs-4); font-weight: var(--fw-semibold); overflow-wrap: anywhere; user-select: all; min-width: 0; max-width: 100%; }
+.copy-command-button[data-copied='true'] { color: var(--primary); }
+.copy-command-button svg { width: var(--space-3-5); height: var(--space-3-5); }
+
+/* ---------- 046 shared marks ---------- */
+.spec { font-family: var(--font-mono); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.strike { font-family: var(--font-mono); color: var(--muted-foreground); text-decoration: line-through; text-decoration-thickness: 2px; overflow-wrap: anywhere; }
+.cap { font-size: var(--fs-2); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.rk { display: inline-block; flex: none; width: 11px; height: 11px; padding: 0; border: 1px solid var(--muted-foreground); background: var(--muted-foreground); opacity: 0.6; cursor: pointer; }
+.rk[data-st='hard'] { opacity: 1; } .rk[data-st='soft'] { opacity: 0.3; background: transparent; }
+.rk[data-enf='true'] { outline: 2px solid var(--primary); outline-offset: 1px; }
+.rk:hover { outline: 2px solid var(--primary-border); outline-offset: 1px; }
+.rk[data-on='true'] { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.rk[data-dim='true'] { opacity: 0.12; }
+.badge { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0 var(--space-1-5); border: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; line-height: var(--lh-snug); }
+.badge[data-k='runner'] { border-color: var(--muted-foreground); background: var(--fill-2); }
+.badge[data-k='test'] { border-style: dashed; }
+.tags { display: flex; flex-wrap: wrap; gap: var(--space-1); min-width: 0; align-items: center; }
+[aria-pressed='true'].srow, [aria-pressed='true'].tile2, [aria-pressed='true'].tr-row, [aria-pressed='true'].mm-item { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+/* ---------- A: the specimen sheet ---------- */
+.plates { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--space-3); }
+.plate { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3); border: 1px solid var(--border); background: var(--background); min-width: 0; }
+.plate[data-wide='true'] { grid-column: span 2; }
+.plate-h { display: flex; align-items: baseline; gap: var(--space-2); padding-bottom: var(--space-1-5); border-bottom: 1px solid var(--border-faint); }
+.plate-h .micro-label { margin-right: auto; color: var(--foreground); }
+.plate-h b { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); font-weight: var(--fw-semibold); }
+.plate .glab { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.case-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: var(--space-2); }
+.case { display: grid; gap: var(--space-0-5); align-content: start; padding: var(--space-2) var(--space-2-5); border: 1px solid var(--border); background: var(--fill-1); text-align: left; min-width: 0; }
+.case:hover { background: var(--state-hover); }
+.case .big { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); overflow-wrap: anywhere; }
+.srow { display: grid; gap: var(--space-0-5); padding: var(--space-1) var(--space-1-5); margin-inline: calc(var(--space-1-5) * -1); text-align: left; min-width: 0; }
+.srow:hover { background: var(--state-hover); }
+.srow .pair { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); align-items: baseline; }
+.srow .cap { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+.srow[data-prose='true'] .cap { color: var(--foreground); opacity: 0.7; }
+.more-btn { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); text-align: left; }
+.more-btn:hover { color: var(--foreground); text-decoration: underline; }
+@media (max-width: 42rem) { .plate[data-wide='true'] { grid-column: auto; } }
+
+/* ---------- A: the runner bench ---------- */
+.bench { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--space-3); align-items: start; }
+.rplate { display: grid; gap: var(--space-2-5); align-content: start; padding: var(--space-3); border: 1px solid var(--border); border-top: 3px solid var(--foreground); background: var(--background); min-width: 0; }
+.rplate[data-k='checks'] { border-top-style: dashed; border-top-color: var(--muted-foreground); }
+.rplate[data-k='coverage'] { border-style: dashed; background: var(--hatch); }
+.rplate .rname { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); }
+.rplate .rname b { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.rplate .rname code { color: var(--muted-foreground); }
+.cmds { display: grid; gap: var(--space-2-5); }
+.cmd { display: grid; gap: var(--space-1); min-width: 0; }
+.cmd .cap { padding-left: var(--space-0-5); }
+.forbid { display: grid; gap: var(--space-2); margin-top: var(--space-3); padding: var(--space-3); border: 1px dashed var(--border); }
+.forbid .tags { gap: var(--space-1-5) var(--space-3); }
+
+/* ---------- B: rule piles (the 044 E pile, reused) ---------- */
+.piles { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: var(--space-1-5); align-items: end; }
+.pile-col { display: grid; gap: var(--space-2); align-content: end; min-width: 0; }
+.pile-col[data-dim='true'] { opacity: 0.35; }
+.pile { display: flex; flex-direction: column-reverse; gap: 3px; }
+.pile .rk { width: 100%; height: 13px; }
+.pile-zero { height: 13px; border: 1px dashed var(--muted-foreground); display: grid; place-items: center; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); line-height: 1; }
+.pile-lab { display: grid; gap: var(--space-1); justify-items: start; text-align: left; padding-top: var(--space-1-5); border-top: 1px solid var(--border); min-width: 0; }
+.pile-lab b { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: 1.1; }
+.pile-lab .pl { max-width: 100%; font-size: var(--fs-2); color: var(--muted-foreground); overflow-wrap: anywhere; line-height: 1.25; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.pile-lab[aria-pressed='true'] b { color: var(--primary); }
+.runner-strip { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: stretch; }
+.rmini { display: grid; gap: var(--space-0-5); padding: var(--space-1-5) var(--space-2-5); border: 1px solid var(--border); border-top: 3px solid var(--foreground); min-width: 0; }
+.rmini[data-k='coverage'] { border-style: dashed; border-top-width: 1px; background: var(--hatch); }
+.rmini b { font-weight: var(--fw-semibold); }
+.rmini code { font-size: var(--fs-2); color: var(--muted-foreground); }
+@media (max-width: 42rem) { .pile-lab .pl { display: none; } }
+
+/* ---------- B: the shipped clean tree (009 B) with test-type badges ---------- */
+.tree { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center; width: 100%; }
+.tree > li { display: contents; }
+.tr-row { display: contents; }
+.t-name { position: relative; display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-7); padding-left: calc(var(--d) * var(--space-6)); padding-right: var(--space-4); font-family: var(--font-mono); white-space: nowrap; text-align: left; }
+.t-name::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--d) * var(--space-6)); background: repeating-linear-gradient(to right, var(--border-faint) 0 1px, transparent 1px var(--space-6)); pointer-events: none; }
+.t-name svg { color: var(--muted-foreground); }
+.t-name[data-folder] svg { color: var(--primary); }
+.t-name[data-folder] .nm { font-weight: var(--fw-semibold); }
+button.t-name:hover .nm { text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.t-name[aria-pressed='true'] .nm { background: var(--primary-tint); outline: 1px solid var(--primary-border); outline-offset: 2px; }
+.t-note { min-height: var(--space-7); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); font-size: var(--fs-2); color: var(--muted-foreground); border-bottom: 1px solid var(--border-faint); min-width: 0; }
+.tree > li:last-child .t-note { border-bottom: 0; }
+.tree-scroll { overflow-x: auto; }
+@media (max-width: 42rem) { .tree { grid-template-columns: max-content max-content; width: max-content; } }
+
+/* ---------- C: the territory map ---------- */
+.terr { display: flex; flex-wrap: wrap; border: 2px solid var(--foreground); }
+.tile2 { flex: var(--g) 1 9rem; display: grid; gap: var(--space-1-5); align-content: start; min-height: 6.5rem; padding: var(--space-2) var(--space-2-5); border: 1px solid var(--border); background: var(--fill-1); text-align: left; min-width: 0; }
+.tile2[data-step='2'] { background: var(--fill-2); } .tile2[data-step='3'] { background: var(--fill-3); }
+.tile2[data-every='true'] { flex-basis: 100%; background: var(--background); }
+.tile2:hover { box-shadow: inset 0 0 0 2px var(--primary-border); }
+.tile2 .tn { display: flex; align-items: baseline; gap: var(--space-2); min-width: 0; }
+.tile2 .tn code { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.tile2 .tn b { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: 1; }
+.tile2 .rks { display: flex; flex-wrap: wrap; gap: 3px; }
+
+/* ---------- C: the mirror map (tests wired to the code they mirror) ---------- */
+.mirror { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) var(--space-28) minmax(0, 1fr); gap: var(--space-2) 0; align-items: start; }
+.mm-wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.mm-wires path { fill: none; stroke: var(--muted-foreground); stroke-width: 1.5; }
+.mm-wires path[data-inferred='true'] { stroke-dasharray: 4 4; }
+.mm-wires path[data-hot='true'] { stroke: var(--primary); stroke-width: 2.5; }
+.mm-col { display: grid; gap: var(--space-2); align-content: start; min-width: 0; }
+.mm-col.left { grid-column: 1; } .mm-col.right { grid-column: 3; }
+.mm-col > .micro-label { padding-bottom: var(--space-1); border-bottom: 1px solid var(--border); }
+.mm-item { position: relative; z-index: 1; display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-2-5); border: 1px solid var(--border); background: var(--background); text-align: left; min-width: 0; }
+.mm-item:hover { background: var(--state-hover); }
+.mm-item code { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.mm-item[data-src='true'] { background: var(--fill-2); }
+.mm-item[data-lone='true'] { border-style: dashed; }
+.mm-item .cap { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.mm-mid { grid-column: 2; }
+@media (max-width: 42rem) { .mirror { grid-template-columns: minmax(0, 1fr) var(--space-8) minmax(0, 1fr); } .mm-item .cap { display: none; } }
+.cmd-list { display: grid; gap: var(--space-3); }
+.cmd-list .cmd { padding-bottom: var(--space-2-5); border-bottom: 1px solid var(--border-faint); }
+
+.mirror > .mm-item { z-index: 1; }
+.mm-h { padding-bottom: var(--space-1); border-bottom: 1px solid var(--border); }
+
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">046 conventions + testing</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Specimen sheet + runner bench</a>
+    <a data-tab="b" href="#b">B: Reuse — rule piles + test tree</a>
+    <a data-tab="c" href="#c">C: Territory map + mirror map</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="labelore">Labelore</button><button data-state="tidemark">Tidemark (older Conventions)</button><button data-state="commands8">Eight run commands</button>
+    <span class="name">Panel</span><button data-act="panel" data-panel="conventions">Conventions</button><button data-act="panel" data-panel="testing">Testing</button></span>
+</nav>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+<div id="toast" role="status"></div>
+<script>
+const DOCS = {"conventions":{"labelore":{"front":{"last_mapped_commit":"717c8d7db3d75717948b08690df3a087fc01684d","last_mapped_at":"2026-11-04"},"comment":null,"title":"Coding Conventions","date":"2026-11-04","intro":[],"sections":[{"h":"Naming Patterns","blocks":[{"t":"label","text":"Files","value":""},{"t":"ul","items":[{"text":"kebab-case for every source file: `src/server/project-registry.ts`, `src/planning-repo/handlers/roadmap.ts`, `src/web/components/app-shell.tsx`","sub":[]},{"text":"Source files carry an explicit extension in imports (`allowImportingTsExtensions` is on): `import type { ProjectSnapshot } from '../planning-repo/types.ts'`","sub":[]},{"text":"Web hooks use a `use-` prefix: `src/web/components/use-active-section.ts`","sub":[]},{"text":"Web page components live in `src/web/pages/*-page.tsx` and route-level views in `src/web/views/*.ts(x)`","sub":[]},{"text":"Planning-artifact handlers are named after the artifact type: `src/planning-repo/handlers/<type>.ts` (for example `state.ts`, `review-report.ts`, `ui-spec-contract.ts`); `handlers/index.ts` is the registry","sub":[]},{"text":"Test files mirror the source area and end in `.test.ts` (never `.test.tsx`): `test/server/refresh.test.ts`, `test/rendering/markdown.test.ts`, `test/web/class-vocabulary.test.ts`","sub":[]},{"text":"Playwright specs end in `.spec.ts` and live in `test/e2e/`","sub":[]}]},{"t":"label","text":"Functions","value":""},{"t":"ul","items":[{"text":"camelCase for all functions: `defaultSettingsDir`, `tryParseFrontmatter`, `buildSearchDocuments`, `createApp`","sub":[]},{"text":"Top-level helpers are `function` declarations, not `const` arrow functions: `function cn(...)` in `src/web/components/ui/button.tsx`, `function findSection(...)` in `src/planning-repo/handlers/state.ts`","sub":[]},{"text":"Factory functions are named `create*`: `createApp` (`src/server/index.ts`), `createSearchIndexState` (`src/server/search-index.ts`), `createRegistryApp` (`src/server/registry-api.ts`), `createProjectApi` (`src/server/project-api.ts`)","sub":[]},{"text":"Test fixture builders are named `make*`: `makeArtifact`, `makePhase`, `makeProject`, `makeSnapshot` (repeated per test file, see `test/server/search-index.test.ts`)","sub":[]},{"text":"Predicate helpers are named `is*` / `has*`: `isBlockersHeading`, `isDecisionsHeading`, `isReady`","sub":[]},{"text":"Parsing helpers that return null on failure start with `try`: `tryParseFrontmatter` (`src/planning-repo/frontmatter.ts`)","sub":[]}]},{"t":"label","text":"Variables","value":""},{"t":"ul","items":[{"text":"camelCase locals; `const` by default","sub":[]},{"text":"Module-level constants are SCREAMING_SNAKE_CASE: `DEFAULT_PORT`, `PORT_ATTEMPTS`, `HOSTNAME` (`src/server/index.ts`), `MAX_QUERY_LENGTH`, `SCAN_RESULT_CAP`, `DEFAULT_MAX_LOADED` (`src/server/project-registry.ts`)","sub":[]},{"text":"Message tables are SCREAMING_SNAKE too: `LOAD_STATUS_MESSAGES` (`src/cli/target-path.ts`), `NOTICE_UNREADABLE` (`src/server/settings-model.ts`)","sub":[]},{"text":"Private class fields are plain `private readonly` (no `#` fields): `src/planning-repo/warnings.ts`","sub":[]}]},{"t":"label","text":"Types","value":""},{"t":"ul","items":[{"text":"PascalCase for types, interfaces and classes; no `I` prefix on interfaces (`SettingsStore`, `ParseWarning`, `FailedLoadStatus`)","sub":[]},{"text":"Use `type` aliases for unions and discriminated results: `export type LoadStatus = ...`, `export type MutateResult = { ok: true; ... } | { ok: false; ... }` (`src/server/settings-store.ts`)","sub":[]},{"text":"Use `interface` for object shapes and extension points: `export interface SettingsStore` (`src/server/settings-store.ts`), and option bags such as `ServerOptions` in `src/server/index.ts`","sub":[]},{"text":"Discriminate results on a `status` or `ok` literal field; never throw for expected load failures (see Error Handling)","sub":[]},{"text":"Domain types live in `src/domain/model.ts`; planning-repo contract types in `src/planning-repo/types.ts`","sub":[]}]}]},{"h":"Code Style","blocks":[{"t":"label","text":"Formatting","value":""},{"t":"ul","items":[{"text":"Prettier 3.9.6 with `.prettierrc`: single quotes, semicolons, `printWidth: 100`, `trailingComma: \"all\"`","sub":[]},{"text":"Run with `npm run format` (`prettier --write .`). Formatting is not enforced by a hook or pre-commit step","sub":[]},{"text":"Keep lines at or under 100 columns in new code; some existing files (notably `src/web/**` and tests) exceed this in long string literals and JSX attribute lists","sub":[]}]},{"t":"label","text":"TypeScript settings","value":""},{"t":"ul","items":[{"text":"`strict: true`, `verbatimModuleSyntax: true`, `module`/`moduleResolution: nodenext` (`tsconfig.json`)","sub":[]},{"text":"Use `import type { ... }` for type-only imports; the compiler rejects value imports of types under `verbatimModuleSyntax`","sub":[]},{"text":"Web code is type-checked with `tsconfig.web.json` (`jsx: react-jsx`, DOM lib); server code with `tsconfig.server.json`","sub":[]},{"text":"`npm run typecheck` runs both configs","sub":[]}]},{"t":"label","text":"Linting","value":""},{"t":"ul","items":[{"text":"ESLint 10 flat config at `eslint.config.js`","sub":[]},{"text":"Base: `@eslint/js` recommended + `typescript-eslint` recommended","sub":[]},{"text":"`@typescript-eslint/no-unused-vars` is an error with `argsIgnorePattern: '^_'`: prefix intentionally unused parameters with `_`","sub":[]},{"text":"`src/web/**` adds `eslint-plugin-react-hooks` recommended rules and browser globals; `src/server/**`, `src/cli/**`, `src/planning-repo/**`, `src/planning-fs/**` and `test/**` use Node globals","sub":[]},{"text":"Restricted import rule (NAV-09): in `src/web/**`, `Link`, `NavLink`, `useNavigate` and `useLocation` must not be imported from `react-router`. Use the wrappers in `src/web/nav.tsx`. Only `nav.tsx` and `src/web/app-router.tsx` are exempt","sub":[]},{"text":"Ignored: `dist/**`, `fixtures/**`, `test/__golden__/**`, `.planning/**`","sub":[]},{"text":"Run with `npm run lint`","sub":[]},{"text":"Suppressions are rare and narrow: the one `eslint-disable-next-line react-hooks/exhaustive-deps` is in `src/web/components/use-active-section.ts`. No `@ts-ignore` or `@ts-expect-error` appears in `src/` or `test/`","sub":[]},{"text":"`any` does not appear as a type annotation in source; use `unknown` and narrow","sub":[]}]},{"t":"label","text":"Exports","value":""},{"t":"ul","items":[{"text":"Named exports only. No `export default` appears anywhere in `src/` or `test/`. Keep it that way: `src/server/index.ts` exports `createApp`, `routesToApp`, `startServer` by name","sub":[]},{"text":"Re-exports are used to keep old import paths alive, for example `test/helpers/fixture-project.ts` re-exports loaders from `todo-corpus.ts`","sub":[]}]}]},{"h":"Import Organization","blocks":[{"t":"label","text":"Order (observed, not lint-enforced)","value":""},{"t":"ol","items":[{"text":"Node built-ins with `node:` prefix: `import { mkdtempSync } from 'node:fs'`","sub":[]},{"text":"Third-party packages: `hono`, `react`, `@base-ui/react/dialog`, `class-variance-authority`","sub":[]},{"text":"Project modules via relative paths with extensions, parents first then siblings: `../planning-repo/types.ts`, then `./settings-model.ts`","sub":[]},{"text":"`import type` lines are commonly grouped with the module they describe, not separated","sub":[]}]},{"t":"label","text":"Path Aliases","value":""},{"t":"ul","items":[{"text":"None. The project has no `@/` alias. Use relative paths with `.ts` / `.tsx` extensions","sub":[]},{"text":"`src/web/components/ui/dialog.tsx` imports `./button.tsx` for the same reason","sub":[]}]},{"t":"label","text":"Restricted imports","value":""},{"t":"ul","items":[{"text":"Router primitives come from `src/web/nav.tsx`, not `react-router`, inside `src/web/**` (see Linting)","sub":[]}]}]},{"h":"Error Handling","blocks":[{"t":"label","text":"Load and read paths never throw (D-12)","value":""},{"t":"ul","items":[{"text":"`PlanningRepository.load()` / `refresh()` return a `LoadStatus` value: `{ status: 'ok' }` or one of `not-a-gsd-project`, `path-not-found`, `permission-denied`, each with `pathChecked` and `message` (`src/planning-repo/types.ts`)","sub":[]},{"text":"Consumers switch on `status`; they do not wrap calls in `try`","sub":[]},{"text":"The `LOAD_STATUS_MESSAGES` table in `src/cli/target-path.ts` maps statuses to user-facing text","sub":[]}]},{"t":"label","text":"Per-artifact degradation (D-11)","value":""},{"t":"ul","items":[{"text":"A parse failure does not drop the artifact. It attaches a `ParseWarning` (`path`, `stage`, `message`, `salvage`) produced by `WarningCollector` in `src/planning-repo/warnings.ts`","sub":[]},{"text":"`stage` is one of `read`, `frontmatter`, `structured-extraction`, `assembly`","sub":[]},{"text":"`salvage` describes what survived, for example \"body intact, frontmatter unavailable\"","sub":[]},{"text":"Never store the caught error object or its stack in a warning. Store the message string","sub":[]}]},{"t":"label","text":"Frontmatter","value":""},{"t":"ul","items":[{"text":"Wrap `gray-matter` (via `src/planning-repo/frontmatter.ts`) in try/catch; on failure keep the whole file as body with empty frontmatter. Do not call `matter()` unguarded","sub":[]}]},{"t":"label","text":"Settings store","value":""},{"t":"ul","items":[{"text":"`src/server/settings-store.ts` returns `MutateResult` (`{ ok: true, state } | { ok: false, state, reason }`) from `mutate()` and never throws for I/O problems it can describe. `read()` \"never throws\"","sub":[]},{"text":"Errors caught as `catch (err)` and reduced to a reason string","sub":[]}]},{"t":"label","text":"Throwing","value":""},{"t":"ul","items":[{"text":"Throw `Error` only for programmer or configuration faults that must stop startup or a test run:","sub":["`src/server/settings-store.ts`: `LABELORE_CONFIG_DIR must be set when Labelore runs under vitest`","`src/server/index.ts`: `--port requires a numeric value`, `Unknown option: ...`, `Invalid port: ...`","`test/helpers/fixture-project.ts`: a missing fixture throws instead of skipping"]},{"text":"The CLI entry (`src/server/index.ts`) catches the top-level error, prints `error.message`, and exits non-zero","sub":[]}]},{"t":"label","text":"HTTP responses","value":""},{"t":"ul","items":[{"text":"JSON errors use `c.json({ error: '...' }, status)` from Hono, e.g. `c.json({ error: 'API route not found' }, 404)` in `src/server/index.ts`","sub":[]}]}]},{"h":"Logging","blocks":[{"t":"label","text":"Framework","value":"`console` only. No logging library is present."},{"t":"label","text":"Where logging is allowed","value":""},{"t":"ul","items":[{"text":"Startup and CLI output: `src/server/index.ts` (`Labelore is reading ...`, `Open ${baseUrl}`), `src/cli/snapshot.ts` (`console.error` for usage, `console.log` for JSON)","sub":[]},{"text":"Non-fatal remote warnings: `console.warn` in `src/server/remote-source.ts`","sub":[]},{"text":"Do not add logging inside `src/planning-repo/**` or `src/planning-fs/**`; report through `ParseWarning` or `LoadStatus` so the data path stays pure","sub":[]}]}]},{"h":"Comments","blocks":[{"t":"label","text":"File headers","value":""},{"t":"ul","items":[{"text":"Almost every source file opens with a multi-line `//` header that states the file's role, the decisions it implements, and the constraints it keeps. Example: `src/server/settings-store.ts` names the one permitted `node:fs` writer and the test that enforces it","sub":[]},{"text":"Decision and requirement IDs are cited inline: `D-09`, `D-12`, `PLAT-02`, `NAV-09`, `SEC-05`, `TEST-01`, and quick-task IDs such as `quick-260923-jxp`. Keep citing them when you extend a file","sub":[]}]},{"t":"label","text":"When to Comment","value":""},{"t":"ul","items":[{"text":"Explain why a rule exists, especially invariants that a test enforces. `src/web/nav.tsx` explains why links go through the wrappers","sub":[]},{"text":"Put a comment at the top of an exported function when the behavior is subtle, using `/** ... */` (see `src/planning-repo/warnings.ts`, `src/server/index.ts` `createApp`)","sub":[]},{"text":"Section dividers use `// ---- name ----` or long `// -----` rules in long files (`test/web/class-vocabulary.test.ts`, `src/planning-repo/handlers/verification-report.ts`)","sub":[]},{"text":"Do not restate what the code does","sub":[]}]},{"t":"label","text":"JSDoc/TSDoc","value":""},{"t":"ul","items":[{"text":"`/** */` on exported functions, interface members and type aliases where a contract matters (`SettingsStore.read`, `ServerOptions.autoPort`)","sub":[]},{"text":"No `@param` / `@returns` tags are used. Prose only","sub":[]}]}]},{"h":"Function Design","blocks":[{"t":"label","text":"Size","value":"Parsers in `src/planning-repo/handlers/*.ts` are long and split into many small helpers in the same file. Prefer adding a helper to the file over growing a handler's main function."},{"t":"label","text":"Parameters","value":""},{"t":"ul","items":[{"text":"Positional for one to three arguments","sub":[]},{"text":"Options bags for many optional values: `ServerOptions` in `src/server/index.ts`, `createApp(source, production, staticRoot, commitLog)` with defaults","sub":[]},{"text":"Dependency injection through parameters with defaults: `defaultSettingsDir(env = process.env, home = homedir())` in `src/server/settings-store.ts`. Tests pass `MemorySettingsStore` or `InMemoryPlanningFilesystem`","sub":[]}]},{"t":"label","text":"Return Values","value":""},{"t":"ul","items":[{"text":"Pure functions return data; repository and store methods return discriminated results (see Error Handling)","sub":[]},{"text":"Nullable lookups return `null`, not `undefined`: `findSection(...)` in `src/planning-repo/handlers/state.ts` returns `{...} | null`, and `tryParseFrontmatter` in `src/planning-repo/frontmatter.ts` follows the same rule","sub":[]},{"text":"`undefined` is reserved for absent optional fields in options bags","sub":[]}]},{"t":"label","text":"Classes","value":""},{"t":"ul","items":[{"text":"Use a class when state is held across calls: `WarningCollector`, `ProjectRegistry`, `ProjectRuntime`, `FileSettingsStore`, `RemoteSnapshotSource`, `InMemoryPlanningFilesystem`, `LocalFsPlanningFilesystem`","sub":[]},{"text":"Use plain functions for everything else","sub":[]}]}]},{"h":"Module Design","blocks":[{"t":"label","text":"Exports","value":"Named exports; one primary concept per file. Types that belong to a module are exported from that module (`src/server/settings-model.ts` exports `ParsedSettings`, `SettingsState`)."},{"t":"label","text":"Barrel Files","value":""},{"t":"ul","items":[{"text":"Used in one place: `src/planning-repo/handlers/index.ts` (the handler registry)","sub":[]},{"text":"Otherwise import from the concrete file. Do not add new barrels","sub":[]}]},{"t":"label","text":"Boundaries that are enforced by tests","value":""},{"t":"ul","items":[{"text":"Only two modules may import `node:fs` under `src/` (`src/planning-fs/local-fs.ts` and `src/server/settings-store.ts`); `test/portability.test.ts` checks this","sub":[]},{"text":"The planning reader (`src/planning-repo/**`, `src/planning-fs/**`) is read-only and does not import the settings store","sub":[]},{"text":"Web code fetches the server through `src/web/api.ts` (the fetch layer referenced by the React Query hooks)","sub":[]}]}]},{"h":"Web (React) Conventions","blocks":[{"t":"label","text":"Components","value":""},{"t":"ul","items":[{"text":"Function components with named exports, `.tsx` extension, JSX runtime `react-jsx` (no `import React` needed)","sub":[]},{"text":"`forwardRef` is used for wrapper components that forward refs to DOM elements (`src/web/nav.tsx` `Link`, `NavLink`)","sub":[]},{"text":"Props types are declared inline or as a local `interface`, not exported unless a test uses them","sub":[]}]},{"t":"label","text":"UI primitives (shadcn base-sera)","value":""},{"t":"ul","items":[{"text":"Live in `src/web/components/ui/` (`button.tsx`, `dialog.tsx`, `toast.tsx`), built on `@base-ui/react` primitives","sub":[]},{"text":"Each primitive sets `data-slot`\u0001 on its root element","sub":[]},{"text":"Variants use `class-variance-authority` `cva(...)` with `variant` and `size` keys and `defaultVariants`","sub":[]},{"text":"Class merging uses `twMerge(clsx(...))`. Each ui file defines its own local `cn` helper (`src/web/components/ui/button.tsx`, `dialog.tsx`); do not import a shared `cn`","sub":[]},{"text":"Corners are squared: `rounded-none` is the base for buttons. Keep this when adding primitives","sub":[]}]},{"t":"label","text":"Styling vocabulary","value":""},{"t":"ul","items":[{"text":"Page and component classes are plain CSS class names defined in `src/web/styles/globals.css`, not CSS modules","sub":[]},{"text":"Every class used in `src/web/views`, `src/web/pages` and `src/web/components` must appear in the table of `docs/design-language.md`, or in the reserved `view-<kind>-<suffix>` namespace. `test/web/class-vocabulary.test.ts` enforces this. To add a class, add a row to `docs/design-language.md` first","sub":[]},{"text":"Tokens are oklch CSS custom properties (`--primary`, `--muted-foreground`, `--card-veil`, `--status-square-size`). Do not hard-code hex or hue values in components; use a token. Derive tints from existing tokens with `color-mix`","sub":[]},{"text":"Tone is expressed with a `data-tone`\u0001 attribute on `.status-chip` / `.status-square`, not extra class names","sub":[]}]},{"t":"label","text":"State and data","value":""},{"t":"ul","items":[{"text":"Server state flows through `@tanstack/react-query` (`src/web/api.ts` is the single fetch layer)","sub":[]},{"text":"Local UI state uses `useState` and hooks; no global state library","sub":[]}]}]},{"h":"Server (Hono) Conventions","blocks":[{"t":"ul","items":[{"text":"One Hono app per concern: `createProjectApi` (`src/server/project-api.ts`), `createRegistryApp` (`src/server/registry-api.ts`), composed with `app.route('/api', ...)`","sub":[]},{"text":"Routes are thin; logic lives in `src/presentation/**` (pure view models) and `src/server/**` (I/O-adjacent)","sub":[]},{"text":"Every mutating or request-facing route passes through the request guard in `src/server/request-guard.ts` (Host and same-origin checks)","sub":[]},{"text":"Read-only is the rule: nothing writes inside a target project. The only write is Labelore's own `settings.json`, via `SettingsStore`","sub":[]}]}]},{"h":"Naming of Presentation Concepts","blocks":[{"t":"ul","items":[{"text":"Route and URL helpers are in `src/presentation/routes.ts` and `src/presentation/route-table.ts`; add new URL grammar there, not inline in components","sub":[]},{"text":"Slugs come from `src/presentation/project-slug.ts` (`slugOf`, `allocateSlug`)","sub":[]},{"text":"Presentation modules are pure TypeScript with no React and no `node:` imports (`src/presentation/*.ts`)","sub":[]}]}]},{"h":"Where to Follow These Rules","blocks":[{"t":"ul","items":[{"text":"New planning artifact type: add `src/planning-repo/handlers/<type>.ts`, register it in `handlers/index.ts`, and return `ParseWarning`s instead of throwing","sub":[]},{"text":"New server route: add it to the Hono app that owns the area; keep the `.ts` extension in imports","sub":[]},{"text":"New UI class: add the row to `docs/design-language.md` first, then use it","sub":[]},{"text":"New React link or navigation: use `src/web/nav.tsx`","sub":[]}]}]}],"footer":"Convention analysis: 2026-11-04"},"tidemark":{"front":{},"comment":"<!-- made-up example · derived from agents/gsd-codebase-mapper.md · gsd-core 1.19.0 -->","title":"Coding Conventions","date":"2026-10-27","intro":[],"sections":[{"h":"Naming Patterns","blocks":[{"t":"label","text":"Files","value":""},{"t":"ul","items":[{"text":"Server modules are lower-case, one noun per file (`clash.ts`, `window.ts`)","sub":[]},{"text":"Board components live in a PascalCase folder with an `index.tsx`","sub":[]}]},{"t":"label","text":"Functions","value":""},{"t":"ul","items":[{"text":"camelCase, verb first (`buildWindow`, `findClash`)","sub":[]}]},{"t":"label","text":"Variables","value":""},{"t":"ul","items":[{"text":"camelCase; constants in SCREAMING_SNAKE_CASE only at module top level","sub":[]}]},{"t":"label","text":"Types","value":""},{"t":"ul","items":[{"text":"PascalCase, no `I` prefix","sub":[]}]}]},{"h":"Code Style","blocks":[{"t":"label","text":"Formatting","value":""},{"t":"ul","items":[{"text":"Prettier 3, default settings plus single quotes","sub":[]},{"text":"Two-space indent","sub":[]}]},{"t":"label","text":"Linting","value":""},{"t":"ul","items":[{"text":"ESLint 9 with the recommended TypeScript rules","sub":[]},{"text":"No unused exports outside `index.ts` files","sub":[]}]}]},{"h":"Import Organization","blocks":[{"t":"label","text":"Order","value":""},{"t":"ol","items":[{"text":"Node built-ins","sub":[]},{"text":"Packages","sub":[]},{"text":"Project modules by relative path","sub":[]}]},{"t":"label","text":"Path Aliases","value":""},{"t":"ul","items":[{"text":"None","sub":[]}]}]},{"h":"Error Handling","blocks":[{"t":"label","text":"Patterns","value":""},{"t":"ul","items":[{"text":"Routes throw a `HarbourError` with a status code","sub":[]},{"text":"Never swallow an error in the store; let it reach the route handler","sub":[]}]}]},{"h":"Logging","blocks":[{"t":"label","text":"Framework","value":"pino"},{"t":"label","text":"Patterns","value":""},{"t":"ul","items":[{"text":"One info line per request, one warn line per refused request","sub":[]},{"text":"Never log an owner's email address","sub":[]}]}]},{"h":"Comments","blocks":[{"t":"label","text":"When to Comment","value":""},{"t":"ul","items":[{"text":"Say why a tide rule exists, not what the line does","sub":[]}]},{"t":"label","text":"JSDoc/TSDoc","value":""},{"t":"ul","items":[{"text":"Only on exports used across route groups","sub":[]}]}]},{"h":"Function Design","blocks":[{"t":"label","text":"Size","value":"Short enough to read without scrolling"},{"t":"label","text":"Parameters","value":"One options object after the second positional argument"},{"t":"label","text":"Return Values","value":"Plain values; failures are thrown, not returned"}]},{"h":"Module Design","blocks":[{"t":"label","text":"Exports","value":"Named exports only"},{"t":"label","text":"Barrel Files","value":"One `index.ts` per route group, nowhere else"}]}],"footer":"Last updated: 2026-10-27"}},"testing":{"labelore":{"front":{"last_mapped_commit":"717c8d7db3d75717948b08690df3a087fc01684d","last_mapped_at":"2026-11-04"},"comment":null,"title":"Testing Patterns","date":"2026-11-04","intro":[],"sections":[{"h":"Test Framework","blocks":[{"t":"label","text":"Runner","value":""},{"t":"ul","items":[{"text":"Vitest 4.1.11 (`package.json` devDependencies)","sub":[]},{"text":"Config: `vitest.config.ts`","sub":["`include: ['test/**/*.test.ts']`","`setupFiles: ['test/helpers/config-dir-setup.ts']`, which gives every worker its own throwaway `LABELORE_CONFIG_DIR` (decision D-09) so no run touches the real settings file"]},{"text":"No `environment: 'jsdom'`. Web code is tested as text and contract scans, not rendered in a DOM (no `.test.tsx` files exist)","sub":[]}]},{"t":"label","text":"E2E runner","value":""},{"t":"ul","items":[{"text":"Playwright Test 1.63.0 (`@playwright/test`)","sub":[]},{"text":"Config: `playwright.config.ts`","sub":[]},{"text":"Specs: `test/e2e/*.spec.ts`","sub":[]}]},{"t":"label","text":"Assertion Library","value":""},{"t":"ul","items":[{"text":"Vitest's built-in `expect` (Chai-style matchers: `toEqual`, `toBe`, `toMatch`, `toThrow`, `toBeLessThan`)","sub":[]},{"text":"Playwright's `expect` for browser specs","sub":[]}]},{"t":"label","text":"Run Commands","value":""},{"t":"fence","lang":"bash","text":"npm test                      # vitest run (all unit/contract tests)\nnpm run test:watch            # vitest (watch mode)\nnpm run test:gate             # node test/helpers/vitest-gate.mjs: fails on any skip, todo, failure, or zero tests\nnpm run test:gate -- test/server/refresh.test.ts   # gate a single file\nnpm run test:e2e              # playwright test (starts four servers, see E2E below)\nnpx playwright test -g \"copy-path\"                 # one e2e spec or title, the narrowest run\nnpm run typecheck             # tsc --noEmit on tsconfig.server.json and tsconfig.web.json\nnpm run lint                  # eslint .\nnpx vitest run test/web/class-vocabulary.test.ts   # one file"},{"t":"label","text":"Coverage","value":""},{"t":"ul","items":[{"text":"No coverage tool or script is configured. There is no `@vitest/coverage-*` dependency and no `coverage` key in `vitest.config.ts`","sub":[]},{"text":"Coverage requirement: none enforced","sub":[]}]}]},{"h":"Test File Organization","blocks":[{"t":"label","text":"Location","value":""},{"t":"ul","items":[{"text":"All unit and contract tests live in a top-level `test/` directory, separate from `src/`. Tests are never co-located with source","sub":[]},{"text":"Folders mirror the source layers:","sub":["`test/server/` for `src/server/**` (for example `test/server/refresh.test.ts`, `test/server/search-index.test.ts`, `test/server/settings-store.test.ts`)","`test/rendering/` for `src/rendering/**` (for example `test/rendering/ascii-tree.test.ts`, `test/rendering/markdown.test.ts`)","`test/presentation/` for `src/presentation/**` (for example `test/presentation/roadmap.test.ts`, `test/presentation/url-grammar.test.ts`)","`test/web/` for `src/web/**` (static contract checks, see Test Types)","`test/e2e/` for Playwright browser specs","Planning-repo handler tests sit at the root of `test/`, one per artifact type: `test/uat-session.test.ts`, `test/verification-report.test.ts`, `test/review-report.test.ts`, `test/todo-file.test.ts`","Root-level guards cover whole-repo rules: `test/no-skips.test.ts`, `test/portability.test.ts`, `test/token-guard.test.ts`, `test/made-up-examples.test.ts`, `test/fixture-leak.test.ts`"]},{"text":"Shared helpers: `test/helpers/` (see Fixtures and Factories)","sub":[]},{"text":"Golden outputs: `test/__golden__/` (`dense.json`), consumed by `test/snapshot.golden.test.ts`","sub":[]}]},{"t":"label","text":"Naming","value":""},{"t":"ul","items":[{"text":"`<subject>.test.ts`, kebab-case, matching the source module name where one exists: `test/rendering/lane-layout.test.ts` tests `src/rendering/lane-layout.ts`","sub":[]},{"text":"Handler guards use `<type>-handler-guard.test.ts` (for example `test/review-handler-guard.test.ts`, `test/uat-handler-guard.test.ts`)","sub":[]},{"text":"Playwright specs: `<feature>.spec.ts` in `test/e2e/`","sub":[]}]},{"t":"label","text":"Structure","value":""},{"t":"fence","lang":"","text":"test/\n├── helpers/            # shared builders, loaders, request helpers, source scanners\n├── fixtures/           # made-up planning projects: lendshed/, shapes/, dashboard/, debug/, ...\n├── __golden__/         # frozen snapshot JSON\n├── rendering/fixtures/ # ASCII diagram fixtures (*.txt)\n├── server/             # server unit tests\n├── presentation/       # view-model tests\n├── web/                # web contract tests (source-text scans)\n├── e2e/                # Playwright specs and app-url / fixture-server helpers\n└── *.test.ts           # planning-repo handler tests and root guards"}]},{"h":"Test Structure","blocks":[{"t":"label","text":"Suite Organization","value":""},{"t":"ul","items":[{"text":"`describe` groups one module or one behavior; nested `describe` for sub-behaviors. About 980 `describe(` blocks across 244 test files","sub":[]},{"text":"`it(` is the only test form in use. The codebase has about 4,000 `it(` blocks and no `test(` calls. Keep `it`","sub":[]},{"text":"`it` titles are full sentences in the past or present tense that state the observable outcome, often citing the decision or requirement they pin. Examples from the tree:","sub":["`it('yields three Milestone entries for a live milestone and two archived ones, each carrying its own phases', ...)`","`it('carries both fields separately and lets them disagree', ...)`","`it('falls back to the root <details> block per field when the per-milestone block leaves it empty', ...)`"]},{"text":"Header comment at the top of the file explains what the file pins and which IDs it covers (`test/server/refresh.test.ts`: \"Pins the POST /api/refresh contract ...\")","sub":[]}]},{"t":"label","text":"Standard shape","value":""},{"t":"fence","lang":"typescript","text":"import { describe, expect, it } from 'vitest';\nimport { createApp } from '../../src/server/index.ts';\nimport { buildSearchDocuments, tokenizeSearchText } from '../../src/server/search-index.ts';\n\nfunction waitForBuild(): Promise<void> {\n  return new Promise((resolve) => setImmediate(resolve));\n}\n\ndescribe('search index', () => {\n  it('returns no documents for a project with no artifacts', async () => {\n    // arrange with a make* builder, act, assert\n    expect(buildSearchDocuments(makeProject([], [])).length).toBe(0);\n  });\n});"},{"t":"label","text":"Patterns","value":""},{"t":"ul","items":[{"text":"Setup: builders named `make*` at the top of the file (`makeArtifact`, `makePhase`, `makeProject`, `makeSnapshot`). Each file re-declares its own builders with `Partial<T> & { path }` overrides rather than importing one shared factory. Keep that convention and spread `...overrides` last","sub":[]},{"text":"Teardown: `afterAll` / `afterEach` for temp directories, as in `test/web/class-vocabulary.test.ts` (`rm(tmpDir, { recursive: true, force: true })`)","sub":[]},{"text":"Shared `beforeEach` / `afterEach` / `beforeAll` calls: about 115 across the test tree","sub":[]},{"text":"Async ordering: wait for pending async index builds with `setImmediate` (`waitForBuild` in `test/server/search-index.test.ts`), not with fixed sleeps","sub":[]},{"text":"Assertions: prefer `toEqual` on whole structures and `toMatch` on text; use `toThrow` for the programmer-error throws listed in CONVENTIONS.md","sub":[]}]}]},{"h":"Test Types","blocks":[{"t":"label","text":"Unit tests (`test/rendering/`, `test/presentation/`, `test/*.test.ts`)","value":""},{"t":"ul","items":[{"text":"Pure function in, value out. Use the made-up Lendshed fixture or inline builders","sub":[]},{"text":"Parse behavior is tested against both realistic documents and malformed ones. Degradation tests assert the `ParseWarning` stage and salvage text, not thrown errors (see `test/degradation.test.ts`)","sub":[]}]},{"t":"label","text":"HTTP / server tests (`test/server/`)","value":""},{"t":"ul","items":[{"text":"Build the real Hono app with `createApp(source)` or `createRegistryApp(...)` and drive it with `app.request(...)`. No real socket is opened","sub":[]},{"text":"Guarded requests: `guardedRequest`, `guardedHeaders`, `testPolicy` from `test/helpers/guarded-request.ts` add the allowed Host and Origin headers the request guard expects","sub":[]},{"text":"`test/server/start-server.test.ts` checks that `startServer` (the production entry) never constructs the test-only single-runtime wrapper","sub":[]}]},{"t":"label","text":"Contract / source-scan tests (`test/web/`, `test/no-skips.test.ts`, `test/portability.test.ts`, `test/token-guard.test.ts`)","value":""},{"t":"ul","items":[{"text":"Read source files as text and assert structural rules. No AST tooling is used; the scanners are regex plus comment stripping","sub":[]},{"text":"Helpers: `blankComments` and `walkSource` from `test/helpers/source-scan.ts`; vocabulary loader and checks from `test/helpers/design-vocabulary.ts`","sub":[]},{"text":"Each scanner ships with a planted positive control: it writes a bad file into a `mkdtemp` folder and asserts that the scanner flags it. See `test/web/class-vocabulary.test.ts`, which writes a fixture and checks it fails","sub":[]},{"text":"Examples:","sub":["`test/web/class-vocabulary.test.ts`: every class in `src/web/views`, `src/web/pages`, `src/web/components` must be listed in `docs/design-language.md`","`test/web/nav-contract.test.ts`: no router link or navigate call bypasses `src/web/nav.tsx`","`test/web/css-source-order.test.ts`: CSS ordering constraints in `src/web/styles/globals.css`","`test/portability.test.ts`: only the two allowed modules import `node:fs` under `src/`"]}]},{"t":"label","text":"Golden tests","value":""},{"t":"ul","items":[{"text":"`test/snapshot.golden.test.ts` compares a full snapshot of the dense fixture against `test/__golden__/dense.json`","sub":[]},{"text":"Regenerate only when the output change is intended. Golden files are excluded from ESLint (`test/__golden__/**` in `eslint.config.js`)","sub":[]}]},{"t":"label","text":"Integration tests (`test/fixture-project.test.ts`, `test/fs-equivalence.test.ts`)","value":""},{"t":"ul","items":[{"text":"Load a real fixture root through `LocalFsPlanningFilesystem` and `PlanningRepository`, then assert on the whole snapshot","sub":[]}]},{"t":"label","text":"E2E tests (`test/e2e/`)","value":""},{"t":"ul","items":[{"text":"Playwright with a single `chromium` project (see `playwright.config.ts`)","sub":[]},{"text":"`testDir: 'test/e2e'`, `testMatch: '**/*.spec.ts'`, `fullyParallel: false`, `workers: 1`, `timeout: 60_000`, `expect.timeout: 10_000`","sub":[]},{"text":"Four servers start fresh on every run, each with its own temporary `LABELORE_CONFIG_DIR`:","sub":["port 4199: the repository itself (document-page sweep)","port 4198: the made-up Lendshed fixture (`test/fixtures/lendshed`), through the dev server","port 4197: the made-up Shapes fixture through the dev server (deep-reload spec)","port 4196: Shapes through the built app (`npm run build` then `npm start`)"]},{"text":"`reuseExistingServer: false`: Playwright never attaches to a running instance. The user's own instances on 4173 and 4174 are never touched","sub":[]},{"text":"Specs resolve URLs from the presentation payload (`projectApiUrl`, `artifactUrl` in `test/e2e/app-url.ts`) rather than hard-coding paths","sub":[]},{"text":"Run the narrowest spec or title with `-g` when iterating. A full e2e run is several minutes","sub":[]}]}]},{"h":"Mocking","blocks":[{"t":"label","text":"Framework","value":"Vitest `vi` (`vi.fn`, `vi.doMock`, `vi.resetModules`, `vi.stubEnv`, `vi.stubGlobal`, `vi.spyOn`). Used in 14 test files only."},{"t":"label","text":"Preferred approach: fakes, not mocks.","value":"The codebase ships in-memory implementations of its boundaries and tests use those:"},{"t":"ul","items":[{"text":"`InMemoryPlanningFilesystem` in `src/planning-fs/in-memory-fs.ts` for the planning read boundary","sub":[]},{"text":"`MemorySettingsStore` in `src/server/settings-store.ts` for Labelore's settings (`createApp` / `startServer` accept it through `ServerOptions.settings`)","sub":[]},{"text":"`createSource` and `remoteRunner` options on `ServerOptions` (tests only) replace the real local and ssh sources","sub":[]},{"text":"`FileSettingsStore` is always pointed at a `mkdtemp` directory in tests","sub":[]}]},{"t":"label","text":"Patterns","value":""},{"t":"fence","lang":"typescript","text":"// Environment: stub, then restore\nvi.stubEnv('LABELORE_CONFIG_DIR', dir);\n// ...\nvi.unstubAllEnvs();\n\n// Module isolation for a module that reads env at import time\nvi.resetModules();\nvi.doMock('../../src/server/settings-store.ts', () => ({ ... }));\nconst { defaultSettingsDir } = await import('../../src/server/settings-store.ts');\nvi.doUnmock('../../src/server/settings-store.ts');\n\n// Global stub\nvi.stubGlobal('fetch', vi.fn(async () => new Response('{}')));\nvi.unstubAllGlobals();"},{"t":"label","text":"What to Mock","value":""},{"t":"ul","items":[{"text":"The environment (`LABELORE_CONFIG_DIR`, `VITEST`) through `vi.stubEnv`","sub":[]},{"text":"External process or network boundaries (ssh, fetch) through the injected option, not `vi.mock`","sub":[]},{"text":"Time-dependent values by passing them in (`readAt`, `mtimeMs` are set in builders)","sub":[]}]},{"t":"label","text":"What NOT to Mock","value":""},{"t":"ul","items":[{"text":"The planning parser, handlers, or presentation layer. Tests run them for real on fixtures","sub":[]},{"text":"The filesystem for planning reads. Use `LocalFsPlanningFilesystem` on a fixture root or `InMemoryPlanningFilesystem`","sub":[]},{"text":"Hono: use `app.request` on the real app","sub":[]}]}]},{"h":"Fixtures and Factories","blocks":[{"t":"label","text":"Made-up planning projects (required pattern)","value":""},{"t":"ul","items":[{"text":"Realistic but fictional GSD projects live under `test/fixtures/`: `lendshed/`, `shapes/`, `dashboard/`, `debug/`, `learnings/`, `review/`, `todos/`, `verification/`","sub":[]},{"text":"The rule is enforced by `test/made-up-examples.test.ts`: every file of a rule kind must carry a marker, and each marked file must appear in `test/fixtures/README.md`","sub":["Frontmatter form: `made_up_example: true`, `derived_from: <path under ~/.claude>`, `gsd_core_version: <version>`","No-frontmatter form: first line `<!-- made-up example · derived from <path> · gsd-core <version> -->`"]},{"text":"The frozen `fixtures/dense` root is exempt by name. This repository's own `.planning/` is exempt because it holds real planning files","sub":[]},{"text":"`test/fixture-leak.test.ts` and `test/no-skips.test.ts` forbid tests that reach any real project on the machine","sub":[]}]},{"t":"label","text":"Fixture access","value":""},{"t":"ul","items":[{"text":"`test/helpers/fixture-project.ts` exports:","sub":["`FX_ROOT`, `FX_PLANNING`: absolute paths to the Lendshed project","`fxPath(relative)` and `fxRead(relative)`: throw when the file is missing","`loadProject(...)`: loads a `LoadedProject` (snapshot, presentation, reference registry, body lookup)","`loadFiles`, `planningFiles`"]},{"text":"`test/helpers/shapes-project.ts`, `test/helpers/from-directory.ts`, `test/helpers/fixture-roots.ts` load the other fixture roots","sub":[]},{"text":"`test/helpers/note-corpus.ts`, `todo-corpus.ts`, `research-fixtures.ts`, `project-research-fixtures.ts`, `security-synthetic.ts`, `diagram-grids.ts` build corpora for specific handlers","sub":[]}]},{"t":"label","text":"Missing fixtures fail, never skip","value":""},{"t":"ul","items":[{"text":"`test/helpers/fixture-project.ts` throws at import when `test/fixtures/lendshed/.planning` is absent","sub":[]},{"text":"`playwright.config.ts` calls `resolveFixtureRoot` at load time, which throws when a fixture is missing","sub":[]}]},{"t":"label","text":"Inline builders (common pattern)","value":""},{"t":"fence","lang":"typescript","text":"const PHASE_IDENTITY: PhaseIdentity = {\n  milestoneVersion: null,\n  number: '01',\n  projectCode: null,\n  slug: 'identity-slice',\n};"},{"t":"ul","items":[{"text":"Put constant identities and builder functions at the top of the test file, before the first `describe`","sub":[]}]}]},{"h":"Forbidden Test Constructs","blocks":[{"t":"p","text":"Enforced by `test/no-skips.test.ts` (scans every test file, comments blanked):"},{"t":"ul","items":[{"text":"`it.skip`, `test.skip`, `describe.skip`, `.todo`, `.only`, `.fixme`, `.skipIf`, `.runIf`","sub":[]},{"text":"Disguised skips: `if (!existsSync(...)) return;` at the top of a test","sub":[]},{"text":"Absolute machine paths: `/home/<user>/codebases`, `~/Work`, `homedir()` calls, real checkout constants","sub":[]},{"text":"Absolute millisecond timing budgets (`expect(elapsed).toBeLessThan(<ms>)` with `performance.now`, `Date.now` or `bestOf`). Use the growth harness `test/helpers/growth.ts` for scaling checks instead","sub":[]},{"text":"Exemptions are a frozen list in `test/no-skips.test.ts` (four files, including `test/server/remote-source.test.ts` for a generous hang detector). Adding one is a decision, not an edit","sub":[]}]},{"t":"label","text":"Gate","value":"`npm run test:gate` (`test/helpers/vitest-gate.mjs`) runs vitest with a JSON reporter and exits 1 when any test is failed, skipped, todo, or when zero tests run. A green plain `npm test` can hide a skip. Use the gate for \"is it actually green\" checks."}]},{"h":"Coverage","blocks":[{"t":"label","text":"Requirements","value":"None enforced. No threshold in `vitest.config.ts`."},{"t":"label","text":"View Coverage","value":"Not configured. There is no coverage script in `package.json`."},{"t":"label","text":"Practical coverage map","value":""},{"t":"ul","items":[{"text":"Planning-repo handlers: one `*.test.ts` and often one `*-handler-guard.test.ts` per type under `test/`","sub":[]},{"text":"Presentation and rendering: one test file per module under `test/presentation/` and `test/rendering/`","sub":[]},{"text":"Web: contract tests in `test/web/` (118 files) instead of component tests. Gaps exist where behavior is only visible in the browser. Those are covered by `test/e2e/`","sub":[]}]}]},{"h":"Test Types Summary","blocks":[{"t":"table","head":["Type","Location","Runner","Real I/O"],"rows":[["Unit","`test/rendering`, `test/presentation`, `test/*.test.ts`","Vitest","Fixture files read through `LocalFsPlanningFilesystem`"],["HTTP","`test/server/*.test.ts`","Vitest + `app.request`","No socket; in-memory store"],["Contract (source scan)","`test/web/*.test.ts`, root guards","Vitest","Reads `src/` as text"],["Golden","`test/snapshot.golden.test.ts`","Vitest","Fixture + `test/__golden__/dense.json`"],["E2E","`test/e2e/*.spec.ts`","Playwright","Four real servers on 4196 to 4199"]]}]},{"h":"Common Patterns","blocks":[{"t":"label","text":"Async Testing","value":""},{"t":"fence","lang":"typescript","text":"it('serves the project list after a refresh', async () => {\n  const response = await app.request('/api/projects', guardedHeaders());\n  expect(response.status).toBe(200);\n  const body = (await response.json()) as ProjectListResponse;\n  expect(body.projects.length).toBeGreaterThan(0);\n});"},{"t":"label","text":"Error / Degradation Testing","value":""},{"t":"fence","lang":"typescript","text":"// Pattern: the body survives and the warning names the failed stage.\n// WarningCollector (src/planning-repo/warnings.ts) exposes forPath(path) -> ParseWarning[].\nexpect(warnings.forPath(path)[0].stage).toBe('frontmatter');"},{"t":"label","text":"Throw Testing (programmer errors only, illustrative)","value":""},{"t":"fence","lang":"typescript","text":"expect(() => defaultSettingsDir({ VITEST: '‹value not shown›' }, '/home/x')).toThrow(\n  'LABELORE_CONFIG_DIR must be set when Labelore runs under vitest',\n);"},{"t":"label","text":"Source-scan planted control","value":""},{"t":"fence","lang":"typescript","text":"const dir = await mkdtemp(join(tmpdir(), 'labelore-vocab-'));\nawait writeFile(join(dir, 'bad.tsx'), '<div className=\"not-in-vocabulary\" />');\nexpect(checkTokens(dir)).toContainEqual(expect.objectContaining({ token: 'not-in-vocabulary' }));"}]},{"h":"Adding a Test: Checklist","blocks":[{"t":"ol","items":[{"text":"Pick the mirror folder (`test/server`, `test/presentation`, `test/rendering`, or root for handlers)","sub":[]},{"text":"Use `it(` with a full-sentence title that names the outcome","sub":[]},{"text":"Build inputs with a local `make*` builder or a fixture from `test/helpers/fixture-project.ts`. Do not reach outside `test/fixtures/`","sub":[]},{"text":"Never add `.skip`, `.todo`, or an existence-based early `return`. Throw on a missing fixture","sub":[]},{"text":"For a new web class, add a row to `docs/design-language.md` before the test passes","sub":[]},{"text":"Run `npx vitest run <file>`, then `npm run test:gate -- <file>` before calling it done","sub":[]}]}]}],"footer":"Testing analysis: 2026-11-04"},"tidemark":{"front":{"last_mapped_commit":"c4e91ab7d03f58a2b6e1790d4c35fa80be127d69","last_mapped_at":"2026-10-28","made_up_example":"true","derived_from":"agents/gsd-codebase-mapper.md","gsd_core_version":"1.19.0"},"comment":null,"title":"Testing Patterns","date":"2026-10-28","intro":[],"sections":[{"h":"Test Framework","blocks":[{"t":"label","text":"Runner","value":""},{"t":"ul","items":[{"text":"Vitest 3.2","sub":[]},{"text":"Config: `vitest.config.ts`","sub":[]}]},{"t":"label","text":"Assertion Library","value":""},{"t":"ul","items":[{"text":"Vitest built-ins","sub":[]}]},{"t":"label","text":"Run Commands","value":""},{"t":"fence","lang":"bash","text":"# Run every unit and route test once\nnpm test\n# Watch mode while editing\nnpm run test:watch\n# Coverage report\nnpm run test:coverage"}]},{"h":"Test File Organization","blocks":[{"t":"label","text":"Location","value":""},{"t":"ul","items":[{"text":"Co-located with the module under test","sub":[]}]},{"t":"label","text":"Naming","value":""},{"t":"ul","items":[{"text":"`{module}.test.ts` and `{Component}.test.tsx`","sub":[]}]},{"t":"label","text":"Structure","value":""},{"t":"fence","lang":"","text":"server/store/\n├── clash.ts\n└── clash.test.ts"}]},{"h":"Test Structure","blocks":[{"t":"label","text":"Suite Organization","value":""},{"t":"fence","lang":"typescript","text":"describe('findClash', () => {\n  it('reports two requests that share a berth and a night', () => {\n    expect(findClash(first, second)).toEqual({ berth: 'B4' });\n  });\n});"},{"t":"label","text":"Patterns","value":""},{"t":"ul","items":[{"text":"Build the store in memory in a `beforeEach`","sub":[]},{"text":"Close it in an `afterEach`","sub":[]},{"text":"One behaviour per `it`","sub":[]}]}]},{"h":"Mocking","blocks":[{"t":"label","text":"Framework","value":"Vitest `vi`"},{"t":"label","text":"Patterns","value":""},{"t":"fence","lang":"typescript","text":"vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(feedBody));"},{"t":"label","text":"What to Mock","value":""},{"t":"ul","items":[{"text":"The tide feed and the mail relay","sub":[]}]},{"t":"label","text":"What NOT to Mock","value":""},{"t":"ul","items":[{"text":"The slot store; use an in-memory database instead","sub":[]}]}]},{"h":"Fixtures and Factories","blocks":[{"t":"label","text":"Test Data","value":""},{"t":"fence","lang":"typescript","text":"const request = makeRequest({ berth: 'B4', nights: 2 });"},{"t":"label","text":"Location","value":""},{"t":"ul","items":[{"text":"`server/testing/factories.ts`","sub":[]}]}]},{"h":"Coverage","blocks":[{"t":"label","text":"Requirements","value":"None enforced"},{"t":"label","text":"View Coverage","value":""},{"t":"fence","lang":"bash","text":"npm run test:coverage"}]},{"h":"Test Types","blocks":[{"t":"label","text":"Unit Tests","value":""},{"t":"ul","items":[{"text":"Window building and the clash rule","sub":[]}]},{"t":"label","text":"Integration Tests","value":""},{"t":"ul","items":[{"text":"Route tests against an in-memory store","sub":[]}]},{"t":"label","text":"E2E Tests","value":""},{"t":"ul","items":[{"text":"Playwright, one spec for the request flow","sub":[]}]}]}],"footer":"Testing analysis: 2026-10-28"},"tidemark8":{"front":{"last_mapped_commit":"c4e91ab7d03f58a2b6e1790d4c35fa80be127d69","last_mapped_at":"2026-10-28","made_up_example":"true","derived_from":"agents/gsd-codebase-mapper.md","gsd_core_version":"1.19.0"},"comment":null,"title":"Testing Patterns","date":"2026-10-28","intro":[],"sections":[{"h":"Test Framework","blocks":[{"t":"label","text":"Runner","value":""},{"t":"ul","items":[{"text":"Vitest 3.2","sub":[]},{"text":"Config: `vitest.config.ts`","sub":[]}]},{"t":"label","text":"Assertion Library","value":""},{"t":"ul","items":[{"text":"Vitest built-ins","sub":[]}]},{"t":"label","text":"Run Commands","value":""},{"t":"fence","lang":"bash","text":"# Run every unit and route test once\nnpm test\n# Watch mode while editing\nnpm run test:watch\n# Coverage report\nnpm run test:coverage\n# Route tests only\nnpx vitest run server/routes\n# One module\nnpx vitest run server/store/clash.test.ts\n# The request-a-berth flow in a browser\nnpx playwright test\n# Type check the server and the board\nnpm run typecheck\n# Lint\nnpm run lint"}]},{"h":"Test File Organization","blocks":[{"t":"label","text":"Location","value":""},{"t":"ul","items":[{"text":"Co-located with the module under test","sub":[]}]},{"t":"label","text":"Naming","value":""},{"t":"ul","items":[{"text":"`{module}.test.ts` and `{Component}.test.tsx`","sub":[]}]},{"t":"label","text":"Structure","value":""},{"t":"fence","lang":"","text":"server/store/\n├── clash.ts\n└── clash.test.ts"}]},{"h":"Test Structure","blocks":[{"t":"label","text":"Suite Organization","value":""},{"t":"fence","lang":"typescript","text":"describe('findClash', () => {\n  it('reports two requests that share a berth and a night', () => {\n    expect(findClash(first, second)).toEqual({ berth: 'B4' });\n  });\n});"},{"t":"label","text":"Patterns","value":""},{"t":"ul","items":[{"text":"Build the store in memory in a `beforeEach`","sub":[]},{"text":"Close it in an `afterEach`","sub":[]},{"text":"One behaviour per `it`","sub":[]}]}]},{"h":"Mocking","blocks":[{"t":"label","text":"Framework","value":"Vitest `vi`"},{"t":"label","text":"Patterns","value":""},{"t":"fence","lang":"typescript","text":"vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(feedBody));"},{"t":"label","text":"What to Mock","value":""},{"t":"ul","items":[{"text":"The tide feed and the mail relay","sub":[]}]},{"t":"label","text":"What NOT to Mock","value":""},{"t":"ul","items":[{"text":"The slot store; use an in-memory database instead","sub":[]}]}]},{"h":"Fixtures and Factories","blocks":[{"t":"label","text":"Test Data","value":""},{"t":"fence","lang":"typescript","text":"const request = makeRequest({ berth: 'B4', nights: 2 });"},{"t":"label","text":"Location","value":""},{"t":"ul","items":[{"text":"`server/testing/factories.ts`","sub":[]}]}]},{"h":"Coverage","blocks":[{"t":"label","text":"Requirements","value":"None enforced"},{"t":"label","text":"View Coverage","value":""},{"t":"fence","lang":"bash","text":"npm run test:coverage"}]},{"h":"Test Types","blocks":[{"t":"label","text":"Unit Tests","value":""},{"t":"ul","items":[{"text":"Window building and the clash rule","sub":[]}]},{"t":"label","text":"Integration Tests","value":""},{"t":"ul","items":[{"text":"Route tests against an in-memory store","sub":[]}]},{"t":"label","text":"E2E Tests","value":""},{"t":"ul","items":[{"text":"Playwright, one spec for the request flow","sub":[]}]}]}],"footer":"Testing analysis: 2026-10-28"}}};
+// ---------- icons (lucide paths, 24px grid) ----------
+const ICON = {
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  chevr: '<path d="m9 6 6 6-6 6"/>',
+  arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>',
+  server: '<rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/>',
+  db: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+  radio: '<path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/>',
+  cog: '<path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M12 2v2"/><path d="M12 22v-2"/><path d="m17 20.66-1-1.73"/><path d="M11 10.27 7 3.34"/><path d="m20.66 17-1.73-1"/><path d="m3.34 7 1.73 1"/><path d="M14 12h8"/><path d="M2 12h2"/><path d="m20.66 7-1.73 1"/><path d="m3.34 17 1.73-1"/><path d="m17 3.34-1 1.73"/><path d="m11 13.73-4 6.93"/>',
+  plug: '<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/>',
+  eye: '<path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/>',
+};
+const svg = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const MARK = '\u0001';
+const VNS = '<span class="vns">Value not shown</span>';
+// inline markdown: `code`, **bold**, *italic*; the withheld-value marker becomes the quiet mark.
+const inline = (s) => {
+  const codes = [];
+  let t = String(s).replace(/`([^`]+)`/g, (_, c) => { codes.push(c); return `\u0000${codes.length - 1}\u0000`; });
+  t = esc(t).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<i>$2</i>');
+  return t.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${esc(codes[Number(i)])}</code>`).split(MARK).join(VNS);
+};
+const plainText = (s) => String(s).replace(/`/g, '').replace(/\*\*/g, '').split(MARK).join(' (value not shown)');
+const sq = (tone) => `<span class="sq" data-tone="${tone}" aria-hidden="true"></span>`;
+const chip = (tone, text, title) => `<span class="status-chip" data-tone="${tone}"${title ? ` title="${esc(title)}"` : ''}>${sq(tone)}${esc(text)}</span>`;
+const fmtDate = (iso) => { const m = String(iso || '').match(/(\d{4})-(\d{2})-(\d{2})/); if (!m) return null; const mon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(m[2]) - 1]; return `${mon} ${Number(m[3])}, ${m[1]}`; };
+
+// ---------- the seven documents (the 042 A frame's panel list) ----------
+const ALL = ['stack', 'architecture', 'structure', 'conventions', 'testing', 'integrations', 'concerns'];
+const DOC = { stack: 'Stack', architecture: 'Architecture', structure: 'Structure', conventions: 'Conventions', testing: 'Testing', integrations: 'Integrations', concerns: 'Concerns' };
+const PROJ = {
+  labelore: { name: 'labelore', date: 'Nov 4, 2026', commit: '717c8d7', keys: { stack: '22', architecture: '24', structure: '11', conventions: '8', testing: 'Vitest', integrations: '3', concerns: '30' } },
+  tidemark: { name: 'tidemark', date: 'Oct 30, 2026', commit: 'c4e91ab', keys: { stack: '9', architecture: '5', structure: '3', conventions: '8', testing: 'Vitest', integrations: '2', concerns: '14' } },
+};
+
+// ---------- state ----------
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+const ACTS = {};
+const VIEWS = {};
+const S = { state: null, panel: null, sel: null, filter: null };
+
+// ---------- the 042 A frame, drawn identically in every variant ----------
+const crumbs = () => `<nav class="crumbs" aria-label="Breadcrumb"><span>Labelore</span><span aria-hidden="true">/</span><span aria-current="page">Codebase</span></nav>`;
+const copyPath = () => `<button class="btn-xs icon" type="button" data-act="noop" aria-label="Copy path" title="Copy path">${svg('copy')}</button>`;
+const viewSource = () => `<div class="seg" role="group" aria-label="Show"><button class="btn-xs" type="button" aria-pressed="true">View</button><button class="btn-xs" type="button" aria-pressed="false" data-act="noop">Source</button></div>`;
+const appHead = (pname) => `<header class="app-head" data-shell><span class="app-brand"><i></i>Labelore <span>/ ${esc(pname)}</span></span>
+  <nav class="app-nav" aria-label="Project"><a href="#" data-act="noop" aria-current="page">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Search</a></nav></header>`;
+function factsHtml(p) {
+  return `<div class="facts"><span class="facts-count">7 of 7 documents mapped</span>${chip('complete', 'Complete map')}<span class="facts-date">Mapped ${p.date}</span><span class="status-chip mono" data-tone="quiet" title="Commit the map was made at">Commit ${p.commit}</span></div>`;
+}
+function listHtml(p, cur, mine) {
+  return `<nav class="list" aria-label="Codebase map"><ol>${ALL.map((k, i) => {
+    const on = k === cur;
+    const act = mine.includes(k) ? `data-act="panel" data-panel="${k}"` : 'data-act="other"';
+    return `<li class="entry-li"><a class="entry" href="#" ${act}${on ? ' aria-current="page"' : ''}><span class="entry-no">${String(i + 1).padStart(2, '0')}</span><span class="entry-name">${DOC[k]}</span><span class="entry-key">${esc(p.keys[k])}</span></a></li>`;
+  }).join('')}</ol></nav>`;
+}
+function pageHtml(p, cur, mine, main) {
+  return `${appHead(p.name)}<main class="page">${crumbs()}
+    <header class="heading-block"><p class="eyebrow">Codebase</p><h1>Codebase</h1><div class="meta-row">${copyPath()}${viewSource()}</div></header>
+    <div class="a-grid"><aside class="a-rail">${factsHtml(p)}${listHtml(p, cur, mine)}</aside><div class="a-main">${main}</div></div></main>`;
+}
+// The document's own date: frontmatter stamp, else Analysis Date (the older form), with the source named.
+function stampOf(doc) {
+  if (doc.front.last_mapped_at) return `Mapped ${fmtDate(doc.front.last_mapped_at)} · commit ${String(doc.front.last_mapped_commit || '').slice(0, 7)}`;
+  const foot = doc.footer && /last updated/i.test(doc.footer) ? ` · footer "${doc.footer}"` : '';
+  return doc.date ? `Dated ${fmtDate(doc.date)} from its Analysis Date line (no map stamp, no commit)${foot}` : '';
+}
+const panelHead = (k, key, unit, doc) => `<header class="panel-head"><span class="panel-no">${String(ALL.indexOf(k) + 1).padStart(2, '0')}</span><h2 id="panel-h">${DOC[k]}</h2><span class="panel-key">${esc(key)} ${esc(unit)}</span>${doc ? `<span class="panel-stamp">${esc(stampOf(doc))}</span>` : ''}</header>`;
+
+// ---------- the document as blocks, and the plain form every section keeps ----------
+const norm = (h) => h.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const findSec = (doc, re) => doc.sections.find((s) => re.test(norm(s.h)));
+// A section's groups: a bold label (with an optional inline value) and the lists, fences and lines under it.
+function groupsOf(sec) {
+  const out = [];
+  let g = null;
+  for (const b of sec ? sec.blocks : []) {
+    if (b.t === 'label') { g = { label: b.text, value: b.value, items: [], blocks: [] }; out.push(g); continue; }
+    if (!g) { g = { label: '', value: '', items: [], blocks: [] }; out.push(g); }
+    g.blocks.push(b);
+    if (b.t === 'ul' || b.t === 'ol') g.items.push(...b.items);
+  }
+  return out;
+}
+const NONE_RE = /^(none|not detected|not applicable|not implemented|not hosted|no\b)/i;
+const firstValue = (g) => (g.value || (g.items[0] ? g.items[0].text : '') || '').replace(/`/g, '');
+const isAbsent = (g) => NONE_RE.test(firstValue(g).trim());
+const tokens = (t) => [...String(t).matchAll(/`([^`]+)`/g)].map((m) => m[1]);
+const VAR_RE = /^[A-Z][A-Z0-9]*_[A-Z0-9_]+$|^NODE_ENV$|^VITEST$/;
+function ulHtml(items) {
+  return `<ul class="bul">${items.map((it) => `<li><span>${inline(it.text)}${it.sub.length ? `<ul>${it.sub.map((s) => `<li>${inline(s)}</li>`).join('')}</ul>` : ''}</span></li>`).join('')}</ul>`;
+}
+function blocksHtml(blocks) {
+  return blocks.map((b) => b.t === 'label' ? `<p class="g-label">${esc(b.text)}${b.value ? `: <span class="v">${inline(b.value)}</span>` : ''}</p>`
+    : b.t === 'p' ? `<p class="prose">${inline(b.text)}</p>`
+    : b.t === 'ul' ? ulHtml(b.items)
+    : b.t === 'ol' ? `<ol class="steps">${b.items.map((it) => `<li>${inline(it.text)}</li>`).join('')}</ol>`
+    : b.t === 'table' ? `<div class="tbl-scroll"><table class="ptable"><thead><tr>${b.head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`
+    : b.t === 'fence' ? `<pre class="plain-pre">${esc(b.text)}</pre>` : '').join('');
+}
+// Every section of the document stays reachable as a closed bar under the picture: nothing is dropped.
+function sectionBars(doc) {
+  const intro = doc.intro.length ? `<p class="source-note">${doc.intro.map((b) => inline(b.text || '')).join(' ')}</p>` : '';
+  const last = doc.sections.length - 1;
+  return `${intro}<div class="acc-list">${doc.sections.map((s, i) => `<details class="acc"><summary>${svg('chevr')}<span>${esc(s.h)}</span><span class="n">${groupsOf(s).filter((g) => g.label).length || ''} ${groupsOf(s).filter((g) => g.label).length ? 'groups' : ''}</span></summary><div class="acc-body">${blocksHtml(s.blocks)}${i === last && doc.footer ? `<p class="foot-line">${esc(doc.footer)}</p>` : ''}</div></details>`).join('')}</div>`;
+}
+const pic = (title, tools, body, foot, extra = '') => `<figure class="pic"${extra}><div class="pic-bar"><span class="ff-title">${esc(title)}</span>${tools}</div><div class="pic-body">${body}</div>${foot ? `<div class="pic-foot">${foot}</div>` : ''}</figure>`;
+const art = (k, key, unit, doc, inner) => `<article class="panel" aria-labelledby="panel-h">${panelHead(k, key, unit, doc)}<div class="lifted">${inner}</div></article>`;
+
+// The shipped copy-command row: the command as selectable text outside the button; "Copied" inside it.
+const copyRow = (cmd, id) => `<div class="copy-command"><code class="copy-command-text">${esc(cmd)}</code><button class="btn-xs copy-command-button" type="button" data-act="copycmd" data-id="${id}" aria-label="Copy command: ${esc(cmd)}"${S.copied === id ? ' data-copied="true"' : ''}>${S.copied === id ? `${svg('check')}Copied` : `${svg('copy')}Copy command`}</button></div>`;
+ACTS.copycmd = (el) => { S.copied = el.dataset.id; render(); clearTimeout(ACTS._ct); ACTS._ct = setTimeout(() => { S.copied = null; render(); }, 1500); };
+
+// ---------- render orchestration ----------
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY;
+  const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  document.querySelectorAll('#sketch-bar [data-panel]').forEach((b) => b.classList.toggle('on', b.dataset.panel === S.panel));
+  if (typeof afterRender === 'function') afterRender(v);
+  window.scrollTo(0, y);
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; S.sel = null; S.filter = null; return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (act === 'other') { e.preventDefault(); toast('That panel is drawn in its own sketch'); return; }
+  if (act === 'panel') { e.preventDefault(); S.panel = el.dataset.panel; S.sel = null; S.filter = null; return render(); }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.sel != null) { S.sel = null; render(); } });
+window.addEventListener('hashchange', () => { S.sel = null; S.filter = null; render(); });
+ACTS.sel = (el) => { S.sel = S.sel === el.dataset.id ? null : el.dataset.id; render(); };
+ACTS.close = () => { S.sel = null; render(); };
+ACTS.filter = (el) => { S.filter = S.filter === el.dataset.f ? null : el.dataset.f; render(); };
+
+// =====================================================================================
+// 046: Conventions and Testing. Both panels in every variant; the rail entries 04 Conventions and
+// 05 Testing switch between them (?panel=conventions|testing). Every mark is computed from the
+// documents' own sections, bold labels, bullets, backticked names, fences and tables.
+// =====================================================================================
+const MINE = ['conventions', 'testing'];
+const STATES = {
+  labelore: { proj: 'labelore', conv: 'labelore', test: 'labelore' },
+  tidemark: { proj: 'tidemark', conv: 'tidemark', test: 'tidemark' },
+  commands8: { proj: 'tidemark', conv: 'tidemark', test: 'tidemark8' },
+};
+S.state = STATES[params.get('state')] ? params.get('state') : 'labelore';
+S.panel = MINE.includes(params.get('panel')) ? params.get('panel') : 'conventions';
+const proj = () => STATES[S.state].proj;
+const convDoc = () => DOCS.conventions[STATES[S.state].conv];
+const testDoc = () => DOCS.testing[STATES[S.state].test];
+
+// ---------- the Conventions lift: one rule per top-level bullet (or a label's inline value) ----------
+const CONV_KNOWN = [
+  [/^naming pattern/, 'Naming'], [/^code style/, 'Code style'], [/^import/, 'Imports'], [/^error handling/, 'Errors'],
+  [/^logging/, 'Logging'], [/^comments/, 'Comments'], [/^function design/, 'Functions'], [/^module design/, 'Modules'],
+];
+const HARD = /\b(never|must|do not|don't|only|always|forbid\w*|keep it that way|refuse\w*|rejects?)\b|\bno `|\bnot `|\bno [a-z]/i;
+const SOFT = /\b(observed|commonly|common|usually|rare|almost|prefer|often|mostly)\b/i;
+const ENF = /`test\/[^`]*\.test\.ts`|\beslint\b|\blint\b|\benforc\w*|compiler rejects|checks this|`npm run (lint|typecheck)`/i;
+const CASE_RE = /\b(kebab-case|camelCase|PascalCase|SCREAMING_SNAKE(?:_CASE)?|snake_case|lower-case)\b/;
+function liftConv(doc) {
+  const secs = doc.sections.map((s, si) => {
+    const known = CONV_KNOWN.find(([re]) => re.test(norm(s.h)));
+    const rules = [];
+    groupsOf(s).forEach((g) => {
+      if (g.value) rules.push({ text: g.value, sub: [], label: g.label });
+      g.items.forEach((it) => rules.push({ text: it.text, sub: it.sub, label: g.label }));
+      g.blocks.filter((b) => b.t === 'p').forEach((b) => rules.push({ text: b.text, sub: [], label: g.label }));
+    });
+    rules.forEach((r, ri) => {
+      const all = [r.text, ...r.sub].join(' ');
+      r.id = `r${si}:${ri}`; r.si = si; r.sec = s;
+      r.st = HARD.test(all) ? 'hard' : SOFT.test(all) ? 'soft' : 'plain';
+      r.enf = ENF.test(all);
+      r.toks = tokens(r.text);
+      r.case = (r.text.match(CASE_RE) || [])[1] || null;
+      r.struck = struckOf(r.text);
+      r.paths = [...new Set(tokens(all).map(areaOf).filter(Boolean))];
+    });
+    return { h: s.h, short: known ? known[1] : s.h.replace(/\s+conventions$/i, ''), known: !!known, rules, sec: s };
+  });
+  return { secs, rules: secs.flatMap((s) => s.rules) };
+}
+// "x, not y" / "No y" / "y does not appear": the names after (or, for "does not", before) the negation are struck.
+function struckOf(text) {
+  const out = [];
+  text.split(/;|\.\s/).forEach((cl) => {
+    const m = cl.match(/\b(not|no|never|instead of)\b/i);
+    if (!m) return;
+    // only the negated phrase: up to its first colon or opening parenthesis; never a path
+    const tail = cl.slice(m.index).split(/:\s|\s\(|\b(?:outside|except|other than)\b/)[0];
+    const before = tokens(cl.slice(0, m.index)); const after = tokens(tail);
+    if (/\b(does|do|is|are|must) (not|never)\b/i.test(cl) && before.length && !/^(no|not|never)/i.test(cl.trim())) out.push(...before);
+    else out.push(...after);
+  });
+  return [...new Set(out)].filter((t) => !t.includes('/') && t.length < 30);
+}
+function areaOf(t) {
+  const p = t.replace(/\*+$/, '').replace(/^\.\//, '');
+  let m = p.match(/^(src\/[a-z-]+)/); if (m) return m[1];
+  if (/^test(\/|$)/.test(p)) return 'test';
+  if (/^docs\//.test(p)) return 'docs';
+  if (/^fixtures\//.test(p)) return 'fixtures';
+  if (/^[\w.-]+\.(json|js|cjs|mjs)$/.test(p) || /^\.[a-z]+rc$/.test(p)) return 'repo root';
+  if (/^[\w-]+\/[\w./-]+$/.test(p) && /\.[a-z]{2,4}$/.test(p)) return 'other paths';
+  if (/^[\w.-]+\.(ts|tsx)$/.test(p)) return 'files by name';
+  return null;
+}
+const rk = (r, extra = '') => `<button class="rk" type="button" data-act="sel" data-id="${r.id}" data-st="${r.st}" data-enf="${r.enf}"${S.sel === r.id ? ' data-on="true"' : ''}${S.filter != null && S.filter !== String(r.si) ? ' data-dim="true"' : ''} title="${esc(plainText(r.text).slice(0, 120))}"${extra}></button>`;
+const convHead = (C, inner) => art('conventions', PROJ[proj()].keys.conventions, 'rule groups', convDoc(), inner);
+const stWord = { hard: 'a hard rule (never, must, only, no)', soft: 'an observed habit (observed, usually, rare)', plain: 'a plain rule' };
+function dockConv(C) {
+  if (!S.sel) return `<div class="dock-empty">Select a rule to read it in full.</div>`;
+  if (S.sel.startsWith('sec:')) {
+    const s = C.secs[Number(S.sel.slice(4))];
+    return `<div class="dock"><div class="dock-head"><h4>${esc(s.h)}</h4><span class="source-note">${s.rules.length} rules</span><button class="text-link d-x" type="button" data-act="close">Close</button></div>${blocksHtml(s.sec.blocks)}</div>`;
+  }
+  if (S.sel.startsWith('area:')) {
+    const a = S.sel.slice(5);
+    const rs = C.rules.filter((r) => (a === 'everywhere' ? !r.paths.length : r.paths.includes(a)));
+    return `<div class="dock"><div class="dock-head"><h4>${a === 'everywhere' ? 'Rules that name no path' : `Rules that name <code>${esc(a)}</code>`}</h4><span class="source-note">${rs.length} rules</span><button class="text-link d-x" type="button" data-act="close">Close</button></div>${C.secs.filter((s) => rs.some((r) => r.si === s.rules[0]?.si)).map((s) => `<p class="g-label">${esc(s.h)}</p>${ulHtml(rs.filter((r) => r.sec === s.sec))}`).join('')}</div>`;
+  }
+  const r = C.rules.find((x) => x.id === S.sel);
+  if (!r) return '';
+  return `<div class="dock"><div class="dock-head"><h4>${esc(r.sec.h)}${r.label ? ` · ${esc(r.label)}` : ''}</h4><span class="source-note">${stWord[r.st]}${r.enf ? ' · checked by a test or the linter' : ''}</span><button class="text-link d-x" type="button" data-act="close">Close</button></div>${ulHtml([r])}</div>`;
+}
+
+// ---------- the Testing lift: runners, types, commands, the tree, the mirror pairs ----------
+function liftTest(doc) {
+  const fw = findSec(doc, /^test framework/);
+  const plates = [];
+  groupsOf(fw).forEach((g) => {
+    if (/run command/i.test(g.label)) return;
+    if (!/runner|assertion|framework/i.test(g.label) || !g.items.length) return;
+    const first = g.items[0].text;
+    const m = first.match(/^(.+?)\s+(\d[\w.]*)/);
+    const cfg = g.items.map((it) => it.text).find((t) => /^config:/i.test(t));
+    plates.push({ key: /assert/i.test(g.label) ? 'assert' : /e2e/i.test(g.label) ? 'e2e' : 'runner', label: g.label, name: plainText(m ? m[1] : first.replace(/\s*\(.*$/, '')).replace(/[`]/g, ''), version: m ? m[2] : null, config: cfg ? tokens(cfg)[0] : null, g });
+  });
+  const runners = plates.filter((p) => p.key !== 'assert');
+  const runnerFor = (t) => {
+    if (/\b(tsc|typecheck|eslint|lint)\b/i.test(t)) return 'checks';
+    const hit = runners.find((p) => new RegExp(`\\b${p.name.split(' ')[0]}\\b`, 'i').test(t));
+    return hit ? hit.name : runners[0] ? runners[0].name : 'checks';
+  };
+  // commands: every line of a shell fence under a commands label or the Coverage section
+  const cmds = [];
+  doc.sections.forEach((s) => groupsOf(s).forEach((g) => g.blocks.filter((b) => b.t === 'fence' && /^(bash|sh|shell)?$/.test(b.lang) && (/command|coverage/i.test(g.label) || /^coverage/.test(norm(s.h)))).forEach((b) => {
+    let pending = null;
+    b.text.split('\n').forEach((line) => {
+      const c = line.match(/^\s*#\s?(.*)$/);
+      if (c) { pending = c[1]; return; }
+      if (!line.trim()) return;
+      const bm = line.split(/\s{2,}#\s/);
+      const cmd = bm[0].trim(); const note = bm[1] ? bm[1].trim() : pending;
+      pending = null;
+      const prev = cmds.find((x) => x.cmd === cmd);
+      if (prev) { if (!prev.where.includes(g.label)) prev.where.push(g.label); return; }
+      cmds.push({ id: `k${cmds.length}`, cmd, note: note || '', where: [g.label], runner: runnerFor(`${cmd} ${note || ''}`) });
+    });
+  })));
+  // test types: Test Types labels, with the paths in their parenthesis and the runner their lines name
+  const ttSec = findSec(doc, /^test types$/) || findSec(doc, /^test types/);
+  const types = groupsOf(ttSec).filter((g) => g.label).map((g) => ({ name: plainText(g.label.replace(/\s*\(.*\)\s*$/, '')).replace(/ tests?$/i, ''), paths: tokens(g.label), runner: runnerFor(textOf(g)), g }));
+  const summary = findSec(doc, /^test types summary/);
+  const table = summary ? summary.blocks.find((b) => b.t === 'table') : null;
+  if (table) table.rows.forEach((r) => { const t = types.find((x) => x.name.toLowerCase().startsWith(r[0].toLowerCase().split(' ')[0])); if (t) t.runner = runnerFor(r[2]); });
+  const cov = findSec(doc, /^coverage/);
+  const covReq = groupsOf(cov).find((g) => /requirement/i.test(g.label));
+  const fo = findSec(doc, /^test file organi/);
+  const treeFence = fo ? groupsOf(fo).flatMap((g) => g.blocks).find((b) => b.t === 'fence' && /[├└]/.test(b.text)) : null;
+  const loc = fo ? groupsOf(fo).find((g) => /location/i.test(g.label)) : null;
+  const forbid = doc.sections.find((s) => /forbidden/i.test(s.h));
+  return { plates, runners, cmds, types, covReq, tree: treeFence ? treeFence.text : null, loc, fo, forbid, doc };
+}
+const textOf = (g) => [g.label, g.value, ...g.items.flatMap((it) => [it.text, ...it.sub])].join(' ');
+function cmdHtml(c) { return `<div class="cmd">${copyRow(c.cmd, c.id)}${c.note ? `<span class="cap">${esc(c.note)}</span>` : ''}</div>`; }
+const testHead = (inner) => art('testing', PROJ[proj()].keys.testing, 'framework', testDoc(), inner);
+function dockTest(T) {
+  if (!S.sel) return `<div class="dock-empty">Select a runner, a folder or a test type to read it in full.</div>`;
+  const [kind, ...rest] = S.sel.split(':'); const key = rest.join(':');
+  if (kind === 'plate') { const p = T.plates.find((x) => x.name === key); return p ? `<div class="dock"><div class="dock-head"><h4>${esc(p.name)}${p.version ? ` <code>${esc(p.version)}</code>` : ''}</h4><span class="source-note">${esc(p.label)}</span><button class="text-link d-x" type="button" data-act="close">Close</button></div>${blocksHtml(p.g.blocks)}</div>` : ''; }
+  if (kind === 'type') { const t = T.types.find((x) => x.name === key); return t ? `<div class="dock"><div class="dock-head"><h4>${esc(t.g.label)}</h4><span class="source-note">Runs on ${esc(t.runner)}</span><button class="text-link d-x" type="button" data-act="close">Close</button></div>${blocksHtml(t.g.blocks)}</div>` : ''; }
+  if (kind === 'path') {
+    const p = key; const items = [];
+    T.doc.sections.forEach((s) => groupsOf(s).forEach((g) => g.items.forEach((it) => [it.text, ...it.sub].forEach((t) => { if (tokens(t).some((x) => x === p || x.startsWith(p) || p.endsWith(x))) items.push({ text: t, sub: [] }); }))));
+    const ty = T.types.filter((t) => t.paths.some((x) => x === p || p.startsWith(x.replace(/\*.*$/, '')) && x.endsWith('/')));
+    return `<div class="dock"><div class="dock-head"><h4><code>${esc(p)}</code></h4><span class="source-note">${ty.length ? `${ty.map((t) => t.name).join(', ')} tests` : 'Named in the document'}</span><button class="text-link d-x" type="button" data-act="close">Close</button></div>${items.length ? ulHtml(items.slice(0, 8)) : '<p class="source-note">No line names this folder; it comes from the tree.</p>'}</div>`;
+  }
+  return '';
+}
+const typesOn = (T, runner) => T.types.filter((t) => t.runner === runner).map((t) => `<button class="badge" type="button" data-act="sel" data-id="type:${esc(t.name)}"${S.sel === `type:${t.name}` ? ' aria-pressed="true"' : ''}>${esc(t.name)}</button>`).join('');
+function runnerStrip(T) {
+  return `<div class="runner-strip">${T.plates.map((p) => `<button class="rmini" type="button" data-act="sel" data-id="plate:${esc(p.name)}"${S.sel === `plate:${p.name}` ? ' aria-pressed="true"' : ''}><span class="micro-label">${esc(p.label)}</span><span><b>${esc(p.name)}</b>${p.version ? ` <code>${esc(p.version)}</code>` : ''}</span>${p.config ? `<code>${esc(p.config)}</code>` : ''}</button>`).join('')}${T.covReq ? `<span class="rmini" data-k="coverage"><span class="micro-label">Coverage</span><span><b>${esc(plainText(T.covReq.value || firstValue(T.covReq)).split(/\.\s/)[0].replace(/\.$/, ''))}</b></span></span>` : ''}</div>`;
+}
+
+// =====================================================================================
+// A: Specimen sheet + runner bench
+// =====================================================================================
+function specRow(r) {
+  const prose = !r.toks.length;
+  const keep = r.toks.filter((t) => !r.struck.includes(t)).slice(0, 3);
+  const lead = plainText(r.text.split('`')[0]).replace(/[:,(]\s*$/, '').trim();
+  const cap = lead.length >= 12 ? lead : plainText(r.text).slice(0, 80);
+  const pair = prose ? '' : `<span class="pair">${keep.map((t) => `<span class="spec">${esc(t)}</span>`).join('')}${r.struck.slice(0, 2).map((t) => `<span class="strike">${esc(t)}</span>`).join('')}${r.toks.length > keep.length + Math.min(2, r.struck.length) ? `<span class="cap">+${r.toks.length - keep.length - Math.min(2, r.struck.length)}</span>` : ''}</span>`;
+  return `<button class="srow" type="button" data-act="sel" data-id="${r.id}"${prose ? ' data-prose="true"' : ''}${S.sel === r.id ? ' aria-pressed="true"' : ''}>${pair}<span class="cap">${esc(cap)}</span></button>`;
+}
+function plate(s, si) {
+  const cases = s.rules.filter((r) => r.case);
+  const rest = s.rules.filter((r) => !r.case);
+  const MAX = 6;
+  const caseHtml = cases.length ? `<div class="case-grid">${cases.map((r) => { const ex = r.toks.find((t) => !/\s/.test(t) && t.length < 34 && !r.struck.includes(t)) || ''; return `<button class="case" type="button" data-act="sel" data-id="${r.id}"${S.sel === r.id ? ' aria-pressed="true"' : ''}><span class="glab">${esc(r.label || '')}</span><span class="big">${esc(r.case)}</span>${ex ? `<span class="spec cap">${esc(ex.split('/').pop())}</span>` : ''}</button>`; }).join('')}</div>` : '';
+  const shown = rest.slice(0, MAX);
+  return `<section class="plate"${s.rules.length > 9 && cases.length ? ' data-wide="true"' : ''}><div class="plate-h"><span class="micro-label">${esc(s.h)}</span><b>${s.rules.length}</b></div>${caseHtml}${shown.map(specRow).join('')}${rest.length > MAX ? `<button class="more-btn" type="button" data-act="sel" data-id="sec:${si}">+${rest.length - MAX} more rules</button>` : ''}</section>`;
+}
+function convA() {
+  const C = liftConv(convDoc());
+  const body = `<div class="plates">${C.secs.map((s, i) => plate(s, i)).join('')}</div>`;
+  const foot = `<span class="key"><span class="spec">name</span> a name the rule shows</span><span class="key"><span class="strike">name</span> a name the rule rules out</span><span class="key"><span class="spec" style="font-size:var(--fs-7)">camelCase</span> a case style the rule names</span><span>Rules with no name in code are a plain caption.</span>`;
+  return convHead(C, `${pic('The conventions as specimens', `<span class="counts-line">${C.secs.length} sections · ${C.rules.length} rules</span>`, body, foot)}${dockConv(C)}${sectionBars(convDoc())}`);
+}
+function testA() {
+  const T = liftTest(testDoc());
+  const benches = [...T.runners.map((p) => ({ k: p.key, p, name: p.name })), ...(T.cmds.some((c) => c.runner === 'checks') ? [{ k: 'checks', name: 'checks' }] : [])];
+  const assert = T.plates.find((p) => p.key === 'assert');
+  const plates = benches.map((b) => `<section class="rplate" data-k="${b.k}">${b.p ? `<button class="srow" type="button" data-act="sel" data-id="plate:${esc(b.p.name)}"${S.sel === `plate:${b.p.name}` ? ' aria-pressed="true"' : ''}><span class="micro-label">${esc(b.p.label)}</span><span class="rname"><b>${esc(b.p.name)}</b>${b.p.version ? `<code>${esc(b.p.version)}</code>` : ''}</span>${b.p.config ? `<span class="cap">Config <code>${esc(b.p.config)}</code></span>` : ''}</button><div class="tags">${typesOn(T, b.name)}</div>` : `<span class="micro-label">Checks beside the tests</span><span class="rname"><b>Type check and lint</b></span>`}<div class="cmds">${T.cmds.filter((c) => c.runner === b.name).map(cmdHtml).join('')}</div></section>`).join('');
+  const cov = T.covReq ? `<section class="rplate" data-k="coverage"><span class="micro-label">Coverage</span><span class="rname"><b>${esc(plainText(T.covReq.value || firstValue(T.covReq)).split(/\.\s/)[0].replace(/\.$/, ''))}</b></span>${assert ? `<span class="cap">Assertions: ${esc(assert.name)}</span>` : ''}</section>` : '';
+  const forbid = T.forbid ? `<div class="forbid"><span class="micro-label">${esc(T.forbid.h)}</span><div class="tags">${[...new Set(groupsOf(T.forbid).flatMap((g) => g.items.flatMap((it) => tokens(it.text))))].slice(0, 14).map((t) => `<span class="strike">${esc(t)}</span>`).join('')}</div></div>` : '';
+  const body = `<div class="bench">${plates}${cov}</div>${forbid}`;
+  const foot = `<span>One bench per runner the document names, each holding the test types that run on it and its run commands; checks that are not tests get their own bench. A command is selectable text with a Copy command button; Labelore never runs it.</span>`;
+  return testHead(`${pic('What runs the tests', `<span class="counts-line">${T.runners.length} runner${T.runners.length > 1 ? 's' : ''} · ${T.cmds.length} commands</span>`, body, foot)}${dockTest(T)}${sectionBars(testDoc())}`);
+}
+
+// =====================================================================================
+// B: Reuse. Conventions as the 044 E piles; Testing on the shipped clean tree.
+// =====================================================================================
+function convB() {
+  const C = liftConv(convDoc());
+  const cols = C.secs.map((s, i) => `<div class="pile-col"${S.filter != null && S.filter !== String(i) ? ' data-dim="true"' : ''}><div class="pile">${s.rules.length ? s.rules.map((r) => rk(r)).join('') : '<span class="pile-zero">0</span>'}</div><button class="pile-lab" type="button" data-act="filter" data-f="${i}" aria-pressed="${S.filter === String(i)}"><b>${s.rules.length}</b><span class="pl">${esc(s.short)}</span></button></div>`).join('');
+  const legend = `<div class="sec-legend" role="group" aria-label="Sections">${C.secs.map((s, i) => `<button class="sec-chip" type="button" data-act="filter" data-f="${i}" aria-pressed="${S.filter === String(i)}"><span>${esc(s.short)}</span><b>${s.rules.length}</b></button>`).join('')}</div>`;
+  const foot = `<span class="key"><span class="rk" data-st="hard"></span>a hard rule: never, must, only, no</span><span class="key"><span class="rk" data-st="plain"></span>a plain rule</span><span class="key"><span class="rk" data-st="soft"></span>an observed habit</span><span class="key"><span class="rk" data-st="plain" data-enf="true"></span>checked by a test or the linter</span><span>One column per section in the document's order, one segment per rule.</span>`;
+  return convHead(C, `${pic('How much each section asks', `<span class="counts-line">${C.rules.length} rules · ${C.rules.filter((r) => r.st === 'hard').length} hard · ${C.rules.filter((r) => r.enf).length} checked</span>`, `<div class="piles" style="--cols:${C.secs.length}">${cols}</div>`, foot)}${legend}${dockConv(C)}${sectionBars(convDoc())}`);
+}
+function parseTree(text) {
+  const rows = [];
+  text.split('\n').forEach((line) => {
+    if (!line.trim()) return;
+    const m = line.match(/^((?:│\s{3}|\s{4})*)(?:├── |└── )(.*)$/);
+    const depth = m ? m[1].length / 4 + 1 : 0;
+    const rest = m ? m[2] : line.trim();
+    const h = rest.search(/\s+#\s/);
+    const name = (h >= 0 ? rest.slice(0, h) : rest).trim();
+    rows.push({ depth, name, note: h >= 0 ? rest.slice(h).replace(/^\s+#\s+/, '') : '', folder: name.endsWith('/') });
+  });
+  // the full path of each row
+  const stack = [];
+  rows.forEach((r) => { stack.length = r.depth; stack[r.depth] = r.name; r.path = stack.slice(0, r.depth + 1).join(''); });
+  return rows;
+}
+function testB() {
+  const T = liftTest(testDoc());
+  let tree = '';
+  if (T.tree) {
+    const rows = parseTree(T.tree);
+    tree = `<ul class="tree">${rows.map((r) => {
+      const ty = T.types.filter((t) => t.paths.some((p) => p === r.path || (p.endsWith('/') && r.path === p) || (/\*/.test(p) && r.path === p.replace(/\*.*$/, '') && false)));
+      const isTest = /\.(test|spec)\./.test(r.name);
+      const runnerB = ty.length && ty[0].runner !== (T.runners[0] || {}).name ? `<span class="badge" data-k="runner">${esc(ty[0].runner)}</span>` : '';
+      return `<li><button class="t-name" type="button" data-act="sel" data-id="path:${esc(r.path)}" style="--d:${r.depth}"${r.folder ? ' data-folder' : ''}${S.sel === `path:${r.path}` ? ' aria-pressed="true"' : ''}>${svg(r.folder ? 'folder' : 'file')}<span class="nm">${esc(r.name)}</span></button><span class="t-note">${ty.map((t) => `<span class="badge">${esc(t.name)}</span>`).join('')}${runnerB}${isTest ? '<span class="badge" data-k="test">test file</span>' : ''}${r.note ? `<span>${esc(r.note)}</span>` : ''}</span></li>`;
+    }).join('')}</ul>`;
+  }
+  const loose = T.types.filter((t) => !t.paths.length || !T.tree || !t.paths.some((p) => T.tree.includes(p.replace(/^test\//, '').replace(/\/$/, '')))).map((t) => `<button class="badge" type="button" data-act="sel" data-id="type:${esc(t.name)}">${esc(t.name)}</button>`).join('');
+  const body = `${runnerStrip(T)}<div class="tree-scroll" style="margin-top:var(--space-4)">${tree || `<p class="source-note">${esc(T.loc ? plainText(firstValue(T.loc)) : 'No tree in this document')}</p>`}</div>${loose ? `<div class="notused" style="display:grid;gap:var(--space-1-5);margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px dashed var(--border)"><span class="micro-label">Test types not placed on the tree</span><div class="tags">${loose}</div></div>` : ''}`;
+  const cmds = `<section class="pic" style="margin-top:0"><div class="pic-bar"><span class="ff-title">Run commands</span><span class="counts-line">${T.cmds.length}</span></div><div class="pic-body"><div class="cmd-list">${T.cmds.map(cmdHtml).join('')}</div></div></section>`;
+  const foot = `<span>The tree is the document's own Structure fence, drawn as the shipped clean tree (009 B); a badge is a Test Types heading whose parenthesis names that folder.</span>`;
+  return testHead(`${pic('Where the tests live', `<span class="counts-line">${T.types.length} test types</span>`, body, foot)}${cmds}${dockTest(T)}${sectionBars(testDoc())}`);
+}
+
+// =====================================================================================
+// C: Territory map + mirror map
+// =====================================================================================
+function convC() {
+  const C = liftConv(convDoc());
+  const areas = new Map();
+  C.rules.forEach((r) => (r.paths.length ? r.paths : ['everywhere']).forEach((a) => { (areas.get(a) || areas.set(a, []).get(a)).push(r); }));
+  const order = [...areas.entries()].sort((a, b) => (a[0] === 'everywhere' ? -1 : b[0] === 'everywhere' ? 1 : b[1].length - a[1].length));
+  const max = Math.max(1, ...order.filter(([a]) => a !== 'everywhere').map(([, rs]) => rs.length));
+  const tiles = order.map(([a, rs]) => `<div class="tile2" role="group"${a === 'everywhere' ? ' data-every="true"' : ` data-step="${rs.length >= max * 0.6 ? 3 : rs.length >= max * 0.3 ? 2 : 1}"`} style="--g:${rs.length}"><button class="tn text-link" type="button" data-act="sel" data-id="area:${esc(a)}" style="text-transform:none;letter-spacing:0;white-space:normal;color:var(--foreground)">${a === 'everywhere' ? '<span class="micro-label">Everywhere · rules that name no path</span>' : `<code>${esc(a)}</code>`}<b>${rs.length}</b></button><div class="rks">${rs.map((r) => rk(r)).join('')}</div></div>`).join('');
+  const legend = `<div class="sec-legend" role="group" aria-label="Sections">${C.secs.map((s, i) => `<button class="sec-chip" type="button" data-act="filter" data-f="${i}" aria-pressed="${S.filter === String(i)}"><span>${esc(s.short)}</span><b>${s.rules.length}</b></button>`).join('')}</div>`;
+  const foot = `<span class="key"><span class="rk" data-st="hard"></span>hard</span><span class="key"><span class="rk" data-st="plain"></span>plain</span><span class="key"><span class="rk" data-st="soft"></span>observed</span><span class="key"><span class="rk" data-st="plain" data-enf="true"></span>checked</span><span>A territory is a part of the repository the rules name by path; a rule naming two sits in both. Its size and shade grow with the rules that name it.</span>`;
+  return convHead(C, `${pic('Where each rule applies', `<span class="counts-line">${order.length} territories · ${C.rules.length} rules</span>`, `<div class="terr">${tiles}</div>`, foot)}${legend}${dockConv(C)}${sectionBars(convDoc())}`);
+}
+function mirrorModel(T) {
+  const left = new Map(); const right = [];
+  const srcNames = new Set();
+  const lines = T.loc ? T.loc.items.flatMap((it) => [it.text, ...it.sub]) : [];
+  lines.forEach((t) => tokens(t).forEach((x) => { const m = x.match(/^(src\/[a-z-]+)/); if (m) srcNames.add(m[1]); }));
+  ['planning-repo', 'planning-fs', 'server', 'web', 'presentation', 'rendering', 'cli', 'domain'].forEach((n) => { if (T.doc.sections.some((s) => JSON.stringify(s.blocks).includes(`src/${n}`))) srcNames.add(`src/${n}`); });
+  lines.forEach((t, i) => {
+    const toks = tokens(t);
+    const test = toks.find((x) => /^test\//.test(x) && !/\.test\.ts$|\.mjs$/.test(x)) || (toks.find((x) => /^test\//.test(x)) ? 'test/' : null);
+    if (!test) return;
+    let src = (toks.find((x) => /^src\//.test(x)) || '').match(/^(src\/[a-z-]+)/);
+    let inferred = false;
+    if (!src) { const w = [...srcNames].find((n) => new RegExp(`\\b${n.slice(4).replace('-', '[- ]')}\\b`, 'i').test(t)); if (w) { src = [w]; inferred = true; } }
+    const label = test;
+    if (right.some((r) => r.label === label && r.cap === plainText(t.replace(/^`[^`]+`\s*/, '')))) return;
+    const runner = /playwright|e2e/i.test(t) ? (T.runners.find((p) => /playwright/i.test(p.name)) || {}).name : null;
+    const r = { id: `m${i}`, label, path: test, src: src ? src[1] : null, inferred, runner, cap: plainText(t.replace(/^`[^`]+`\s*/, '')) };
+    right.push(r);
+    if (r.src) left.set(r.src, true);
+  });
+  // co-located pairs from the tree (x.ts beside x.test.ts)
+  const pairs = [];
+  if (!right.some((r) => r.src) && T.tree) {
+    const rows = parseTree(T.tree);
+    rows.filter((r) => /\.test\.\w+$/.test(r.name)).forEach((r) => { const base = r.path.replace(/\.test(\.\w+)$/, '$1'); if (rows.some((x) => x.path === base)) pairs.push({ src: base, test: r.path }); });
+  }
+  return { left: [...left.keys()], right, pairs };
+}
+function testC() {
+  const T = liftTest(testDoc());
+  const M = mirrorModel(T);
+  let map;
+  if (M.right.some((r) => r.src)) {
+    const selR = S.sel && S.sel.startsWith('path:') ? S.sel.slice(5) : null;
+    map = `<div class="mirror" id="mirror"><svg class="mm-wires" aria-hidden="true"></svg><span class="micro-label mm-h" style="grid-column:1;grid-row:1">The code</span><span class="micro-label mm-h" style="grid-column:3;grid-row:1">Its tests</span>${M.left.map((l) => `<button class="mm-item" type="button" data-src="true" data-key="${esc(l)}" data-act="sel" data-id="path:${esc(l)}" style="grid-column:1;grid-row:${M.right.findIndex((r) => r.src === l) + 2}"${selR === l ? ' aria-pressed="true"' : ''}><code>${esc(l)}</code></button>`).join('')}${M.right.map((r, ri) => `<button style="grid-column:3;grid-row:${ri + 2}" class="mm-item" type="button" data-to="${esc(r.src || '')}" data-inferred="${r.inferred}"${r.src ? '' : ' data-lone="true"'} data-act="sel" data-id="path:${esc(r.path)}"${selR === r.path ? ' aria-pressed="true"' : ''}><span class="tags"><code>${esc(r.label)}</code>${r.runner ? `<span class="badge" data-k="runner">${esc(r.runner)}</span>` : ''}</span><span class="cap">${esc(r.cap)}</span></button>`).join('')}</div>`;
+  } else {
+    map = `<div class="mirror" id="mirror"><svg class="mm-wires" aria-hidden="true"></svg><div class="mm-col left"><span class="micro-label">The code</span>${M.pairs.map((p) => `<button class="mm-item" type="button" data-src="true" data-key="${esc(p.src)}" data-act="sel" data-id="path:${esc(p.src)}"><code>${esc(p.src)}</code></button>`).join('')}</div><div class="mm-mid"></div><div class="mm-col right"><span class="micro-label">Its tests · ${esc(T.loc ? plainText(firstValue(T.loc)) : '')}</span>${M.pairs.map((p) => `<button class="mm-item" type="button" data-to="${esc(p.src)}" data-act="sel" data-id="path:${esc(p.test)}"><code>${esc(p.test)}</code></button>`).join('')}</div></div>`;
+  }
+  const cmds = `<div class="cmd-list" style="margin-top:var(--space-5);padding-top:var(--space-4);border-top:1px solid var(--border)"><span class="micro-label">Run commands · ${T.cmds.length}</span>${T.cmds.map(cmdHtml).join('')}</div>`;
+  const foot = `<span>Each test folder is wired to the source folder its line names ("test/server/ for src/server/**"); a dashed box names no source folder. With co-located tests the tree's x.ts and x.test.ts pairs are wired instead.</span><span class="pan-note">The map reflows; captions hide.</span>`;
+  return testHead(`${pic('Tests against the code they test', `<span class="counts-line">${M.right.length || M.pairs.length} test place${(M.right.length || M.pairs.length) === 1 ? '' : 's'}</span>`, `${runnerStrip(T)}<div style="margin-top:var(--space-4)">${map}</div>${cmds}`, foot)}${dockTest(T)}${sectionBars(testDoc())}`);
+}
+function wireMirror() {
+  const m = document.getElementById('mirror');
+  if (!m) return;
+  const br = m.getBoundingClientRect();
+  const sel = S.sel && S.sel.startsWith('path:') ? S.sel.slice(5) : null;
+  m.querySelector('.mm-wires').innerHTML = [...m.querySelectorAll('.mm-item[data-to]')].filter((e) => e.dataset.to).map((e) => {
+    const s = m.querySelector(`.mm-item[data-src][data-key="${CSS.escape(e.dataset.to)}"]`);
+    if (!s) return '';
+    const a = s.getBoundingClientRect(); const b = e.getBoundingClientRect();
+    const x1 = a.right - br.left; const y1 = a.top + a.height / 2 - br.top; const x2 = b.left - br.left; const y2 = b.top + Math.min(b.height / 2, 18) - br.top;
+    const mx = (x1 + x2) / 2;
+    const hot = sel && (sel === e.dataset.to || e.dataset.id === `path:${sel}`);
+    return `<path d="M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}"${e.dataset.inferred === 'true' ? ' data-inferred="true"' : ''}${hot ? ' data-hot="true"' : ''}/>`;
+  }).join('');
+}
+
+// ---------- wiring ----------
+const VARIANT = { a: { conventions: convA, testing: testA }, b: { conventions: convB, testing: testB }, c: { conventions: convC, testing: testC } };
+['a', 'b', 'c'].forEach((v) => { VIEWS[v] = () => pageHtml(PROJ[proj()], S.panel, MINE, VARIANT[v][S.panel]()); });
+function afterRender() { wireMirror(); }
+window.addEventListener('resize', () => render());
+render();
+
+</script>
+</body>
+</html>
