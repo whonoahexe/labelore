@@ -41,13 +41,38 @@ function tokenAt(text: string, from: number): { name: string; end: number } | nu
   return { name: text.slice(from, end), end };
 }
 
+/**
+ * True when the text between a placeholder's brackets reads as a description and not as a value: a few lower-case words
+ * (`your port`, `port`, `api-key`), or an upper-snake token (`YOUR_KEY`). Anything with a digit or mixed case
+ * (`hunter2`, `sk-live-1`, `Hunter`) is a value written in brackets and is not a placeholder (WR-01).
+ */
+function readsAsPlaceholder(inner: string): boolean {
+  if (inner.length === 0) return true;
+  let spaced = false;
+  let lower = true;
+  let upper = true;
+  for (let i = 0; i < inner.length; i += 1) {
+    const c = inner.charCodeAt(i);
+    if (c === 32) {
+      spaced = true;
+      continue;
+    }
+    if (c >= 97 && c <= 122) upper = false;
+    else if (c >= 65 && c <= 90) lower = false;
+    else if (c !== 95 && c !== 45) return false;
+  }
+  if (spaced) return true;
+  return lower || (upper && inner.includes('_'));
+}
+
 /** True when a remainder is nothing, or one bracketed or angle-bracketed placeholder (`[your port]`, `<port>`). */
 function isPlaceholder(remainder: string): boolean {
   const value = remainder.trim();
   if (value.length === 0) return true;
   const first = value[0];
   const last = value[value.length - 1];
-  return (first === '[' && last === ']') || (first === '<' && last === '>');
+  if (!((first === '[' && last === ']') || (first === '<' && last === '>'))) return false;
+  return readsAsPlaceholder(value.slice(1, -1));
 }
 
 /**
@@ -98,8 +123,20 @@ export interface WithheldText {
   hadValue: boolean;
 }
 
-/** The end of the value a `=` starts at `from`: the next space or tab, or the end of the text. */
+/** The end of the value a `=` starts at `from`: a quoted run (a quote, or a quote escaped by a backslash) read whole, spaces
+ * inside it included, else the next space or tab, or the end of the text. */
 function valueEnd(text: string, from: number): number {
+  const escaped = text[from] === '\\' && (text[from + 1] === '"' || text[from + 1] === "'");
+  const first = escaped ? text[from + 1] : text[from];
+  if (first === '"' || first === "'") {
+    const close = text.indexOf(first, escaped ? from + 2 : from + 1);
+    if (close >= 0) {
+      let after = close + 1;
+      while (after < text.length && text[after] !== ' ' && text[after] !== '\t') after += 1;
+      return after;
+    }
+    return text.length;
+  }
   let end = from;
   while (end < text.length && text[end] !== ' ' && text[end] !== '\t') end += 1;
   return end;
@@ -235,13 +272,21 @@ function isBreak(code: number): boolean {
   return code === 32 || code === 9 || code === 10 || code === 13;
 }
 
-/** A character a value may end on without it being part of the value: the punctuation of the sentence around it. */
+/** A character a value may end on without it being part of the value: the punctuation and the closing marks of the
+ * sentence around it (a comma, semicolon, full stop, closing bracket or parenthesis, quote, colon or bold star). */
 function isTrailingPunctuation(code: number): boolean {
-  return code === 44 || code === 59 || code === 46 || code === 41 || code === 58;
+  return (
+    code === 44 || code === 59 || code === 46 || code === 41 || code === 58 || code === 93 || code === 34 || code === 39 || code === 42
+  );
 }
 
-/** The index just past a placeholder that starts at `at` (`[...]` or `<...>`, the closer within PLACEHOLDER_SPAN and
- * followed by the end, a break or sentence punctuation), or -1 when what starts there is not one. */
+/** A closing mark that may sit between a name and its sign: a bold or italic star, or a quote (`"NAME": value`). */
+function isCloser(code: number): boolean {
+  return code === 42 || code === 34 || code === 39;
+}
+
+/** The index just past a placeholder that starts at `at` (`[...]` or `<...>` reading as a description, the closer within
+ * PLACEHOLDER_SPAN and followed by the end, a break or sentence punctuation), or -1 when what starts there is not one. */
 function placeholderEnd(text: string, at: number, to: number): number {
   const opener = text.charCodeAt(at);
   const closer = opener === 91 ? 93 : opener === 60 ? 62 : 0;
@@ -250,26 +295,55 @@ function placeholderEnd(text: string, at: number, to: number): number {
   for (let k = at + 1; k < limit; k += 1) {
     if (text.charCodeAt(k) !== closer) continue;
     const after = k + 1;
+    if (!readsAsPlaceholder(text.slice(at + 1, k))) return -1;
     if (after >= to) return after;
     const next = text.charCodeAt(after);
-    if (isBreak(next) || isTrailingPunctuation(next) || next === 96 || next === 34 || next === 39) return after;
+    if (isBreak(next) || isTrailingPunctuation(next) || next === 96) return after;
     return -1;
   }
   return -1;
 }
 
-/** The index just past the value that starts at `start`: the whole rest of a code span, a quoted run, or the next
- * space, tab or line break. Trailing sentence punctuation stays outside the value. */
-function maskedValueEnd(text: string, start: number, to: number, inSpan: boolean): number {
-  if (inSpan) return to;
-  const first = text.charCodeAt(start);
-  if (first === 34 || first === 39 || first === 96) {
-    const close = text.indexOf(text[start], start + 1);
-    return close >= 0 && close < to ? close + 1 : to;
-  }
-  let end = start;
+/** The end of the quoted run that opens at `start` (a quote, a backtick, or a backslash-escaped quote): past its closing
+ * mark and any value characters stuck to it (`"abc"def`), or `to` when it is never closed. */
+function quotedEnd(text: string, start: number, to: number): number {
+  const escaped = text.charCodeAt(start) === 92;
+  const quote = text[escaped ? start + 1 : start];
+  const close = text.indexOf(quote, escaped ? start + 2 : start + 1);
+  if (close < 0 || close >= to) return to;
+  let end = close + 1;
   while (end < to && !isBreak(text.charCodeAt(end))) end += 1;
-  while (end > start + 1 && isTrailingPunctuation(text.charCodeAt(end - 1))) end -= 1;
+  while (end > close + 1 && isTrailingPunctuation(text.charCodeAt(end - 1))) end -= 1;
+  return end;
+}
+
+/** True when `start` opens a quoted run: a quote, a backtick, or a backslash before a quote. */
+function opensQuote(text: string, start: number): boolean {
+  const first = text.charCodeAt(start);
+  if (first === 34 || first === 39 || first === 96) return true;
+  if (first !== 92) return false;
+  const second = text.charCodeAt(start + 1);
+  return second === 34 || second === 39;
+}
+
+/** The index just past the value that starts at `start`: the whole rest of a code span, a quoted run, the words up to
+ * the end of the clause (`multiWord`: a comma, semicolon, closing bracket, full stop before a space, or a line break),
+ * or the next space, tab or line break. Trailing sentence punctuation stays outside the value. */
+function maskedValueEnd(text: string, start: number, to: number, inSpan: boolean, multiWord: boolean): number {
+  if (inSpan) return to;
+  if (opensQuote(text, start)) return quotedEnd(text, start, to);
+  let end = start;
+  if (multiWord) {
+    while (end < to) {
+      const c = text.charCodeAt(end);
+      if (c === 10 || c === 13 || c === 44 || c === 59 || c === 41 || c === 93 || c === 96) break;
+      if (c === 46 && (end + 1 >= to || isBreak(text.charCodeAt(end + 1)))) break;
+      end += 1;
+    }
+  } else {
+    while (end < to && !isBreak(text.charCodeAt(end))) end += 1;
+  }
+  while (end > start + 1 && (isBreak(text.charCodeAt(end - 1)) || isTrailingPunctuation(text.charCodeAt(end - 1)))) end -= 1;
   return end;
 }
 
@@ -282,16 +356,21 @@ interface MaskState {
 /**
  * When `=` (or `:`) after the name that ends at `nameEnd` begins an assignment with a value, writes the text so far and
  * the marker and returns the index just past the value; returns the index past a kept placeholder, or -1 when the name
- * is not assigned anything. `NAME=value` and `NAME: value` and `NAME:value` and `NAME = value` are assignments;
- * `NAME= value`, `NAME==`, `NAME=>` and `NAME://` are not.
+ * is not assigned anything. `NAME=value` and `NAME: value` and `NAME:value` and `NAME = value` are assignments, also
+ * with the name closed by bold stars or quotes (`**NAME** = value`, `"NAME": value`); `NAME= value`, `NAME==`, `NAME=>`
+ * and `NAME://` are not. After a colon and a space the value runs to the end of the clause, so a value of several words
+ * (`NAME: pass phrase here`) is masked whole; elsewhere it is one token.
  */
 function maskAssignment(state: MaskState, text: string, nameEnd: number, to: number, inSpan: boolean): number {
   let at = nameEnd;
+  while (at < to && isCloser(text.charCodeAt(at))) at += 1;
+  const afterName = at;
   while (at < to && isBlank(text.charCodeAt(at))) at += 1;
-  const spaced = at > nameEnd;
+  const spaced = at > afterName;
   const sign = text.charCodeAt(at);
   if (at >= to) return -1;
   let start: number;
+  let multiWord = false;
   if (sign === 61) {
     const after = at + 1;
     if (after >= to) return -1;
@@ -310,14 +389,16 @@ function maskAssignment(state: MaskState, text: string, nameEnd: number, to: num
     const next = text.charCodeAt(after);
     if (next === 58 || next === 47) return -1;
     start = after;
-    while (start < to && isBlank(text.charCodeAt(start))) start += 1;
+    while (start < to && (isBlank(text.charCodeAt(start)) || text.charCodeAt(start) === 42)) start += 1;
+    // `NAME: a few words` is a clause; `NAME:value` with no space after the colon is one token.
+    multiWord = start > after;
   } else {
     return -1;
   }
   if (start >= to) return -1;
   const placeholder = placeholderEnd(text, start, to);
   if (placeholder >= 0) return placeholder;
-  const end = maskedValueEnd(text, start, to, inSpan);
+  const end = maskedValueEnd(text, start, to, inSpan, multiWord);
   if (end <= start) return -1;
   if (start > state.start) state.out.push(text.slice(state.start, start));
   state.out.push(VALUE_NOT_SHOWN_MARK);
@@ -365,17 +446,56 @@ function maskRange(text: string, from: number, to: number, inSpan: boolean, out:
   if (to > state.start) out.push(text.slice(state.start, to));
 }
 
+/** True for a table cell that is only a variable name (optionally in backticks, bold or quotes). */
+function isNameCell(cell: string): boolean {
+  let from = 0;
+  let to = cell.length;
+  const edge = (c: number): boolean => c === 32 || c === 9 || c === 96 || c === 42 || c === 34 || c === 39;
+  while (from < to && edge(cell.charCodeAt(from))) from += 1;
+  while (to > from && edge(cell.charCodeAt(to - 1))) to -= 1;
+  const token = tokenAt(cell, from);
+  return token !== null && token.end === to;
+}
+
+/**
+ * A table row whose cell is a variable name has its value in a later cell, with no `=` or `:` for the scan to see
+ * (`| STRIPE_KEY | sk_live_abc |`). Every non-empty cell after the first name cell (a name before the first pipe is
+ * not a cell) becomes the marker; a cell already masked or reading as a placeholder is kept. Text with no pipe is
+ * returned as written.
+ */
+function maskTableRow(text: string): string {
+  if (!text.includes('|')) return text;
+  const cells = text.split('|');
+  let named = -1;
+  for (let i = 1; i < cells.length; i += 1) {
+    if (isNameCell(cells[i])) {
+      named = i;
+      break;
+    }
+  }
+  if (named < 0) return text;
+  for (let j = named + 1; j < cells.length; j += 1) {
+    const trimmed = cells[j].trim();
+    if (trimmed === '' || trimmed === VALUE_NOT_SHOWN_MARK) continue;
+    if (placeholderEnd(trimmed, 0, trimmed.length) === trimmed.length) continue;
+    cells[j] = ` ${VALUE_NOT_SHOWN_MARK} `;
+  }
+  return cells.join('|');
+}
+
 /**
  * `text` with the value of every assignment replaced by VALUE_NOT_SHOWN_MARK, the name kept: `NAME=value`, `NAME: value`,
- * `NAME:value`, `NAME = value`, a quoted value, a value inside an inline code span (up to the closing backtick), and
- * `` `NAME`=value ``, anywhere in the string, any number of times. A name is upper-snake (A to Z, 0 to 9, underscore,
- * starting with a letter, two to eighty characters). A bracketed or angle-bracketed placeholder (`PORT=[your port]`), an
- * empty remainder and text with no assignment are returned as written. The remainder is never returned. One pass, linear,
- * no regular expression.
+ * `NAME:value`, `NAME = value`, `**NAME** = value`, a quoted value, a value of several words after a colon, a value inside
+ * an inline code span (up to the closing backtick), `` `NAME`=value ``, and the cells after a variable name in a table row
+ * (`| NAME | value |`), anywhere in the string, any number of times. A name is upper-snake (A to Z, 0 to 9, underscore,
+ * starting with a letter, two to eighty characters). A bracketed or angle-bracketed placeholder that reads as a description
+ * (`PORT=[your port]`, `PORT=<port>`; not `<hunter2>`), an empty remainder and text with no assignment are returned as
+ * written. The remainder is never returned. One pass, linear, no regular expression.
  */
 export function maskValues(text: string): string {
   if (text === '') return text;
   const out: string[] = [];
-  maskRange(text, 0, text.length, false, out);
+  const row = maskTableRow(text);
+  maskRange(row, 0, row.length, false, out);
   return out.join('');
 }

@@ -10,6 +10,7 @@ import {
   withholdValue,
 } from '../src/planning-repo/handlers/withhold-values.ts';
 import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
+import { WRITTEN_FORMS, formTag } from './helpers/written-value-forms.ts';
 
 describe('withholdValue', () => {
   it('gives the name and hadValue for NAME=value, the planted Tidemark line included', () => {
@@ -223,5 +224,47 @@ describe('maskValues', () => {
       maxSize: 30_000,
     });
     expect(ticks.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+});
+
+// 10-REVIEW CR-02 / WR-01: the mask removes the value in every written form, not only the leading `NAME=value`.
+describe('maskValues - every written form (10-REVIEW CR-02, WR-01)', () => {
+  for (const [index, form] of WRITTEN_FORMS.entries()) {
+    it(`withholds the value of: ${form.label}`, () => {
+      const tag = formTag(index);
+      const out = maskValues(form.line(tag));
+      for (const secret of form.secrets(tag)) expect(out, secret).not.toContain(secret);
+      expect(out).toContain(VALUE_NOT_SHOWN_MARK);
+      expect(maskValues(out), 'idempotent').toBe(out);
+    });
+  }
+
+  it('still names the variable beside the mark', () => {
+    expect(maskValues('**STRIPE_KEY** = hunter2')).toBe(`**STRIPE_KEY** = ${VALUE_NOT_SHOWN_MARK}`);
+    expect(maskValues('Auth: STRIPE_KEY: hunter2')).toBe(`Auth: STRIPE_KEY: ${VALUE_NOT_SHOWN_MARK}`);
+    expect(maskValues('| STRIPE_KEY | hunter2 |')).toBe(`| STRIPE_KEY | ${VALUE_NOT_SHOWN_MARK} |`);
+    expect(maskValues('x [STRIPE_KEY=hunter2] y')).toBe(`x [STRIPE_KEY=${VALUE_NOT_SHOWN_MARK}] y`);
+  });
+
+  it('keeps a description in brackets (lower-case words, an upper-snake token) but not a value in brackets', () => {
+    for (const kept of ['PORT=<port>', 'PORT=[your port]', 'KEY=<api-key>', 'KEY=<YOUR_KEY>', 'KEY=[paste it here]']) {
+      expect(maskValues(kept), kept).toBe(kept);
+    }
+    for (const masked of ['PASSWORD=<hunter2>', 'API_KEY=[sk-live-1]', 'API_KEY=<Hunter>']) {
+      expect(maskValues(masked), masked).toContain(VALUE_NOT_SHOWN_MARK);
+    }
+  });
+
+  it('leaves a table row with no variable name, and a header row, as written', () => {
+    expect(maskValues('| Variable | Value |')).toBe('| Variable | Value |');
+    expect(maskValues('| --- | --- |')).toBe('| --- | --- |');
+    expect(maskValues('| Host | Stripe dashboard |')).toBe('| Host | Stripe dashboard |');
+  });
+});
+
+describe('withholdInText - a quoted value is removed whole (10-REVIEW CR-02)', () => {
+  it('removes a single-quoted value of several words and a double-quoted one', () => {
+    expect(withholdInText("STRIPE_KEY='sk live' now").text).toBe('STRIPE_KEY now');
+    expect(withholdInText('Use STRIPE_KEY="a b c" now').text).toBe('Use STRIPE_KEY now');
   });
 });
