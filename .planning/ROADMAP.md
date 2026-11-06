@@ -464,7 +464,7 @@ the rest.
    template or workstream layout, and fall back to a readable generic page when a real file differs.
    *(VIEW-14, VIEW-15, VIEW-16, VIEW-17, VIEW-18, VIEW-19, VIEW-20)*
 
-**Plans**: 5/32 plans executed
+**Plans**: 6/32 plans executed
 
 Plans:
 **Wave 1**
@@ -479,7 +479,7 @@ Plans:
 - [x] 11-05-PLAN.md — Made-up spikes tree in Lendshed: free-text verdicts, coercion traps, scripts and outputs
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 11-06-PLAN.md — Made-up pause pair and nested pauses; spike, handoff and continue-here kinds join the rule with Shapes' markers
+- [x] 11-06-PLAN.md — Made-up pause pair and nested pauses; spike, handoff and continue-here kinds join the rule with Shapes' markers
 
 **Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 11-07-PLAN.md — Pause lift and context: HANDOFF.json and .continue-here.md, pairing, date source, moved on, disagreements
@@ -613,7 +613,7 @@ file, ID or project.
 | 8. Several Projects and a Switcher | v2.1 | 18/18 | Complete    | 2026-11-02 |
 | 9. Review, Audit and Root Document Pages | v2.1 | 16/16 | In Progress | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 24/24 | Complete    | 2026-11-06 |
-| 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 5/32 | In Progress | - |
+| 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 6/32 | In Progress | - |
 | 12. Project Settings, Source Mode and Reading Polish | v2.1 | 0/TBD | Not started | - |
 | 13. Search and Quick-Jump Palette | v2.1 | 0/TBD | Not started | - |
 
