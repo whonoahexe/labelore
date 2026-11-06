@@ -501,8 +501,10 @@ export function IndexesView({ model }: { model: ComposedIndexes }): React.JSX.El
 
   function open(tile: ComposedIndexesTile): void {
     if (tile.to === null) return;
-    setClosed(null);
-    navigate(tile.to);
+    // The address already names this tile (it was collapsed in place): just open it again. Anywhere else, go to the
+    // tile's own address; the collapsed state resets when the address's tile changes, so the old panel never flashes.
+    if (tile.key === model.openKey) setClosed(null);
+    else navigate(tile.to);
   }
 
   return (

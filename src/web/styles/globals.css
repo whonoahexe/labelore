@@ -35306,8 +35306,13 @@ button.view-indexes-tile:hover:not(:disabled) {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .view-indexes-bars {
+    gap: var(--space-3);
+  }
+
   .view-indexes-bars li {
     grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: var(--space-0-5);
   }
 
   .view-indexes-bartrack {
