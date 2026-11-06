@@ -1,0 +1,77 @@
+{
+  "_meta": {
+    "updated_at": "2026-09-14T09:12:40.000Z",
+    "version": 3,
+    "made_up_example": true,
+    "derived_from": "agents/gsd-intel-updater.md",
+    "gsd_core_version": "1.19.0"
+  },
+  "entries": {
+    "fastify": {
+      "version": "^5.1.0",
+      "type": "production",
+      "used_by": [
+        "src/server/index.ts",
+        "src/server/routes/"
+      ],
+      "invocation": "npm run serve"
+    },
+    "react": {
+      "version": "^19.0.0",
+      "type": "production",
+      "used_by": [
+        "src/web/"
+      ],
+      "invocation": "npm run dev"
+    },
+    "react-router": {
+      "version": "^7.0.0",
+      "type": "production",
+      "used_by": [
+        "src/web/App.tsx"
+      ],
+      "invocation": "npm run dev"
+    },
+    "better-sqlite3": {
+      "version": "^11.3.0",
+      "type": "production",
+      "used_by": [
+        "src/server/db.ts"
+      ],
+      "invocation": "require"
+    },
+    "vite": {
+      "version": "^6.0.0",
+      "type": "development",
+      "used_by": [
+        "vite.config.ts"
+      ],
+      "invocation": "npm run build"
+    },
+    "vitest": {
+      "version": "^3.0.0",
+      "type": "development",
+      "used_by": [
+        "test/"
+      ],
+      "invocation": "npm test"
+    },
+    "eslint": {
+      "version": "^9.0.0",
+      "type": "development",
+      "used_by": [
+        "src/"
+      ],
+      "invocation": "npm run lint"
+    },
+    "typescript": {
+      "version": "^5.6.0",
+      "type": "development",
+      "used_by": [
+        "src/",
+        "test/"
+      ],
+      "invocation": "implicit"
+    }
+  }
+}
