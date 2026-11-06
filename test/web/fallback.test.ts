@@ -110,7 +110,7 @@ describe('resolveViewFor sourceEscape (09 D-01)', () => {
   );
 
   it('does not extend the exemption to any other kind', () => {
-    const resolved = resolveViewFor('handoff', input(), { sourceEscape: true });
+    const resolved = resolveViewFor('deferred-items', input(), { sourceEscape: true });
     expect(resolved.recognized).toBe(false);
     expect(resolved.manifest.lead).toContain("doesn't yet have a dedicated view");
   });
