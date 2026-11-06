@@ -628,6 +628,18 @@ describe('spikes view contract - the real sources', () => {
     }
   });
 
+  it('the sheet reuses the shared RecordDisagreement, lists files as text with no link, and says "by name only" once', async () => {
+    const code = stripSourceComments(await source(COMPONENTS));
+    expect(code).toContain("from '../components/record-disagreement.tsx'");
+    expect(code).toContain('<RecordDisagreement');
+    const files = code.slice(code.indexOf('function FilesList'), code.indexOf('function Bars'));
+    expect(files).not.toMatch(/<(a|Link)\b/);
+    expect(files).not.toContain('href');
+    expect(count(code, 'Listed by name only. Labelore never runs or opens these files.')).toBe(1);
+    expect(code).toContain('aria-label={SHEET_CLOSE_LABEL}');
+    expect(await source('src/web/views/spikes-page.ts')).toContain("SHEET_CLOSE_LABEL = 'Close spike'");
+  });
+
   it('reuses no view-pause-*, research-* or view-codebase-* class', async () => {
     const code = stripSourceComments(await source(COMPONENTS));
     expect(code).not.toMatch(/className=["'{][^>]*\b(view-pause-|research-|view-codebase-)/);
