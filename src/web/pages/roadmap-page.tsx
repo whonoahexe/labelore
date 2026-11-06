@@ -113,6 +113,13 @@ function PhaseFlow({
               <Link to={phase.url}>{phase.name}</Link>
             </h3>
             {phase.goal ? <p className="phase-goal">{phase.goal}</p> : null}
+            {phase.pausedHereUrl !== null ? (
+              <p className="source-note">
+                <Link className="text-link" to={phase.pausedHereUrl}>
+                  Paused work
+                </Link>
+              </p>
+            ) : null}
           </div>
           <div className="phase-statuses" aria-label="Phase status">
             <span
