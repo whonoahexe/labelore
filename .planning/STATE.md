@@ -22,10 +22,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-11-02)
+See: .planning/PROJECT.md (updated 2026-11-06)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Phase 10 — Codebase Map, Specification and Check Pages
+**Current focus:** Phase 9 — Review, Audit and Root Document Pages (2 human-UAT items open)
 
 ## Current Position
 
@@ -200,6 +200,8 @@ None blocking. Open scope and policy questions from research, to settle during t
 - Workstreams, intel, graphs, reports and forensics have no real example on this machine; research recommended deferring them. They stay in scope in Phase 11, the last page phase, with workstreams built last within it, so they can be cut cleanly.
 - [Phase 6] `.mcp.json` and Labelore's own `.planning/` and `.claude/` still name private projects and paths (327 files, listed in 06-22-SUMMARY); the leak test leaves these three locations out until they are cleaned.
 - [Phase 6] The research page shows the last PITFALLS rows with names like "to 33 Minor" — a heading-parsing bug to fix in code, not in the file.
+- [Phase 10] SECURITY.md was never produced (security enforcement is on); run /gsd-secure-phase 10.
+- [Phase 10] Advisory: a bare value typed in the USER-SETUP Variable table's Source column still reaches `variables[].source` (10-VERIFICATION).
 - [Phase 6] Five test-hygiene review warnings stay open (06-REVIEW-DISPOSITION.md); WR-02, the no-skips scan's comment blanker hiding test headers after `//` in strings, is the one worth fixing first.
 
 ### Quick Tasks Completed
@@ -228,9 +230,9 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-11-03T18:01:19.432Z
+Last session: 2026-11-06T09:40:00Z
 Stopped at: Phase 10 complete, ready to verify Phase 9
-Resume file: .planning/phases/10-codebase-map-specification-and-check-pages/10-UI-SPEC.md
+Resume file: None
 
 ## Operator Next Steps
 

@@ -174,6 +174,15 @@ URLs read like what they point to, with search that is quicker to use and easier
   `ssh://` target added at runtime; remembered in Labelore's own settings and switched from the
   header, with each project's name visible in the header down to phone width (PLAT-02) — Phase 8
 
+**Codebase map, specification and check pages**
+
+- ✓ The seven codebase-map documents open into designed pages, and a project holding only a
+  codebase map opens on a "mapped, not started" overview (VIEW-13, TGT-09) — Phase 10
+- ✓ Spec, AI spec, user setup, eval review, browser check and cross-AI reviews open into designed
+  pages; user setups never show a variable's value (VIEW-11, VIEW-12) — Phase 10
+- ✓ Types with no real example on this machine are built and tested against made-up examples that
+  are labelled as made up (VIEW-21) — Phase 10
+
 ### Active
 
 <!-- v2.1 Wayfinding scope, defined 2026-10-25. REQUIREMENTS.md holds the REQ-IDs. -->
@@ -181,12 +190,10 @@ URLs read like what they point to, with search that is quicker to use and easier
 **Document legibility**
 
 - [ ] Sketch-built pages for every GSD file type that lacks one (root documents, milestone audit,
-      review disposition, coverage, review fix, spec, AI spec, eval review, user setup, browser
-      check, cross-AI reviews, codebase map, spikes, seeds, threads, reports, intel, graphs,
+      review disposition, coverage, review fix, spikes, seeds, threads, reports, intel, graphs,
       forensics, workstreams, onboarding, handoff, continue-here)
 - [ ] `config.json` shown as read-only project settings reachable from anywhere in the app
 - [ ] Redesigned Source mode
-- [ ] Codebase-only projects open on a "mapped, not started" overview
 
 **v1.1 leftovers**
 
@@ -339,4 +346,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-02 after Phase 8*
+*Last updated: 2026-11-06 after Phase 10*
