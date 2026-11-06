@@ -107,6 +107,8 @@ export interface SynthesisSummary {
   documents: number | null;
   /** How many classification types the file counts; null when it counts none. */
   classifications: number | null;
+  /** The per-type document counts as written ("ADR: 2"), in the file's order; empty when it counts none. */
+  classificationSplit: CountRow[];
   /** null when the summary line could not be read. */
   conflicts: ConflictBuckets | null;
 }
@@ -395,8 +397,14 @@ function extractSynthesis(text: string): SynthesisSummary {
     numberAt(text, /^\s*(?:[-*]\s*)?Docs synthesized:\s*(\d+)/im) ??
     numberAt(text, /^\s*(?:[-*]\s*)?Documents?(?: synthesized)?:\s*(\d+)/im);
   const types = new Set<string>();
+  const split: CountRow[] = [];
   const typeRow = /^\s*[-*]\s*(ADR|SPEC|PRD|DOC|UNKNOWN)s?\s*[:x×-]\s*(\d+)\b/gim;
-  for (let found = typeRow.exec(text); found !== null; found = typeRow.exec(text)) types.add(found[1].toUpperCase());
+  for (let found = typeRow.exec(text); found !== null; found = typeRow.exec(text)) {
+    const type = found[1].toUpperCase();
+    if (types.has(type)) continue;
+    types.add(type);
+    split.push({ label: type, count: Number(found[2]) });
+  }
   const conflictLine = /^\s*(?:[-*]\s*)?Conflicts:\s*(.*)$/im.exec(text);
   let conflicts: ConflictBuckets | null = null;
   if (conflictLine) {
@@ -408,7 +416,13 @@ function extractSynthesis(text: string): SynthesisSummary {
       conflicts = { blockers, competing, autoResolved };
     }
   }
-  return { kind: 'synthesis', documents, classifications: types.size > 0 ? types.size : null, conflicts };
+  return {
+    kind: 'synthesis',
+    documents,
+    classifications: types.size > 0 ? types.size : null,
+    classificationSplit: split,
+    conflicts,
+  };
 }
 
 /** decisions.md, requirements.md, constraints.md and context.md: a heading count and status counts only. */
