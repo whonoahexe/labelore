@@ -2,6 +2,8 @@
 // page. Over the committed Shapes and Lendshed payloads every URL the server emits opens something, every
 // redirect goes where the payload says, and every miss (an internal file, a bare folder, a phase or plan
 // that does not exist) is the same not-found outcome.
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -27,6 +29,7 @@ import {
   legacyPhaseUrl,
   legacyPlanUrl,
 } from '../helpers/legacy-urls.ts';
+import { writeIngestDocsProject } from '../helpers/index-fixtures.ts';
 import { SHAPES_ROOT } from '../helpers/shapes-project.ts';
 
 const shapes: ProjectPresentation = (await loadProject(SHAPES_ROOT)).presentation;
@@ -608,6 +611,76 @@ describe('the bare /spikes (Phase 11, 11-15, RESEARCH C1)', () => {
 
   it('opens each spike address as a document, never a redirect', () => {
     for (const artifact of lendshed.artifacts.filter((a) => a.kind.startsWith('spike'))) {
+      expect(resolve(artifact.key, lendshed), artifact.key).toMatchObject({ kind: 'document', url: artifact.key });
+    }
+  });
+});
+
+describe('the bare /indexes (Phase 11, 11-18, RESEARCH C1)', () => {
+  it("redirects to the Graph tile's own address on Lendshed", () => {
+    const graph = lendshed.artifacts.find((artifact) => artifact.path === '.planning/graphs/graph.json');
+    expect(graph?.key).toBe('/graphs/graph.json');
+    expect(resolve('/indexes', lendshed)).toEqual({ kind: 'redirect', to: '/graphs/graph.json' });
+  });
+
+  it('redirects to the first intel tile when there is no graphs/ folder', () => {
+    const noGraphs: ProjectPresentation = {
+      ...lendshed,
+      artifacts: lendshed.artifacts.filter((artifact) => !artifact.path.startsWith('.planning/graphs/')),
+    };
+    const arch = lendshed.artifacts.find((artifact) => artifact.path === '.planning/intel/arch-decisions.json');
+    expect(resolve('/indexes', noGraphs)).toEqual({ kind: 'redirect', to: arch!.key });
+  });
+
+  it('redirects to the Synthesis tile on a project whose intel is the ingest-docs markdown only', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'labelore-ingest-'));
+    try {
+      writeIngestDocsProject(dir);
+      const ingest = (await loadProject(dir)).presentation;
+      expect(resolve('/indexes', ingest)).toEqual({ kind: 'redirect', to: '/intel/SYNTHESIS.md' });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('is not-found where the project has no intel and no graphs', () => {
+    expect(resolve('/indexes', shapes)).toEqual({ kind: 'not-found' });
+  });
+
+  it('is not-found when the payload holds only the stamp or files no tile owns', () => {
+    const stampOnly: ProjectPresentation = {
+      ...lendshed,
+      artifacts: lendshed.artifacts.filter(
+        (artifact) =>
+          !artifact.path.startsWith('.planning/graphs/') &&
+          (!artifact.path.startsWith('.planning/intel/') || artifact.path.endsWith('.last-refresh.json')),
+      ),
+    };
+    expect(stampOnly.artifacts.some((artifact) => artifact.path.endsWith('.last-refresh.json'))).toBe(true);
+    expect(resolve('/indexes', stampOnly)).toEqual({ kind: 'not-found' });
+  });
+
+  it('always leads to a key some payload artifact carries, never to a typed address', () => {
+    const outcome = resolve('/indexes', lendshed);
+    expect(outcome.kind).toBe('redirect');
+    const to = outcome.kind === 'redirect' ? outcome.to : '';
+    expect(lendshed.artifacts.some((artifact) => artifact.key === to)).toBe(true);
+    // An artifact with an empty key (no address) is never a target.
+    const keyless: ProjectPresentation = {
+      ...lendshed,
+      artifacts: lendshed.artifacts.map((artifact) =>
+        artifact.path.startsWith('.planning/graphs/') || artifact.path.startsWith('.planning/intel/')
+          ? { ...artifact, key: '' }
+          : artifact,
+      ),
+    };
+    expect(resolve('/indexes', keyless)).toEqual({ kind: 'not-found' });
+  });
+
+  it('opens each intel and graph address as a document, never a redirect', () => {
+    const indexFiles = lendshed.artifacts.filter((artifact) => artifact.kind === 'intel' || artifact.kind === 'graph');
+    expect(indexFiles.length).toBeGreaterThan(5);
+    for (const artifact of indexFiles) {
       expect(resolve(artifact.key, lendshed), artifact.key).toMatchObject({ kind: 'document', url: artifact.key });
     }
   });
