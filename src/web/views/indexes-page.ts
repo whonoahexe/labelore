@@ -17,6 +17,7 @@
 // view with no notice (Phase 10 C1, X2). T-11-28: only the bounded summary is read here; every string is author text
 // rendered as React text by the components.
 import type { IndexTile, IndexTileKey } from '../../presentation/indexes-context.ts';
+import type { SynthesisSummary } from '../../planning-repo/handlers/index-intel-lift.ts';
 import type { GraphSummary } from '../../server/index-summary.ts';
 import { formatByteSize } from '../../presentation/file-facts.ts';
 import type { ViewInput } from './manifest.ts';
@@ -49,10 +50,33 @@ export interface ComposedIndexesCount {
 export type ComposedIndexesFigure =
   /** The Graph tile: big counts when they were read, else "Counts not read", then the chips. */
   | { kind: 'graph'; counts: ComposedIndexesCount[]; countsLabel: string | null; chips: ComposedIndexesChip[] }
-  /** Every other tile in this plan: one line of text (11-19 replaces it with the tile's key figure). */
+  /** A big count with, as the tile needs, a split bar, untoned tags and toned chips (File roles, API surface,
+   * Dependencies, Synthesis). `count` is null when the file does not state one. */
+  | {
+      kind: 'count';
+      count: ComposedIndexesCount | null;
+      split: ComposedIndexesSplit | null;
+      tags: string[];
+      chips: ComposedIndexesChip[];
+    }
+  /** Every other tile: one line of text. */
   | { kind: 'line'; text: string }
   | { kind: 'unreadable' }
   | { kind: 'ghost'; text: string };
+
+/** One part of a split bar. `fill` picks one of four theme-token fills; `share` is its width in percent. */
+export interface ComposedIndexesSplitPart {
+  label: string;
+  value: number;
+  share: number;
+  fill: 'a' | 'b' | 'c' | 'd';
+}
+
+/** A split bar with its one accessible name ("24 module, 3 entry-point"); the parts are decoration. */
+export interface ComposedIndexesSplit {
+  name: string;
+  parts: ComposedIndexesSplitPart[];
+}
 
 export interface ComposedIndexesCell {
   key: 'built' | 'good' | 'update';
@@ -251,6 +275,32 @@ function lineOf(tile: IndexTile): string {
   }
 }
 
+function plural(count: number, one: string, many: string): string {
+  return count === 1 ? `1 ${one}` : `${count} ${many}`;
+}
+
+/** The synthesis conflict chips in the file's own words (RESEARCH C5): blockers `missing`, competing variants
+ * `in-flight`, auto-resolved `quiet`. A bucket that holds none is `quiet`, never a tone that reads as a problem. */
+function conflictChips(summary: SynthesisSummary): ComposedIndexesChip[] {
+  if (summary.conflicts === null) return [];
+  const { blockers, competing, autoResolved } = summary.conflicts;
+  return [
+    { label: plural(blockers, 'blocker', 'blockers'), tone: blockers > 0 ? 'missing' : 'quiet' },
+    { label: plural(competing, 'competing variant', 'competing variants'), tone: competing > 0 ? 'in-flight' : 'quiet' },
+    { label: `${autoResolved} auto-resolved`, tone: 'quiet' },
+  ];
+}
+
+function synthesisFigure(summary: SynthesisSummary): ComposedIndexesFigure {
+  return {
+    kind: 'count',
+    count: summary.documents === null ? null : { value: groupedNumber(summary.documents), word: summary.documents === 1 ? 'document' : 'documents' },
+    split: null,
+    tags: [],
+    chips: conflictChips(summary),
+  };
+}
+
 function figureOf(tile: IndexTile): ComposedIndexesFigure {
   if (tile.state === 'not-built') return { kind: 'ghost', text: NOT_BUILT_WORDS };
   if (tile.key === 'graph') {
@@ -263,6 +313,7 @@ function figureOf(tile: IndexTile): ComposedIndexesFigure {
     };
   }
   if (tile.state === 'unreadable') return { kind: 'unreadable' };
+  if (tile.summary !== null && tile.summary.kind === 'synthesis') return synthesisFigure(tile.summary);
   return { kind: 'line', text: lineOf(tile) };
 }
 

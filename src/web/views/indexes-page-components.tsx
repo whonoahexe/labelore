@@ -98,6 +98,19 @@ function Figure({ tile }: { tile: ComposedIndexesTile }): React.JSX.Element | nu
           ) : null}
         </>
       );
+    case 'count':
+      return (
+        <>
+          {figure.count !== null ? <Counts counts={[figure.count]} label={null} /> : null}
+          {figure.chips.length > 0 ? (
+            <span className="view-indexes-chips">
+              {figure.chips.map((chip) => (
+                <Chip key={chip.label} chip={chip} />
+              ))}
+            </span>
+          ) : null}
+        </>
+      );
     case 'line':
       return figure.text === '' ? null : <span className="view-indexes-line">{figure.text}</span>;
     case 'unreadable':
