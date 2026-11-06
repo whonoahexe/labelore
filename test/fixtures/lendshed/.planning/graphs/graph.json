@@ -1,0 +1,653 @@
+{
+  "made_up_example": true,
+  "derived_from": "gsd-core/bin/lib/graphify.cjs",
+  "gsd_core_version": "1.19.0",
+  "directed": false,
+  "multigraph": false,
+  "built_at_commit": "7c2e9a41d05f83b6e1a4c970f2d86b35a01e4c9d",
+  "graph": {},
+  "nodes": [
+    {
+      "id": "SessionStore",
+      "label": "SessionStore",
+      "file_type": "code",
+      "source_file": "src/sessionStore.ts",
+      "community": 0
+    },
+    {
+      "id": "createSession",
+      "label": "createSession",
+      "file_type": "code",
+      "source_file": "src/createSession.ts",
+      "community": 0
+    },
+    {
+      "id": "requireSession",
+      "label": "requireSession",
+      "file_type": "code",
+      "source_file": "src/requireSession.ts",
+      "community": 0
+    },
+    {
+      "id": "endSession",
+      "label": "endSession",
+      "file_type": "code",
+      "source_file": "src/endSession.ts",
+      "community": 0
+    },
+    {
+      "id": "PasswordHasher",
+      "label": "PasswordHasher",
+      "file_type": "code",
+      "source_file": "src/passwordHasher.ts",
+      "community": 0
+    },
+    {
+      "id": "SignInForm",
+      "label": "SignInForm",
+      "file_type": "code",
+      "source_file": "src/signInForm.ts",
+      "community": 0
+    },
+    {
+      "id": "ForcedPasswordChange",
+      "label": "ForcedPasswordChange",
+      "file_type": "code",
+      "source_file": "src/forcedPasswordChange.ts",
+      "community": 0
+    },
+    {
+      "id": "SessionCookie",
+      "label": "SessionCookie",
+      "file_type": "code",
+      "source_file": "src/sessionCookie.ts",
+      "community": 0
+    },
+    {
+      "id": "LoanLedger",
+      "label": "LoanLedger",
+      "file_type": "code",
+      "source_file": "src/loanLedger.ts",
+      "community": 1
+    },
+    {
+      "id": "lendTool",
+      "label": "lendTool",
+      "file_type": "code",
+      "source_file": "src/lendTool.ts",
+      "community": 1
+    },
+    {
+      "id": "returnTool",
+      "label": "returnTool",
+      "file_type": "code",
+      "source_file": "src/returnTool.ts",
+      "community": 1
+    },
+    {
+      "id": "LoanRecord",
+      "label": "LoanRecord",
+      "file_type": "code",
+      "source_file": "src/loanRecord.ts",
+      "community": 1
+    },
+    {
+      "id": "exportLoansCsv",
+      "label": "exportLoansCsv",
+      "file_type": "code",
+      "source_file": "src/exportLoansCsv.ts",
+      "community": 1
+    },
+    {
+      "id": "MonthPicker",
+      "label": "MonthPicker",
+      "file_type": "code",
+      "source_file": "src/monthPicker.ts",
+      "community": 1
+    },
+    {
+      "id": "ConditionNote",
+      "label": "ConditionNote",
+      "file_type": "code",
+      "source_file": "src/conditionNote.ts",
+      "community": 1
+    },
+    {
+      "id": "OverdueSweep",
+      "label": "OverdueSweep",
+      "file_type": "code",
+      "source_file": "src/overdueSweep.ts",
+      "community": 1
+    },
+    {
+      "id": "Catalogue",
+      "label": "Catalogue",
+      "file_type": "code",
+      "source_file": "src/catalogue.ts",
+      "community": 2
+    },
+    {
+      "id": "ShedList",
+      "label": "ShedList",
+      "file_type": "code",
+      "source_file": "src/shedList.ts",
+      "community": 2
+    },
+    {
+      "id": "ToolCard",
+      "label": "ToolCard",
+      "file_type": "code",
+      "source_file": "src/toolCard.ts",
+      "community": 2
+    },
+    {
+      "id": "CategoryFilter",
+      "label": "CategoryFilter",
+      "file_type": "code",
+      "source_file": "src/categoryFilter.ts",
+      "community": 2
+    },
+    {
+      "id": "StockCount",
+      "label": "StockCount",
+      "file_type": "code",
+      "source_file": "src/stockCount.ts",
+      "community": 2
+    },
+    {
+      "id": "RepairFlag",
+      "label": "RepairFlag",
+      "file_type": "code",
+      "source_file": "src/repairFlag.ts",
+      "community": 2
+    },
+    {
+      "id": "ShedPicker",
+      "label": "ShedPicker",
+      "file_type": "code",
+      "source_file": "src/shedPicker.ts",
+      "community": 2
+    },
+    {
+      "id": "MemberDirectory",
+      "label": "MemberDirectory",
+      "file_type": "code",
+      "source_file": "src/memberDirectory.ts",
+      "community": 3
+    },
+    {
+      "id": "createMember",
+      "label": "createMember",
+      "file_type": "code",
+      "source_file": "src/createMember.ts",
+      "community": 3
+    },
+    {
+      "id": "resetPassword",
+      "label": "resetPassword",
+      "file_type": "code",
+      "source_file": "src/resetPassword.ts",
+      "community": 3
+    },
+    {
+      "id": "RolePolicy",
+      "label": "RolePolicy",
+      "file_type": "code",
+      "source_file": "src/rolePolicy.ts",
+      "community": 3
+    },
+    {
+      "id": "GrantEditor",
+      "label": "GrantEditor",
+      "file_type": "code",
+      "source_file": "src/grantEditor.ts",
+      "community": 3
+    },
+    {
+      "id": "disableMember",
+      "label": "disableMember",
+      "file_type": "code",
+      "source_file": "src/disableMember.ts",
+      "community": 3
+    },
+    {
+      "id": "StewardDesk",
+      "label": "StewardDesk",
+      "file_type": "code",
+      "source_file": "src/stewardDesk.ts",
+      "community": 3
+    },
+    {
+      "id": "openDb",
+      "label": "openDb",
+      "file_type": "code",
+      "source_file": "src/openDb.ts",
+      "community": 4
+    },
+    {
+      "id": "withTransaction",
+      "label": "withTransaction",
+      "file_type": "code",
+      "source_file": "src/withTransaction.ts",
+      "community": 4
+    },
+    {
+      "id": "MigrationRunner",
+      "label": "MigrationRunner",
+      "file_type": "code",
+      "source_file": "src/migrationRunner.ts",
+      "community": 4
+    },
+    {
+      "id": "SchemaV7",
+      "label": "SchemaV7",
+      "file_type": "code",
+      "source_file": "src/schemaV7.ts",
+      "community": 4
+    },
+    {
+      "id": "SeedSheds",
+      "label": "SeedSheds",
+      "file_type": "code",
+      "source_file": "src/seedSheds.ts",
+      "community": 4
+    },
+    {
+      "id": "BackupJob",
+      "label": "BackupJob",
+      "file_type": "code",
+      "source_file": "src/backupJob.ts",
+      "community": 4
+    },
+    {
+      "id": "TransferRequest",
+      "label": "TransferRequest",
+      "file_type": "code",
+      "source_file": "src/transferRequest.ts",
+      "community": 5
+    },
+    {
+      "id": "moveTool",
+      "label": "moveTool",
+      "file_type": "code",
+      "source_file": "src/moveTool.ts",
+      "community": 5
+    },
+    {
+      "id": "TransferQueue",
+      "label": "TransferQueue",
+      "file_type": "code",
+      "source_file": "src/transferQueue.ts",
+      "community": 5
+    },
+    {
+      "id": "ShedInventory",
+      "label": "ShedInventory",
+      "file_type": "code",
+      "source_file": "src/shedInventory.ts",
+      "community": 5
+    }
+  ],
+  "links": [
+    {
+      "source": "SessionStore",
+      "target": "createSession",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "SessionStore",
+      "target": "requireSession",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "SessionStore",
+      "target": "endSession",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "SessionStore",
+      "target": "PasswordHasher",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "SessionStore",
+      "target": "SignInForm",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "SessionStore",
+      "target": "ForcedPasswordChange",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "SessionStore",
+      "target": "SessionCookie",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "LoanLedger",
+      "target": "lendTool",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "LoanLedger",
+      "target": "returnTool",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "LoanLedger",
+      "target": "LoanRecord",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "LoanLedger",
+      "target": "exportLoansCsv",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "LoanLedger",
+      "target": "MonthPicker",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "LoanLedger",
+      "target": "ConditionNote",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "LoanLedger",
+      "target": "OverdueSweep",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "Catalogue",
+      "target": "ShedList",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "Catalogue",
+      "target": "ToolCard",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "Catalogue",
+      "target": "CategoryFilter",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "Catalogue",
+      "target": "StockCount",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "Catalogue",
+      "target": "RepairFlag",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "Catalogue",
+      "target": "ShedPicker",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "MemberDirectory",
+      "target": "createMember",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "MemberDirectory",
+      "target": "resetPassword",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "MemberDirectory",
+      "target": "RolePolicy",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "MemberDirectory",
+      "target": "GrantEditor",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "MemberDirectory",
+      "target": "disableMember",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "MemberDirectory",
+      "target": "StewardDesk",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "openDb",
+      "target": "withTransaction",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "openDb",
+      "target": "MigrationRunner",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "openDb",
+      "target": "SchemaV7",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "openDb",
+      "target": "SeedSheds",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "openDb",
+      "target": "BackupJob",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "TransferRequest",
+      "target": "moveTool",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "TransferRequest",
+      "target": "TransferQueue",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "TransferRequest",
+      "target": "ShedInventory",
+      "relation": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "lendTool",
+      "target": "requireSession",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "returnTool",
+      "target": "requireSession",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "exportLoansCsv",
+      "target": "RolePolicy",
+      "relation": "calls",
+      "confidence": "INFERRED"
+    },
+    {
+      "source": "LoanRecord",
+      "target": "withTransaction",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "lendTool",
+      "target": "withTransaction",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "createMember",
+      "target": "withTransaction",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "createSession",
+      "target": "openDb",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "StockCount",
+      "target": "openDb",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "moveTool",
+      "target": "withTransaction",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "moveTool",
+      "target": "ShedInventory",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "TransferQueue",
+      "target": "StewardDesk",
+      "relation": "references",
+      "confidence": "INFERRED"
+    },
+    {
+      "source": "RepairFlag",
+      "target": "ConditionNote",
+      "relation": "references",
+      "confidence": "INFERRED"
+    },
+    {
+      "source": "GrantEditor",
+      "target": "RolePolicy",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "SignInForm",
+      "target": "ForcedPasswordChange",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "resetPassword",
+      "target": "PasswordHasher",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "OverdueSweep",
+      "target": "MemberDirectory",
+      "relation": "references",
+      "confidence": "AMBIGUOUS"
+    },
+    {
+      "source": "BackupJob",
+      "target": "LoanRecord",
+      "relation": "references",
+      "confidence": "AMBIGUOUS"
+    },
+    {
+      "source": "ShedPicker",
+      "target": "ShedList",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "MigrationRunner",
+      "target": "SchemaV7",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "returnTool",
+      "target": "LoanRecord",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "ToolCard",
+      "target": "RepairFlag",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "GrantEditor",
+      "target": "disableMember",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "StewardDesk",
+      "target": "MemberDirectory",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "moveTool",
+      "target": "LoanRecord",
+      "relation": "references",
+      "confidence": "INFERRED"
+    },
+    {
+      "source": "CategoryFilter",
+      "target": "StockCount",
+      "relation": "calls",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "source": "SeedSheds",
+      "target": "ShedInventory",
+      "relation": "references",
+      "confidence": "INFERRED"
+    }
+  ]
+}

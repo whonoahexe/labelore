@@ -1,0 +1,40 @@
+{
+  "_meta": {
+    "updated_at": "2026-09-14T09:12:40.000Z",
+    "version": 3,
+    "made_up_example": true,
+    "derived_from": "agents/gsd-intel-updater.md",
+    "gsd_core_version": "1.19.0"
+  },
+  "entries": {
+    "overview": {
+      "pattern": "Browser -> Fastify API -> SQLite",
+      "description": "A React single-page app talks to one Fastify process that owns a single SQLite file; chosen because a neighbourhood library has one small server and no need for a hosted database."
+    },
+    "data-flow": {
+      "flow": "Sign-in form -> session route -> signed cookie -> loan routes",
+      "description": "Every loan route calls requireSession first, so a request without a live session never reaches the database."
+    },
+    "conventions": {
+      "naming": "camelCase for functions, PascalCase for types",
+      "file-organization": "one route file per resource under src/server/routes",
+      "imports": "relative paths inside a package, no path aliases"
+    },
+    "component:SessionStore": {
+      "path": "src/server/session.ts",
+      "responsibility": "Creates, checks and ends signed-in sessions"
+    },
+    "component:LoanLedger": {
+      "path": "src/server/routes/loans.ts",
+      "responsibility": "Lends, returns and exports loans"
+    },
+    "component:Catalogue": {
+      "path": "src/web/pages/Catalogue.tsx",
+      "responsibility": "Browse tools by shed and category"
+    },
+    "security": {
+      "passwords": "Hashed with a per-member salt; the first sign-in forces a change",
+      "exports": "A steward role is required for the loan export"
+    }
+  }
+}
