@@ -1,4 +1,7 @@
 {
+  "made_up_example": true,
+  "derived_from": "gsd-core/workflows/pause-work.md",
+  "gsd_core_version": "1.19.0",
   "paused_at": "2026-05-09T16:40:00.000Z",
   "phase": "02",
   "phase_name": "Glaze recipes",
