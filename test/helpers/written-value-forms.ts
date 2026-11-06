@@ -3,10 +3,12 @@
 // strings that must be absent from anything the pages store or draw. The tests that guard value withholding share this
 // list, so a form added here is checked at every layer (the mask, the Integrations lift, the User setup reader and the
 // markup of both pages).
+// Phase 10 re-verification gap (truth 5, CR-01 remainder): the last forms put a colon inside the value (a connection
+// string, a prefixed token), so a reader that splits a field line at its first colon before masking keeps the value.
 
 export interface WrittenForm {
   label: string;
-  /** One line that writes the planted value(s) beside STRIPE_KEY (or TOKEN, A_B). */
+  /** One line that writes the planted value(s) beside STRIPE_KEY, TOKEN, A_B, DATABASE_URL or DB. */
   line: (tag: string) => string;
   /** The strings that must appear nowhere after masking. */
   secrets: (tag: string) => string[];
@@ -37,6 +39,14 @@ export const WRITTEN_FORMS: readonly WrittenForm[] = [
   { label: 'text stuck to a closing quote', line: (t) => `TOKEN="${t}-a"${t}-b`, secrets: (t) => [`${t}-a`, `${t}-b`] },
   { label: 'backslash-escaped quotes', line: (t) => `A_B=\\"${t}-a ${t}-b\\"`, secrets: (t) => [`${t}-a`, `${t}-b`] },
   { label: 'quoted name, JSON style', line: (t) => `"STRIPE_KEY": "${t}"`, secrets: one },
+  { label: 'colon inside the value, connection string', line: (t) => `DATABASE_URL=postgres://u:${t}@host/db`, secrets: one },
+  { label: 'colon inside the value, prefixed token', line: (t) => `STRIPE_KEY=sk:${t}`, secrets: one },
+  { label: 'spaced equals, colon inside the value', line: (t) => `STRIPE_KEY = a:${t}`, secrets: one },
+  { label: 'ticked name, URL value with a colon', line: (t) => `\`STRIPE_KEY\`=https://u:${t}@host`, secrets: one },
+  { label: 'bold name, URL value', line: (t) => `**STRIPE_KEY**=https://${t}`, secrets: one },
+  { label: 'after a word, connection string', line: (t) => `Set STRIPE_KEY=postgres://u:${t}@host/db`, secrets: one },
+  { label: 'double-quoted connection string', line: (t) => `DB="postgres://u:${t}@host/db"`, secrets: one },
+  { label: 'value opening with a colon', line: (t) => `STRIPE_KEY=:${t}`, secrets: one },
 ];
 
 /** The tag of form number `index`: PLANTED-FORM-nn, with digits. */
