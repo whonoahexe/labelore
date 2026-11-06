@@ -48,6 +48,7 @@ import {
 import { IndexIntelHandler } from './index-intel.ts';
 import { SeedHandler, ThreadHandler } from './seed-thread.ts';
 import { ReportHandler, ForensicsHandler } from './reports.ts';
+import { OnboardingHandler } from './onboarding.ts';
 import { GenericMarkdownHandler } from './generic.ts';
 
 export const HANDLERS: ArtifactHandler[] = [
@@ -98,6 +99,7 @@ export const HANDLERS: ArtifactHandler[] = [
   ThreadHandler,
   ReportHandler,
   ForensicsHandler,
+  OnboardingHandler,
   ContinueHereHandler,
   GenericMarkdownHandler,
 ];
