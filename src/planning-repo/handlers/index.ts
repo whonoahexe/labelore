@@ -39,6 +39,12 @@ import { UserSetupHandler } from './user-setup.ts';
 import { EvalReviewHandler } from './eval-review.ts';
 import { DomVerifyHandler } from './dom-verify.ts';
 import { ReviewsHandler } from './reviews.ts';
+import {
+  SpikeReadmeHandler,
+  SpikesConventionsHandler,
+  SpikesManifestHandler,
+  SpikesWrapUpHandler,
+} from './spikes.ts';
 import { GenericMarkdownHandler } from './generic.ts';
 
 export const HANDLERS: ArtifactHandler[] = [
@@ -80,6 +86,10 @@ export const HANDLERS: ArtifactHandler[] = [
   EvalReviewHandler,
   DomVerifyHandler,
   ReviewsHandler,
+  SpikesManifestHandler,
+  SpikeReadmeHandler,
+  SpikesWrapUpHandler,
+  SpikesConventionsHandler,
   ContinueHereHandler,
   GenericMarkdownHandler,
 ];

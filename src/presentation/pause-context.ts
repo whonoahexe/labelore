@@ -22,6 +22,8 @@ import type {
   PauseAntiPattern,
   PauseTaskRow,
 } from '../planning-repo/handlers/pause-lift.ts';
+import { spikeIdInText } from '../planning-repo/handlers/spikes-lift.ts';
+import { columnOfKeyword, manifestRowOfSpike } from './spikes-context.ts';
 
 export const HANDOFF_FILE = 'HANDOFF.json';
 export const CONTINUE_FILE = '.continue-here.md';
@@ -54,7 +56,7 @@ export interface PauseDate {
 /** "Work has moved on since": the named phase is complete (ROADMAP) or STATE has moved past it. */
 export interface PauseMovedOn {
   what: string;
-  source: 'ROADMAP' | 'STATE';
+  source: 'ROADMAP' | 'STATE' | 'MANIFEST';
   date: string | null;
 }
 
@@ -309,12 +311,21 @@ function movedOnForPhase(presentation: ProjectPresentation, phase: PhaseDto): Pa
 }
 
 /**
- * The "work has moved on" note for a spike pause: its manifest verdict. The spike manifest lift arrives with
- * 11-12, which fills this in; until then a spike pause carries no note, and there is no example of one to
- * read the rule from (RESEARCH open item 5).
+ * The "work has moved on" note for a spike pause (RESEARCH A8, UI-SPEC open item 5; no real example exists, so
+ * the rule is stated here): the spike the pause names has a manifest verdict of VALIDATED, INVALIDATED or
+ * PARTIAL. `spikeFolder` is what the pause calls its spike (`SPIKE-006`, `006`, `003b-local-disk-staging`); the
+ * manifest row is found by the id it names. A pending, unknown or empty verdict, a spike with no row and a
+ * project with no readable manifest give null. The manifest carries no date, so the note has none.
  */
-export function movedOnForSpike(_presentation: ProjectPresentation, _spikeId: string): PauseMovedOn | null {
-  return null;
+export function movedOnForSpike(presentation: ProjectPresentation, spikeFolder: string): PauseMovedOn | null {
+  const id = spikeIdInText(spikeFolder);
+  if (id === null) return null;
+  const row = manifestRowOfSpike(presentation, id);
+  if (row === null) return null;
+  const column = columnOfKeyword(row.verdictKeyword);
+  if (column !== 'validated' && column !== 'invalidated' && column !== 'partial') return null;
+  const label = row.name === '' ? `spike ${row.id}` : `spike ${row.id} ${row.name}`;
+  return { what: `${label} is marked ${column.toUpperCase()} in the manifest`, source: 'MANIFEST', date: null };
 }
 
 // ---------------------------------------------------------------------------------------------------------
