@@ -217,6 +217,31 @@ describe('composeIndexes', () => {
     }
   });
 
+  it("opens an ingest-docs project on Synthesis with the file's own conflict words beside the Not built graph", async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'labelore-ingest-'));
+    try {
+      writeIngestDocsProject(dir);
+      const { presentation } = await loadProject(dir);
+      const context = buildIndexesContext(presentation, '.planning/intel/SYNTHESIS.md', null);
+      const model = composeIndexes({ ...EMPTY_INPUT, indexesContext: context });
+      expect(model?.tiles.map((tile) => `${tile.key}${tile.ghost ? ':ghost' : ''}`)).toEqual(['synthesis', 'graph:ghost']);
+      expect(model?.openKey).toBe('synthesis');
+      expect(model?.tiles[0].figure).toEqual({
+        kind: 'count',
+        count: { value: '5', word: 'documents' },
+        split: null,
+        tags: [],
+        chips: [
+          { label: '1 blocker', tone: 'missing' },
+          { label: '2 competing variants', tone: 'in-flight' },
+          { label: '3 auto-resolved', tone: 'quiet' },
+        ],
+      });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('writes the Lendshed facts line: five intel files, one graph and the refresh date', async () => {
     const model = composeIndexes({ ...EMPTY_INPUT, indexesContext: await lendshedContext(null) });
     expect(model?.head.facts).toEqual(['5 intel files', '1 graph', 'Intel refreshed 2026-09-14']);
