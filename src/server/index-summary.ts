@@ -272,6 +272,14 @@ export interface GraphReportLift {
   summaryLines: string[];
   /** The God Nodes list, at most INDEX_BOUNDS.hubs, with how many the report named. */
   godNodes: { items: { label: string; edges: number }[]; total: number };
+  /** Thin communities the Summary line says it left out ("203 thin omitted"); null when it says none. */
+  thin: number | null;
+  /** The Summary's Extraction line as written, share by label ("87% EXTRACTED"); empty when there is none. */
+  extraction: { label: string; percent: number }[];
+  /** Bullets under "Import Cycles", counted even when a cycle line is too long to keep; null without the section. */
+  importCycles: number | null;
+  /** The date in the report's title "# Graph Report - {name} ({date})", the day of the build it describes. */
+  reportDate: string | null;
 }
 
 function countBefore(line: string, word: RegExp): number | null {
@@ -290,20 +298,49 @@ export function liftGraphReport(text: string): GraphReportLift {
   const godItems: { label: string; edges: number }[] = [];
   let godTotal = 0;
   let counts: GraphReportLift['counts'] = null;
-  let section: 'summary' | 'god' | 'other' = 'other';
+  let thin: number | null = null;
+  const extraction: GraphReportLift['extraction'] = [];
+  let importCycles: number | null = null;
+  let reportDate: string | null = null;
+  let section: 'summary' | 'god' | 'cycles' | 'other' = 'other';
   for (const raw of text.split('\n')) {
-    if (raw.length > INDEX_BOUNDS.reportLineChars) continue;
+    if (raw.length > INDEX_BOUNDS.reportLineChars) {
+      // A cycle is one bullet however long: count it without ever reading the text.
+      if (section === 'cycles' && /^\s*[-*]\s+\S/.test(raw.slice(0, 16))) importCycles = (importCycles ?? 0) + 1;
+      continue;
+    }
     const line = raw.replace(/\r$/, '');
+    if (reportDate === null && section === 'other') {
+      const title = /^#\s+.*\((\d{4}-\d{2}-\d{2})\)\s*$/.exec(line);
+      if (title) reportDate = title[1];
+    }
     const heading = /^##\s+(.*)$/.exec(line);
     if (heading) {
       const name = heading[1].trim().toLowerCase();
-      section = name.startsWith('summary') ? 'summary' : name.startsWith('god nodes') ? 'god' : 'other';
+      section = name.startsWith('summary')
+        ? 'summary'
+        : name.startsWith('god nodes')
+          ? 'god'
+          : name.startsWith('import cycles')
+            ? 'cycles'
+            : 'other';
+      if (section === 'cycles' && importCycles === null) importCycles = 0;
       continue;
     }
-    if (section === 'summary') {
+    if (section === 'cycles') {
+      if (/^\s*[-*]\s+\S/.test(line) && /cycle|->/i.test(line)) importCycles = (importCycles ?? 0) + 1;
+    } else if (section === 'summary') {
       const bullet = /^\s*[-*]\s+(.*\S)\s*$/.exec(line);
       if (!bullet) continue;
       if (summaryLines.length < INDEX_BOUNDS.reportLines) summaryLines.push(bullet[1]);
+      if (/^extraction\s*:/i.test(bullet[1])) {
+        for (const found of bullet[1].matchAll(/(\d{1,3})%\s+([A-Za-z_]+)/g)) {
+          if (extraction.length < 4) extraction.push({ label: found[2].toUpperCase(), percent: Number(found[1]) });
+        }
+        continue;
+      }
+      const thinCount = countBefore(bullet[1], /(\d[\d,]*)\s+thin\b/i);
+      if (thin === null && thinCount !== null) thin = thinCount;
       const nodes = countBefore(bullet[1], /(\d[\d,]*)\s+nodes?\b/i);
       if (counts === null && nodes !== null) {
         counts = {
@@ -321,7 +358,7 @@ export function liftGraphReport(text: string): GraphReportLift {
       }
     }
   }
-  return { counts, summaryLines, godNodes: { items: godItems, total: godTotal } };
+  return { counts, summaryLines, godNodes: { items: godItems, total: godTotal }, thin, extraction, importCycles, reportDate };
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -346,6 +383,14 @@ export interface GraphSummary {
   countsRead: boolean;
   /** The most connected nodes, at most INDEX_BOUNDS.hubs; the report's God Nodes when it has them, else the scan's. */
   hubs: GraphHub[];
+  /** Thin communities the report left out of its list; null when it does not say. */
+  thinCommunities: number | null;
+  /** Import cycles the report lists; null when it has no such section. */
+  importCycles: number | null;
+  /** How the edges were found, the report's Extraction shares as written; empty when it has none. */
+  extraction: { label: string; percent: number }[];
+  /** The day the report was written for, i.e. the last build that produced one; null without a report title date. */
+  reportDate: string | null;
   reportLines: string[];
   status: BuildStatus | null;
   /** The commit graph.json says it was built at, when it is a hex commit id. */
@@ -535,6 +580,10 @@ export function createIndexSummary(deps: IndexSummaryDeps): IndexSummary {
       countsFrom,
       countsRead: counts !== null,
       hubs,
+      thinCommunities: lifted ? lifted.thin : null,
+      importCycles: lifted ? lifted.importCycles : null,
+      extraction: lifted ? lifted.extraction : [],
+      reportDate: lifted ? lifted.reportDate : null,
       reportLines: lifted ? lifted.summaryLines : [],
       status,
       builtAtCommit,
