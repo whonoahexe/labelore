@@ -214,10 +214,57 @@ describe('buildPauseContext: work has moved on', () => {
     expect(context.movedOn).toBeNull();
   });
 
-  it('leaves the spike note to 11-12: the seam answers null', async () => {
+  it("gives Lendshed's SPIKE-006 pause no note: the manifest has no row for spike 006", async () => {
     const presentation = await lendshed();
     expect(movedOnForSpike(presentation, 'SPIKE-006')).toBeNull();
     expect(buildPauseContext(presentation, SPIKE_NOTE)!.movedOn).toBeNull();
+  });
+});
+
+describe('movedOnForSpike: the spike pause rule (RESEARCH A8, flagged)', () => {
+  const MANIFEST = '.planning/spikes/MANIFEST.md';
+
+  function withRow(presentation: ProjectPresentation, verdictKeyword: string, id = '006'): ProjectPresentation {
+    return planted(presentation, (draft) => {
+      const manifest = draft.artifacts.find((artifact) => artifact.path === MANIFEST)!;
+      const lift = (manifest.structured.spikes as { manifest: { rows: Array<Record<string, unknown>> } }).manifest;
+      lift.rows.push({ id, idea: 'kiosk-handover', name: 'restart-replay', type: 'standard', validates: '', verdictKeyword, verdictText: '', tags: [] });
+    });
+  }
+
+  it.each(['VALIDATED', 'INVALIDATED', 'PARTIAL'])('reads %s as moved on, from the manifest', async (keyword) => {
+    const copy = withRow(await lendshed(), keyword);
+    const note = movedOnForSpike(copy, 'SPIKE-006');
+    expect(note).toEqual({ what: `spike 006 restart-replay is marked ${keyword} in the manifest`, source: 'MANIFEST', date: null });
+    // The pause page's context fills the same note for the SPIKE-006 pause.
+    expect(buildPauseContext(copy, SPIKE_NOTE)!.movedOn).toEqual(note);
+  });
+
+  it('does not read PENDING, an unknown word or an empty verdict as moved on', async () => {
+    for (const keyword of ['PENDING', 'DEFERRED', '']) {
+      const copy = withRow(await lendshed(), keyword);
+      expect(movedOnForSpike(copy, 'SPIKE-006'), keyword).toBeNull();
+      expect(buildPauseContext(copy, SPIKE_NOTE)!.movedOn, keyword).toBeNull();
+    }
+  });
+
+  it('finds the row by the id the folder names, however the folder is written', async () => {
+    const presentation = await lendshed();
+    expect(movedOnForSpike(presentation, '003b-local-disk-staging')?.what).toBe('spike 003b local-disk-staging is marked VALIDATED in the manifest');
+    expect(movedOnForSpike(presentation, 'SPIKE-004')?.what).toBe('spike 004 object-store-staging is marked PARTIAL in the manifest');
+    expect(movedOnForSpike(presentation, 'spike 2')?.what).toBe('spike 002 offline-ledger-queue is marked INVALIDATED in the manifest');
+    expect(movedOnForSpike(presentation, 'no id here')).toBeNull();
+  });
+
+  it('gives null when the project has no readable manifest', async () => {
+    const missing = planted(await lendshed(), (draft) => {
+      draft.artifacts = draft.artifacts.filter((artifact) => artifact.path !== MANIFEST);
+    });
+    expect(movedOnForSpike(missing, '003b')).toBeNull();
+    const unreadable = planted(await lendshed(), (draft) => {
+      draft.artifacts.find((artifact) => artifact.path === MANIFEST)!.structured = {};
+    });
+    expect(movedOnForSpike(unreadable, '003b')).toBeNull();
   });
 });
 
