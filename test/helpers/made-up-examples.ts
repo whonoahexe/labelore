@@ -7,6 +7,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import type { Artifact, Project } from '../../src/domain/model.ts';
+import { tryParseJson } from '../../src/planning-repo/frontmatter.ts';
 import { loadProject } from './fixture-project.ts';
 
 /**
@@ -28,6 +29,8 @@ export const MADE_UP_EXAMPLE_KINDS: ReadonlySet<string> = new Set([
   'codebase-testing',
   'codebase-integrations',
   'codebase-concerns',
+  'intel',
+  'graph',
 ]);
 
 export interface ExemptRoot {
@@ -105,13 +108,62 @@ function markerFromComment(rawText: string): MadeUpMarker | null {
 }
 
 /**
- * The marker a file carries, or null. Two forms: frontmatter keys made_up_example true, derived_from and
- * gsd_core_version; or, for a file with no frontmatter, a first-line HTML comment
- * `<!-- made-up example · derived from {path} · gsd-core {version} -->`. A file carrying both forms is one
- * marked example (the frontmatter form wins).
+ * The marker in a raw JSON file (D-15, RESEARCH C13): the three keys at the top level, else inside a top-level
+ * `_meta` object (the intel writer's shape). Read through the guarded JSON reader, so invalid JSON is a missing
+ * marker and never a throw.
+ */
+export function markerFromJson(rawText: string): MadeUpMarker | null {
+  const trimmed = (rawText.startsWith('\ufeff') ? rawText.slice(1) : rawText).trim();
+  if (!trimmed.startsWith('{')) return null;
+  const { data, warning } = tryParseJson(trimmed);
+  if (warning) return null;
+  const top = markerFromFrontmatter(data);
+  if (top) return top;
+  const meta = data._meta;
+  if (meta && typeof meta === 'object' && !Array.isArray(meta)) return markerFromFrontmatter(meta as Record<string, unknown>);
+  return null;
+}
+
+const FENCE = '---';
+
+function fenceLineValue(line: string, key: string): string | null {
+  const lead = `${key}:`;
+  if (!line.startsWith(lead)) return null;
+  let value = line.slice(lead.length).trim();
+  if (value.length >= 2 && (value.startsWith('"') || value.startsWith("'")) && value.endsWith(value[0] as string)) value = value.slice(1, -1);
+  return value;
+}
+
+/**
+ * The marker read from the `key: value` lines inside a leading `---` frontmatter fence, by a line scan, so a
+ * file whose YAML elsewhere fails to parse still carries a readable marker.
+ */
+export function markerFromFenceLines(rawText: string): MadeUpMarker | null {
+  const lines = (rawText.startsWith('\ufeff') ? rawText.slice(1) : rawText).split('\n').map((line) => line.replace(/\r$/, ''));
+  if (lines[0]?.trim() !== FENCE) return null;
+  let madeUp = false;
+  let derivedFrom = '';
+  let version = '';
+  for (let i = 1; i < lines.length; i += 1) {
+    const line = lines[i] as string;
+    if (line.trim() === FENCE) break;
+    if (fenceLineValue(line, 'made_up_example') === 'true') madeUp = true;
+    derivedFrom = fenceLineValue(line, 'derived_from') ?? derivedFrom;
+    version = fenceLineValue(line, 'gsd_core_version') ?? version;
+  }
+  if (!madeUp || derivedFrom === '' || version === '') return null;
+  return { derivedFrom, version };
+}
+
+/**
+ * The marker a file carries, or null. Forms, tried in order: parsed frontmatter keys made_up_example true,
+ * derived_from and gsd_core_version; the same three `key: value` lines inside a frontmatter fence when the
+ * YAML elsewhere fails to parse; a first-line HTML comment
+ * `<!-- made-up example · derived from {path} · gsd-core {version} -->`; the three keys in a raw JSON file,
+ * at the top level or inside `_meta`. A file carrying more than one form is one marked example (first wins).
  */
 export function readMadeUpMarker(frontmatter: Record<string, unknown>, rawText: string): MadeUpMarker | null {
-  return markerFromFrontmatter(frontmatter) ?? markerFromComment(rawText);
+  return markerFromFrontmatter(frontmatter) ?? markerFromFenceLines(rawText) ?? markerFromComment(rawText) ?? markerFromJson(rawText);
 }
 
 function splitRow(line: string): string[] {

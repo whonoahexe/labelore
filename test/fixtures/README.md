@@ -7,13 +7,15 @@ every fixture root through the real repository and fails when a file of a rule k
 marked file has no row here, or when a row names a file that does not exist. The UI never reads the marker.
 The rule binds every later type with no real example on this machine, Phase 11's included.
 
-Two marker forms, both carrying the same three facts (it is made up, the GSD source it was derived from, the
+Marker forms, all carrying the same three facts (it is made up, the GSD source it was derived from, the
 gsd-core version it was derived at):
 
 - A file with frontmatter carries the keys `made_up_example: true`, `derived_from: <path under ~/.claude>`
   and `gsd_core_version: <version>`.
 - A file with no frontmatter carries, as its first line, an HTML comment:
   `<!-- made-up example · derived from <path under ~/.claude> · gsd-core <version> -->`.
+- A raw JSON file carries the same three keys at the top level or inside a top-level `_meta` object. A markdown
+  file whose YAML fails to parse still counts when the three `key: value` lines sit inside its `---` fence.
 
 Two roots are exempt by name, each with a reason: `fixtures/dense` (a frozen golden, `test/__golden__/dense.json`,
 whose own ledger is `fixtures/README.md`) and this repository's own `.planning` (real planning files).
@@ -46,6 +48,7 @@ whose own ledger is `fixtures/README.md`) and this repository's own `.planning` 
 | test/fixtures/lendshed/.planning/phases/04-bulk-loan-export/04-EVAL-REVIEW.md | eval-review | agents/gsd-eval-auditor.md | 1.19.0 | NEEDS WORK at 64/100: five dimensions mixing COVERED, PARTIAL and MISSING with Code, LLM Judge and Human measurements, an Infrastructure Audit in the auditor's own status words, no Critical gaps, a three-group Remediation Plan |
 | test/fixtures/lendshed/.planning/phases/01-member-sign-in-sessions/01-REVIEWS.md | reviews | gsd-core/workflows/review.md | 1.19.0 | single reviewer: one lane (claude), one plan, an empty Plan-Revision Conflicts block, a Consensus Summary that says there is nothing to compare |
 | test/fixtures/lendshed/.planning/phases/04-bulk-loan-export/04-REVIEWS.md | reviews | gsd-core/workflows/review.md | 1.19.0 | disagreeing reviewers: four lanes, three substantive at overall risk LOW, MEDIUM and HIGH, one approve-versus-revise split on plan 04-03, qwen a failed-lane stub, a `models` value of `"unknown"`, a `plan_coverage` block, a Plan-Revision Conflicts entry between its markers, a `## 04-02` heading inside a reviewer's body, two concerns raised by more than one reviewer, the writer's Consensus Summary |
+| test/fixtures/lendshed/.planning/intel/stack.json | intel | agents/gsd-intel-updater.md | 1.19.0 | tracer intel file in the writer's own shape: `_meta` (updated_at, version 3) holding the marker, then flat lists (languages, frameworks, tools, content_formats) and string fields (build_system, test_framework, package_manager) instead of an `entries` object |
 
 ## For later phases
 

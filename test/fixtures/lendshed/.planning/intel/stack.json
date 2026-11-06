@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "updated_at": "2026-09-14T09:12:40.000Z",
+    "version": 3,
+    "made_up_example": true,
+    "derived_from": "agents/gsd-intel-updater.md",
+    "gsd_core_version": "1.19.0"
+  },
+  "languages": ["TypeScript", "SQL"],
+  "frameworks": ["Fastify", "React"],
+  "tools": ["Vite", "Vitest", "ESLint", "Docker"],
+  "build_system": "npm scripts",
+  "test_framework": "Vitest",
+  "package_manager": "npm",
+  "content_formats": ["Markdown (shed rules, steward guide)", "CSV (loan export)", "SQL (migrations)"]
+}
