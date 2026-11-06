@@ -33,6 +33,10 @@ export const MADE_UP_EXAMPLE_KINDS: ReadonlySet<string> = new Set([
   'graph',
   'handoff',
   'continue-here',
+  'spikes-manifest',
+  'spike',
+  'spikes-wrap-up',
+  'spikes-conventions',
 ]);
 
 export interface ExemptRoot {
