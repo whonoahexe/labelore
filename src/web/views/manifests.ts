@@ -30,6 +30,7 @@ import { composeDomVerify } from './dom-verify-page.ts';
 import { composeReviews } from './reviews-page.ts';
 import { composeCodebase } from './codebase-page.ts';
 import { composePause } from './pause-page.ts';
+import { composeSpikes } from './spikes-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -480,6 +481,15 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     lead: 'Where paused work stopped, what blocks resuming it and the one next action, from the handoff files.',
     promote: [{ type: 'section', heading: /\S/, all: true }],
     pausePage: composePause,
+  },
+  // Phase 11 (11-15, sketch-053 winner A): one view for the spikes manifest, every spike README, CONVENTIONS and
+  // WRAP-UP-SUMMARY, reached through `viewKindOf`'s table. `promote` is the silent fallback when the page composes
+  // nothing (Phase 10 C1, X2).
+  spikes: {
+    kind: 'spikes',
+    lead: "What each spike tried and what it found, grouped by idea, with each spike's notes one click away.",
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+    spikesPage: composeSpikes,
   },
 });
 

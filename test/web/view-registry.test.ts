@@ -1,7 +1,7 @@
-// VIEW-05's registry-completeness test: every kind in `VIEW_KINDS` (32 total: UI-SPEC's own 16
+// VIEW-05's registry-completeness test: every kind in `VIEW_KINDS` (33 total: UI-SPEC's own 16
 // plus `review-fix`, `findings`, `debug`, `todo` and `note`, RESEARCH.md § Open Question 1's recommended corpus-grep
 // gap and discovery's directory-position kind, the Phase 9 kinds, and Phase 10's `codebase` plus the six specification
-// and check kinds, and Phase 11's `pause`) must have a registered `VIEW_MANIFESTS` entry with a non-empty `lead` and at least one
+// and check kinds, and Phase 11's `pause` and `spikes`) must have a registered `VIEW_MANIFESTS` entry with a non-empty `lead` and at least one
 // `promote` entry — and no manifest may exist for a kind that isn't a `VIEW_KINDS` member. Both
 // directions are asserted via a single sorted-keys `toEqual`, so a new kind added to either list
 // without a matching update on the other fails this suite immediately.
@@ -20,8 +20,8 @@ const KNOWN_COMPONENTS: readonly BlockComponentKey[] = [
 ];
 
 describe('view registry completeness (VIEW-05)', () => {
-  it('VIEW_KINDS has exactly 32 members', () => {
-    expect(VIEW_KINDS.length).toBe(32);
+  it('VIEW_KINDS has exactly 33 members', () => {
+    expect(VIEW_KINDS.length).toBe(33);
   });
 
   it('VIEW_MANIFESTS keys and VIEW_KINDS are the same set, both directions', () => {
@@ -210,6 +210,41 @@ describe('view registry completeness (VIEW-05)', () => {
     it('a pause input with no context composes nothing, so the promoted sections render with no notice', () => {
       const manifest = VIEW_MANIFESTS.pause;
       expect(manifest?.pausePage?.({ ...EMPTY_INPUT, kind: 'handoff' })).toBeNull();
+    });
+  });
+
+  describe('Phase 11: the spikes view kind and its four wire kinds', () => {
+    const EMPTY_INPUT: ViewInput = { kind: '', frontmatter: {}, structured: {}, groups: [], planSegments: [] };
+    const SPIKE_KINDS = ['spikes-manifest', 'spike', 'spikes-wrap-up', 'spikes-conventions'];
+
+    it('viewKindOf maps the four spike wire kinds to spikes and keeps the pause rows', () => {
+      for (const kind of SPIKE_KINDS) expect(viewKindOf(kind), kind).toBe('spikes');
+      expect(viewKindOf('spikes')).toBe('spikes');
+      expect(viewKindOf('handoff')).toBe('pause');
+      expect(viewKindOf('sketch')).toBe('sketch');
+    });
+
+    it('resolveViewFor gives each spike file the one spikes manifest, recognised', () => {
+      for (const kind of SPIKE_KINDS) {
+        const resolved = resolveViewFor(kind, { ...EMPTY_INPUT, kind });
+        expect(resolved.recognized, kind).toBe(true);
+        expect(resolved.manifest, kind).toBe(VIEW_MANIFESTS.spikes);
+      }
+    });
+
+    it('the spikes manifest opts into the page, keeps a silent promote-every-section fallback and has its verbatim lead', () => {
+      const manifest = VIEW_MANIFESTS.spikes;
+      expect(typeof manifest?.spikesPage).toBe('function');
+      expect(manifest?.lead).toBe(
+        "What each spike tried and what it found, grouped by idea, with each spike's notes one click away.",
+      );
+      expect(manifest?.promote).toHaveLength(1);
+      expect(documentHtmlAllowedInView(manifest ?? null)).toBe(true);
+    });
+
+    it('a spikes input with no context composes nothing, so the promoted sections render with no notice', () => {
+      const manifest = VIEW_MANIFESTS.spikes;
+      expect(manifest?.spikesPage?.({ ...EMPTY_INPUT, kind: 'spikes-manifest' })).toBeNull();
     });
   });
 });
