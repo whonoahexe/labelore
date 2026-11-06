@@ -192,7 +192,7 @@ function boundedLabels(value: unknown, cap: number): Bounded<string> {
   const items: string[] = [];
   let total = 0;
   for (const entry of source) {
-    const text = label(entry);
+    const text = label(entry, INDEX_BOUNDS.listItemChars);
     if (text === null) continue;
     total += 1;
     if (items.length < cap) items.push(text);
