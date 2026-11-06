@@ -167,14 +167,40 @@ export function withholdInText(text: string): WithheldText {
   return { text: out, hadValue };
 }
 
-/** Bidirectional control characters: marks, embeddings, overrides and isolates. */
-function isBidirectional(code: number): boolean {
-  return code === 0x061c || code === 0x200e || code === 0x200f || (code >= 0x202a && code <= 0x202e) || (code >= 0x2066 && code <= 0x2069);
+/**
+ * True for a Unicode format character (general category Cf) that draws nothing: bidirectional marks, embeddings,
+ * overrides and isolates, zero-width space, non-joiner and joiner, word joiner and invisible operators, the byte order
+ * mark, the soft hyphen, the interlinear annotation marks and the tag block (U+E0000 to U+E007F, used to hide text).
+ * Written as ranges so no regular expression runs over document text.
+ */
+function isFormatCharacter(code: number): boolean {
+  return (
+    code === 0x00ad ||
+    (code >= 0x0600 && code <= 0x0605) ||
+    code === 0x061c ||
+    code === 0x06dd ||
+    code === 0x070f ||
+    code === 0x08e2 ||
+    code === 0x180e ||
+    (code >= 0x200b && code <= 0x200f) ||
+    (code >= 0x202a && code <= 0x202e) ||
+    (code >= 0x2060 && code <= 0x2064) ||
+    (code >= 0x2066 && code <= 0x206f) ||
+    code === 0xfeff ||
+    (code >= 0xfff9 && code <= 0xfffb) ||
+    code === 0x110bd ||
+    code === 0x110cd ||
+    (code >= 0x13430 && code <= 0x1343f) ||
+    (code >= 0x1bca0 && code <= 0x1bca3) ||
+    (code >= 0x1d173 && code <= 0x1d17a) ||
+    (code >= 0xe0000 && code <= 0xe007f)
+  );
 }
 
 /**
- * `text` with C0 and C1 control characters (a tab kept), DEL and bidirectional override characters removed, so a copied
- * command is the visible, selectable text and one line. Ordinary text, including non-Latin letters, is untouched.
+ * `text` with C0 and C1 control characters (a tab kept), DEL and invisible format characters (bidirectional overrides,
+ * zero-width characters, the soft hyphen, tag characters) removed, so a copied command is the visible, selectable text
+ * and one line. Ordinary text, including non-Latin letters, is untouched.
  */
 export function stripControlCharacters(text: string): string {
   let out = '';
@@ -184,7 +210,7 @@ export function stripControlCharacters(text: string): string {
       out += ch;
       continue;
     }
-    if (code < 0x20 || (code >= 0x7f && code <= 0x9f) || isBidirectional(code)) continue;
+    if (code < 0x20 || (code >= 0x7f && code <= 0x9f) || isFormatCharacter(code)) continue;
     out += ch;
   }
   return out;

@@ -109,6 +109,18 @@ describe('stripControlCharacters', () => {
     );
   });
 
+  // 10-REVIEW WR-05: a zero-width, soft-hyphen or tag character inside a command draws nothing, so the command on screen
+  // would differ from the command pasted. Every input below is written with escapes, never with the character itself.
+  it('removes zero-width, word-joiner, byte-order-mark, soft-hyphen and tag characters, so the copy is the visible text', () => {
+    expect(stripControlCharacters('npm\u200B test\u2060 \u{E0041}x\u00AD')).toBe('npm test x');
+    expect(stripControlCharacters('n\u200Cp\u200Dm\uFEFF \u180Etest')).toBe('npm test');
+    expect(stripControlCharacters('\u{E0001}ls\u{E007F} -la')).toBe('ls -la');
+  });
+
+  it('keeps the characters beside them: non-Latin letters, an emoji and ordinary punctuation', () => {
+    expect(stripControlCharacters('echo é日本 \u{1F600} --flag=1')).toBe('echo é日本 \u{1F600} --flag=1');
+  });
+
   it('removes a newline and a carriage return, so a copied command is one line', () => {
     expect(stripControlCharacters('rm -rf x\nls')).toBe('rm -rf xls');
     expect(stripControlCharacters('a\r\nb')).toBe('ab');
