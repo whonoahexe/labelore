@@ -464,7 +464,7 @@ the rest.
    template or workstream layout, and fall back to a readable generic page when a real file differs.
    *(VIEW-14, VIEW-15, VIEW-16, VIEW-17, VIEW-18, VIEW-19, VIEW-20)*
 
-**Plans**: 17/32 plans executed
+**Plans**: 18/32 plans executed
 
 Plans:
 **Wave 1**
@@ -508,7 +508,7 @@ Plans:
 - [x] 11-18-PLAN.md — Indexes page from sketch 055 A: wiring, large-file bypass, graph tile, bare /indexes
 
 **Wave 11** *(blocked on Wave 10 completion)*
-- [ ] 11-19-PLAN.md — Indexes page finished: every tile and panel, ghost and unreadable states, beside 055 A
+- [x] 11-19-PLAN.md — Indexes page finished: every tile and panel, ghost and unreadable states, beside 055 A
 
 **Wave 12** *(blocked on Wave 11 completion)*
 - [ ] 11-22-PLAN.md — Seed page from its winner, and the seed and thread links context
@@ -613,7 +613,7 @@ file, ID or project.
 | 8. Several Projects and a Switcher | v2.1 | 18/18 | Complete    | 2026-11-02 |
 | 9. Review, Audit and Root Document Pages | v2.1 | 16/16 | In Progress | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 24/24 | Complete    | 2026-11-06 |
-| 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 17/32 | In Progress | - |
+| 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 18/32 | In Progress | - |
 | 12. Project Settings, Source Mode and Reading Polish | v2.1 | 0/TBD | Not started | - |
 | 13. Search and Quick-Jump Palette | v2.1 | 0/TBD | Not started | - |
 
