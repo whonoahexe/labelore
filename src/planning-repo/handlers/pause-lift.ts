@@ -10,6 +10,9 @@
 // key such as `constructor` cannot reach a prototype. Lists are capped at PAUSE_ROW_CAP rows and every
 // string at PAUSE_TEXT_CAP characters, and the rows past the cap are counted in `moreCount`, because the
 // whole structured record ships to the browser (T-11-09).
+import { fenceMarker, scanFencedLines } from './fenced-sections.ts';
+import type { FenceMarker } from './fenced-sections.ts';
+import { parseMarkdownTable } from './markdown-sections.ts';
 
 /** The most rows any one list keeps. */
 export const PAUSE_ROW_CAP = 200;
@@ -330,5 +333,317 @@ export function extractHandoff(value: unknown): HandoffLift {
   return lift;
 }
 
+// ---------------------------------------------------------------------------------------------------------
+// .continue-here.md
+// ---------------------------------------------------------------------------------------------------------
+
+export interface ContinueHereTags {
+  currentState?: string;
+  completedWork?: string;
+  remainingWork?: string;
+  decisionsMade?: string;
+  blockers?: string;
+  context?: string;
+  nextAction?: string;
+}
+
+/** The seven pseudo-XML tag sections of the template, by the key the lift stores them under. */
+const TAGS: ReadonlyMap<string, keyof ContinueHereTags> = new Map([
+  ['current_state', 'currentState'],
+  ['completed_work', 'completedWork'],
+  ['remaining_work', 'remainingWork'],
+  ['decisions_made', 'decisionsMade'],
+  ['blockers', 'blockers'],
+  ['context', 'context'],
+  ['next_action', 'nextAction'],
+]);
+
+/** A `- [ ] CONSTRAINT: name — what — mitigation` line. A line that does not split keeps its whole text as
+ * `name`; one split gives a name and a `what`; two give all three. */
+export interface PauseConstraint {
+  name: string;
+  what?: string;
+  mitigation?: string;
+}
+
+export interface PauseAntiPattern {
+  pattern: string;
+  description?: string;
+  /** The severity cell as written. */
+  severity?: string;
+  /** True when the severity cell says blocking. */
+  blocking: boolean;
+  prevention?: string;
+}
+
+export interface PauseSection {
+  heading: string;
+  text: string;
+}
+
+export interface ContinueHereLift {
+  /** `context` frontmatter: phase, spike and so on. */
+  context?: string;
+  phase?: string;
+  task?: number | string;
+  totalTasks?: number | string;
+  status?: string;
+  /** `last_updated` as the day, or the full ISO time when a time of day is present. */
+  lastUpdated?: string;
+  tags: ContinueHereTags;
+  constraints: PauseConstraint[];
+  antiPatterns: PauseAntiPattern[];
+  /** Every other `##` heading with its text, in file order, after the text before the first one. */
+  sections: PauseSection[];
+  moreCount: number;
+}
+
 /** What `structured.pause` carries: a lift stamped with the file it came from. */
-export type PauseBody = HandoffLift & { source: 'handoff' };
+export type PauseBody =
+  | (HandoffLift & { source: 'handoff' })
+  | (ContinueHereLift & { source: 'continue-here' });
+
+/** The tag a line names when it is only that tag (`<current_state>` or `</current_state>`), else null. */
+function tagLine(line: string): { key: keyof ContinueHereTags; name: string; closing: boolean } | null {
+  const trimmed = line.trim();
+  if (trimmed.length < 9 || trimmed.length > 22) return null;
+  if (trimmed.charCodeAt(0) !== 60 || trimmed.charCodeAt(trimmed.length - 1) !== 62) return null;
+  const inner = trimmed.slice(1, -1);
+  const closing = inner.charCodeAt(0) === 47;
+  const name = closing ? inner.slice(1) : inner;
+  const key = TAGS.get(name);
+  return key === undefined ? null : { key, name, closing };
+}
+
+export interface PauseBodyScan {
+  /** Each tag's text, read from the untouched body; the first block of a tag wins. */
+  tags: ContinueHereTags;
+  /** The lines outside every tag block, carriage returns dropped. */
+  rest: string[];
+  /** The body with every tag-only line blanked and all content kept (RESEARCH Pitfall 4). */
+  blanked: string;
+}
+
+/**
+ * One linear pass over a `.continue-here.md` body (fences honoured). Tag names such as `<context>` are
+ * valid CommonMark HTML block openers, so a tag-only line swallows the heading after it when the body is
+ * rendered: the renderer gets `blanked`, while the tags are read from the untouched lines. A tag with no
+ * closing line is not a block (its content stays in `rest`); each tag name is searched for at most once,
+ * so the scan costs at most seven passes over the lines.
+ */
+export function scanPauseBody(body: string): PauseBodyScan {
+  const lines = body.split('\n');
+  const blanked = lines.slice();
+  const inBlock = new Uint8Array(lines.length);
+  const tags: ContinueHereTags = {};
+  const settled = new Set<string>();
+  let fence: FenceMarker | null = null;
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    const marker = fenceMarker(line);
+    if (fence !== null) {
+      if (marker !== null && marker.bare && marker.char === fence.char && marker.length >= fence.length) fence = null;
+      continue;
+    }
+    if (marker !== null) {
+      fence = marker;
+      continue;
+    }
+    const tag = tagLine(line);
+    if (tag === null) continue;
+    blanked[i] = '';
+    if (tag.closing || settled.has(tag.name)) continue;
+    settled.add(tag.name);
+    let close = -1;
+    for (let j = i + 1; j < lines.length; j += 1) {
+      const candidate = tagLine(lines[j]);
+      if (candidate !== null && candidate.closing && candidate.name === tag.name) {
+        close = j;
+        break;
+      }
+    }
+    if (close === -1) continue;
+    const text = lines.slice(i + 1, close).join('\n').trim();
+    if (text !== '') tags[tag.key] = cap(text);
+    for (let k = i; k <= close; k += 1) inBlock[k] = 1;
+    blanked[close] = '';
+    i = close;
+  }
+  const rest: string[] = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    if (inBlock[i] === 1) continue;
+    const line = lines[i];
+    rest.push(line.endsWith('\r') ? line.slice(0, -1) : line);
+  }
+  return { tags, rest, blanked: blanked.join('\n') };
+}
+
+/** The body for the renderer: every tag-only line blanked, everything else untouched. */
+export function blankPauseTagLines(body: string): string {
+  return scanPauseBody(body).blanked;
+}
+
+const LINE_CAP = PAUSE_TEXT_CAP + 200;
+const SEPARATOR = ' — ';
+
+/** The text after `CONSTRAINT:` on a `- [ ] CONSTRAINT: …` list line, else undefined. No regular expression. */
+function constraintText(line: string): string | undefined {
+  const text = (line.length > LINE_CAP ? line.slice(0, LINE_CAP) : line).trimStart();
+  const bullet = text.charCodeAt(0);
+  if (bullet !== 45 && bullet !== 42) return undefined;
+  let i = 1;
+  while (text.charCodeAt(i) === 32) i += 1;
+  if (text.charCodeAt(i) !== 91 || text.charCodeAt(i + 2) !== 93) return undefined;
+  i += 3;
+  while (text.charCodeAt(i) === 32) i += 1;
+  if (text.slice(i, i + 11).toLowerCase() !== 'constraint:') return undefined;
+  const value = text.slice(i + 11).trim();
+  return value === '' ? undefined : value;
+}
+
+/** Splits a constraint on its em-dash separators into name, what and mitigation; a line that does not split
+ * stays whole in `name`. */
+export function splitConstraint(text: string): PauseConstraint {
+  const parts = text.split(SEPARATOR).map((part) => part.trim());
+  if (parts.length < 2 || parts[0] === '') return { name: cap(text) };
+  const constraint: PauseConstraint = { name: cap(parts[0]) };
+  if (parts[1] !== '') constraint.what = cap(parts[1]);
+  if (parts.length > 2) {
+    const mitigation = parts.slice(2).join(SEPARATOR).trim();
+    if (mitigation !== '') constraint.mitigation = cap(mitigation);
+  }
+  return constraint;
+}
+
+/** A YAML Date as the day, or the full ISO time when a time of day is present; anything else as text. */
+function dateOf(value: unknown): string | undefined {
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return undefined;
+    const iso = value.toISOString();
+    return iso.endsWith('T00:00:00.000Z') ? iso.slice(0, 10) : iso;
+  }
+  return textOf(value);
+}
+
+/** The cell whose header starts with `prefix`, compared lower-cased. */
+function cellOf(row: Record<string, string>, prefix: string): string | undefined {
+  for (const header of Object.keys(row)) {
+    if (header.toLowerCase().startsWith(prefix)) return textOf(row[header]);
+  }
+  return undefined;
+}
+
+/** A line that is one HTML comment and nothing else (the made-up example markers sit on such a line). */
+function isCommentLine(line: string): boolean {
+  const trimmed = line.trim();
+  return trimmed.startsWith('<!--') && trimmed.endsWith('-->');
+}
+
+/** The text of a heading line without its hashes. */
+function headingOf(line: string): string {
+  let i = 0;
+  while (line.charCodeAt(i) === 35) i += 1;
+  return line.slice(i).trim();
+}
+
+/**
+ * The projection of a `.continue-here.md`: its frontmatter fields, the seven tag sections read from the
+ * untouched body, the constraint lines, the Critical Anti-Patterns table, and every other `##` heading as a
+ * section (the text before the first one is a section headed by its title line). The handler still guards
+ * the call.
+ */
+export function extractContinueHere(frontmatter: Record<string, unknown>, body: string): ContinueHereLift {
+  const fm = isRecord(frontmatter) ? frontmatter : {};
+  const scan = scanPauseBody(body);
+  const overflow: Overflow = { more: 0 };
+  const lift: ContinueHereLift = { tags: scan.tags, constraints: [], antiPatterns: [], sections: [], moreCount: 0 };
+  put(lift, 'context', textOf(own(fm, 'context')));
+  put(lift, 'phase', textOf(own(fm, 'phase')));
+  put(lift, 'task', scalarOf(own(fm, 'task')));
+  put(lift, 'totalTasks', scalarOf(own(fm, 'total_tasks')));
+  put(lift, 'status', textOf(own(fm, 'status')));
+  put(lift, 'lastUpdated', dateOf(own(fm, 'last_updated')));
+
+  // Constraint lines, outside fences, anywhere in what is left of the file.
+  const lines = scan.rest;
+  const isConstraint = new Uint8Array(lines.length);
+  let fence: FenceMarker | null = null;
+  for (let i = 0; i < lines.length; i += 1) {
+    const marker = fenceMarker(lines[i]);
+    if (fence !== null) {
+      if (marker !== null && marker.bare && marker.char === fence.char && marker.length >= fence.length) fence = null;
+      continue;
+    }
+    if (marker !== null) {
+      fence = marker;
+      continue;
+    }
+    const text = constraintText(lines[i]);
+    if (text === undefined) continue;
+    isConstraint[i] = 1;
+    if (lift.constraints.length >= PAUSE_ROW_CAP) overflow.more += 1;
+    else lift.constraints.push(splitConstraint(text));
+  }
+
+  const textBetween = (from: number, to: number): string => {
+    const kept: string[] = [];
+    for (let i = from; i < to; i += 1) if (isConstraint[i] === 0) kept.push(lines[i]);
+    return kept.join('\n').trim();
+  };
+  const headings = scanFencedLines(lines).filter((section) => section.level === 2);
+  const firstHeading = headings.length > 0 ? headings[0].startLine : lines.length;
+  const sections: PauseSection[] = [];
+
+  // The text before the first `##`: a title line gives the heading; a BLOCKING CONSTRAINTS block that
+  // yielded constraints is not repeated as a section.
+  let first = 0;
+  while (first < firstHeading && (lines[first].trim() === '' || isCommentLine(lines[first]))) first += 1;
+  let title = '';
+  let from = 0;
+  let droppedConstraintBlock = false;
+  if (first < firstHeading && lines[first].charCodeAt(0) === 35) {
+    title = headingOf(lines[first]);
+    from = first + 1;
+    droppedConstraintBlock = lift.constraints.length > 0 && title.toLowerCase().startsWith('blocking constraints');
+  }
+  if (!droppedConstraintBlock) {
+    const text = textBetween(from, firstHeading);
+    if (text !== '') sections.push({ heading: title === '' ? 'Note' : title.slice(0, 300), text: cap(text) });
+  }
+
+  for (const section of headings) {
+    const text = textBetween(section.startLine + 1, section.endLine);
+    if (section.heading.toLowerCase().startsWith('critical anti-pattern')) {
+      const rows = parseMarkdownTable(text);
+      if (rows.length > 0) {
+        for (const row of rows) {
+          const pattern = cellOf(row, 'pattern');
+          if (pattern === undefined) continue;
+          if (lift.antiPatterns.length >= PAUSE_ROW_CAP) {
+            overflow.more += 1;
+            continue;
+          }
+          const severity = cellOf(row, 'severity');
+          const entry: PauseAntiPattern = {
+            pattern,
+            blocking: severity !== undefined && severity.toLowerCase().startsWith('blocking'),
+          };
+          put(entry, 'description', cellOf(row, 'description'));
+          put(entry, 'severity', severity);
+          put(entry, 'prevention', cellOf(row, 'prevention'));
+          lift.antiPatterns.push(entry);
+        }
+        continue;
+      }
+    }
+    if (text === '') continue;
+    if (sections.length >= PAUSE_ROW_CAP) {
+      overflow.more += 1;
+      continue;
+    }
+    sections.push({ heading: section.heading, text: cap(text) });
+  }
+  lift.sections = sections;
+  lift.moreCount = overflow.more;
+  return lift;
+}
