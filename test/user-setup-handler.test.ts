@@ -11,6 +11,7 @@ import { VALUE_NOT_SHOWN_MARK } from '../src/planning-repo/handlers/withhold-val
 import { GenericMarkdownHandler } from '../src/planning-repo/handlers/generic.ts';
 import { fxRead } from './helpers/fixture-project.ts';
 import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
+import { WRITTEN_FORMS, formTag, userSetupFormDoc } from './helpers/written-value-forms.ts';
 
 const PATH = '.planning/phases/04-bulk-loan-export/04-USER-SETUP.md';
 
@@ -302,5 +303,80 @@ describe('UserSetupHandler masks every stored string', () => {
       maxSize: 5000,
     });
     expect(assignments.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+});
+
+// 10-REVIEW CR-01 and WR-01: a checklist item's `- Key: value` lines were masked one fragment at a time, so a variable
+// name used as the key never met its value; and a table's value cell has no `=` or `:` beside the name. Every written
+// form (test/helpers/written-value-forms.ts) is planted in each place a person may put it, and none may be stored.
+describe('the User setup reader withholds a value written in any form (10-REVIEW CR-01, WR-01)', () => {
+  it('keeps the value of a `- NAME: value` field out of the fields and the notes, and keeps the name', () => {
+    const body = extractUserSetup(
+      '## Stripe\n\n- [ ] **Add the key**\n  - URL: https://host.example/keys\n  - STRIPE_KEY: PLANTED-FIELD-0001\n  - `SECOND_KEY`: PLANTED-FIELD-0002\n  - Value: PLANTED-FIELD-0003\n  - Notes: where it goes\n',
+    );
+    expect(body.steps[0].fields).toEqual([
+      { key: 'URL', text: 'https://host.example/keys' },
+      { key: 'STRIPE_KEY', text: VALUE_NOT_SHOWN_MARK },
+      { key: '`SECOND_KEY`', text: VALUE_NOT_SHOWN_MARK },
+      { key: 'Value', text: VALUE_NOT_SHOWN_MARK },
+      { key: 'Notes', text: 'where it goes' },
+    ]);
+    expect(JSON.stringify(body)).not.toContain('PLANTED-FIELD');
+  });
+
+  it('keeps a field whose key is a plain label as written, and a placeholder value as written', () => {
+    const body = extractUserSetup('## Stripe\n\n- [ ] **Add**\n  - Location: Settings → Keys\n  - STRIPE_KEY: <your key>\n');
+    expect(body.steps[0].fields).toEqual([
+      { key: 'Location', text: 'Settings → Keys' },
+      { key: 'STRIPE_KEY', text: '<your key>' },
+    ]);
+  });
+
+  it('stores none of the planted secrets of any form, in the steps, fields, notes or sections', () => {
+    const body = extractUserSetup(userSetupFormDoc());
+    const text = JSON.stringify(body);
+    expect(body.steps).toHaveLength(1);
+    expect(body.steps[0].fields.length).toBeGreaterThan(2);
+    for (const [index, form] of WRITTEN_FORMS.entries()) {
+      for (const secret of form.secrets(formTag(index))) expect(text, `${form.label}: ${secret}`).not.toContain(secret);
+    }
+  });
+
+  it('masks a table row whatever the header says: a Value column, a Name column, no header, a lower-case name', () => {
+    const body = extractUserSetup(
+      [
+        '## A',
+        '',
+        '| Variable | Value |',
+        '| --- | --- |',
+        '| STRIPE_KEY | PLANTED-TABLE-0001 |',
+        '',
+        '## B',
+        '',
+        '| Name | Value |',
+        '| --- | --- |',
+        '| stripe_key | PLANTED-TABLE-0002 |',
+        '',
+        '## C',
+        '',
+        '| Env var | Where |',
+        '| --- | --- |',
+        '| `STRIPE_KEY` | PLANTED-TABLE-0003 | PLANTED-TABLE-0004 |',
+        '',
+        '## D',
+        '',
+        '| STRIPE_KEY | PLANTED-TABLE-0005 |',
+        '',
+      ].join('\n'),
+    );
+    expect(JSON.stringify(body)).not.toContain('PLANTED-TABLE');
+    const lines = body.sections.map((s) => s.lines.join('\n'));
+    expect(lines[0]).toContain(`| STRIPE_KEY | ${VALUE_NOT_SHOWN_MARK} |`);
+    expect(lines[0]).toContain('| Variable | Value |');
+  });
+
+  it('keeps a variable table row with a Status column as a step with its source and destination', () => {
+    const body = extractUserSetup('## Env\n\n| Status | Variable | Source | Add to |\n|---|---|---|---|\n| [ ] | `A_KEY` | Host | `.env` |\n');
+    expect(body.steps[0]).toMatchObject({ title: 'A_KEY', source: 'Host', destination: '.env' });
   });
 });
