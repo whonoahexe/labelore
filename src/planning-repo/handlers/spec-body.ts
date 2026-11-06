@@ -292,6 +292,9 @@ function readRequirements(
   let draft: RequirementDraft | null = null;
   let pointer: FieldName | null = null;
   let previousBlank = true;
+  // The indent of the first numbered line: a numbered line indented deeper is a nested list inside a requirement, not
+  // another requirement (10-REVIEW WR-03).
+  let headIndent = -1;
 
   const flush = (): void => {
     if (draft === null) return;
@@ -325,8 +328,10 @@ function readRequirements(
       pointer = null;
       return;
     }
+    const lineIndent = line.length - line.trimStart().length;
     const head = readRequirementHead(line);
-    if (head !== null) {
+    if (head !== null && (headIndent < 0 || lineIndent <= headIndent)) {
+      if (headIndent < 0) headIndent = lineIndent;
       flush();
       if (items.length >= SPEC_REQUIREMENT_CAP) {
         omitted += 1;
