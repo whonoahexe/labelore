@@ -41,6 +41,12 @@ export const WRITTEN_FORMS: readonly WrittenForm[] = [
   { label: 'quoted name, JSON style', line: (t) => `"STRIPE_KEY": "${t}"`, secrets: one },
   { label: 'colon inside the value, connection string', line: (t) => `DATABASE_URL=postgres://u:${t}@host/db`, secrets: one },
   { label: 'colon inside the value, prefixed token', line: (t) => `STRIPE_KEY=sk:${t}`, secrets: one },
+  { label: 'spaced equals, colon inside the value', line: (t) => `STRIPE_KEY = a:${t}`, secrets: one },
+  { label: 'ticked name, URL value with a colon', line: (t) => `\`STRIPE_KEY\`=https://u:${t}@host`, secrets: one },
+  { label: 'bold name, URL value', line: (t) => `**STRIPE_KEY**=https://${t}`, secrets: one },
+  { label: 'after a word, connection string', line: (t) => `Set STRIPE_KEY=postgres://u:${t}@host/db`, secrets: one },
+  { label: 'double-quoted connection string', line: (t) => `DB="postgres://u:${t}@host/db"`, secrets: one },
+  { label: 'value opening with a colon', line: (t) => `STRIPE_KEY=:${t}`, secrets: one },
 ];
 
 /** The tag of form number `index`: PLANTED-FORM-nn, with digits. */
