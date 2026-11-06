@@ -299,6 +299,26 @@ function filesOf(folder: SpikeFolder | undefined): SpikeFile[] {
 }
 
 // ---------------------------------------------------------------------------------------------------------
+// One spike's manifest verdict (the pause page's "work has moved on" rule)
+// ---------------------------------------------------------------------------------------------------------
+
+/**
+ * The manifest row whose id matches `id` (compared without leading zeros, case-insensitively), or null when the
+ * project has no readable manifest or no such row. The first row wins when an id repeats.
+ */
+export function manifestRowOfSpike(presentation: ProjectPresentation, id: string): SpikeManifestRow | null {
+  try {
+    const artifact = presentation.artifacts.find((candidate) => candidate.kind === 'spikes-manifest' && candidate.path.startsWith(SPIKES_DIR));
+    const manifest = rowsOfManifest(artifact);
+    if (manifest === null) return null;
+    const wanted = spikeIdKey(id);
+    return manifest.rows.find((row) => spikeIdKey(row.id) === wanted) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------
 // The build
 // ---------------------------------------------------------------------------------------------------------
 
