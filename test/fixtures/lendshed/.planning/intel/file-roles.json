@@ -1,0 +1,131 @@
+{
+  "_meta": {
+    "updated_at": "2026-09-14T09:12:40.000Z",
+    "version": 3,
+    "made_up_example": true,
+    "derived_from": "agents/gsd-intel-updater.md",
+    "gsd_core_version": "1.19.0"
+  },
+  "entries": {
+    "src/server/index.ts": {
+      "exports": [
+        "startServer"
+      ],
+      "imports": [
+        "./routes/loans",
+        "./session",
+        "fastify"
+      ],
+      "type": "entry-point"
+    },
+    "src/server/routes/loans.ts": {
+      "exports": [
+        "loanRoutes"
+      ],
+      "imports": [
+        "../db",
+        "../session"
+      ],
+      "type": "module"
+    },
+    "src/server/routes/members.ts": {
+      "exports": [
+        "memberRoutes"
+      ],
+      "imports": [
+        "../db",
+        "../session"
+      ],
+      "type": "module"
+    },
+    "src/server/routes/sheds.ts": {
+      "exports": [
+        "shedRoutes"
+      ],
+      "imports": [
+        "../db"
+      ],
+      "type": "module"
+    },
+    "src/server/session.ts": {
+      "exports": [
+        "createSession",
+        "requireSession",
+        "endSession"
+      ],
+      "imports": [
+        "./db",
+        "node:crypto"
+      ],
+      "type": "module"
+    },
+    "src/server/db.ts": {
+      "exports": [
+        "openDb",
+        "withTransaction"
+      ],
+      "imports": [
+        "node:fs",
+        "better-sqlite3"
+      ],
+      "type": "module"
+    },
+    "src/shared/types.ts": {
+      "exports": [
+        "Loan",
+        "Member",
+        "Shed",
+        "Tool"
+      ],
+      "imports": [],
+      "type": "type-def"
+    },
+    "src/web/main.tsx": {
+      "exports": [],
+      "imports": [
+        "react",
+        "./App"
+      ],
+      "type": "entry-point"
+    },
+    "src/web/App.tsx": {
+      "exports": [
+        "App"
+      ],
+      "imports": [
+        "react-router",
+        "./pages/Catalogue"
+      ],
+      "type": "module"
+    },
+    "src/web/styles.css": {
+      "exports": [],
+      "imports": [],
+      "type": "style"
+    },
+    "vite.config.ts": {
+      "exports": [
+        "default"
+      ],
+      "imports": [
+        "vite"
+      ],
+      "type": "config"
+    },
+    "test/loans.test.ts": {
+      "exports": [],
+      "imports": [
+        "vitest",
+        "../src/server/routes/loans"
+      ],
+      "type": "test"
+    },
+    "scripts/seed-sheds.ts": {
+      "exports": [],
+      "imports": [
+        "../src/server/db"
+      ],
+      "type": "script"
+    }
+  }
+}

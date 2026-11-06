@@ -72,7 +72,8 @@ describe('made-up example markers and index (VIEW-21)', () => {
     expect(problems).toEqual(SHAPES_MAP_PATHS.map((path) => ({ path, kind: 'not-indexed' })));
   });
 
-  it('the rule covers the spec, check and map kinds', () => {
+  it('the rule covers the spec, check, map, intel and graph kinds', () => {
+    for (const kind of ['intel', 'graph']) expect(MADE_UP_EXAMPLE_KINDS.has(kind)).toBe(true);
     for (const kind of ['spec', 'ai-spec', 'user-setup', 'eval-review', 'dom-verify', 'reviews']) expect(MADE_UP_EXAMPLE_KINDS.has(kind)).toBe(true);
     for (const name of ['stack', 'architecture', 'structure', 'conventions', 'testing', 'integrations', 'concerns']) {
       expect(MADE_UP_EXAMPLE_KINDS.has(`codebase-${name}`)).toBe(true);
@@ -137,6 +138,63 @@ describe('planted controls: the check bites', () => {
       { path: SPEC, kind: 'not-indexed' },
       { path: '.planning/phases/02-y/02-SPEC.md', kind: 'missing-marker' },
     ]);
+  });
+});
+
+const STACK = '.planning/intel/stack.json';
+const MARKER_KEYS = { made_up_example: true, derived_from: 'agents/gsd-intel-updater.md', gsd_core_version: '1.19.0' };
+
+function intelRow(path: string): IndexRow {
+  return { path, type: 'intel', derivedFrom: 'agents/gsd-intel-updater.md', version: '1.19.0', shape: 'planted' };
+}
+
+describe('JSON markers (D-15, RESEARCH C13)', () => {
+  it('a top-level marker passes', async () => {
+    const root = plantProject({ [STACK]: JSON.stringify({ ...MARKER_KEYS, languages: ['TypeScript'] }) });
+    const problems = await findMadeUpProblems({ roots: [root], indexRows: [intelRow(STACK)], repoRoot: root });
+    expect(problems).toEqual([]);
+  });
+
+  it('a marker inside _meta passes', async () => {
+    const root = plantProject({ [STACK]: JSON.stringify({ _meta: { updated_at: 'x', version: 1, ...MARKER_KEYS }, entries: {} }) });
+    const problems = await findMadeUpProblems({ roots: [root], indexRows: [intelRow(STACK)], repoRoot: root });
+    expect(problems).toEqual([]);
+  });
+
+  it('a JSON file with no marker is exactly one missing-marker problem', async () => {
+    const root = plantProject({ [STACK]: JSON.stringify({ _meta: { updated_at: 'x', version: 1 }, entries: {} }) });
+    const problems = await findMadeUpProblems({ roots: [root], indexRows: [intelRow(STACK)], repoRoot: root });
+    expect(problems).toEqual([{ path: STACK, kind: 'missing-marker' }]);
+  });
+
+  it('a graph file is bound by the rule too', async () => {
+    const graph = '.planning/graphs/graph.json';
+    const root = plantProject({ [graph]: JSON.stringify({ nodes: [], links: [] }) });
+    const problems = await findMadeUpProblems({ roots: [root], indexRows: [], repoRoot: root });
+    expect(problems).toEqual([
+      { path: graph, kind: 'missing-marker' },
+      { path: graph, kind: 'not-indexed' },
+    ]);
+  });
+
+  it('invalid JSON is a missing marker and never a throw', async () => {
+    const root = plantProject({ [STACK]: '{ "made_up_example": true, "derived_from": ' });
+    const problems = await findMadeUpProblems({ roots: [root], indexRows: [intelRow(STACK)], repoRoot: root });
+    expect(problems).toEqual([{ path: STACK, kind: 'missing-marker' }]);
+    expect(readMadeUpMarker({}, '{ not json')).toBeNull();
+    expect(readMadeUpMarker({}, '[1, 2, 3]')).toBeNull();
+  });
+
+  it('a marker with a wrong type or a prototype key is not a marker', () => {
+    expect(readMadeUpMarker({}, JSON.stringify({ ...MARKER_KEYS, made_up_example: 'true' }))).toBeNull();
+    expect(readMadeUpMarker({}, '{"__proto__": {"made_up_example": true, "derived_from": "a", "gsd_core_version": "1"}}')).toBeNull();
+  });
+
+  it('reads the marker from fence lines when the YAML beside it does not parse', () => {
+    const text = ['---', 'spike: 004', 'verdict: VALIDATED: with a stray colon', 'made_up_example: true', 'derived_from: agents/gsd-intel-updater.md', 'gsd_core_version: 1.19.0', '---', '# Planted', ''].join('\n');
+    expect(readMadeUpMarker({}, text)).toEqual({ derivedFrom: 'agents/gsd-intel-updater.md', version: '1.19.0' });
+    expect(readMadeUpMarker({}, text.replace('made_up_example: true', 'made_up_example: false'))).toBeNull();
+    expect(readMadeUpMarker({}, text.replace('---\n', '').replace('spike: 004', '# spike'))).toBeNull();
   });
 });
 
