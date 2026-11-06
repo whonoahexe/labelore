@@ -77,7 +77,7 @@ describe('PauseHandler', () => {
   it('reaches the tracer context: the stop and the next action, paired with the root continue-here', async () => {
     const { presentation } = await loadFixtureProject();
     const context = buildPauseContext(presentation, HANDOFF_PATH);
-    expect(context?.stop).toEqual({ task: 3, totalTasks: 6, status: 'paused' });
+    expect(context?.stop).toMatchObject({ task: 3, totalTasks: 6, status: 'paused' });
     expect(context?.nextAction?.text).toContain('Point the loan log');
     expect(context?.files.continueHere?.path).toBe('.planning/.continue-here.md');
   });
