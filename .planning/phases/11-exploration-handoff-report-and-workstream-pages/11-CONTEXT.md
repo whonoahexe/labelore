@@ -128,6 +128,30 @@ dashboard "Paused" mark (D-06).
 - Which intel files exist in practice (the ingest-docs markdown family versus the intel-updater JSON
   family) is settled by D-14's real run.
 
+### Confirmed research deviations (11-01)
+The user answered "approve all" on 2026-11-07 to the C1 to X6 table (11-01 Task 1). C1 words D-01's
+spike address as the Phase 7 key plus a redirect, and C12 narrows D-13; both are recorded as answered.
+- C1: adopted (2026-11-07; plans 11-15, 11-16, 11-18)
+- C2: adopted (2026-11-07; plans 11-18)
+- C3: adopted (2026-11-07; plans 11-03, 11-13)
+- C4: adopted (2026-11-07; plans 11-03, 11-16)
+- C5: adopted (2026-11-07; plans 11-13, 11-19)
+- C6: adopted (2026-11-07; plans 11-05, 11-12)
+- C7: adopted (2026-11-07; plans 11-29, 11-31)
+- C8: adopted (2026-11-07; plans 11-03, 11-27)
+- C9: adopted (2026-11-07; plans 11-06, 11-07, 11-10)
+- C10: adopted (2026-11-07; plans 11-09, 11-17, 11-20, 11-24)
+- C11: adopted (2026-11-07; plans 11-09, 11-20, 11-21, 11-26)
+- C12: adopted (2026-11-07; plans 11-28, 11-29, 11-31)
+- C13: adopted (2026-11-07; plans 11-04, 11-06)
+- C14: adopted (2026-11-07; plans 11-07, 11-13)
+- X1: adopted (2026-11-07; plans 11-10, 11-11)
+- X2: adopted (2026-11-07; plans 11-10, 11-15, 11-18, 11-22, 11-23, 11-24, 11-25, 11-26)
+- X3: adopted (2026-11-07; plans 11-19)
+- X4: approve, the fifth size (2026-11-07; plans 11-15, 11-16)
+- X5: approve, the fifth size (2026-11-07; plans 11-18, 11-19)
+- X6: approve, the fifth size (2026-11-07; plans 11-31)
+
 </decisions>
 
 <canonical_refs>
