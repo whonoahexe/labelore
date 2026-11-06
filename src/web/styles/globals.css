@@ -33316,7 +33316,6 @@ button.view-codebase-mark:hover {
   min-height: var(--space-7);
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--border);
-  border-radius: 0;
   background: none;
   color: inherit;
   font-family: var(--font-mono);
@@ -33484,6 +33483,214 @@ button.view-codebase-mark:hover {
   overflow-wrap: anywhere;
 }
 
+/* Rail marks: done is the accent, the stop and the resume step are heavy squares, a gate is a bar in the missing tone
+   (a cleared gate is a plain hairline bar), what is left is a dashed square. The line before a done step and after the
+   last step is dashed, as the sketch draws it. */
+.view-pause-rail[data-rail='behind']::before {
+  border-left: 2px dashed var(--border);
+}
+
+.view-pause-rail[data-rail='ahead']::before {
+  border-left: 2px dashed var(--muted-foreground);
+}
+
+.view-pause-dot[data-kind='done'] {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.view-pause-dot[data-kind='gate'],
+.view-pause-dot[data-kind='cleared'] {
+  width: var(--space-8);
+  height: var(--space-2);
+  margin-top: var(--space-4);
+  border: 0;
+  background: var(--missing-fill);
+}
+
+.view-pause-dot[data-kind='cleared'] {
+  background: var(--border);
+}
+
+.view-pause-dot[data-kind='ahead'] {
+  border-style: dashed;
+  border-color: var(--muted-foreground);
+}
+
+/* Done tasks and tasks left, as small chips. */
+.view-pause-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-pause-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1-5);
+  min-width: 0;
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--border-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-pause-chip[data-tone='quiet'] {
+  border-style: dashed;
+  color: var(--muted-foreground);
+}
+
+.view-pause-chip-note {
+  color: var(--muted-foreground);
+}
+
+.view-pause-sq {
+  --status-square-size: var(--space-2-5);
+  align-self: center;
+}
+
+/* A gate: one bar per blocking item, outlined in the missing tone. A gate marked as read keeps it. */
+.view-pause-gate {
+  display: grid;
+  gap: var(--space-1-5);
+  padding: var(--space-2-5) var(--space-3);
+  border: 1px solid var(--missing-border);
+  min-width: 0;
+}
+
+.view-pause-what {
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-pause-why {
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.view-pause-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.view-pause-read {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--space-7);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.view-pause-read:hover {
+  background: var(--state-hover);
+}
+
+.view-pause-read[aria-pressed='true'] {
+  background: var(--muted);
+}
+
+@media (pointer: coarse) {
+  .view-pause-read {
+    min-height: var(--space-10);
+  }
+}
+
+.view-pause-cleared {
+  margin: 0;
+  padding: var(--space-2-5) var(--space-3);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+/* Side notes branch off the rail: dashed and quiet, joined to it by a short dashed line. */
+.view-pause-side {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.view-pause-side::before {
+  content: '';
+  position: absolute;
+  top: var(--space-4);
+  right: 100%;
+  width: var(--space-5);
+  border-top: 1px dashed var(--border);
+}
+
+.view-pause-side strong {
+  color: var(--foreground);
+  font-weight: var(--fw-semibold);
+}
+
+/* The shared disagreement block (record-disagreement): dashed and quiet, two labelled values, never merged. The Spikes
+   and Workstreams pages reuse it. */
+.record-disagreement {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  border: 1px dashed var(--muted-foreground);
+  min-width: 0;
+}
+
+.record-disagreement > div {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-3) var(--space-4);
+  min-width: 0;
+}
+
+.record-disagreement [data-part='label'] {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.record-disagreement [data-part='value'] {
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.record-disagreement [data-part='ne'] {
+  display: grid;
+  place-items: center;
+  padding: 0 var(--space-2);
+  border-inline: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+}
+
 @media (max-width: 52rem) {
   .view-pause-path > li {
     grid-template-columns: var(--space-6) minmax(0, 1fr);
@@ -33497,6 +33704,22 @@ button.view-codebase-mark:hover {
   .view-pause-aside {
     grid-column: 2;
     padding-top: 0;
+  }
+
+  .view-pause-side::before {
+    display: none;
+  }
+}
+
+@media (max-width: 30rem) {
+  .record-disagreement {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .record-disagreement [data-part='ne'] {
+    padding: var(--space-1) 0;
+    border-inline: 0;
+    border-block: 1px dashed var(--border);
   }
 }
 /* phase-11-pause:end */
