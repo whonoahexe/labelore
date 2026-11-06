@@ -52,10 +52,10 @@ Each page is sketched first, then built and screenshot-checked against the winni
       alongside the existing review page
 - [ ] **VIEW-10**: A coverage file opens into a designed page that shows what GSD's coverage file actually holds
       (its capability-by-capability coverage matrix)
-- [ ] **VIEW-11**: Phase specification documents open into designed pages: spec, AI spec and user setup
-- [ ] **VIEW-12**: Phase check documents open into designed pages: eval review, browser check (DOM verify) and
+- [x] **VIEW-11**: Phase specification documents open into designed pages: spec, AI spec and user setup
+- [x] **VIEW-12**: Phase check documents open into designed pages: eval review, browser check (DOM verify) and
       cross-AI reviews
-- [ ] **VIEW-13**: The seven codebase-map documents (stack, architecture, structure, conventions, testing,
+- [x] **VIEW-13**: The seven codebase-map documents (stack, architecture, structure, conventions, testing,
       integrations, concerns) open into designed pages
 - [ ] **VIEW-14**: Spikes open into designed pages: the spikes manifest, each spike and its wrap-up summary
 - [ ] **VIEW-15**: Seeds open into designed pages showing the idea, when it should surface and where it was planted
@@ -65,7 +65,7 @@ Each page is sketched first, then built and screenshot-checked against the winni
 - [ ] **VIEW-18**: Reports, forensics and onboarding documents open into designed pages
 - [ ] **VIEW-19**: Intel and graph files open into designed summary pages, never a dump of the raw data
 - [ ] **VIEW-20**: A project that uses GSD workstreams shows each workstream with its own state, roadmap and phases
-- [ ] **VIEW-21**: Every type with no real example on this machine is built and tested against a made-up example
+- [x] **VIEW-21**: Every type with no real example on this machine is built and tested against a made-up example
       derived from GSD's own template, and that example is labelled as made up
 
 ### Project settings, Source mode and project shapes
@@ -76,7 +76,7 @@ Each page is sketched first, then built and screenshot-checked against the winni
 - [ ] **SRC-01**: Source mode is redesigned from a sketch
 - [ ] **SRC-02**: Source mode can show a file's raw text with line numbers, folded frontmatter, a link to a line,
       and copy buttons for the path and the contents
-- [ ] **TGT-09**: A project whose `.planning/` holds only a codebase map (as `/gsd-map-codebase` leaves it) opens
+- [x] **TGT-09**: A project whose `.planning/` holds only a codebase map (as `/gsd-map-codebase` leaves it) opens
       from either its project path or its `.planning` path, and its first screen is a "mapped, not started"
       overview built from the codebase documents
 
@@ -185,9 +185,9 @@ Which phases cover which requirements. Filled in when the roadmap is created.
 | VIEW-08 | Phase 9 | Pending |
 | VIEW-09 | Phase 9 | Pending |
 | VIEW-10 | Phase 9 | Pending |
-| VIEW-11 | Phase 10 | Pending |
-| VIEW-12 | Phase 10 | Pending |
-| VIEW-13 | Phase 10 | Pending |
+| VIEW-11 | Phase 10 | Complete |
+| VIEW-12 | Phase 10 | Complete |
+| VIEW-13 | Phase 10 | Complete |
 | VIEW-14 | Phase 11 | Pending |
 | VIEW-15 | Phase 11 | Pending |
 | VIEW-16 | Phase 11 | Pending |
@@ -195,11 +195,11 @@ Which phases cover which requirements. Filled in when the roadmap is created.
 | VIEW-18 | Phase 11 | Pending |
 | VIEW-19 | Phase 11 | Pending |
 | VIEW-20 | Phase 11 | Pending |
-| VIEW-21 | Phase 10 | Pending |
+| VIEW-21 | Phase 10 | Complete |
 | SET-01 | Phase 12 | Pending |
 | SRC-01 | Phase 12 | Pending |
 | SRC-02 | Phase 12 | Pending |
-| TGT-09 | Phase 10 | Pending |
+| TGT-09 | Phase 10 | Complete |
 | NAV-09 | Phase 7 | Complete |
 | NAV-10 | Phase 7 | Complete |
 | NAV-11 | Phase 7 | Complete |

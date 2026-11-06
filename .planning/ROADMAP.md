@@ -49,7 +49,7 @@ read.
 - [x] **Phase 7: Recognised Files and Readable URLs** - Every GSD file is recognised by where it lives and has one readable address starting with the project's name (completed 2026-10-27)
 - [x] **Phase 8: Several Projects and a Switcher** - One run holds several projects, remembers them, and moves between them without mixing their data (completed 2026-11-02)
 - [ ] **Phase 9: Review, Audit and Root Document Pages** - The root documents, milestone audits, coverage files and the review ledger open into designed pages
-- [ ] **Phase 10: Codebase Map, Specification and Check Pages** - Codebase maps, map-only projects, and the documents a phase is specified and checked with get pages, built on labelled made-up examples where none exists
+- [x] **Phase 10: Codebase Map, Specification and Check Pages** - Codebase maps, map-only projects, and the documents a phase is specified and checked with get pages, built on labelled made-up examples where none exists (completed 2026-11-06)
 - [ ] **Phase 11: Exploration, Handoff, Report and Workstream Pages** - Spikes, seeds, threads, paused work, the rarer reports and indexes, and workstreams each open into a designed page
 - [ ] **Phase 12: Project Settings, Source Mode and Reading Polish** - `config.json` becomes a read-only settings page, Source mode is redesigned, and the v1.1 polish items close
 - [ ] **Phase 13: Search and Quick-Jump Palette** - Search is grouped, filterable and honest while indexing, and Cmd-K jumps to any page, ID or project
@@ -369,7 +369,7 @@ testing such pages against made-up examples that are clearly labelled as made up
    and falls back to a readable generic page when a real file differs from what the design expected.
    *(VIEW-21, VIEW-11, VIEW-12, VIEW-13)*
 
-**Plans**: 24/24 plans executed
+**Plans**: 24/24 plans complete
 
 Plans:
 **Wave 1**
@@ -535,7 +535,7 @@ file, ID or project.
 | 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
 | 8. Several Projects and a Switcher | v2.1 | 18/18 | Complete    | 2026-11-02 |
 | 9. Review, Audit and Root Document Pages | v2.1 | 16/16 | In Progress | - |
-| 10. Codebase Map, Specification and Check Pages | v2.1 | 24/24 | In Progress | - |
+| 10. Codebase Map, Specification and Check Pages | v2.1 | 24/24 | Complete    | 2026-11-06 |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |
 | 12. Project Settings, Source Mode and Reading Polish | v2.1 | 0/TBD | Not started | - |
 | 13. Search and Quick-Jump Palette | v2.1 | 0/TBD | Not started | - |
