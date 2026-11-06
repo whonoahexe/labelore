@@ -27,6 +27,18 @@ describe('projectMapState', () => {
     ).toBe(false);
   });
 
+  it('is not map-only once a live workstream folder holds a file (RESEARCH C8)', () => {
+    const state = projectMapState([map('STACK.md'), at('.planning/workstreams/alpha/STATE.md', 'other')]);
+    expect(state).toEqual({ present: ['STACK.md'], mapOnly: false });
+    expect(
+      projectMapState([map('STACK.md'), at('.planning/workstreams/alpha/phases/01-a/01-CONTEXT.md', 'other')]).mapOnly,
+    ).toBe(false);
+  });
+
+  it('stays map-only beside a lone file directly in workstreams/ (no workstream folder)', () => {
+    expect(projectMapState([map('STACK.md'), at('.planning/workstreams/README.md', 'other')]).mapOnly).toBe(true);
+  });
+
   it('stays map-only beside a PROJECT.md, a stray changelog and a ui-reviews folder', () => {
     const state = projectMapState([
       map('STACK.md'),
