@@ -47,6 +47,7 @@ import {
 } from './spikes.ts';
 import { IndexIntelHandler } from './index-intel.ts';
 import { SeedHandler, ThreadHandler } from './seed-thread.ts';
+import { ReportHandler, ForensicsHandler } from './reports.ts';
 import { GenericMarkdownHandler } from './generic.ts';
 
 export const HANDLERS: ArtifactHandler[] = [
@@ -95,6 +96,8 @@ export const HANDLERS: ArtifactHandler[] = [
   IndexIntelHandler,
   SeedHandler,
   ThreadHandler,
+  ReportHandler,
+  ForensicsHandler,
   ContinueHereHandler,
   GenericMarkdownHandler,
 ];
