@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 053 — Spikes page</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 053: the Spikes page (VIEW-14), one page for the manifest's verdict board plus a panel per spike, the
+   conventions and the wrap-up summary (Phase 11 D-01). Three kinds of picture: a board (A), a map (B) and a reuse of
+   the shipped rail + column frame with 044 E's piles (C). Text is MADE UP in the shape of a real GSD spikes tree
+   (read for shape only, never copied: the real one is private work). Tokens come from ../themes/default.css; every
+   colour is a theme token or a colour-mix of tokens. The atoms below are 050/052's, verbatim. */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --neutral-fill: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; padding: 0 var(--space-0-5); background: var(--veil); overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.app-brand span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+@media (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- page atoms ---------- */
+.page { display: grid; gap: var(--space-8); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); min-width: 0; }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.meta { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.micro-label { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h2.sh { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+.btn-xs.icon { padding-inline: 0; width: var(--space-7); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } .btn-xs.icon { width: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; background: transparent; }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--neutral-fill); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); }
+.num { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.prose { max-width: 72ch; }
+.mono { font-family: var(--font-mono); }
+.vname { font-family: var(--font-mono); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+
+/* the lead and the shared status meter (048's drawing, reused) */
+.lead-line { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.lead-line b { font-family: var(--font-mono); }
+.status-meter { display: grid; gap: var(--space-1-5); min-width: 0; }
+.status-meter .cells { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.status-meter .cells .sq { --sq: var(--space-5); }
+.status-meter .cap { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); letter-spacing: var(--ls-wider); }
+.status-meter .cap b { color: var(--foreground); }
+
+/* the disagreement: the file's Status line beside the box count, never merged; quiet, not an alarm */
+.disagree { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; border: 1px dashed var(--muted-foreground); min-width: 0; }
+.disagree > div { display: grid; gap: var(--space-1); align-content: start; padding: var(--space-3) var(--space-4); min-width: 0; }
+.disagree .ne { display: grid; place-items: center; padding: 0 var(--space-2); border-inline: 1px dashed var(--border); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-7); }
+.disagree .foot { grid-column: 1 / -1; padding: var(--space-2) var(--space-4); border-top: 1px dashed var(--border); color: var(--muted-foreground); }
+.disagree .val { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.agree { display: inline-flex; gap: var(--space-2); align-items: center; }
+
+/* the step dock (shared) */
+.dock { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.dock-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.dock-head h3 { font-size: inherit; font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.dock-head .x { margin-left: auto; }
+.dock > h3 { font-size: inherit; font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.fields { display: grid; gap: var(--space-2); }
+.fields > div { display: grid; grid-template-columns: calc(var(--space-8) * 3.5) minmax(0, 1fr); gap: var(--space-3); }
+.fields dt { padding-top: var(--space-0-5); }
+.fields dd { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 42rem) { .fields > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-0-5); } }
+.dock-empty { padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); color: var(--muted-foreground); }
+.vfacts { display: grid; gap: var(--space-2); }
+.vfacts li { display: grid; grid-template-columns: var(--icon) minmax(0, 1fr); gap: var(--space-2); align-items: center; min-width: 0; overflow-wrap: anywhere; }
+.vfacts .i { color: var(--muted-foreground); }
+.cell .status-chip, .bar summary .status-chip, .tag .status-chip { white-space: normal; }
+.goes { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); align-items: baseline; }
+
+/* closed bars + the In the source only strip (shared) */
+.bars-wrap { display: grid; gap: var(--space-3); }
+.bars { display: grid; border-top: 1px solid var(--border); }
+.bar-group { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-8); padding: var(--space-3) var(--space-2) var(--space-1); border-bottom: 1px solid var(--border-faint); }
+.bar { border-bottom: 1px solid var(--border); }
+.bar > summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding-inline: var(--space-2); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); min-width: 0; }
+.bar > summary > span:not(.sq):not(.n) { min-width: 0; overflow-wrap: anywhere; }
+.bar > summary::-webkit-details-marker { display: none; }
+.bar > summary:hover { background: var(--state-hover); }
+.bar[open] > summary .chev { transform: rotate(90deg); }
+.bar > summary .n { margin-left: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.bar-body { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--icon) + var(--space-4)); min-width: 0; }
+@media (max-width: 42rem) { .bar-body { padding-left: var(--space-2); } }
+.only { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); }
+.only a { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; text-decoration: underline; text-underline-offset: var(--space-0-5); text-decoration-color: var(--border); }
+.blocks { display: grid; gap: var(--space-3); min-width: 0; }
+/* the shipped copy-command row (10-10): the command as selectable mono text, then the Copy command button */
+.copy-command { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-3); border: 1px solid var(--border-faint); background: var(--veil); min-width: 0; }
+.copy-command code { flex: 1 1 16rem; background: none; padding: 0; font-size: var(--fs-2); line-height: var(--lh-snug); min-width: 0; }
+.cmd-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+
+/* the missing tone (document content: the missing family only) */
+:root { --missing-border: color-mix(in oklch, var(--missing-fill) 55%, var(--border)); }
+.status-chip[data-tone='missing'] { border-color: var(--missing-border); color: var(--missing-fill); background: transparent; }
+.sq[data-tone='missing'] { background: transparent; border: 2px solid var(--missing-fill); }
+.status-chip.big { font-size: var(--fs-7); letter-spacing: var(--ls-tight); padding: var(--space-1-5) var(--space-3); }
+.status-chip.big .sq { --sq: var(--space-3); }
+.facts { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); }
+.facts span { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.facts b { color: var(--foreground); font-weight: var(--fw-semibold); }
+.score { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.word { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.tgt { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: 0 var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); white-space: nowrap; }
+.steps { display: grid; gap: var(--space-2); counter-reset: none; }
+.step { display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.step .no { font-family: var(--font-mono); font-weight: var(--fw-semibold); color: var(--muted-foreground); }
+.step .tx { min-width: 0; overflow-wrap: anywhere; }
+.step .tx .tgt { margin-left: var(--space-1); }
+.zero { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--muted-foreground); }
+
+
+/* ---------- 053 shared ---------- */
+:root { --sheet: calc(var(--space-8) * 19); --lane: calc(var(--space-8) * 7); }
+.status-chip[data-tone='neutral'] { border-style: dashed; color: var(--muted-foreground); background: transparent; }
+.vtext { color: var(--muted-foreground); overflow-wrap: anywhere; }
+.addr { display: inline-flex; gap: var(--space-1-5); align-items: center; padding: var(--space-0-5) var(--space-2); border: 1px solid var(--border-faint); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.addr b { color: var(--foreground); font-weight: var(--fw-semibold); }
+.gwt { display: grid; gap: 0; border: 1px solid var(--border); }
+.gwt > div { display: grid; grid-template-columns: calc(var(--space-8) * 2.2) minmax(0, 1fr); gap: var(--space-3); padding: var(--space-2) var(--space-3); }
+.gwt > div + div { border-top: 1px solid var(--border-faint); }
+.files { display: grid; border: 1px dashed var(--border); }
+.files li { display: grid; grid-template-columns: var(--icon) minmax(0, 1fr) auto auto; gap: var(--space-2) var(--space-3); align-items: center; padding: var(--space-1-5) var(--space-3); font-family: var(--font-mono); font-size: var(--fs-2); }
+.files li + li { border-top: 1px solid var(--border-faint); }
+.files .i { color: var(--muted-foreground); }
+.files .k { color: var(--muted-foreground); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.files .sz { color: var(--muted-foreground); text-align: right; }
+.files-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); padding: var(--space-1-5) var(--space-3); border-top: 1px dashed var(--border); }
+.md table { border-collapse: collapse; width: 100%; font-size: var(--fs-4); }
+.md th, .md td { text-align: left; padding: var(--space-1-5) var(--space-2); border-bottom: 1px solid var(--border-faint); vertical-align: top; }
+.md th { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); font-weight: var(--fw-semibold); }
+.md ul { list-style: square; padding-left: var(--space-5); display: grid; gap: var(--space-1); }
+.md p + p, .md p + ul, .md ul + p, .md p + table, .md table + p { margin-top: var(--space-2); }
+.tblwrap { overflow-x: auto; }
+.panel { display: grid; gap: var(--space-5); min-width: 0; }
+.panel-head { display: grid; gap: var(--space-2); }
+.panel-head h2 { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); overflow-wrap: anywhere; }
+.panel-head .row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.rel { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.rel button { display: inline-flex; gap: var(--space-1-5); align-items: center; padding: var(--space-0-5) var(--space-2); border: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); }
+.rel button:hover { background: var(--state-hover); }
+.reqs { display: grid; gap: var(--space-1-5); }
+.reqs li { display: grid; grid-template-columns: var(--space-3) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; }
+.reqs li::before { content: ''; width: var(--space-1-5); height: var(--space-1-5); background: var(--muted-foreground); transform: translateY(-0.1em); }
+.disagree.small .val { font-size: var(--fs-4); }
+.processed { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+
+/* =====================================================================
+   A: Verdict board — ideas as lanes, the four verdicts as columns; a spike opens in a sheet from the right
+   ===================================================================== */
+.board { display: grid; grid-template-columns: var(--lane) repeat(4, minmax(0, 1fr)); border: 1px solid var(--border); min-width: 0; }
+.board > .colhead { display: grid; gap: var(--space-1); align-content: start; padding: var(--space-3); border-bottom: 1px solid var(--border); border-left: 1px solid var(--border-faint); }
+.board > .colhead.first { border-left: 0; }
+.board > .colhead .num { font-size: var(--fs-display-1); line-height: var(--lh-none); }
+.board > .lanehead { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3); border-top: 1px solid var(--border-faint); }
+.board > .lanehead .vname { font-size: var(--fs-4); }
+.board > .cell { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-2); border-top: 1px solid var(--border-faint); border-left: 1px solid var(--border-faint); min-height: calc(var(--space-8) * 3); min-width: 0; }
+.board > .cell[data-tone='complete'] { background: color-mix(in oklch, var(--primary) 3%, transparent); }
+.board > .lanehead.first-lane, .board > .cell.first-lane { border-top: 0; }
+.board > .reqrow { grid-column: 1 / -1; padding: var(--space-3) var(--space-4) var(--space-4) var(--space-3); border-top: 1px dashed var(--border); background: var(--veil); }
+.tile { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-2-5); border: 1px solid var(--border); background: var(--card); text-align: left; min-width: 0; position: relative; }
+.tile:hover { background: color-mix(in oklch, var(--card) 80%, var(--muted)); }
+.tile[aria-current='true'] { outline: 2px solid var(--foreground); outline-offset: -2px; }
+.tile .top { display: flex; gap: var(--space-2); align-items: center; }
+.tile .id { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); }
+.tile .nm { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.tile .vtext { font-size: var(--fs-2); font-family: var(--font-mono); }
+.tile .foot { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.tile .foot .flag { border: 1px dashed var(--muted-foreground); padding: 0 var(--space-1); }
+.tile[data-tone='missing'] { border-color: var(--missing-border); }
+.tile[data-tone='complete'] { border-color: var(--primary-border); }
+.tile[data-tone='in-flight'] { border-color: var(--in-flight-border); }
+.tile[data-tone='quiet'], .tile[data-tone='neutral'] { border-style: dashed; background: transparent; }
+.side-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 9)), 1fr)); gap: var(--space-3); }
+.side-strip .tile { padding: var(--space-3); }
+.sheet-scrim { position: fixed; inset: 0; z-index: 60; background: color-mix(in oklch, var(--foreground) 18%, transparent); opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }
+.sheet { position: fixed; top: 0; right: 0; bottom: 0; z-index: 61; width: min(var(--sheet), 100%); overflow-y: auto; padding: var(--space-6) var(--space-6) var(--space-10); background: var(--background); border-left: 1px solid var(--border); transform: translateX(100%); transition: transform 0.18s ease; }
+.sheet.on { transform: none; }
+.sheet-scrim.on { opacity: 1; pointer-events: auto; }
+.sheet .sheet-bar { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-5); }
+.sheet .sheet-bar .x { margin-left: auto; }
+@media (max-width: 48rem) {
+  .board { grid-template-columns: minmax(0, 1fr); }
+  .board > .colhead { display: none; }
+  .board > .cell { border-left: 0; min-height: 0; padding: var(--space-1) var(--space-2) var(--space-2); }
+  .board > .cell:empty { display: none; }
+  .board > .cell::before { content: attr(data-word); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+  .board > .lanehead { border-top: 1px solid var(--border); }
+  .sheet { padding: var(--space-4) var(--space-4) var(--space-10); }
+}
+.board-key { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
+@media (min-width: 48.01rem) { .board-key { display: none; } }
+
+/* =====================================================================
+   B: Idea map — each idea a figure: the idea node, its spikes (letter families stacked), related wires, and the
+   wrap-up node the processed spikes feed; a node opens its panel in place under the figure
+   ===================================================================== */
+.map { display: grid; gap: var(--space-4); padding: var(--space-4); border: 1px solid var(--border); position: relative; min-width: 0; }
+.map-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); }
+.map-head .vname { font-size: var(--fs-7); letter-spacing: var(--ls-tight); }
+.map-grid { position: relative; padding-block: var(--space-10); display: grid; grid-auto-flow: column; grid-auto-columns: minmax(calc(var(--space-8) * 5.5), 1fr); gap: var(--space-8); align-items: center; min-width: 0; }
+.map-grid svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.map-col { display: grid; gap: var(--space-3); align-content: center; position: relative; z-index: 1; }
+.fam { display: grid; gap: var(--space-2); padding: var(--space-2); border: 1px dashed var(--border); }
+.fam > .micro-label { padding-inline: var(--space-1); }
+.node { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-2-5); border: 1px solid var(--border); background: var(--card); text-align: left; min-width: 0; }
+.node:hover { background: color-mix(in oklch, var(--card) 80%, var(--muted)); }
+.node[aria-current='true'] { outline: 2px solid var(--foreground); outline-offset: 2px; }
+.node .top { display: flex; gap: var(--space-2); align-items: center; }
+.node .id { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); }
+.node .nm { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.node .word { font-size: var(--fs-2); }
+.node[data-tone='complete'] { border-color: var(--primary); background: color-mix(in oklch, var(--primary) 7%, var(--card)); }
+.node[data-tone='in-flight'] { border-color: var(--in-flight-fill); }
+.node[data-tone='missing'] { border: 2px solid var(--missing-fill); }
+.node[data-tone='quiet'] { border-style: dashed; border-color: var(--muted-foreground); background: transparent; }
+.node.idea { background: var(--muted); border-color: var(--foreground); }
+.node.wrap { border-style: double; border-width: 3px; border-color: var(--foreground); }
+.wire { fill: none; stroke: var(--border); stroke-width: 1.5; }
+.wire.rel { stroke: var(--muted-foreground); stroke-dasharray: 3 3; }
+.wire.feed { stroke: var(--foreground); stroke-width: 1.5; }
+.wire.on { stroke: var(--foreground); stroke-width: 2; stroke-dasharray: none; }
+.map-key { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.map-key svg { width: var(--space-6); height: var(--space-2); vertical-align: middle; }
+.inpanel { padding: var(--space-5); border: 1px solid var(--foreground); background: var(--card); }
+.inpanel .sheet-bar { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4); }
+.inpanel .sheet-bar .x { margin-left: auto; }
+@media (max-width: 52rem) {
+  .map-grid { grid-auto-flow: row; grid-auto-columns: auto; gap: var(--space-3); padding-left: var(--space-5); }
+  .map-grid svg.wires { display: none; }
+  .map-grid::before { content: ''; position: absolute; left: var(--space-2); top: var(--space-6); bottom: var(--space-6); border-left: 1px solid var(--border); }
+  .map-col { position: relative; }
+  .map-col::before { content: ''; position: absolute; left: calc(var(--space-3) * -1); top: 50%; width: var(--space-3); border-top: 1px solid var(--border); }
+  .map-col.ideacol { margin-left: calc(var(--space-5) * -1); }
+  .map-col.ideacol::before { display: none; }
+  .inpanel { padding: var(--space-4); }
+}
+
+/* =====================================================================
+   C: Reuse — 042 A's rail + column, the board panel drawn as 044 E's piles (one pile per verdict)
+   ===================================================================== */
+.rc { display: grid; grid-template-columns: calc(var(--space-8) * 7.5) minmax(0, 1fr); gap: var(--space-8); align-items: start; min-width: 0; }
+.rail { position: sticky; top: calc(var(--space-10) * 2); display: grid; gap: var(--space-4); }
+.rail .grp-list { display: grid; }
+.rail button { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1-5) var(--space-2); text-align: left; border-left: 2px solid transparent; min-width: 0; }
+.rail button:hover { background: var(--state-hover); }
+.rail button[aria-current='true'] { border-left-color: var(--foreground); background: var(--muted); }
+.rail .id { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); }
+.rail .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail-select { display: none; }
+.piles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); align-items: end; }
+.pile { display: grid; gap: var(--space-2); align-content: end; min-width: 0; }
+.pile .stack { display: flex; flex-direction: column-reverse; gap: var(--space-1); min-height: calc(var(--space-8) * 5); justify-content: flex-start; }
+.pile .seg { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2); align-items: center; padding: var(--space-1-5) var(--space-2); min-height: var(--space-10); text-align: left; border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.pile .seg:hover { background: var(--state-hover); }
+.pile .seg .id { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); }
+.pile .seg .nm { font-size: var(--fs-2); font-family: var(--font-mono); color: var(--muted-foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pile[data-tone='complete'] .seg { background: var(--primary); border-color: var(--primary); color: var(--background); }
+.pile[data-tone='complete'] .seg .nm { color: color-mix(in oklch, var(--background) 80%, transparent); }
+.pile[data-tone='in-flight'] .seg { background: color-mix(in oklch, var(--in-flight-fill) 22%, var(--card)); border-color: var(--in-flight-fill); }
+.pile[data-tone='missing'] .seg { border: 2px solid var(--missing-fill); }
+.pile[data-tone='quiet'] .seg { border-style: dashed; background: transparent; }
+.pile .seg[data-flag] { box-shadow: inset 0 0 0 1px var(--background), inset 0 0 0 3px var(--muted-foreground); }
+.pile .base { display: grid; gap: var(--space-0-5); padding-top: var(--space-2); border-top: 2px solid var(--foreground); }
+.pile .base .num { font-size: var(--fs-display-1); line-height: var(--lh-none); }
+.ideas-legend { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 9)), 1fr)); }
+.ideas-legend > div { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--border-faint); }
+@media (max-width: 48rem) {
+  .rc { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+  .rail { display: none; }
+  .rail-select { display: flex; gap: var(--space-2); overflow-x: auto; padding-bottom: var(--space-1); }
+  .rail-select button { flex: none; }
+  .piles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pile .stack { min-height: 0; }
+}
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">053 spikes page</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Verdict board ★ Selected</a>
+    <a data-tab="b" href="#b">B: Idea map</a>
+    <a data-tab="c" href="#c">C: Reuse — rail + piles</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="lendshed">Three ideas, wrapped up, one orphan, one disagreement</button><button data-state="single">One idea, letter family, no wrap-up</button></span>
+</nav>
+
+<header class="app-head"><span class="app-brand"><i></i>Labelore <span>/ Lendshed</span></span>
+  <nav class="app-nav"><a href="#" data-act="noop">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Research</a><a href="#" data-act="noop">Files</a></nav></header>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+// MADE-UP spikes trees in the shape of a real GSD `.planning/spikes/` (manifest with ## Ideas and a ## Spikes
+// table whose Verdict column carries free text after the keyword; README frontmatter spike/idea/name/type/validates/
+// verdict/related/tags; scripts and outputs beside the README). Nothing here is copied from a real project.
+const TREES = {
+  lendshed: {
+    manifest: '.planning/spikes/MANIFEST.md',
+    ideas: [
+      { key: 'loan-export-archive', desc: 'Build the monthly loan archive a steward downloads, without holding a shed’s whole history in memory. Feeds Phase 4 (Bulk Loan Export).',
+        req: ['The archive streams; memory stays flat however many loans a shed has', 'A re-run of the same month gives the same file', 'Staging stays on the shed’s own server, with no new paid service', 'Runs on the 2 GB shed box'] },
+      { key: 'overdue-reminders', desc: 'Remind members about overdue loans by text, with email as the fallback.',
+        req: ['No member phone number leaves the shed’s server unencrypted', 'Costs nothing under 200 texts a month', 'A member can opt out with one reply'] },
+      { key: 'barcode-check-in', desc: 'Check tools in and out by scanning a label with a phone, with no dedicated scanner.',
+        req: ['Works in a phone browser, with no app to install', 'Labels survive a season in a damp shed', 'Scan to recorded loan in under 3 seconds'] },
+    ],
+    spikes: [
+      { id: '001', idea: 'loan-export-archive', name: 'zip-streaming-archive', type: 'standard', verdict: 'VALIDATED', related: ['002'], tags: ['zip', 'streaming', 'memory'],
+        validates: 'Given a shed with 60,000 loans, when the archive is built by streaming rows into a zip, then peak memory stays under 80 MB and the file matches a re-run byte for byte',
+        files: [['README.md', 'notes', '3.1 KB'], ['stream_zip.ts', 'script', '1.4 KB'], ['out/timings.csv', 'output', '0.6 KB'], ['out/sample-archive.zip', 'output', '2.4 MB']],
+        results: '<p>Peak memory held flat as the loan count grew; the zip is deterministic once file times are pinned.</p><div class="tblwrap"><table><tr><th>Loans</th><th>Peak RSS</th><th>Build</th><th>Same bytes on re-run</th></tr><tr><td>5,000</td><td>61 MB</td><td>0.9 s</td><td>yes</td></tr><tr><td>20,000</td><td>63 MB</td><td>3.2 s</td><td>yes</td></tr><tr><td>60,000</td><td>64 MB</td><td>9.8 s</td><td>yes (mtime pinned)</td></tr></table></div>',
+        sections: [['How to Run', '<p><code>node stream_zip.ts --loans 60000 &gt; out/timings.csv</code></p>'], ['Investigation Trail', '<ul><li>First run differed byte-wise between runs: the zip entries carried the build time.</li><li>Pinning every entry’s mtime to the month’s last day made re-runs identical.</li></ul>'], ['Signals for the Build', '<ul><li>Pin entry times to the archive month.</li><li>Stream from a cursor; never collect rows in an array.</li></ul>']] },
+      { id: '002', idea: 'loan-export-archive', name: 'sqlite-month-walk', type: 'standard', verdict: 'PARTIAL (only measured to 40k loans)', fm: 'PARTIAL', related: ['001'], tags: ['sqlite', 'index', 'timing'],
+        validates: 'Given the loans table on the shed box, when one month is walked by the (shed_id, lent_at) index, then the walk finishes inside the 30 s request deadline',
+        files: [['README.md', 'notes', '2.6 KB'], ['walk.sql', 'script', '0.4 KB'], ['bench.sh', 'script', '0.7 KB'], ['out/bench-40k.txt', 'output', '1.1 KB']],
+        results: '<p>The month walk takes 4.1 s at 40,000 loans. No shed fixture larger than 40k existed, so the 30 s deadline is untested beyond that.</p>',
+        sections: [['How to Run', '<p><code>./bench.sh 40000</code></p>'], ['Research', '<p>The index is already in the schema; the walk needs no migration.</p>']] },
+      { id: '003a', idea: 'loan-export-archive', name: 'object-storage-staging', type: 'comparison', verdict: 'INVALIDATED (no bucket in the shed’s plan)', fm: 'INVALIDATED', related: ['003b'], tags: ['staging', 'storage'],
+        validates: 'Given a hosted object store, when the archive is staged there before download, then a steward downloads it with a signed link that expires in an hour',
+        files: [['README.md', 'notes', '1.8 KB']],
+        results: '<p>Works, but every shed would need a paid bucket. Ruled out by the “no new paid service” requirement.</p>',
+        sections: [['Research', '<p>Signed links behave as expected; the cost is the blocker, not the mechanism.</p>']] },
+      { id: '003b', idea: 'loan-export-archive', name: 'local-disk-staging', type: 'comparison', verdict: 'VALIDATED', fm: 'PENDING', related: ['003a', '001'], tags: ['staging', 'disk'],
+        validates: 'Given the shed box’s own disk, when the archive is staged under the server’s data folder, then it is served once and deleted after download',
+        files: [['README.md', 'notes', '2.0 KB'], ['disk_check.sh', 'script', '0.5 KB']],
+        results: '<p>Staged, served and removed on the shed box. The README still says PENDING; the manifest row was updated after the test.</p>',
+        sections: [['How to Run', '<p><code>./disk_check.sh /var/lib/lendshed/exports</code></p>']] },
+      { id: '004', idea: 'overdue-reminders', name: 'sms-gateway-free-tier', type: 'standard', verdict: 'INVALIDATED (sender needs a registered business)', fm: 'INVALIDATED', related: ['005'], tags: ['sms', 'cost'],
+        validates: 'Given a free SMS gateway tier, when 200 reminders are sent in a month, then nothing is charged and replies reach the shed',
+        files: [['README.md', 'notes', '1.5 KB']],
+        results: '<p>The free tier only sends from a registered business sender. Most sheds are informal groups.</p>', sections: [] },
+      { id: '005', idea: 'overdue-reminders', name: 'email-digest-fallback', type: 'standard', verdict: 'PENDING (needs a week of real overdue loans)', fm: 'PENDING', related: ['004'], tags: ['email', 'digest'],
+        validates: 'Given a week of overdue loans, when one digest email per member is sent each Monday, then members return tools sooner than with no reminder',
+        files: [['README.md', 'notes', '1.2 KB'], ['digest.mjs', 'script', '2.2 KB']],
+        results: '<p>Not run yet.</p>', sections: [['How to Run', '<p><code>node digest.mjs --dry-run</code></p>']] },
+      { id: '006a', idea: 'barcode-check-in', name: 'phone-camera-scan', type: 'comparison', verdict: 'PARTIAL (iOS Safari only)', fm: 'PARTIAL', related: ['006b', '007'], tags: ['camera', 'barcode', 'browser'],
+        validates: 'Given a phone browser and a printed Code 128 label, when the member points the camera at it, then the tool id is read in under 3 seconds',
+        files: [['README.md', 'notes', '2.9 KB'], ['scan-demo.html', 'script', '6.3 KB'], ['out/ios-run.webm', 'output', '8.1 MB'], ['out/android-notes.txt', 'output', '0.4 KB']],
+        results: '<div class="tblwrap"><table><tr><th>Browser</th><th>Read</th><th>Median</th></tr><tr><td>iOS Safari</td><td>20 / 20</td><td>1.4 s</td></tr><tr><td>Android Chrome</td><td>not run</td><td>—</td></tr></table></div>',
+        sections: [['Investigation Trail', '<ul><li>The barcode API is missing in one engine; the demo falls back to a small decoder.</li></ul>']] },
+      { id: '006b', idea: 'barcode-check-in', name: 'nfc-tag-tap', type: 'comparison', verdict: 'INVALIDATED (no NFC in iOS browsers)', fm: 'INVALIDATED', related: ['006a'], tags: ['nfc'],
+        validates: 'Given an NFC sticker on each tool, when a member taps a phone on it, then the tool page opens',
+        files: [['README.md', 'notes', '0.9 KB']], results: '<p>Web NFC is not available in iOS browsers.</p>', sections: [] },
+      { id: '007', idea: 'barcode-check-in', name: 'label-print-size', type: 'standard', verdict: 'VALIDATED', fm: 'VALIDATED', related: ['006a'], tags: ['labels', 'print'],
+        validates: 'Given labels printed at 40 × 12 mm on polyester stock, when they spend a season on tools in the shed, then they still scan',
+        files: [['README.md', 'notes', '1.7 KB'], ['label-sheet.svg', 'output', '14 KB']], results: '<p>All 30 test labels still scanned after 14 weeks outdoors.</p>', sections: [] },
+    ],
+    orphans: [
+      { id: '008', idea: null, name: 'label-printer-driver', type: 'standard', verdict: null, fm: 'PENDING', related: [], tags: ['printer'],
+        validates: 'Given the shed’s label printer, when a sheet is sent from the server, then it prints without a desktop driver',
+        files: [['README.md', 'notes', '0.8 KB'], ['driver_probe.py', 'script', '1.0 KB']], results: '<p>Not run yet.</p>', sections: [] },
+    ],
+    wrap: {
+      date: '2026-04-02', processed: ['001', '002', '003a', '003b'], skill: 'spike-findings-lendshed',
+      findings: '<ul><li>Stream the archive from a cursor and pin entry times; memory stays flat (001).</li><li>Stage on the shed box’s own disk; hosted storage costs every shed a bucket (003a, 003b).</li><li>The month walk is fast to 40k loans; larger sheds are untested (002).</li></ul>',
+      conventions: [['Stack', '<p>Node 22 scripts beside each README; SQLite from the app’s own schema.</p>'], ['Structure', '<p><code>NNN-name/README.md</code>, scripts at the top, measured output in <code>out/</code>.</p>'], ['Patterns', '<ul><li>Measure at three sizes, the largest real shed last.</li><li>Every comparison gets a letter: 003a, 003b.</li></ul>'], ['Tools & Libraries', '<ul><li><code>archiver</code> for zips</li><li><code>better-sqlite3</code> in spikes only</li></ul>']],
+    },
+  },
+  single: {
+    manifest: '.planning/spikes/MANIFEST.md',
+    ideas: [
+      { key: 'receipt-printing', desc: 'Print a loan receipt at the shed counter when a tool goes out, from the portal, on whatever printer the shed has.',
+        req: ['Receipts keep the member name, the tool and the due date', 'Works with a cheap thermal printer and with an office printer', 'A fallback is required for sheds without a supported printer, and must not need a paid print seat (none spare)', 'No printer driver install on the shed box'] },
+    ],
+    spikes: [
+      { id: '001a', idea: 'receipt-printing', name: 'cloud-print-service', type: 'comparison', verdict: 'INVALIDATED (no spare print seat)', fm: 'INVALIDATED', related: ['001b', '002'], tags: ['print', 'cloud'],
+        validates: 'Given a hosted print service, when the portal sends a receipt, then it prints at the counter within 5 seconds', files: [['README.md', 'notes', '4.4 KB']],
+        results: '<p>Each shed would take a paid seat; there are none spare.</p>', sections: [['Research', '<p>Three hosted services compared; all charge per seat.</p>'], ['Investigation Trail', '<ul><li>Free tiers stop after 30 days.</li></ul>']] },
+      { id: '002', idea: 'receipt-printing', name: 'pdf-receipt-template', type: 'standard', verdict: 'PARTIAL (A6 layout untested)', fm: 'PARTIAL', related: ['001a', '001b'], tags: ['pdf', 'template'],
+        validates: 'Given a loan, when a receipt PDF is rendered at 58 mm and A6, then name, tool and due date fit without wrapping',
+        files: [['README.md', 'notes', '7.2 KB'], ['make_receipt.sh', 'script', '1.3 KB']],
+        results: '<div class="tblwrap"><table><tr><th>Width</th><th>Fits</th><th>Render</th></tr><tr><td>58 mm</td><td>yes</td><td>0.2 s</td></tr><tr><td>A6</td><td>not run</td><td>—</td></tr></table></div>',
+        sections: [['How to Run', '<p><code>./make_receipt.sh --width 58mm</code></p>'], ['Signals for the Build', '<ul><li>Render once at the narrowest width; scale up.</li></ul>']] },
+      { id: '001b', idea: 'receipt-printing', name: 'thermal-printer-direct', type: 'comparison', verdict: 'PENDING (needs a test print at the shed)', fm: 'PENDING', related: ['001a'], tags: ['thermal'],
+        validates: 'Given a USB thermal printer on the counter PC, when the browser prints the 58 mm PDF, then the receipt comes out uncropped', files: [['README.md', 'notes', '5.0 KB']], results: '<p>Waiting on a test print.</p>', sections: [] },
+      { id: '001c', idea: 'receipt-printing', name: 'browser-print-fallback', type: 'comparison', verdict: 'PENDING (needs Windows test)', fm: 'PENDING', related: ['001a'], tags: ['fallback'],
+        validates: 'Given any printer the counter PC can reach, when the member uses the browser’s print dialog, then the A6 receipt prints', files: [['README.md', 'notes', '1.9 KB']], results: '<p>Waiting on a Windows test.</p>', sections: [] },
+    ],
+    orphans: [], wrap: null,
+  },
+};
+
+const VERDICTS = [['VALIDATED', 'complete', 'Validated'], ['PARTIAL', 'in-flight', 'Partial'], ['INVALIDATED', 'missing', 'Invalidated'], ['PENDING', 'quiet', 'Pending']];
+const TONE = Object.fromEntries(VERDICTS.map(([k, t]) => [k, t]));
+const WORD = Object.fromEntries(VERDICTS.map(([k, , w]) => [k, w]));
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') === 'dark' ? 'dark' : 'light';
+const S = { state: params.get('state') === 'single' ? 'single' : 'lendshed', sel: null };
+const T = () => TREES[S.state];
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// the manifest Verdict cell: the keyword groups, the free text is kept
+function verdictOf(sp) {
+  if (!sp.verdict) return { key: null, text: '', tone: 'neutral' };
+  const m = sp.verdict.match(/^([A-Z]+)\s*(?:\((.*)\))?\s*$/);
+  const key = m && TONE[m[1]] ? m[1] : null;
+  return { key, text: m && m[2] ? m[2] : '', tone: key ? TONE[key] : 'neutral' };
+}
+const fmKey = (sp) => sp.fm || verdictOf(sp).key;
+const disagrees = (sp) => sp.verdict && fmKey(sp) !== verdictOf(sp).key;
+const all = () => [...T().spikes, ...T().orphans];
+const byId = (id) => all().find((s) => s.id === id);
+const family = (id) => id.replace(/[a-z]$/, '');
+const slug = (sp) => `${sp.id}-${sp.name}`;
+const counts = () => Object.fromEntries(VERDICTS.map(([k]) => [k, T().spikes.filter((s) => verdictOf(s).key === k).length]));
+
+const ICON = {
+  file: '<svg class="i" viewBox="0 0 24 24"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4"/></svg>',
+  script: '<svg class="i" viewBox="0 0 24 24"><path d="M8 9l-3 3 3 3"/><path d="M16 9l3 3-3 3"/></svg>',
+  output: '<svg class="i" viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M4 14h16"/></svg>',
+  x: '<svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  copy: '<svg class="i" viewBox="0 0 24 24"><path d="M9 9h11v11H9z"/><path d="M5 15H4V4h11v1"/></svg>',
+  chev: '<svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>',
+};
+
+// ---------- the page head (shared) ----------
+function head() {
+  const t = T(); const c = counts(); const n = t.spikes.length;
+  const sel = S.sel ? (byId(S.sel) ? `spikes/${slug(byId(S.sel))}` : `spikes/${S.sel}`) : 'spikes';
+  return `<div class="heading-block">
+    <nav class="crumbs"><span>Lendshed</span><span>/</span><span aria-current="page">Spikes</span></nav>
+    <p class="eyebrow">Exploration · Spikes</p>
+    <h1>Spikes</h1>
+    <div class="meta-row">
+      <span class="meta">${t.ideas.length} idea${t.ideas.length > 1 ? 's' : ''} · ${n} spikes${t.orphans.length ? ` · ${t.orphans.length} not in the manifest` : ''}</span>
+      <span class="meta">${t.wrap ? `Wrapped up ${t.wrap.date}` : 'Not wrapped up'}</span>
+      <span class="addr">/lendshed/<b>${esc(sel)}</b></span>
+      <button class="btn-xs" data-act="copy">${ICON.copy}${esc(t.manifest)}</button>
+    </div>
+    <p class="lead-line">${VERDICTS.filter(([k]) => c[k]).map(([k, , w]) => `<b>${c[k]}</b> ${w.toLowerCase()}`).join(' · ')}</p>
+  </div>`;
+}
+
+// ---------- a spike, the conventions or the wrap-up as a panel (shared by all three) ----------
+function gwt(s) {
+  const m = s.match(/^Given (.*?), when (.*?), then (.*)$/i);
+  if (!m) return `<p>${esc(s)}</p>`;
+  return `<div class="gwt">${[['Given', m[1]], ['When', m[2]], ['Then', m[3]]].map(([k, v]) => `<div><span class="micro-label">${k}</span><span>${esc(v)}</span></div>`).join('')}</div>`;
+}
+function bars(list, k) {
+  if (!list.length) return '';
+  return `<div class="bars">${list.map(([h, body], i) => `<details class="bar" data-k="${k}${i}"><summary>${ICON.chev}<span>${esc(h)}</span></summary><div class="bar-body md">${body}</div></details>`).join('')}</div>`;
+}
+function spikePanel(sp) {
+  const v = verdictOf(sp); const t = T();
+  const chip = v.key
+    ? `<span class="status-chip big" data-tone="${v.tone}"><span class="sq" data-tone="${v.tone}"></span>${WORD[v.key]}</span>`
+    : `<span class="status-chip big" data-tone="neutral">Not in the manifest</span>`;
+  const dis = disagrees(sp) ? `<div class="disagree small">
+      <div><span class="micro-label">Manifest says</span><span class="val">${WORD[v.key]}</span></div><span class="ne">≠</span>
+      <div><span class="micro-label">README says</span><span class="val">${WORD[fmKey(sp)]}</span></div>
+      <p class="foot">The two files disagree; both are shown as written.</p></div>` : '';
+  const orphan = !sp.verdict ? `<p class="dock-empty">This folder has no row in ${esc(t.manifest)}. Its README says <b>${WORD[fmKey(sp)]}</b>.</p>` : '';
+  const kindIcon = { notes: ICON.file, script: ICON.script, output: ICON.output };
+  return `<article class="panel">
+    <div class="panel-head">
+      <span class="micro-label">Spike ${esc(sp.id)}${sp.idea ? ` · ${esc(sp.idea)}` : ''} · ${esc(sp.type)}</span>
+      <h2>${esc(sp.name)}</h2>
+      <div class="row">${chip}${v.text ? `<span class="vtext mono">${esc(v.text)}</span>` : ''}</div>
+    </div>
+    ${dis}${orphan}
+    <div class="blocks"><span class="micro-label">What this validates</span>${gwt(sp.validates)}</div>
+    <div class="blocks"><span class="micro-label">Results</span><div class="md">${sp.results}</div></div>
+    ${sp.related.length ? `<div class="blocks"><span class="micro-label">Related</span><div class="rel">${sp.related.map((r) => { const o = byId(r); const vv = o ? verdictOf(o) : { tone: 'neutral' }; return `<button data-act="open" data-id="${r}"><span class="sq" data-tone="${vv.tone}"></span>${r}${o ? ` ${esc(o.name)}` : ''}</button>`; }).join('')}</div></div>` : ''}
+    <div class="blocks"><span class="micro-label">Files in ${esc(slug(sp))}/</span>
+      <ul class="files">${sp.files.map(([n, k, z]) => `<li>${kindIcon[k]}<span>${esc(n)}</span><span class="k">${k}</span><span class="sz">${z}</span></li>`).join('')}</ul>
+      <p class="files-note">Listed by name only. Labelore never runs or opens these files.</p></div>
+    <div class="facts"><span>Tags <b>${sp.tags.map(esc).join(', ')}</b></span></div>
+    ${bars(sp.sections, sp.id)}
+  </article>`;
+}
+function wrapPanel(kind) {
+  const w = T().wrap;
+  if (kind === 'conventions') return `<article class="panel"><div class="panel-head"><span class="micro-label">.planning/spikes/CONVENTIONS.md</span><h2>How this project spikes</h2></div>
+    ${w.conventions.map(([h, b]) => `<div class="blocks"><span class="micro-label">${esc(h)}</span><div class="md">${b}</div></div>`).join('')}</article>`;
+  return `<article class="panel"><div class="panel-head"><span class="micro-label">.planning/spikes/WRAP-UP-SUMMARY.md</span><h2>Wrap-up, ${w.date}</h2>
+      <div class="row"><span class="meta">Packaged into the project skill <code>${esc(w.skill)}</code></span></div></div>
+    <div class="blocks"><span class="micro-label">Processed spikes</span><div class="rel">${w.processed.map((r) => { const o = byId(r); return `<button data-act="open" data-id="${r}"><span class="sq" data-tone="${verdictOf(o).tone}"></span>${r} ${esc(o.name)}</button>`; }).join('')}</div></div>
+    <div class="blocks"><span class="micro-label">Key findings</span><div class="md">${w.findings}</div></div>
+    <p class="source-note">Not processed: ${all().filter((s) => !w.processed.includes(s.id)).map((s) => s.id).join(', ')}.</p></article>`;
+}
+const panelFor = (id) => (id === 'wrap' || id === 'conventions' ? wrapPanel(id) : spikePanel(byId(id)));
+const panelLabel = (id) => (id === 'wrap' ? 'WRAP-UP-SUMMARY.md' : id === 'conventions' ? 'CONVENTIONS.md' : `${slug(byId(id))}/README.md`);
+const ideaReqs = (idea) => `<ul class="reqs">${idea.req.map((r) => `<li><span>${esc(r)}</span></li>`).join('')}</ul>`;
+
+// ---------- A: Verdict board ----------
+const VIEWS = {}; const ACTS = {}; const AFTER = [];
+function tileA(sp) {
+  const v = verdictOf(sp);
+  return `<button class="tile" data-tone="${v.tone}" data-act="open" data-id="${sp.id}" aria-current="${S.sel === sp.id}">
+    <span class="top"><span class="sq" data-tone="${v.tone}"></span><span class="id">${esc(sp.id)}</span><span class="word">${esc(sp.type)}</span></span>
+    <span class="nm">${esc(sp.name)}</span>
+    ${v.text ? `<span class="vtext">${esc(v.text)}</span>` : ''}
+    <span class="foot"><span>${sp.files.length} file${sp.files.length > 1 ? 's' : ''}</span>${disagrees(sp) ? `<span class="flag">README says ${WORD[fmKey(sp)]}</span>` : ''}${T().wrap && T().wrap.processed.includes(sp.id) ? '<span>wrapped up</span>' : ''}</span>
+  </button>`;
+}
+S.reqOpen = new Set();
+VIEWS.a = () => {
+  const t = T(); const c = counts();
+  let g = `<div class="colhead first"><span class="micro-label">Idea</span></div>`;
+  g += VERDICTS.map(([k, tone, w]) => `<div class="colhead"><span class="num">${c[k]}</span><span class="status-chip" data-tone="${tone}"><span class="sq" data-tone="${tone}"></span>${w}</span></div>`).join('');
+  t.ideas.forEach((idea, i) => {
+    const first = i === 0 ? ' first-lane' : '';
+    const open = S.reqOpen.has(idea.key);
+    g += `<div class="lanehead${first}"><span class="vname">${esc(idea.key)}</span><span class="source-note">${esc(idea.desc)}</span>
+      <button class="text-link" data-act="reqs" data-k="${idea.key}" aria-expanded="${open}">${idea.req.length} requirements ${open ? '−' : '+'}</button></div>`;
+    g += VERDICTS.map(([k, tone, w]) => `<div class="cell${first}" data-tone="${tone}" data-word="${w}">${t.spikes.filter((s) => s.idea === idea.key && verdictOf(s).key === k).map(tileA).join('')}</div>`).join('');
+    if (open) g += `<div class="reqrow"><span class="micro-label">Requirements, as the manifest states them</span>${ideaReqs(idea)}</div>`;
+  });
+  const extras = [];
+  if (t.orphans.length) extras.push(`<div class="blocks"><span class="micro-label">Not in the manifest</span><div class="side-strip">${t.orphans.map(tileA).join('')}</div></div>`);
+  if (t.wrap) extras.push(`<div class="blocks"><span class="micro-label">Wrap-up</span><div class="side-strip">
+    <button class="tile" data-act="open" data-id="wrap" aria-current="${S.sel === 'wrap'}"><span class="top"><span class="id">WRAP-UP-SUMMARY.md</span></span><span class="nm">Wrap-up, ${t.wrap.date}</span><span class="vtext">${t.wrap.processed.length} spikes processed into ${esc(t.wrap.skill)}</span></button>
+    <button class="tile" data-act="open" data-id="conventions" aria-current="${S.sel === 'conventions'}"><span class="top"><span class="id">CONVENTIONS.md</span></span><span class="nm">How this project spikes</span><span class="vtext">${t.wrap.conventions.map((x) => x[0]).join(' · ')}</span></button></div></div>`);
+  else extras.push(`<p class="source-note">Not wrapped up yet: no WRAP-UP-SUMMARY.md or CONVENTIONS.md in .planning/spikes/.</p>`);
+  return `<div class="page">${head()}
+    <div class="board-key">${VERDICTS.map(([k, tone, w]) => `<span class="status-chip" data-tone="${tone}"><span class="sq" data-tone="${tone}"></span>${c[k]} ${w}</span>`).join('')}</div>
+    <div class="board">${g}</div>${extras.join('')}</div>
+    <div class="sheet-scrim${S.sel ? ' on' : ''}" data-act="close"></div>
+    <aside class="sheet${S.sel ? ' on' : ''}" aria-label="Spike panel">${S.sel ? `<div class="sheet-bar"><span class="addr">${esc(panelLabel(S.sel))}</span><button class="btn-xs icon x" data-act="close" aria-label="Close">${ICON.x}</button></div>${panelFor(S.sel)}` : ''}</aside>`;
+};
+ACTS.reqs = (el) => { const k = el.dataset.k; if (S.reqOpen.has(k)) S.reqOpen.delete(k); else S.reqOpen.add(k); render(); };
+
+// ---------- B: Idea map ----------
+function nodeB(sp) {
+  const v = verdictOf(sp);
+  return `<button class="node" data-tone="${v.tone}" data-act="open" data-id="${sp.id}" data-node="${sp.id}" aria-current="${S.sel === sp.id}">
+    <span class="top"><span class="id">${esc(sp.id)}</span><span class="word">${v.key ? WORD[v.key] : 'No row'}</span></span>
+    <span class="nm">${esc(sp.name)}</span>${v.text ? `<span class="vtext mono" style="font-size:var(--fs-2)">${esc(v.text)}</span>` : ''}
+    ${disagrees(sp) ? `<span class="word">README: ${WORD[fmKey(sp)]}</span>` : ''}</button>`;
+}
+function mapFor(idea, spikes, key) {
+  const t = T();
+  const fams = []; spikes.forEach((s) => { const f = family(s.id); let g = fams.find((x) => x.f === f); if (!g) fams.push(g = { f, list: [] }); g.list.push(s); });
+  const cols = fams.map((g) => g.list.length > 1
+    ? `<div class="map-col"><div class="fam"><span class="micro-label">${g.f} · one question, ${g.list.length} answers</span>${g.list.map(nodeB).join('')}</div></div>`
+    : `<div class="map-col">${nodeB(g.list[0])}</div>`).join('');
+  const wraps = t.wrap && spikes.some((s) => t.wrap.processed.includes(s.id));
+  const ideaNode = !idea ? '' : `<div class="map-col ideacol"><button class="node idea" data-act="reqs" data-k="${idea.key}" data-node="idea-${key}"><span class="micro-label">Idea</span><span class="nm">${esc(idea.key)}</span><span class="word">${idea.req.length} requirements ${S.reqOpen.has(idea.key) ? '−' : '+'}</span></button></div>`;
+  const wrapNode = wraps ? `<div class="map-col"><button class="node wrap" data-act="open" data-id="wrap" data-node="wrap-${key}" aria-current="${S.sel === 'wrap'}"><span class="micro-label">Wrap-up</span><span class="nm">${t.wrap.date}</span><span class="word">into ${esc(t.wrap.skill)}</span></button>
+    <button class="node" data-act="open" data-id="conventions" aria-current="${S.sel === 'conventions'}"><span class="micro-label">Conventions</span><span class="nm">How this project spikes</span></button></div>` : '';
+  const here = S.sel && (spikes.some((s) => s.id === S.sel) || (wraps && (S.sel === 'wrap' || S.sel === 'conventions')));
+  return `<section class="map" data-map="${key}">
+    <div class="map-head"><span class="vname">${idea ? esc(idea.key) : 'Not in the manifest'}</span>${idea ? `<span class="source-note">${esc(idea.desc)}</span>` : ''}</div>
+    ${idea && S.reqOpen.has(idea.key) ? `<div class="reqrow" style="padding:var(--space-3);border:1px dashed var(--border);background:var(--veil)"><span class="micro-label">Requirements, as the manifest states them</span>${ideaReqs(idea)}</div>` : ''}
+    <div class="map-grid" data-grid="${key}">${ideaNode}${cols}${wrapNode}<svg class="wires" aria-hidden="true"></svg></div>
+    ${here ? `<div class="inpanel" id="inpanel"><div class="sheet-bar"><span class="addr">${esc(panelLabel(S.sel))}</span><button class="btn-xs icon x" data-act="close" aria-label="Close">${ICON.x}</button></div>${panelFor(S.sel)}</div>` : ''}
+  </section>`;
+}
+VIEWS.b = () => {
+  const t = T();
+  const maps = t.ideas.map((idea, i) => mapFor(idea, t.spikes.filter((s) => s.idea === idea.key), `i${i}`));
+  if (t.orphans.length) maps.push(mapFor(null, t.orphans, 'orph'));
+  return `<div class="page">${head()}
+    <div class="map-key"><span><svg viewBox="0 0 24 8"><path d="M0 4h24" stroke="currentColor" stroke-dasharray="3 3" stroke-width="1.5"/></svg> related (README)</span><span><svg viewBox="0 0 24 8"><path d="M0 4h24" stroke="currentColor" stroke-width="2.5"/></svg> processed into the wrap-up</span>
+      ${VERDICTS.map(([k, tone, w]) => `<span><span class="sq" data-tone="${tone}"></span> ${w}</span>`).join('')}</div>
+    ${t.wrap ? '' : '<p class="source-note">Not wrapped up yet: no WRAP-UP-SUMMARY.md or CONVENTIONS.md in .planning/spikes/.</p>'}
+    ${maps.join('')}</div>`;
+};
+AFTER.push(() => {
+  if (pickVariant() !== 'b') return;
+  document.querySelectorAll('[data-grid]').forEach((grid) => {
+    const svg = grid.querySelector('svg.wires'); const key = grid.dataset.grid; const box = grid.getBoundingClientRect();
+    if (getComputedStyle(svg).display === 'none') return;
+    const R = (el) => { const r = el.getBoundingClientRect(); return { l: r.left - box.left, r: r.right - box.left, t: r.top - box.top, b: r.bottom - box.top, cy: (r.top + r.bottom) / 2 - box.top, cx: (r.left + r.right) / 2 - box.left }; };
+    const node = (id) => grid.querySelector(`[data-node="${id}"]`);
+    const curve = (a, b) => { const mx = (a.x + b.x) / 2; return `M${a.x},${a.y} C${mx},${a.y} ${mx},${b.y} ${b.x},${b.y}`; };
+    let p = '';
+    const ids = [...grid.querySelectorAll('.node[data-node]')].map((n) => n.dataset.node).filter((x) => byId(x));
+    // anchor: a spike inside a letter family attaches at its family box, so a wire never crosses a sibling
+    const anchor = (id) => { const n = node(id); const f = n.closest('.fam'); const r = R(n); const fr = f ? R(f) : r; return { x: r.cx, t: fr.t, b: fr.b, cy: r.cy, l: r.l, r: r.r, fam: f }; };
+    const tops = ids.map((id) => anchor(id).t); const bots = ids.map((id) => anchor(id).b);
+    const top = Math.min(...tops); const bot = Math.max(...bots);
+    const seen = new Set(); let lvl = 0;
+    ids.forEach((id) => byId(id).related.forEach((rel) => {
+      const k = [id, rel].sort().join('|'); if (seen.has(k) || !node(rel)) return; seen.add(k);
+      const a = anchor(id); const b = anchor(rel); const on = (S.sel === id || S.sel === rel) ? ' on' : '';
+      if (a.fam && a.fam === b.fam) { const x = Math.max(a.r, b.r) + 8; p += `<path class="wire rel${on}" d="M${a.r},${a.cy} H${x} V${b.cy} H${b.r}"/>`; return; }
+      const y = top - 10 - (lvl++ % 3) * 9;
+      p += `<path class="wire rel${on}" d="M${a.x},${a.t} V${y} H${b.x} V${b.t}"/>`;
+    }));
+    const w = node(`wrap-${key}`);
+    if (w) {
+      const rw = R(w); const y = bot + 14; const on = S.sel === 'wrap' ? ' on' : ''; const xs = [];
+      ids.filter((id) => T().wrap.processed.includes(id)).forEach((id) => { const a = anchor(id); const x = a.fam ? a.x + (xs.filter((v) => Math.abs(v - a.x) < 2).length * 6) : a.x; xs.push(a.x); p += `<path class="wire feed${on}" d="M${x},${a.fam ? a.b : R(node(id)).b} V${y}"/>`; });
+      const minX = Math.min(...xs); const gx = rw.l - 14;
+      p += `<path class="wire feed${on}" d="M${minX},${y} H${gx} V${rw.cy} H${rw.l}"/>`;
+    }
+    svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`); svg.innerHTML = p;
+  });
+});
+
+// ---------- C: Reuse — rail + column with verdict piles ----------
+VIEWS.c = () => {
+  const t = T(); const c = counts(); const sel = S.sel || 'board';
+  const railBtn = (id, label, tone) => `<button data-act="${id === 'board' ? 'close' : 'open'}" data-id="${id}" aria-current="${sel === id}">${tone ? `<span class="sq" data-tone="${tone}"></span>` : ''}${label}</button>`;
+  const rail = [`<div class="grp-list">${railBtn('board', '<span class="nm">Board</span>')}</div>`];
+  t.ideas.forEach((idea) => rail.push(`<div class="grp-list"><span class="micro-label">${esc(idea.key)}</span>${t.spikes.filter((s) => s.idea === idea.key).map((s) => railBtn(s.id, `<span class="id">${s.id}</span><span class="nm">${esc(s.name)}</span>`, verdictOf(s).tone)).join('')}</div>`));
+  if (t.orphans.length) rail.push(`<div class="grp-list"><span class="micro-label">Not in the manifest</span>${t.orphans.map((s) => railBtn(s.id, `<span class="id">${s.id}</span><span class="nm">${esc(s.name)}</span>`, 'neutral')).join('')}</div>`);
+  if (t.wrap) rail.push(`<div class="grp-list"><span class="micro-label">Wrap-up</span>${railBtn('wrap', '<span class="nm">Summary</span>')}${railBtn('conventions', '<span class="nm">Conventions</span>')}</div>`);
+  const select = `<div class="rail-select">${['board', ...all().map((s) => s.id), ...(t.wrap ? ['wrap', 'conventions'] : [])].map((id) => `<button class="btn-xs" data-act="${id === 'board' ? 'close' : 'open'}" data-id="${id}" aria-pressed="${sel === id}">${id === 'board' ? 'Board' : id === 'wrap' ? 'Wrap-up' : id === 'conventions' ? 'Conventions' : id}</button>`).join('')}</div>`;
+  const ideaIx = (s) => t.ideas.findIndex((i) => i.key === s.idea) + 1;
+  const board = `<article class="panel">
+    <div class="piles">${VERDICTS.map(([k, tone, w]) => `<div class="pile" data-tone="${tone}"><div class="stack">${t.spikes.filter((s) => verdictOf(s).key === k).map((s) => `<button class="seg" data-act="open" data-id="${s.id}" title="${esc(s.verdict)}"${disagrees(s) ? ' data-flag' : ''}><span class="id">${s.id}</span><span class="nm">${t.ideas.length > 1 ? `${ideaIx(s)} · ` : ''}${esc(s.name)}</span></button>`).join('')}</div>
+      <div class="base"><span class="num">${c[k]}</span><span class="status-chip" data-tone="${tone}">${w}</span></div></div>`).join('')}</div>
+    ${t.spikes.some(disagrees) ? `<p class="source-note">A ringed segment: the README’s own verdict differs from the manifest row (${t.spikes.filter(disagrees).map((s) => `${s.id}: README says ${WORD[fmKey(s)]}`).join('; ')}).</p>` : ''}
+    <div class="ideas-legend">${t.ideas.map((idea, i) => `<div><span class="micro-label">${t.ideas.length > 1 ? `${i + 1} · ` : ''}${esc(idea.key)}</span><span class="source-note">${esc(idea.desc)}</span>${ideaReqs(idea)}</div>`).join('')}</div>
+    ${t.orphans.length ? `<p class="dock-empty">${t.orphans.length} folder not in the manifest: ${t.orphans.map((s) => `<button class="text-link" data-act="open" data-id="${s.id}">${s.id} ${esc(s.name)}</button>`).join(' ')}</p>` : ''}
+    ${t.wrap ? '' : '<p class="source-note">Not wrapped up yet: no WRAP-UP-SUMMARY.md or CONVENTIONS.md in .planning/spikes/.</p>'}
+  </article>`;
+  return `<div class="page">${head()}<div class="rc"><nav class="rail" aria-label="Panels">${rail.join('')}</nav><div>${select}${sel === 'board' ? board : panelFor(sel)}</div></div></div>`;
+};
+
+// ---------- render orchestration ----------
+ACTS.open = (el) => { S.sel = el.dataset.id; history.replaceState(null, '', `${location.search}#${pickVariant()}/${S.sel}`); render(); if (pickVariant() === 'b') { const p = document.getElementById('inpanel'); if (p) p.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } if (pickVariant() === 'c') window.scrollTo({ top: 0 }); };
+ACTS.close = () => { S.sel = null; history.replaceState(null, '', `${location.search}#${pickVariant()}`); render(); };
+ACTS.copy = () => toast(`Copied ${T().manifest}`);
+const pickVariant = () => { const h = location.hash.slice(1).split('/')[0]; return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY; const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  window.scrollTo(0, y);
+  AFTER.forEach((f) => f());
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; S.sel = null; S.reqOpen = new Set(); return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.sel) ACTS.close(); });
+document.addEventListener('toggle', () => AFTER.forEach((f) => f()), true);
+window.addEventListener('hashchange', () => { const p = location.hash.slice(1).split('/'); S.sel = p[1] || null; render(); });
+window.addEventListener('resize', () => AFTER.forEach((f) => f()));
+{ const p = location.hash.slice(1).split('/'); if (p[1]) S.sel = p[1]; }
+if (document.fonts) document.fonts.ready.then(() => AFTER.forEach((f) => f()));
+render();
+</script>
+</body>
+</html>
