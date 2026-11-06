@@ -19,6 +19,7 @@
 // is missing, so the page keeps the promoted-section view with no notice (Phase 10 C1, X2). T-11-24: every string
 // is author text rendered as React text by the components.
 import type {
+  SpikeFileKind,
   SpikeFolderEntry,
   SpikeLane,
   SpikeTile,
@@ -26,6 +27,7 @@ import type {
   VerdictColumnKey,
 } from '../../presentation/spikes-context.ts';
 import { VERDICT_COLUMNS } from '../../presentation/spikes-context.ts';
+import { spikeFolderIdentity, spikeIdKey } from '../../planning-repo/handlers/spikes-lift.ts';
 import type { ViewInput } from './manifest.ts';
 
 export type SpikeTone = 'complete' | 'in-flight' | 'missing' | 'quiet';
@@ -44,6 +46,10 @@ export const UNREADABLE_MANIFEST_NOTE =
 export const EMPTY_MANIFEST_NOTE = 'The manifest lists no spikes.';
 export const README_SAYS_WORDS = 'README says';
 export const WRAPPED_UP_WORDS = 'Wrapped up';
+export const SHEET_CLOSE_LABEL = 'Close spike';
+export const DISAGREE_NOTE = 'The two files disagree; both are shown as written.';
+export const NOT_PROCESSED_WORDS = 'Not processed';
+export const CONVENTIONS_TITLE = 'How this project spikes';
 
 /** The tone of each verdict column (UI-SPEC "Page-by-page tone use": never destructive, never warning). */
 const COLUMN_TONE: Readonly<Record<VerdictColumnKey, SpikeTone>> = {
@@ -87,6 +93,8 @@ export interface ComposedSpikesTile {
   label: string;
   /** True for the tile whose address the page is open at. */
   active: boolean;
+  /** The README's folder segment as the address spells it, or `null`: the key focus returns to when the sheet closes. */
+  folder: string | null;
 }
 
 export interface ComposedSpikesLane {
@@ -110,6 +118,84 @@ export interface ComposedSpikesWrapTile {
   active: boolean;
 }
 
+export interface ComposedSpikesFile {
+  name: string;
+  kind: SpikeFileKind;
+  /** "1.7 KB": from the stat only, never from the file's bytes. */
+  size: string;
+}
+
+export interface ComposedSpikesChip {
+  id: string;
+  label: string;
+  /** The panel's address, or `null` for an id that resolves to no README (plain text). */
+  to: string | null;
+  tone: SpikeTone | null;
+}
+
+export interface ComposedSpikesBar {
+  key: string;
+  title: string;
+  html: string;
+}
+
+export interface ComposedSpikesDisagreement {
+  field: string;
+  manifest: { label: string; value: string };
+  readme: { label: string; value: string };
+  note: string;
+}
+
+export type ComposedSpikesValidates =
+  | { kind: 'gwt'; given: string; when: string; then: string }
+  | { kind: 'whole'; text: string };
+
+interface ComposedSpikesSheetBase {
+  /** The panel the address names: a folder, `wrap-up-summary` or `conventions`. */
+  key: string;
+  /** The line over the title: "Spike 003b · export-staging · comparison", or the file's path. */
+  eyebrow: string;
+  title: string;
+  /** The file the sheet shows, in the sheet's bar. */
+  address: string;
+  /** The manifest's address the sheet closes to, or `null` when the project has none (the sheet hides in place). */
+  closeTo: string | null;
+  /** The opening tile's folder, so focus can go back to it. */
+  focus: string | null;
+}
+
+export interface ComposedSpikesSpikeSheet extends ComposedSpikesSheetBase {
+  kind: 'spike';
+  verdict: { word: string; tone: SpikeTone | null; freeText: string };
+  disagreement: ComposedSpikesDisagreement | null;
+  /** The line for a folder with no manifest row. */
+  orphanNote: string | null;
+  validates: ComposedSpikesValidates | null;
+  /** The README's Results section as the sanitised document HTML, or `null`. */
+  resultsHtml: string | null;
+  related: ComposedSpikesChip[];
+  filesTitle: string;
+  files: ComposedSpikesFile[];
+  tags: string[];
+  bars: ComposedSpikesBar[];
+  pauseTo: string | null;
+}
+
+export interface ComposedSpikesWrapSheet extends ComposedSpikesSheetBase {
+  kind: 'wrap-up';
+  skill: string | null;
+  processed: ComposedSpikesChip[];
+  findingsHtml: string | null;
+  notProcessed: string | null;
+}
+
+export interface ComposedSpikesConventionsSheet extends ComposedSpikesSheetBase {
+  kind: 'conventions';
+  sections: ComposedSpikesBar[];
+}
+
+export type ComposedSpikesSheet = ComposedSpikesSpikeSheet | ComposedSpikesWrapSheet | ComposedSpikesConventionsSheet;
+
 export interface ComposedSpikes {
   head: {
     eyebrow: string;
@@ -129,6 +215,8 @@ export interface ComposedSpikes {
   boardNote: string | null;
   notInManifest: { title: string; tiles: ComposedSpikesTile[] } | null;
   wrapUp: { title: string; tiles: ComposedSpikesWrapTile[]; note: string | null };
+  /** The open panel (the page was opened at a spike README, the wrap-up or the conventions), or `null` for the board. */
+  sheet: ComposedSpikesSheet | null;
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -165,10 +253,15 @@ function columnLabel(key: VerdictColumnKey): string {
   return column === undefined ? key : column.label;
 }
 
-/** The folder segment of a spike address such as `/spikes/001-name/readme`, compared case-insensitively. */
-function folderOfUrl(url: string): string {
+/** The folder segment of a spike address such as `/spikes/001-name/readme`, as the address spells it. */
+function folderSegment(url: string): string {
   const segments = url.split('/');
-  return segments.length >= 2 ? segments[segments.length - 2].toLowerCase() : '';
+  return segments.length >= 2 ? segments[segments.length - 2] : '';
+}
+
+/** The same segment, lower-cased for comparison. */
+function folderOfUrl(url: string): string {
+  return folderSegment(url).toLowerCase();
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -211,6 +304,7 @@ function tileOf(source: TileSource, activeKey: string | null): ComposedSpikesTil
     wrappedUp: source.wrappedUp,
     label: verdict === '' ? `${source.id} ${source.name}` : `${source.id} ${source.name}, ${verdict}`,
     active: activeKey !== null && source.url !== null && folderOfUrl(source.url) === activeKey.toLowerCase(),
+    folder: source.url === null ? null : folderSegment(source.url),
   };
 }
 
@@ -310,6 +404,239 @@ function wrapUpOf(context: SpikesContext): ComposedSpikes['wrapUp'] {
 }
 
 // ---------------------------------------------------------------------------------------------------------
+// The sheet (11-16, D-01, D-07): one spike, the wrap-up or the conventions over the board
+// ---------------------------------------------------------------------------------------------------------
+
+/** One spike the page knows, whether the manifest lists it or only its folder does. */
+interface Panel {
+  id: string;
+  name: string;
+  /** The idea's lane key, or `null` for a folder with no manifest row and for the implicit lane. */
+  idea: string | null;
+  type: string;
+  url: string | null;
+  columnKey: VerdictColumnKey | null;
+  verdictKeyword: string;
+  verdictText: string;
+  inManifest: boolean;
+  readmeSays: string | null;
+  readmeSaysText: string | null;
+  files: SpikeTile['files'];
+  pauseUrl: string | null;
+}
+
+function panelsOf(context: SpikesContext): Panel[] {
+  const panels: Panel[] = [];
+  for (const lane of context.lanes) {
+    for (const column of VERDICT_COLUMNS) {
+      for (const tile of lane.columns[column.key]) {
+        panels.push({
+          id: tile.id,
+          name: tile.name,
+          idea: lane.implicit ? null : lane.key,
+          type: tile.type,
+          url: tile.url,
+          columnKey: tile.known ? tile.columnKey : null,
+          verdictKeyword: tile.verdictKeyword,
+          verdictText: tile.verdictText,
+          inManifest: true,
+          readmeSays: tile.readmeSays,
+          readmeSaysText: tile.readmeSaysText,
+          files: tile.files,
+          pauseUrl: tile.pauseUrl,
+        });
+      }
+    }
+  }
+  for (const entry of context.notInManifest) {
+    panels.push({
+      id: entry.id,
+      name: entry.name,
+      idea: null,
+      type: entry.type,
+      url: entry.url,
+      columnKey: entry.known ? entry.columnKey : null,
+      verdictKeyword: entry.verdictKeyword,
+      verdictText: entry.verdictText,
+      inManifest: false,
+      readmeSays: null,
+      readmeSaysText: null,
+      files: entry.files,
+      pauseUrl: entry.pauseUrl,
+    });
+  }
+  return panels;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function textOf(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
+/** The lift of the open document (`structured.spikes.readme`, `.wrapUp` or `.conventions`), or `null`. */
+function liftOfInput(input: ViewInput, part: string): Record<string, unknown> | null {
+  const structured = input.structured;
+  if (!isRecord(structured) || !Object.hasOwn(structured, 'spikes')) return null;
+  const spikes = structured.spikes;
+  if (!isRecord(spikes) || !Object.hasOwn(spikes, part)) return null;
+  const lift = spikes[part];
+  return isRecord(lift) ? lift : null;
+}
+
+function listOf(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.trim() !== '') : [];
+}
+
+/** "812 B", "1.7 KB", "14 KB", "8.1 MB": from the stat's byte count alone. */
+export function sizeWords(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) return '';
+  if (bytes < 1024) return `${Math.round(bytes)} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return kb < 10 ? `${kb.toFixed(1)} KB` : `${Math.round(kb)} KB`;
+  const mb = kb / 1024;
+  return mb < 10 ? `${mb.toFixed(1)} MB` : `${Math.round(mb)} MB`;
+}
+
+function headingOf(group: { heading: string | null }): string {
+  return group.heading === null ? '' : group.heading.trim().toLowerCase();
+}
+
+function barsOf(input: ViewInput, skip: readonly string[]): ComposedSpikesBar[] {
+  const bars: ComposedSpikesBar[] = [];
+  input.groups.forEach((group, index) => {
+    if (group.heading === null || skip.includes(headingOf(group))) return;
+    bars.push({ key: group.id ?? `section-${index}`, title: group.heading, html: group.html });
+  });
+  return bars;
+}
+
+function groupHtml(input: ViewInput, heading: string): string | null {
+  const found = input.groups.find((group) => headingOf(group) === heading);
+  return found === undefined ? null : found.html;
+}
+
+function validatesOf(lift: Record<string, unknown> | null): ComposedSpikesValidates | null {
+  if (lift === null || !isRecord(lift.validates)) return null;
+  const validates = lift.validates;
+  if (Object.hasOwn(validates, 'given') && Object.hasOwn(validates, 'when') && Object.hasOwn(validates, 'then')) {
+    return { kind: 'gwt', given: textOf(validates.given), when: textOf(validates.when), then: textOf(validates.then) };
+  }
+  const whole = textOf(validates.whole);
+  return whole === '' ? null : { kind: 'whole', text: whole };
+}
+
+/** The chip for an id the author wrote: it opens the spike's panel when the id names a spike with a README, and is
+ * plain text otherwise. */
+function chipOf(raw: string, panels: Panel[]): ComposedSpikesChip {
+  const wanted = spikeIdKey(spikeFolderIdentity(raw).id);
+  const found = panels.find((panel) => spikeIdKey(panel.id) === wanted);
+  if (found === undefined) return { id: raw, label: raw, to: null, tone: null };
+  return {
+    id: found.id,
+    label: found.name === '' ? found.id : `${found.id} ${found.name}`,
+    to: found.url,
+    tone: found.columnKey === null ? null : COLUMN_TONE[found.columnKey],
+  };
+}
+
+function spikeSheet(input: ViewInput, context: SpikesContext, panel: Panel, panels: Panel[], closeTo: string | null): ComposedSpikesSpikeSheet {
+  const lift = liftOfInput(input, 'readme');
+  const folder = panel.url === null ? '' : folderSegment(panel.url);
+  const manifestCell = cellAsWritten(panel.verdictKeyword, panel.verdictText);
+  const verdict: ComposedSpikesSpikeSheet['verdict'] = !panel.inManifest
+    ? { word: NOT_IN_MANIFEST_TITLE, tone: null, freeText: '' }
+    : panel.columnKey !== null
+      ? { word: columnLabel(panel.columnKey), tone: COLUMN_TONE[panel.columnKey], freeText: panel.verdictText }
+      : { word: panel.verdictKeyword === '' ? 'No verdict' : panel.verdictKeyword, tone: null, freeText: panel.verdictText };
+
+  const readmeCell = cellAsWritten(textOf(lift?.verdictKeyword), textOf(lift?.verdictText));
+  const where = context.manifest === null ? 'the manifest' : 'MANIFEST.md';
+  const orphanNote = panel.inManifest
+    ? null
+    : readmeCell === ''
+      ? `This folder has no row in ${where}.`
+      : `This folder has no row in ${where}. Its README says ${readmeCell}.`;
+
+  const eyebrow = [`Spike ${panel.id}`, panel.idea ?? '', panel.type].filter((part) => part !== '').join(' · ');
+  return {
+    kind: 'spike',
+    key: folder === '' ? panel.id : folder,
+    eyebrow,
+    title: panel.name === '' ? panel.id : panel.name,
+    address: folder === '' ? 'README.md' : `${folder}/README.md`,
+    closeTo,
+    focus: panel.url === null ? null : folder,
+    verdict,
+    disagreement:
+      panel.readmeSays === null
+        ? null
+        : {
+            field: 'Verdict',
+            manifest: { label: 'MANIFEST.md', value: manifestCell },
+            readme: { label: 'README.md', value: cellAsWritten(panel.readmeSays, panel.readmeSaysText ?? '') },
+            note: DISAGREE_NOTE,
+          },
+    orphanNote,
+    validates: validatesOf(lift),
+    resultsHtml: groupHtml(input, 'results'),
+    related: listOf(lift?.related).map((raw) => chipOf(raw, panels)),
+    filesTitle: folder === '' ? 'Files' : `Files in ${folder}/`,
+    files: panel.files.map((file) => ({ name: file.name, kind: file.kind, size: sizeWords(file.sizeBytes) })),
+    tags: listOf(lift?.tags),
+    bars: barsOf(input, ['what this validates', 'results']),
+    pauseTo: panel.pauseUrl,
+  };
+}
+
+function wrapSheet(input: ViewInput, context: SpikesContext, panels: Panel[], closeTo: string | null): ComposedSpikesWrapSheet | null {
+  const wrap = context.wrapUp;
+  if (wrap === null) return null;
+  const missed = wrap.notProcessed.map((entry) => entry.id);
+  return {
+    kind: 'wrap-up',
+    key: 'wrap-up-summary',
+    eyebrow: '.planning/spikes/WRAP-UP-SUMMARY.md',
+    title: wrap.date === null || wrap.date === '' ? 'Wrap-up' : `Wrap-up, ${wrap.date}`,
+    address: 'WRAP-UP-SUMMARY.md',
+    closeTo,
+    focus: null,
+    skill: wrap.skillPath === null || wrap.skillPath === '' ? null : wrap.skillPath,
+    processed: wrap.processed.map((row) => chipOf(row.id, panels)),
+    findingsHtml: groupHtml(input, 'key findings'),
+    notProcessed: missed.length === 0 ? null : `${NOT_PROCESSED_WORDS}: ${missed.join(', ')}.`,
+  };
+}
+
+function conventionsSheet(input: ViewInput, closeTo: string | null): ComposedSpikesConventionsSheet {
+  return {
+    kind: 'conventions',
+    key: 'conventions',
+    eyebrow: '.planning/spikes/CONVENTIONS.md',
+    title: CONVENTIONS_TITLE,
+    address: 'CONVENTIONS.md',
+    closeTo,
+    focus: null,
+    sections: barsOf(input, []),
+  };
+}
+
+/** The sheet the address opens, or `null` when it names no panel the page can show. */
+function sheetOf(input: ViewInput, context: SpikesContext): ComposedSpikesSheet | null {
+  const activeKey = context.activeKey;
+  if (activeKey === null) return null;
+  const closeTo = context.manifest === null ? null : context.manifest.url;
+  const panels = panelsOf(context);
+  if (activeKey === 'wrap-up-summary') return wrapSheet(input, context, panels, closeTo);
+  if (activeKey === 'conventions') return context.conventions === null ? null : conventionsSheet(input, closeTo);
+  const wanted = activeKey.toLowerCase();
+  const panel = panels.find((candidate) => candidate.url !== null && folderOfUrl(candidate.url) === wanted);
+  return panel === undefined ? null : spikeSheet(input, context, panel, panels, closeTo);
+}
+
+// ---------------------------------------------------------------------------------------------------------
 // The page
 // ---------------------------------------------------------------------------------------------------------
 
@@ -372,6 +699,7 @@ export function composeSpikes(input: ViewInput): ComposedSpikes | null {
           ? null
           : { title: NOT_IN_MANIFEST_TITLE, tiles: context.notInManifest.map((entry) => folderTile(entry, activeKey)) },
       wrapUp: wrapUpOf(context),
+      sheet: sheetOf(input, context),
     };
   } catch {
     return null;

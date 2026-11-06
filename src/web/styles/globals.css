@@ -34331,4 +34331,387 @@ a.view-spikes-tile:hover {
     text-transform: uppercase;
   }
 }
+/* Phase 11 (11-16, D-01, D-07): the sheet. The shared Dialog docked to the right edge over a scrim, the panel inside it
+   drawn from sketch 053 A: id, idea and type over the name, a big verdict chip with its free text, the shared
+   disagreement block when the manifest and the README part ways, What this validates as Given / When / Then, Results,
+   Related chips, the files listed by name, tags and the remaining sections as closed bars. It sits in a portal outside
+   the page root, so it carries its own type size and sheet width. Under 48rem it takes the full width. Colour is the
+   tone a chip or square carries and theme tokens only; there is no motion. */
+.view-spikes-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: var(--overlay-scrim);
+}
+
+.view-spikes-sheet {
+  --view-spikes-sheet: calc(var(--space-8) * 19);
+
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 71;
+  display: grid;
+  gap: var(--space-5);
+  align-content: start;
+  width: min(var(--view-spikes-sheet), 100%);
+  padding: var(--space-6) var(--space-6) var(--space-10);
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
+  background: var(--background);
+  box-shadow: var(--shadow-popover);
+  color: var(--foreground);
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  outline: none;
+}
+
+.view-spikes-sheet > * {
+  min-width: 0;
+}
+
+.view-spikes-sheet .status-chip {
+  font-size: var(--fs-2);
+}
+
+.view-spikes-sheet-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-spikes-addr {
+  min-width: 0;
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--border-faint);
+  background: var(--code-veil);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-spikes-close {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--space-8);
+  height: var(--space-8);
+  margin-left: auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.view-spikes-close:hover {
+  background: var(--state-hover);
+}
+
+.view-spikes-close svg {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+.view-spikes-panel {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.view-spikes-sheet-head,
+.view-spikes-block {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-spikes-sheet-title {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+.view-spikes-verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-width: 0;
+}
+
+.view-spikes-sheet .view-spikes-chip-big {
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--fs-4);
+}
+
+.view-spikes-chip-big[data-plain='true'] {
+  border-style: dashed;
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.view-spikes-vtext-open {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.view-spikes-gwt {
+  display: grid;
+  margin: 0;
+  border: 1px solid var(--border);
+}
+
+.view-spikes-gwt > div {
+  display: grid;
+  grid-template-columns: calc(var(--space-8) * 2.2) minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+}
+
+.view-spikes-gwt > div + div {
+  border-top: 1px solid var(--border-faint);
+}
+
+.view-spikes-gwt dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-spikes-whole {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-spikes-md {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-spikes-rels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-spikes-rel {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--border);
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+a.view-spikes-rel:hover {
+  background: var(--state-hover);
+}
+
+.view-spikes-rel[data-plain='true'] {
+  border-style: dashed;
+  color: var(--muted-foreground);
+}
+
+/* The files list: names, kind and size in text. A row is never a link. */
+.view-spikes-files {
+  display: grid;
+  border: 1px dashed var(--border);
+  min-width: 0;
+}
+
+.view-spikes-files ul {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-spikes-files li {
+  display: grid;
+  grid-template-columns: var(--space-4) minmax(0, 1fr) auto auto;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+  padding: var(--space-1-5) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-spikes-files li + li {
+  border-top: 1px solid var(--border-faint);
+}
+
+.view-spikes-file-icon {
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--muted-foreground);
+}
+
+.view-spikes-file-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-spikes-file-kind,
+.view-spikes-file-size {
+  color: var(--muted-foreground);
+}
+
+.view-spikes-file-kind {
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-spikes-file-size {
+  text-align: right;
+}
+
+.view-spikes-files-note {
+  margin: 0;
+  padding: var(--space-1-5) var(--space-3);
+  border-top: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-spikes-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-spikes-pause {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: var(--space-0-5);
+}
+
+.view-spikes-bars {
+  display: grid;
+  border-top: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-spikes-bar {
+  border-bottom: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-spikes-bar-sum {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-10);
+  padding-inline: var(--space-2);
+  font-weight: var(--fw-semibold);
+  list-style: none;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.view-spikes-bar-sum::-webkit-details-marker {
+  display: none;
+}
+
+.view-spikes-bar-sum:hover {
+  background: var(--state-hover);
+}
+
+.view-spikes-bar-chev {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--muted-foreground);
+}
+
+.view-spikes-bar[open] .view-spikes-bar-chev {
+  transform: rotate(90deg);
+}
+
+.view-spikes-bar-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-spikes-bar-body {
+  padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--space-4) + var(--space-4));
+}
+
+/* A section renders the shared document markup, whose sizes are fluid and larger than this page's scale; it is taken
+   inside the five sizes here, so no shared document class is edited. */
+.view-spikes-md .artifact-document {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-spikes-md .artifact-document > :first-child {
+  margin-top: 0;
+}
+
+.view-spikes-md .artifact-document :is(h3, h4, h5, h6) {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+.view-spikes-md .artifact-document :is(h3, h4, h5, h6) .heading-copy {
+  font-size: var(--fs-2);
+}
+
+.view-spikes-md .artifact-document table,
+.view-spikes-md .artifact-document pre:not([data-figure-island] *) {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-spikes-md .artifact-document :not(pre) > code {
+  font-size: var(--fs-4);
+}
+
+.view-spikes-md .artifact-document [data-figure-island] * {
+  font-size: var(--fs-2);
+}
+
+@media (max-width: 48rem) {
+  .view-spikes-sheet {
+    width: 100%;
+    padding: var(--space-4) var(--space-4) var(--space-10);
+    border-left: 0;
+  }
+
+  .view-spikes-gwt > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+
+  .view-spikes-bar-body {
+    padding-left: var(--space-2);
+  }
+}
 /* phase-11-spikes:end */
