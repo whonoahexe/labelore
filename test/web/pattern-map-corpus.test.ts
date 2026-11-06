@@ -61,6 +61,7 @@ const PINNED: Record<string, Pinned> = {
   'LB:phases/09-review-audit-and-root-document-pages/09-PATTERNS.md': { rows: 27, exact: 17, role: 8, partial: 2, none: 0, groups: 0, shared: 6, excerpts: 7 },
   // 10: awk over the last cell of the 31 File Classification rows (24 exact incl. one 'exact (shape)', 7 role-match); 24 fence lines.
   'LB:phases/10-codebase-map-specification-and-check-pages/10-PATTERNS.md': { rows: 31, exact: 24, role: 7, partial: 0, none: 0, groups: 0, shared: 8, excerpts: 12 },
+  'LB:phases/11-exploration-handoff-report-and-workstream-pages/11-PATTERNS.md': { rows: 26, exact: 18, role: 8, partial: 0, none: 0, groups: 0, shared: 5, excerpts: 13 },
   'FX:milestones/v1.0-phases/02-shed-inventory-health/02-PATTERNS.md': { rows: 22, exact: 6, role: 4, partial: 4, none: 8, groups: 5, shared: 5, excerpts: 16 },
   'FX:milestones/v1.0-phases/03-catalogue-browsing/03-PATTERNS.md': { rows: 9, exact: 5, role: 4, partial: 0, none: 0, groups: 0, shared: 4, excerpts: 2 },
   'FX:milestones/v1.0-phases/04-shed-to-shed-transfers/04-PATTERNS.md': { rows: 13, exact: 6, role: 3, partial: 2, none: 2, groups: 0, shared: 4, excerpts: 2 },
