@@ -8,15 +8,18 @@
 // request, writes no file and no storage, and resets on reload (T-11-13). A pressed gate keeps its tone and gains the
 // word "Read" beside the bar; it is a reading aid, never a pass.
 import { useEffect, useRef, useState } from 'react';
-import { Check, Link2 } from 'lucide-react';
+import { Check, ChevronRight, Link2 } from 'lucide-react';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import { copyText } from '../components/copy-path-button.tsx';
 import { ResearchInline } from '../pages/research-atoms.tsx';
 import { RecordDisagreement } from '../components/record-disagreement.tsx';
+import { stripLeadingHeading } from './document-sections.ts';
+import { MOVED_ON_WORDS } from './pause-page.ts';
 import type {
   ComposedPause,
   ComposedPauseFile,
   ComposedPauseGate,
+  ComposedPauseRestBar,
   ComposedPauseSideNote,
   ComposedPauseTasks,
 } from './pause-page.ts';
@@ -74,6 +77,22 @@ function PauseMeta({ model }: { model: ComposedPause }): React.JSX.Element | nul
   );
 }
 
+/** The dashed, quiet note beside the date: a fact about the project, apart from the handoff's own fields (D-08). */
+function PauseMovedOn({ model }: { model: ComposedPause }): React.JSX.Element | null {
+  const { movedOn } = model.head;
+  if (movedOn === null || model.head.movedOnLine === null) return null;
+  const where = [movedOn.source, movedOn.date].filter((part): part is string => typeof part === 'string' && part !== '');
+  return (
+    <span className="view-pause-moved">
+      <span>{MOVED_ON_WORDS}:</span>
+      <b>
+        <ResearchInline text={movedOn.what} />
+      </b>
+      {where.length > 0 ? <span>({where.join(', ')})</span> : null}
+    </span>
+  );
+}
+
 function PauseLead({ model }: { model: ComposedPause }): React.JSX.Element | null {
   const { dateLine, age } = model.head;
   if (dateLine === null) return null;
@@ -103,7 +122,13 @@ export function pauseHeaderProps(model: ComposedPause, artifactTitle: string): P
   return {
     eyebrow: model.head.eyebrow,
     title: model.head.title ?? artifactTitle,
-    lead: model.head.dateLine === null ? null : <PauseLead model={model} />,
+    lead:
+      model.head.dateLine === null && model.head.movedOnLine === null ? null : (
+        <span className="view-pause-ago">
+          <PauseLead model={model} />
+          <PauseMovedOn model={model} />
+        </span>
+      ),
     meta: <PauseMeta model={model} />,
     path: null,
     crumbs: [
@@ -302,9 +327,113 @@ function ResumeStep({ model }: { model: ComposedPause }): React.JSX.Element {
   );
 }
 
+function RestBody({
+  bar,
+  renderHtml,
+}: {
+  bar: ComposedPauseRestBar;
+  renderHtml: ((html: string) => React.ReactNode) | undefined;
+}): React.JSX.Element | null {
+  const { body } = bar;
+  switch (body.kind) {
+    case 'paths':
+      return (
+        <ul className="view-pause-paths">
+          {body.paths.map((path, index) => (
+            <li key={index} title={path}>
+              {path}
+            </li>
+          ))}
+        </ul>
+      );
+    case 'items':
+      return (
+        <ul className="view-pause-kv">
+          {body.items.map((item, index) => (
+            <li key={index}>
+              {item.tag !== null ? <span className="view-pause-src">{item.tag}</span> : null}
+              <span>
+                <ResearchInline text={item.text} />
+              </span>
+              {item.detail !== null ? (
+                <span className="source-note">
+                  <ResearchInline text={item.detail} />
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      );
+    case 'blocks':
+      return (
+        <div className="view-pause-prose">
+          {body.blocks.map((block, index) =>
+            block.kind === 'list' ? (
+              <ul key={index}>
+                {block.items.map((item, at) => (
+                  <li key={at}>
+                    <ResearchInline text={item} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p key={index}>
+                <ResearchInline text={block.text} />
+              </p>
+            ),
+          )}
+        </div>
+      );
+    case 'html':
+      return <div className="view-pause-plain-section">{renderHtml ? renderHtml(stripLeadingHeading(body.html)) : null}</div>;
+  }
+}
+
+/** "The rest of the handoff": one closed bar per list or section, each tagged with its file and, for a list, its count. */
+function RestOfHandoff({
+  bars,
+  renderHtml,
+}: {
+  bars: ComposedPauseRestBar[];
+  renderHtml: ((html: string) => React.ReactNode) | undefined;
+}): React.JSX.Element | null {
+  if (bars.length === 0) return null;
+  return (
+    <section className="view-pause-rest" aria-labelledby="view-pause-rest-title">
+      <h2 className="view-pause-key" id="view-pause-rest-title">
+        The rest of the handoff
+      </h2>
+      <div className="view-pause-bars">
+        {bars.map((bar) => (
+          <details key={bar.key} className="view-pause-bar">
+            <summary className="view-pause-bar-sum">
+              <ChevronRight className="view-pause-bar-chev" aria-hidden="true" />
+              <span className="view-pause-bar-name">
+                <ResearchInline text={bar.title} />
+              </span>
+              {bar.count !== null ? <span className="view-pause-bar-count">{bar.count}</span> : null}
+              <SourceTag name={bar.file} />
+            </summary>
+            <div className="view-pause-bar-body">
+              <RestBody bar={bar} renderHtml={renderHtml} />
+            </div>
+          </details>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 /** The pause page: the path on one rail, an ordered list from the work behind you, through where it stopped and the
  * gates to clear, to the next action and what is left ahead. */
-export function PauseView({ model }: { model: ComposedPause }): React.JSX.Element {
+export function PauseView({
+  model,
+  renderHtml,
+}: {
+  model: ComposedPause;
+  /** Renders a section of the note through the document's sanitised path; without it those bars hold no body. */
+  renderHtml?: (html: string) => React.ReactNode;
+}): React.JSX.Element {
   return (
     <div className="view-pause-root">
       <ol className="view-pause-path" role="list" aria-label="Path from the pause to the next action">
@@ -322,6 +451,7 @@ export function PauseView({ model }: { model: ComposedPause }): React.JSX.Elemen
           </Step>
         ) : null}
       </ol>
+      <RestOfHandoff bars={model.rest} renderHtml={renderHtml} />
     </div>
   );
 }
