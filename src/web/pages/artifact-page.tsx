@@ -1629,7 +1629,7 @@ export function ArtifactPage({
       ) : codebaseCover ? (
         <CodebaseView key={artifact.path} model={codebaseCover} renderHtml={renderHtml} />
       ) : pauseCover ? (
-        <PauseView key={artifact.path} model={pauseCover} />
+        <PauseView key={artifact.path} model={pauseCover} renderHtml={renderHtml} />
       ) : specPageCover ? (
         <SpecView key={artifact.path} model={specPageCover} renderHtml={renderHtml} onShowSource={showSource} />
       ) : aiSpecPageCover ? (
