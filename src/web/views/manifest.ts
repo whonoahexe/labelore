@@ -77,6 +77,10 @@ import type { ComposedEvalReview } from './eval-review-page.ts';
 // Type-only import - same reason as `specPage` above (Phase 10, 10-21, sketch-051 winner A, the Browser check page).
 import type { ComposedDomVerify } from './dom-verify-page.ts';
 import type { ComposedReviews } from './reviews-page.ts';
+// Type-only import - same reason as `specPage` above (Phase 11, 11-10, sketch-054 winner C, the pause page).
+import type { ComposedPause } from './pause-page.ts';
+// Type-only import - the pause context is built server-side (Phase 11, 11-10).
+import type { PauseContext } from '../../presentation/pause-context.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -197,6 +201,11 @@ export interface ViewManifest {
    * `reviews`. Returns `null` when the input can't compose one (no `structured.reviews`, or a file with no reviewer), and
    * the page falls back to the promoted-section view, which the manifest keeps as `promote`, with no notice (RESEARCH C1). */
   reviewsPage?: (input: ViewInput) => ComposedReviews | null;
+  /** Phase 11 (11-10, sketch-054 winner C): the pause page a manifest opts into in View mode - the one `pause`
+   * manifest, shared by HANDOFF.json and every `.continue-here.md` (D-05). Returns `null` when the input can't
+   * compose one (no `pauseContext`, or the active file's lift is missing), and the page falls back to the
+   * promoted-section view, which the manifest keeps as `promote`, with no notice (Phase 10 C1, X2). */
+  pausePage?: (input: ViewInput) => ComposedPause | null;
   /** Phase 10 (10-08): true for a kind whose document text must never reach View mode through the generic
    * fallback (promoted sections or the whole document) - `user-setup`, whose file can hold a pasted value
    * (CONTEXT D-11). The Source toggle stays the way to the text. See `documentHtmlAllowedInView`. */
@@ -258,6 +267,10 @@ export interface ViewManifest {
   uatSession?: (input: ViewInput) => ComposedUatSession | null;
 }
 
+/** The pause context as the document response carries it: the join of 11-07 plus the presentation's `readAt`,
+ * the day the page counts the pause's age to (the page never reads the clock). */
+export type PauseContextPayload = PauseContext & { readAt: string };
+
 export interface ViewInput {
   kind: string;
   frontmatter: Record<string, unknown>;
@@ -313,6 +326,10 @@ export interface ViewInput {
    * server-side and passed through from the document response - `null`/absent when the artifact is not a map
    * document. */
   codebaseContext?: CodebaseContext | null;
+  /** Phase 11 (11-10): a pause file's pairing, date, stop, gates and disagreements (plus the presentation's
+   * `readAt`, the day the age counts to), built server-side and passed through from the document response -
+   * `null`/absent when the artifact is not a pause file. */
+  pauseContext?: PauseContextPayload | null;
 }
 
 export type ComposedBlock = { id: string; label: string } & (

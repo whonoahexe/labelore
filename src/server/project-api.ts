@@ -13,6 +13,8 @@ import { buildPlanManualChecks } from '../presentation/manual-checks.ts';
 import type { PlanManualChecks } from '../presentation/manual-checks.ts';
 import { buildCodebaseContext } from '../presentation/codebase-map.ts';
 import type { CodebaseContext } from '../presentation/codebase-map.ts';
+import { buildPauseContext } from '../presentation/pause-context.ts';
+import type { PauseContext } from '../presentation/pause-context.ts';
 import { buildProjectContext } from '../presentation/project-context.ts';
 import type { ProjectContext } from '../presentation/project-context.ts';
 import { buildReviewContext } from '../presentation/review-context.ts';
@@ -181,6 +183,19 @@ export function createProjectApi(
         return null;
       }
     })();
+    // Phase 11 (11-10): the pause page's pairing, date, stop, gates and disagreements, from this request's own
+    // bundle - built only for HANDOFF.json and a .continue-here.md (null elsewhere). It carries the bundle's
+    // `readAt` so the page counts the pause's age to the day the project was read, never to the browser's clock.
+    const pauseContext = ((): (PauseContext & { readAt: string }) | null => {
+      try {
+        const kind = lookup.artifact.kind;
+        if (kind !== 'handoff' && kind !== 'continue-here') return null;
+        const context = buildPauseContext(activeDerived.presentation, lookup.artifact.path);
+        return context === null ? null : { ...context, readAt: activeDerived.presentation.readAt };
+      } catch {
+        return null;
+      }
+    })();
     const document = await (
       await renderer
     ).render(lookup.artifact, { referenceRegistry: activeDerived.referenceRegistry });
@@ -211,6 +226,7 @@ export function createProjectApi(
       ledgerContext,
       projectContext,
       codebaseContext,
+      pauseContext,
       manualChecks,
       reviewContext,
     };
