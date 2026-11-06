@@ -76,9 +76,40 @@ const TYPE_LABELS: Readonly<Record<string, string>> = {
   exe: 'Executable',
 };
 
+// A listed file (a spike script or output) is named by what it is, never by what it holds: the label
+// comes from the extension alone, `File` when the extension says nothing.
+const LISTED_LABELS: Readonly<Record<string, string>> = {
+  sh: 'Shell script',
+  bash: 'Shell script',
+  py: 'Python script',
+  js: 'JavaScript file',
+  mjs: 'JavaScript file',
+  cjs: 'JavaScript file',
+  ts: 'TypeScript file',
+  tsx: 'TypeScript file',
+  jsx: 'JavaScript file',
+  json: 'JSON file',
+  jsonl: 'JSON Lines file',
+  yaml: 'YAML file',
+  yml: 'YAML file',
+  toml: 'TOML file',
+  csv: 'CSV file',
+  tsv: 'TSV file',
+  txt: 'Text file',
+  md: 'Markdown file',
+  log: 'Log file',
+  html: 'HTML file',
+  css: 'Stylesheet',
+  xml: 'XML file',
+};
+
 /** The type label for a file, keyed by lowercase extension (the UI-SPEC table). */
 export function fileTypeLabel(name: string, fileClass: FileClass): string {
   if (fileClass === 'large') return 'Text file';
+  if (fileClass === 'listed') {
+    const listedExt = extensionOf(name);
+    return (listedExt === null ? undefined : (LISTED_LABELS[listedExt] ?? TYPE_LABELS[listedExt])) ?? 'File';
+  }
   const ext = extensionOf(name);
   if (ext === null) return 'Binary file';
   return TYPE_LABELS[ext] ?? `Binary file (.${ext})`;
@@ -132,7 +163,7 @@ export function fileBadgeOf(
   };
 }
 
-export type FilePageKind = 'text' | 'image' | 'image-over-cap' | 'binary' | 'large';
+export type FilePageKind = 'text' | 'image' | 'image-over-cap' | 'binary' | 'large' | 'listed';
 
 /** Which page a file opens as: the text document page, the image page, or the File details card. */
 export function filePageKindOf(fileClass: FileClass, sizeBytes: number): FilePageKind {

@@ -9,7 +9,7 @@ import { ImagePage } from './image-page.tsx';
 
 /** The one entry point for an artifact key. It picks the page from the cached presentation payload
  * alone, so opening a non-text file never requests /api/documents (D-10): an image opens the image
- * page, a binary, a large text file or an over-cap image opens the File details card, and text (or
+ * page, a binary, a large text file, a listed spike file or an over-cap image opens the File details card, and text (or
  * an address the payload does not hold) opens as an ArtifactPage. */
 export function DocumentRoute({ url }: { url: string }): React.JSX.Element {
   const slug = useProjectSlug() ?? '';
@@ -24,7 +24,7 @@ export function DocumentRoute({ url }: { url: string }): React.JSX.Element {
     if (kind === 'image') {
       return <ImagePage key={artifact.key} artifact={artifact} presentation={presentation} />;
     }
-    if (kind === 'image-over-cap' || kind === 'binary' || kind === 'large') {
+    if (kind === 'image-over-cap' || kind === 'binary' || kind === 'large' || kind === 'listed') {
       return <FileDetailsPage artifact={artifact} presentation={presentation} variant={kind} />;
     }
   }
