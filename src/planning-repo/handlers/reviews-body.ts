@@ -274,9 +274,19 @@ function isMark(code: number): boolean {
   return code === 42 || code === 95 || code === 96 || code === 32 || code === 91 || code === 40;
 }
 
-/** The severity word an item opens with, read through bold, backticks or brackets, and what follows it. `strict` asks for
- * a colon (inside or outside the marks) or a dash after the word, so "Low-risk shortcuts exist" is not a concern. */
-export function readSeverity(text: string, strict: boolean): { severity: ReviewSeverity; rest: string } | null {
+/**
+ * How firmly an item must write its severity word:
+ * - `separated`: a colon (inside or outside the marks) or a spaced dash after the word, so "Low-risk shortcuts exist" is
+ *   not a concern;
+ * - `marked`: separated, or the word wrapped in marks (`**High**`, `[HIGH]`), or written in capitals (`HIGH`), so a list
+ *   item such as "High availability is not handled" or "Medium-sized refactor needed" is a concern with no severity
+ *   (10-REVIEW WR-02);
+ * - `any`: a bare severity word, for a line that holds only the risk word.
+ */
+export type SeverityMode = 'separated' | 'marked' | 'any';
+
+/** The severity word an item opens with, read through bold, backticks or brackets, and what follows it. */
+export function readSeverity(text: string, mode: SeverityMode): { severity: ReviewSeverity; rest: string } | null {
   const t = text.trim();
   let open = 0;
   while (open < t.length && isMark(t.charCodeAt(open))) open += 1;
@@ -301,7 +311,11 @@ export function readSeverity(text: string, strict: boolean): { severity: ReviewS
       k += 3;
       separated = true;
     }
-    if (strict && !separated) continue;
+    if (!separated) {
+      if (mode === 'separated') continue;
+      const written = t.slice(open, open + word.length);
+      if (mode === 'marked' && open === 0 && written !== word.toUpperCase()) continue;
+    }
     return { severity, rest: cap(t.slice(k).trim()) };
   }
   return null;
@@ -309,7 +323,7 @@ export function readSeverity(text: string, strict: boolean): { severity: ReviewS
 
 /** The first word of a Risk Assessment line when it is LOW, MEDIUM or HIGH. */
 function riskWordOf(text: string): ReviewSeverity | null {
-  const read = readSeverity(text, false);
+  const read = readSeverity(text, 'any');
   return read === null ? null : read.severity;
 }
 
@@ -437,7 +451,7 @@ function readReviewer(lines: readonly string[], from: number, to: number): Secti
     const item = listItemOf(line);
     if (label === 'concerns') {
       const body = item ?? t;
-      const read = readSeverity(body, item === null);
+      const read = readSeverity(body, item === null ? 'separated' : 'marked');
       if (read !== null) {
         addConcern(read.severity, read.rest, indent);
         return;
@@ -447,7 +461,7 @@ function readReviewer(lines: readonly string[], from: number, to: number): Secti
         return;
       }
     } else if (label === 'intro' || label === 'other') {
-      const read = item === null ? null : readSeverity(item, true);
+      const read = item === null ? null : readSeverity(item, 'separated');
       if (read !== null) {
         addConcern(read.severity, read.rest, indent);
         return;
