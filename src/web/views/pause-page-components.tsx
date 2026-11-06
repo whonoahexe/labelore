@@ -4,13 +4,22 @@
 // rail. The stopped step carries aria-current="step". Every string is author text rendered as plain React text
 // through ResearchInline - never React's raw-HTML injection prop - and no href is built from document text
 // (T-11-12). Colour comes only from the tone a step carries and the theme tokens; a blocking gate is `missing`,
-// never destructive.
+// never destructive. "Mark as read" is a real button whose aria-pressed is React state and nothing else: it issues no
+// request, writes no file and no storage, and resets on reload (T-11-13). A pressed gate keeps its tone and gains the
+// word "Read" beside the bar; it is a reading aid, never a pass.
 import { useEffect, useRef, useState } from 'react';
 import { Check, Link2 } from 'lucide-react';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import { copyText } from '../components/copy-path-button.tsx';
 import { ResearchInline } from '../pages/research-atoms.tsx';
-import type { ComposedPause, ComposedPauseFile } from './pause-page.ts';
+import { RecordDisagreement } from '../components/record-disagreement.tsx';
+import type {
+  ComposedPause,
+  ComposedPauseFile,
+  ComposedPauseGate,
+  ComposedPauseSideNote,
+  ComposedPauseTasks,
+} from './pause-page.ts';
 
 /** Every field optional on purpose: the page spreads this over ArtifactHeader's own props. */
 export type PauseHeaderProps = Partial<{
@@ -113,68 +122,205 @@ function SourceTag({ name }: { name: string }): React.JSX.Element {
   );
 }
 
+/** One step of the path: the rail with its mark, the body, and the aside the side notes branch into. */
+function Step({
+  step,
+  dot,
+  current = false,
+  rail,
+  aside,
+  children,
+}: {
+  step: string;
+  dot: string;
+  current?: boolean;
+  rail?: string;
+  aside?: React.ReactNode;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <li className="view-pause-step" data-step={step} aria-current={current ? 'step' : undefined}>
+      <div className="view-pause-rail" data-rail={rail}>
+        <span className="view-pause-dot" data-kind={dot} aria-hidden="true" />
+      </div>
+      <div className="view-pause-body">{children}</div>
+      <div className="view-pause-aside">{aside}</div>
+    </li>
+  );
+}
+
+function Chips({ tasks, tone }: { tasks: ComposedPauseTasks; tone: 'complete' | 'quiet' }): React.JSX.Element {
+  return (
+    <>
+      <span className="view-pause-key">{tasks.label}</span>
+      <ul className="view-pause-chips">
+        {tasks.chips.map((chip) => (
+          <li key={chip.key} className="view-pause-chip" data-tone={tone}>
+            <i className="status-square view-pause-sq" data-tone={tone} aria-hidden="true" />
+            <span>
+              <ResearchInline text={chip.label} />
+            </span>
+            {chip.count !== null ? <span className="view-pause-chip-note">{chip.count}</span> : null}
+            {chip.commit !== null ? <span className="view-pause-chip-note">{chip.commit}</span> : null}
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+function SideNotes({ notes }: { notes: ComposedPauseSideNote[] }): React.JSX.Element | null {
+  if (notes.length === 0) return null;
+  return (
+    <>
+      {notes.map((note) => (
+        <div key={note.key} className="view-pause-side">
+          <span className="view-pause-key">
+            <span>{note.label}</span>
+            <SourceTag name={note.file} />
+          </span>
+          <strong>
+            <ResearchInline text={note.what} />
+          </strong>
+          {note.detail !== null ? (
+            <span>
+              <ResearchInline text={note.detail} />
+            </span>
+          ) : null}
+        </div>
+      ))}
+    </>
+  );
+}
+
+export function GateBar({ gate }: { gate: ComposedPauseGate }): React.JSX.Element {
+  // View state only: it is never sent anywhere or stored, and a reload clears it.
+  const [read, setRead] = useState(false);
+  return (
+    <div className="view-pause-gate" data-read={read ? 'true' : 'false'}>
+      <span className="view-pause-key">{gate.label}</span>
+      <span className="view-pause-what">
+        <ResearchInline text={gate.what} />
+      </span>
+      {gate.why !== null ? (
+        <span className="view-pause-why">
+          <ResearchInline text={gate.why} />
+        </span>
+      ) : null}
+      {gate.how !== null ? (
+        <span className="view-pause-why">
+          {gate.howLabel !== null ? `${gate.howLabel}: ` : ''}
+          <ResearchInline text={gate.how} />
+        </span>
+      ) : null}
+      <span className="view-pause-foot">
+        <button type="button" className="view-pause-read" aria-pressed={read} onClick={() => setRead((value) => !value)}>
+          Mark as read
+        </button>
+        {read ? (
+          <span className="status-chip" data-tone="quiet">
+            Read
+          </span>
+        ) : null}
+        <SourceTag name={gate.file} />
+      </span>
+    </div>
+  );
+}
+
 function StopStep({ model }: { model: ComposedPause }): React.JSX.Element {
   const { stop } = model;
   return (
-    <li className="view-pause-stop" data-step="stop" aria-current="step">
-      <div className="view-pause-rail">
-        <span className="view-pause-dot" data-kind="stop" aria-hidden="true" />
-      </div>
-      <div className="view-pause-body">
-        <span className="view-pause-key">{stop.label}</span>
-        {stop.title !== null ? (
-          <h2 className="view-pause-stop-title">
-            <ResearchInline text={stop.title} />
-          </h2>
-        ) : null}
-        {stop.progress !== null ? (
-          <span className="source-note">
-            <ResearchInline text={stop.progress} />
-          </span>
-        ) : null}
-      </div>
-      <div className="view-pause-aside" />
-    </li>
+    <Step step="stop" dot="stop" current aside={<SideNotes notes={model.stopSideNotes} />}>
+      <span className="view-pause-key">{stop.label}</span>
+      {stop.title !== null ? (
+        <h2 className="view-pause-stop-title">
+          <ResearchInline text={stop.title} />
+        </h2>
+      ) : null}
+      {stop.progress !== null ? (
+        <span className="source-note">
+          <ResearchInline text={stop.progress} />
+        </span>
+      ) : null}
+      {stop.disagreements.map((row) => (
+        <RecordDisagreement key={row.key} field={row.field} left={row.left} right={row.right} />
+      ))}
+      {stop.disagreements.length > 0 ? (
+        <p className="source-note">The two files disagree; both values are shown as written.</p>
+      ) : null}
+    </Step>
+  );
+}
+
+function GateSteps({ model }: { model: ComposedPause }): React.JSX.Element {
+  const { items, clearedLabel } = model.gates;
+  if (items.length === 0) {
+    return (
+      <Step step="gate" dot="cleared" aside={<SideNotes notes={model.gateSideNotes} />}>
+        <p className="view-pause-cleared">{clearedLabel}</p>
+      </Step>
+    );
+  }
+  return (
+    <>
+      {items.map((gate, index) => (
+        <Step
+          key={gate.key}
+          step="gate"
+          dot="gate"
+          aside={index === 0 ? <SideNotes notes={model.gateSideNotes} /> : undefined}
+        >
+          <GateBar gate={gate} />
+        </Step>
+      ))}
+    </>
   );
 }
 
 function ResumeStep({ model }: { model: ComposedPause }): React.JSX.Element {
   const { resume } = model;
   return (
-    <li className="view-pause-resume" data-step="resume">
-      <div className="view-pause-rail">
-        <span className="view-pause-dot" data-kind="resume" aria-hidden="true" />
-      </div>
-      <div className="view-pause-body">
-        <div className="view-pause-next">
-          <span className="view-pause-key">
-            <span>{resume.next !== null ? `${resume.label} · next action` : resume.label}</span>
-            {resume.next !== null ? <SourceTag name={resume.next.file} /> : null}
+    <Step step="resume" dot="resume">
+      <div className="view-pause-next">
+        <span className="view-pause-key">
+          <span>{resume.next !== null ? `${resume.label} · next action` : resume.label}</span>
+          {resume.next !== null ? <SourceTag name={resume.next.file} /> : null}
+        </span>
+        {resume.next !== null ? (
+          <span className="view-pause-say">
+            <ResearchInline text={resume.next.text} />
           </span>
-          {resume.next !== null ? (
-            <span className="view-pause-say">
-              <ResearchInline text={resume.next.text} />
-            </span>
-          ) : null}
-          {resume.other !== null ? (
-            <span className="source-note">
-              {resume.other.file}: “<ResearchInline text={resume.other.text} />”
-            </span>
-          ) : null}
-        </div>
+        ) : null}
+        {resume.other !== null ? (
+          <span className="source-note">
+            {resume.other.file}: “<ResearchInline text={resume.other.text} />”
+          </span>
+        ) : null}
       </div>
-      <div className="view-pause-aside" />
-    </li>
+    </Step>
   );
 }
 
-/** The pause page: the path on one rail, an ordered list from where the work stopped to the next action. */
+/** The pause page: the path on one rail, an ordered list from the work behind you, through where it stopped and the
+ * gates to clear, to the next action and what is left ahead. */
 export function PauseView({ model }: { model: ComposedPause }): React.JSX.Element {
   return (
     <div className="view-pause-root">
-      <ol className="view-pause-path" aria-label="Path from the pause to the next action">
+      <ol className="view-pause-path" role="list" aria-label="Path from the pause to the next action">
+        {model.behind !== null ? (
+          <Step step="behind" dot="done" rail="behind">
+            <Chips tasks={model.behind} tone="complete" />
+          </Step>
+        ) : null}
         <StopStep model={model} />
+        <GateSteps model={model} />
         <ResumeStep model={model} />
+        {model.ahead !== null ? (
+          <Step step="ahead" dot="ahead" rail="ahead">
+            <Chips tasks={model.ahead} tone="quiet" />
+          </Step>
+        ) : null}
       </ol>
     </div>
   );

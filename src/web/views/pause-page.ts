@@ -5,14 +5,23 @@
 //   - the head: the eyebrow "Paused work · {context}", the phase (or spike) name as the h1, and the lead
 //     "Paused in {context}, {date} · {N} days ago", the age counted from the pause date to the day the project
 //     was read (`readAt`, D-08), never the browser's clock;
-//   - the path, top to bottom on one rail: Behind you, Stopped here, the gates, Resume here, Ahead (the later
-//     steps are built on the same model);
-//   - the stop line "Stopped here · task {N} of {M} · {status}" with the status verbatim.
+//   - the path, top to bottom on one rail: Behind you (done tasks), Stopped here ("task {N} of {M} · {status}",
+//     the status verbatim, then one block per field where the two files differ), the gates (blocking human
+//     actions, then blocking constraints, then blocking anti-patterns, "Gate {i} of {n} · {kind}"), Resume here
+//     ("after {n} gates") and Ahead (tasks left; a plan-shaped entry is one chip with its task count);
+//   - side notes (a non-blocking human action, an advisory anti-pattern) branch off beside the stop and the first
+//     gate; with nothing blocking, one cleared gate reads "No gates: nothing blocks resuming".
 // The composer holds no DOM, no filesystem access, no rendering, no regular expression and no module-level
 // mutable state: two pause pages open at once each compose only from their own input. It returns `null` when the
 // context is missing, so the page keeps the promoted-section view with no notice (Phase 10 C1, X2). T-11-12:
 // every string is author text rendered as React text by the components.
-import type { PauseMovedOn, PauseText } from '../../presentation/pause-context.ts';
+import type {
+  PauseDisagreement,
+  PauseGate,
+  PauseMovedOn,
+  PauseText,
+} from '../../presentation/pause-context.ts';
+import type { PauseTaskRow } from '../../planning-repo/handlers/pause-lift.ts';
 import type { ViewInput } from './manifest.ts';
 
 export const HANDOFF_NAME = 'HANDOFF.json';
@@ -93,12 +102,68 @@ export interface ComposedPauseHead {
   missingPartner: string | null;
 }
 
+export interface ComposedPauseChip {
+  key: string;
+  /** The task's id and name as written ("3 Keep a deleted member's loans attributed"). */
+  label: string;
+  /** The commit a done task carries. */
+  commit: string | null;
+  /** A plan-shaped entry's "2 tasks" ("1 task"); null for a plain task. */
+  count: string | null;
+  /** `complete` for a done task, `quiet` for a task left. */
+  tone: 'complete' | 'quiet';
+}
+
+export interface ComposedPauseTasks {
+  /** "Behind you · 2 tasks done" or "Ahead · 3 tasks left" ("1 task done", "1 task left"). */
+  label: string;
+  chips: ComposedPauseChip[];
+}
+
+/** One field where the two files differ: both values, each under its file's name, never merged. */
+export interface ComposedPauseDisagreement {
+  key: string;
+  /** The field word: "task", "total tasks" or "status". */
+  field: string;
+  left: { label: string; value: string };
+  right: { label: string; value: string };
+}
+
+export interface ComposedPauseSideNote {
+  key: string;
+  /** "Can wait" (a human action that does not block) or "Advisory" (an anti-pattern that does not block). */
+  label: string;
+  what: string;
+  detail: string | null;
+  file: string;
+}
+
 export interface ComposedPauseStop {
   /** "Stopped here · task 3 of 6 · paused": the pieces the file states, in that order. */
   label: string;
   /** The stopped task's name, else "Task {N}"; null when no task is stated. */
   title: string | null;
   progress: string | null;
+  disagreements: ComposedPauseDisagreement[];
+}
+
+export interface ComposedPauseGate {
+  key: string;
+  /** "Gate 2 of 4 · Human action". */
+  label: string;
+  what: string;
+  why: string | null;
+  /** The mitigation or the prevention mechanism; null for a human action. */
+  how: string | null;
+  /** "Prevention" for an anti-pattern's mechanism; null when the text stands alone. */
+  howLabel: string | null;
+  file: string;
+}
+
+export interface ComposedPauseGates {
+  items: ComposedPauseGate[];
+  /** "No gates: nothing blocks resuming" when nothing blocks; null otherwise. */
+  clearedLabel: string | null;
 }
 
 export interface ComposedPauseResume {
@@ -112,8 +177,16 @@ export interface ComposedPauseResume {
 
 export interface ComposedPause {
   head: ComposedPauseHead;
+  /** Done tasks; null for a pause with none (the older HANDOFF layout lists no tasks). */
+  behind: ComposedPauseTasks | null;
   stop: ComposedPauseStop;
+  /** Side notes beside the stop (the first one) and beside the first gate (the rest). */
+  stopSideNotes: ComposedPauseSideNote[];
+  gates: ComposedPauseGates;
+  gateSideNotes: ComposedPauseSideNote[];
   resume: ComposedPauseResume;
+  /** Tasks left; null for a pause with none. */
+  ahead: ComposedPauseTasks | null;
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -165,6 +238,29 @@ function headOf(input: ViewInput): ComposedPauseHead | null {
   };
 }
 
+const DISAGREEMENT_FIELDS: ReadonlyMap<PauseDisagreement['field'], string> = new Map([
+  ['task', 'task'],
+  ['totalTasks', 'total tasks'],
+  ['status', 'status'],
+]);
+
+function disagreementsOf(input: ViewInput): ComposedPauseDisagreement[] {
+  const rows = Array.isArray(input.pauseContext?.disagreements) ? input.pauseContext.disagreements : [];
+  const out: ComposedPauseDisagreement[] = [];
+  for (const row of rows) {
+    // The next action's two wordings sit under the boxed sentence, not in a block of their own.
+    const field = DISAGREEMENT_FIELDS.get(row.field);
+    if (field === undefined) continue;
+    out.push({
+      key: row.field,
+      field,
+      left: { label: row.handoff.file, value: row.handoff.value },
+      right: { label: row.continueHere.file, value: row.continueHere.value },
+    });
+  }
+  return out;
+}
+
 function stopOf(input: ViewInput): ComposedPauseStop {
   const stop = input.pauseContext?.stop;
   const task = textOf(stop?.task);
@@ -177,7 +273,68 @@ function stopOf(input: ViewInput): ComposedPauseStop {
     label: pieces.join(' · '),
     title: textOf(stop?.taskName) ?? (task === null ? null : `Task ${task}`),
     progress: textOf(stop?.progress),
+    disagreements: disagreementsOf(input),
   };
+}
+
+function taskCountWords(count: number): string {
+  return count === 1 ? '1 task' : `${count} tasks`;
+}
+
+function chipOf(row: PauseTaskRow, index: number, tone: 'complete' | 'quiet'): ComposedPauseChip {
+  const label = [textOf(row.id), textOf(row.name)].filter((part): part is string => part !== null).join(' ');
+  return {
+    key: `${tone}-${index}`,
+    label: label === '' ? `Task ${index + 1}` : label,
+    commit: tone === 'complete' ? textOf(row.commit) : null,
+    count: typeof row.taskCount === 'number' ? taskCountWords(row.taskCount) : null,
+    tone,
+  };
+}
+
+function tasksOf(rows: unknown, tone: 'complete' | 'quiet'): ComposedPauseTasks | null {
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  const chips = (rows as PauseTaskRow[]).map((row, index) => chipOf(row, index, tone));
+  const word = tone === 'complete' ? 'done' : 'left';
+  const lead = tone === 'complete' ? 'Behind you' : 'Ahead';
+  return { label: `${lead} · ${taskCountWords(chips.length)} ${word}`, chips };
+}
+
+const GATE_KIND_WORDS: ReadonlyMap<PauseGate['kind'], string> = new Map([
+  ['human-action', 'Human action'],
+  ['constraint', 'Constraint'],
+  ['anti-pattern', 'Anti-pattern'],
+]);
+
+const NO_GATES_LABEL = 'No gates: nothing blocks resuming';
+
+function gatesOf(input: ViewInput): ComposedPauseGates {
+  const rows = Array.isArray(input.pauseContext?.gates) ? input.pauseContext.gates : [];
+  const items = rows.map((gate, index): ComposedPauseGate => {
+    const kind = GATE_KIND_WORDS.get(gate.kind) ?? 'Gate';
+    return {
+      key: `gate-${index}`,
+      label: `Gate ${index + 1} of ${rows.length} · ${kind}`,
+      what: gate.what,
+      why: textOf(gate.why),
+      how: textOf(gate.how),
+      howLabel: gate.kind === 'anti-pattern' ? 'Prevention' : null,
+      file: gate.file,
+    };
+  });
+  return { items, clearedLabel: items.length === 0 ? NO_GATES_LABEL : null };
+}
+
+function sideNotesOf(input: ViewInput): ComposedPauseSideNote[] {
+  const rows = Array.isArray(input.pauseContext?.sideNotes) ? input.pauseContext.sideNotes : [];
+  return rows.map((note, index) => ({
+    key: `side-${index}`,
+    label: note.kind === 'anti-pattern' ? 'Advisory' : 'Can wait',
+    what: note.what,
+    // A human action's context, or an advisory anti-pattern's prevention (the sketch's two side-note details).
+    detail: note.kind === 'anti-pattern' ? (textOf(note.how) ?? textOf(note.why)) : textOf(note.why),
+    file: note.file,
+  }));
 }
 
 function resumeOf(input: ViewInput): ComposedPauseResume {
@@ -196,7 +353,19 @@ export function composePause(input: ViewInput): ComposedPause | null {
   try {
     const head = headOf(input);
     if (head === null) return null;
-    return { head, stop: stopOf(input), resume: resumeOf(input) };
+    const context = input.pauseContext;
+    const sideNotes = sideNotesOf(input);
+    return {
+      head,
+      behind: tasksOf(context?.behind, 'complete'),
+      stop: stopOf(input),
+      // The first side note branches off beside the stop, the rest beside the first gate (or the cleared gate).
+      stopSideNotes: sideNotes.slice(0, 1),
+      gates: gatesOf(input),
+      gateSideNotes: sideNotes.slice(1),
+      resume: resumeOf(input),
+      ahead: tasksOf(context?.ahead, 'quiet'),
+    };
   } catch {
     return null;
   }
