@@ -1,8 +1,8 @@
 ---
 phase: 10-codebase-map-specification-and-check-pages
-verified: 2026-11-06T03:40:00Z
+verified: 2026-11-06T14:30:00Z
 status: gaps_found
-score: 9/11 must-haves verified
+score: 10/11 must-haves verified
 covered_files:
   - .planning/phases/10-codebase-map-specification-and-check-pages/10-01-PLAN.md
   - .planning/phases/10-codebase-map-specification-and-check-pages/10-01-SUMMARY.md
@@ -52,164 +52,127 @@ covered_files:
   - .planning/phases/10-codebase-map-specification-and-check-pages/10-23-SUMMARY.md
   - .planning/phases/10-codebase-map-specification-and-check-pages/10-24-PLAN.md
   - .planning/phases/10-codebase-map-specification-and-check-pages/10-24-SUMMARY.md
-  - playwright.config.ts
-  - src/cli/target-path.ts
-  - src/planning-repo/codebase-files.ts
-  - src/planning-repo/folders.ts
-  - src/planning-repo/handlers/ai-spec.ts
   - src/planning-repo/handlers/codebase-lift.ts
-  - src/planning-repo/handlers/codebase.ts
-  - src/planning-repo/handlers/dom-verify-body.ts
-  - src/planning-repo/handlers/dom-verify.ts
-  - src/planning-repo/handlers/eval-review-body.ts
-  - src/planning-repo/handlers/eval-review.ts
-  - src/planning-repo/handlers/fenced-sections.ts
-  - src/planning-repo/handlers/index.ts
   - src/planning-repo/handlers/reviews-body.ts
-  - src/planning-repo/handlers/reviews.ts
   - src/planning-repo/handlers/spec-body.ts
-  - src/planning-repo/handlers/spec.ts
   - src/planning-repo/handlers/user-setup-body.ts
-  - src/planning-repo/handlers/user-setup.ts
   - src/planning-repo/handlers/withhold-values.ts
-  - src/presentation/codebase-map.ts
-  - src/presentation/project-map-state.ts
-  - src/server/project-api.ts
-  - src/web/components/app-shell.tsx
-  - src/web/components/clean-tree.tsx
-  - src/web/components/copy-command.tsx
-  - src/web/components/status-meter.tsx
-  - src/web/components/value-not-shown.tsx
-  - src/web/pages/artifact-page.tsx
-  - src/web/pages/research-atoms.tsx
-  - src/web/route-dispatch.ts
-  - src/web/styles/globals.css
-  - src/web/views/ai-spec-page-components.tsx
-  - src/web/views/ai-spec-page.ts
-  - src/web/views/codebase-components.tsx
-  - src/web/views/codebase-page.ts
-  - src/web/views/dom-verify-page-components.tsx
-  - src/web/views/dom-verify-page.ts
-  - src/web/views/eval-review-page-components.tsx
-  - src/web/views/eval-review-page.ts
-  - src/web/views/kinds.ts
-  - src/web/views/manifest.ts
-  - src/web/views/manifests.ts
   - src/web/views/reviews-overlap.ts
   - src/web/views/reviews-page-components.tsx
-  - src/web/views/reviews-page.ts
-  - src/web/views/spec-page-components.tsx
-  - src/web/views/spec-page.ts
   - src/web/views/user-setup-page-components.tsx
   - src/web/views/user-setup-page.ts
-  - src/web/views/withheld-document-note.tsx
-  - test/e2e/deep-reload.spec.ts
-  - test/e2e/fixture-root.ts
-  - test/e2e/mapped-not-started.spec.ts
-  - test/e2e/pages.ts
-  - test/e2e/phase-10-screenshots.spec.ts
-  - test/helpers/fixture-roots.ts
-  - test/helpers/made-up-examples.ts
-  - test/helpers/shoot-pages.ts
-covered_digest: "v4:sha256:16b267be9dcc447884a0134cb519b1c30a84f910759b16f214167651c2cbbe86"
+  - test/codebase-lift.test.ts
+  - test/helpers/written-value-forms.ts
+  - test/user-setup-handler.test.ts
+  - test/web/codebase-page.test.ts
+  - test/web/user-setup-page.test.ts
+  - test/withhold-values.test.ts
+covered_digest: "v4:sha256:ebb0b0b5a68a5d2cc94f7e67045897a41c0df532a7c2d2b4bf2e2a8da8dd8f79"
 behavior_unverified: 0
 overrides_applied: 0
+re_verification:
+  previous_status: gaps_found
+  previous_score: 9/11
+  gaps_closed:
+    - "The Integrations panel shows environment variable names only (10-14 truth; VIEW-13) - CR-02 closed by 34f7426"
+  gaps_remaining:
+    - "A user setup never shows the variable's value - CR-01 closed for 'NAME: value' and table cells, still open for '- NAME=value' where the value holds a colon"
+  regressions: []
 gaps:
   - truth: "A user setup shows how many steps are done and where each variable goes, never the variable's value (VIEW-11 / SC3; 10-19 truth: no USER-SETUP variable value appears in any View-mode output)"
     status: failed
-    reason: "CR-01 reproduced: an indented '- NAME: value' field line under a step is stored as { key: 'STRIPE_KEY', text: 'sk_live_abc123' } with the value intact, read by readFields and drawn by MaskedInline in the step's fields list. WR-01 reproduced: a '| Variable | Value |' table row keeps its value cell in the plain-section lines. Both reach View mode (the document HTML is withheld, but the composed model carries the values)."
+    reason: "Re-verification probe: an indented '- NAME=value' field line under a checklist step still stores and renders the value whenever the value contains a colon. '  - DATABASE_URL=postgres://u:PVDB1@host/db' becomes fields [{ key: 'DATABASE_URL=[Value not shown]', text: '//u:PVDB1@host/db' }]; '  - STRIPE_KEY=sk:PVSK2' becomes { key: 'STRIPE_KEY=[Value not shown]', text: 'PVSK2' }. Both strings were present in renderToStaticMarkup(UserSetupView) output. Connection strings with embedded credentials (postgres://user:password@host) are the commonest secret-bearing value a USER-SETUP would carry. The section lines are masked correctly; only the structured step fields leak."
     artifacts:
       - path: "src/planning-repo/handlers/user-setup-body.ts"
-        issue: "readFieldLine masks key and text separately (lines 209-219, 247-251), so maskValues never sees NAME and value together; readSections leaves value cells in table rows"
-      - path: "src/web/views/user-setup-page-components.tsx"
-        issue: "draws step.fields text as given (line 237)"
+        issue: "readFieldLine splits at the first colon of the raw line and tests the left side with isVariableKey; for 'DATABASE_URL=postgres://...' the left side is 'DATABASE_URL=postgres', not a variable name, so the else branch masks key and text separately and the part after the scheme colon reaches text unmasked"
     missing:
-      - "Mask the whole field line before splitting, or return VALUE_NOT_SHOWN_MARK when the key is upper-snake"
-      - "Mask neighbouring cells of any table row that holds an upper-snake name"
-      - "Tests planting '- SECRET_KEY: PLANTED-VALUE' under a checklist item and a value in a table cell, asserting absence from JSON.stringify(structured) and from rendered markup"
-  - truth: "The Integrations panel shows environment variable names only; a value written beside a name is never stored or shown (10-14 truth and prohibition; VIEW-13)"
-    status: failed
-    reason: "CR-02 reproduced: cleanText uses the weaker withholdInText. Through extractCodebase('integrations', ...) the structured record stores 'Auth: STRIPE_KEY = sk_live_abc', a sentence with a quoted STRIPE_KEY=value and '**STRIPE_KEY** = sk_live_envl' verbatim in group.lines and environment.groups[].lines, which the Integrations panel renders. The 10-14 test passes only because its plant uses the leading NAME=value form."
-    artifacts:
-      - path: "src/planning-repo/handlers/withhold-values.ts"
-        issue: "withholdInText misses quoted, bold, spaced-equals, mid-line colon and table forms (lines 114-168)"
-      - path: "src/planning-repo/handlers/codebase-lift.ts"
-        issue: "cleanText (about line 1248) does not use maskValues"
-    missing:
-      - "Run maskValues in cleanText (and fix the quoted-value remainder in withholdInText)"
-      - "Tests for the leaking written forms plus a table row in an INTEGRATIONS fixture"
+      - "In readFieldLine, mask the whole line (keep(rest)) first when the line starts with an upper-snake name followed by '=' (or ' = '), and split the key/text only from the masked result; or drop the field text when the masked line has no colon"
+      - "Add a shared WRITTEN_FORMS entry whose value contains a colon (URL/connection string, 'sk:tag') so the field-line, composer and markup tests plant it"
 ---
-
 # Phase 10: Codebase Map, Specification and Check Pages Verification Report
 
 **Phase Goal:** The seven codebase-map documents open into designed pages; a map-only project opens on a "mapped, not started" overview built from them; the spec, AI spec, user setup, eval review, browser check and cross-AI review documents open into designed pages built and tested against labelled made-up examples.
 **Verified:** 2026-11-06
 **Status:** gaps_found
-**Re-verification:** No, initial verification
+**Re-verification:** Yes, after the code-review fix round (453e16f, 34f7426, b840fa2, 9059134, bda9728, bab6fa5, 3c3e529)
 
 ## Goal Achievement
 
-The phase is substantially delivered: every page family exists, is registered, is wired through the route table and manifests, and is covered by passing tests and browser specs. It fails on one invariant the phase treats as a hard rule: variable values must never reach View mode. Two reviewer-reported leaks (CR-01, CR-02) were reproduced here by running the code, and they falsify two plan must-have truths.
+One of the two earlier gaps is closed. The Integrations leak (CR-02) is gone: every written form reproduced in the first report, plus a dozen forms the fix round never listed, now stores and renders `[Value not shown]`. The User setup leak (CR-01/WR-01) is closed for `- NAME: value`, `- NAME = value`, `| NAME | value |` and the forms in the shared 21-form list, but it is not closed for `- NAME=value` when the value contains a colon, which is how a connection string is written. That form still reaches the rendered page. The other nine truths hold with no regression.
+
+### Re-verification probes (run in this pass, against HEAD)
+
+Probes were temporary vitest files in `test/` (removed afterwards; `git status` shows only the pre-existing `.planning/state.json` change). Planted tags were checked against `JSON.stringify` of the extractor result and, for User setup, against `renderToStaticMarkup(UserSetupView)`.
+
+| Scenario | Original report | Now |
+|----------|-----------------|-----|
+| `extractUserSetup`: `  - STRIPE_KEY: sk_live_abc123` under a step | value stored in `fields` | `fields: [{ key: "STRIPE_KEY", text: "[Value not shown]" }]` |
+| `  - STRIPE_KEY=...`, `  - Value: ...`, Notes `Auth: STRIPE_KEY: ...`, `STRIPE_KEY = ...` | mixed | masked |
+| `\| STRIPE_KEY \| value \|` in a `Variable \| Value` table (plain section) | value kept | masked in `sections[].lines` and in `variables[]` |
+| `extractCodebase('integrations')`: `Auth: STRIPE_KEY = v`, `Set "STRIPE_KEY=v" in env`, `**STRIPE_KEY** = v` (group lines, rows, environment lines) | stored verbatim | absent from the whole record |
+| 14 further Integrations forms: `NAME: postgres://u:pw@h`, `NAME = postgres://...`, `"postgres://..."`, ticked and bold names, table rows, `NAME: \`value\``, two assignments on one line | not probed | none leak |
+| 22 free-form probes through both extractors | not probed | 12 forms mask on both paths; the 10 that survive are prose or non-assignment shapes (see below) |
+| **`  - DATABASE_URL=postgres://u:PVDB1@host/db` field line** | not probed | **LEAK**: `{ key: "DATABASE_URL=[Value not shown]", text: "//u:PVDB1@host/db" }`; present in rendered markup |
+| **`  - STRIPE_KEY=sk:PVSK2` field line** | not probed | **LEAK**: `{ key: "STRIPE_KEY=[Value not shown]", text: "PVSK2" }`; present in rendered markup |
+
+The same colon-in-value leak also appears for `NAME = a:b`, `` `NAME`=scheme://... ``, `**NAME**=scheme://...`, `Set NAME=scheme://...` and `DB="postgres://..."` as field lines. The same strings in a plain section (Notes) or in an Integrations line are masked, so the defect is confined to `readFieldLine`.
+
+Cause (`src/planning-repo/handlers/user-setup-body.ts`, `readFieldLine`): the line is split at the first colon of the raw text; for `DATABASE_URL=postgres://...` the left side is `DATABASE_URL=postgres`, which `isVariableKey` does not accept (its name is `DATABASE_URL`, not the whole string), so the else branch masks key and text separately. Key becomes `DATABASE_URL=[Value not shown]`, and the text after the scheme colon is kept. The fix round's shared list plants `- STRIPE_KEY=<tag>` with no colon in the tag, so its tests could not see it.
 
 ### Observable Truths
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | SC1 (VIEW-13): the seven codebase-map documents open into designed pages and read the real maps on this machine, even where headings differ | VERIFIED | `folders.ts` maps the seven UPPERCASE files to `codebase-*` kinds; `codebase-page.ts`/`codebase-components.tsx` compose one Codebase view per project; `test/codebase-map-corpus.test.ts` reads this repo's own seven maps (shape only) and passes; fuzzy headings via `matchKey`/`normaliseHeading`; test/web/codebase-page.test.ts passes. 10-05 handler wraps the extractor so a throw only omits `structured`. |
-| 2 | SC2 (TGT-09): a map-only project opens from project path, `.planning` path, switcher and folder scan; first screen is "Mapped, not started" with seven documents, stack and concerns lifted, map date, no dead roadmap/traceability links | VERIFIED | `src/cli/target-path.ts` `hasProjectMarker` accepts a codebase map (recognised file, not a directory); `project-map-state.ts` derives `mapOnly` (no roadmap, no phase artifact); `app-shell.tsx`/`route-dispatch.ts` hide the Roadmap and Traceability tabs and route `/` and bare `/codebase`. test/target-path.test.ts and test/presentation/project-map-state.test.ts pass (run here). 10-23 `mapped-not-started.spec.ts` (4 entry paths + copy command) and deep-reload (67/67) reported passing; not re-run per instruction. |
-| 3 | SC3a (VIEW-11): a spec shows whether it is locked enough to plan (ambiguity score vs gate) and each requirement as current, target, acceptance | VERIFIED | `spec-body.ts`/`spec-page.ts`/`spec-page-components.tsx`; locked (0.14) and above-gate (0.31) Lendshed examples; test/web/spec-page.test.ts and spec-handler tests pass. WR-03 (nested numbered list creates extra requirements) is a warning, not a falsification of this truth. |
-| 4 | SC3b (VIEW-11): an AI spec shows system type, framework, evaluation dimensions, checklist progress and says plainly when sections are template slots | VERIFIED | `ai-spec.ts`, `ai-spec-page.ts`, shared `status-meter.tsx`; 02-AI-SPEC (all template slots) and 04-AI-SPEC (half filled) examples; test/web/ai-spec-page.test.ts passes; 10-UI-REVIEW confirms "9 of 9 sections are still template slots". IN-02 (duplicate section numbers) is info. |
-| 5 | SC3c (VIEW-11): a user setup shows how many steps are done and where each variable goes, never the variable's value (10-19: no value appears in any View-mode output) | FAILED | Reproduced here: `extractUserSetup` on `  - STRIPE_KEY: sk_live_abc123` under a checklist step returns `fields: [{ key: "STRIPE_KEY", text: "sk_live_abc123" }]`; `readFields` passes it through and `MaskedInline` renders it (user-setup-page-components.tsx:237). A `\| STRIPE_KEY \| sk_live_cell \|` table row also survives in the extracted record (WR-01, reproduced). Step counts and destinations themselves work (test/web/user-setup-page.test.ts passes), but the never-the-value guarantee is false for these inputs. |
-| 6 | SC4a (VIEW-12): an eval review shows score and verdict, dimension coverage and ordered remediation plan | VERIFIED | `eval-review-body.ts`/`eval-review-page.ts`/components; 03- and 04-EVAL-REVIEW Lendshed examples; test/web/eval-review-page.test.ts passes. |
-| 7 | SC4b (VIEW-12): a browser check shows its outcome, "could not look" visibly different from "nothing to report", plus pass/fail/needs-review counts | VERIFIED | `dom-verify-body.ts`/`dom-verify-page.ts`; three outcomes with distinct words and shape; 01/02/03-DOM-VERIFY examples; test/web/dom-verify-page.test.ts passes. UI review flags the accent "Verified" chip above "2 failed" (copy/colour warning, not a falsification: the file's own status is shown as written). |
-| 8 | SC4c (VIEW-12): a cross-AI review shows each reviewer with its model, agreed concerns first, and disagreements | VERIFIED | `reviews-body.ts`, `reviews-overlap.ts` (`deriveAgreement`/Venn layout), `reviews-page.ts`; 04-REVIEWS example (3 reviewers + failed lane); test/web/reviews-page.test.ts passes. WR-02 (severity words read from prose) and WR-04 (overlap clipping past ~9 singles, absent lanes capped at 3) are warnings. |
-| 9 | SC5a (VIEW-21): each of the six types (and the seven map docs) is tested against a committed made-up example, labelled, indexed, and the rule binds later types | VERIFIED | `test/helpers/made-up-examples.ts` (`MADE_UP_EXAMPLE_KINDS`, marker scan, index, planted controls); test/made-up-examples.test.ts passes (run here); Lendshed/Tidemark/Shapes files carry markers; `test/fixtures/README.md` indexes them; kinds list explicitly expects Phase 11 to append. |
-| 10 | SC5b (VIEW-21/11/12/13): every page sketched first, built from the winning sketch, screenshot-checked, falls back to a readable generic page when a file differs | VERIFIED | Sketches 042-052 exist and are recorded with winners in `.planning/sketches/MANIFEST.md`; winners differ from plan wording by recorded user decision (judged by intent); 10-23 produced 112 screenshots across 28 subjects with shared UI rule checks, and 10-UI-REVIEW (16/24, warnings only) assessed them against the sketch winners; handlers wrap extractors, and each manifest returns null/falls back to the generic view when the composed model is absent (`manifests.ts`, `withheld-document-note.tsx` for user setup). |
-| 11 | 10-14 truth/prohibition (VIEW-13): the Integrations panel's lifted rows show environment variable names only; a value written beside a name is never stored or shown | FAILED | Reproduced here: `extractCodebase('integrations', {}, ...)` returned `group.lines` / `rows[].service` containing `Auth: STRIPE_KEY = sk_live_abc` and `Set "STRIPE_KEY=sk_live_zzz" in env`, and `environment.groups[].lines` containing `**STRIPE_KEY** = sk_live_envl`, all stored and passed to the panel. `withholdInText` reports `hadValue: false` for each (run directly, CR-02). |
+| 1 | SC1 (VIEW-13): the seven codebase-map documents open into designed pages and read the real maps on this machine, even where headings differ | VERIFIED | Unchanged since the first report; test/codebase-map-corpus.test.ts and test/web/codebase-page.test.ts pass in this pass. Fix round touched only `cleanText`/mask; the corpus test still passes. |
+| 2 | SC2 (TGT-09): a map-only project opens from project path, `.planning` path, switcher and folder scan; first screen "Mapped, not started" | VERIFIED | No fix-round file in this area; test/target-path.test.ts and test/presentation/project-map-state.test.ts pass. Playwright specs not re-run. |
+| 3 | SC3a (VIEW-11): a spec shows lock state (ambiguity vs gate) and each requirement as current, target, acceptance | VERIFIED | test/spec-handler.test.ts and test/web/spec-page.test.ts pass. WR-03 fix (9059134, nested numbered lists) now covered by a new test. |
+| 4 | SC3b (VIEW-11): an AI spec shows system type, framework, evaluation dimensions, checklist progress, template slots stated plainly | VERIFIED | test/web/ai-spec-page.test.ts passes; no fix-round change. |
+| 5 | SC3c (VIEW-11): a user setup shows steps done and where each variable goes, never the variable's value (10-19: no value in any View-mode output) | FAILED | Closed for `NAME: value`, `NAME = value`, `NAME=value` without a colon in the value, table cells and `Value:`-labelled lines. Still open for `- NAME=value` field lines whose value contains a colon (connection strings, `scheme://`, `a:b`): value stored in `steps[].fields[].text` and drawn by `MaskedInline`. Reproduced to rendered markup. |
+| 6 | SC4a (VIEW-12): an eval review shows score and verdict, dimension coverage and ordered remediation plan | VERIFIED | test/web/eval-review-page.test.ts passes; no fix-round change. |
+| 7 | SC4b (VIEW-12): a browser check shows its outcome, "could not look" distinct from "nothing to report", plus counts | VERIFIED | test/web/dom-verify-page.test.ts passes; no fix-round change. |
+| 8 | SC4c (VIEW-12): a cross-AI review shows each reviewer with model, agreed concerns first, disagreements | VERIFIED | test/web/reviews-page.test.ts and test/reviews-handler.test.ts pass, including the new WR-02 (ordinary words no longer read as severity) and WR-04 (overflow count, "+N more did not run") tests. |
+| 9 | SC5a (VIEW-21): each type tested against a committed, labelled, indexed made-up example; the rule binds later types | VERIFIED | test/made-up-examples.test.ts passes. |
+| 10 | SC5b (VIEW-21/11/12/13): every page sketched first, built from the winner, screenshot-checked, falls back to a readable generic page | VERIFIED | Unchanged; test/web/ui-review-corpus.test.ts now pins 10-UI-REVIEW.md and passes (3c3e529 fixed the two failures the fix report mentioned). |
+| 11 | 10-14 truth/prohibition (VIEW-13): Integrations panel shows variable names only; a value beside a name is never stored or shown | VERIFIED | Closed. `cleanText` now runs `maskValues(withholdInText(text).text)` (codebase-lift.ts); bold labels pass through it. All three original forms and 14 extra forms absent from the serialised record; test/codebase-lift.test.ts, test/web/codebase-page.test.ts and test/withhold-values.test.ts plant all 21 shared forms and pass. |
 
-**Score:** 9/11 truths verified (0 present, behavior-unverified)
+**Score:** 10/11 truths verified (0 present, behavior-unverified)
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `src/planning-repo/handlers/codebase.ts`, `codebase-lift.ts`, `fenced-sections.ts` | Fence-aware sections, fuzzy headings, lifts | VERIFIED (value withholding gap in `cleanText`) | substantive, wired through handlers/index.ts and manifests |
-| `src/presentation/project-map-state.ts`, `codebase-map.ts` | map-only derivation | VERIFIED | wired to app-shell and route-dispatch |
-| `src/cli/target-path.ts` | map-only project resolves | VERIFIED | `hasProjectMarker` uses `CODEBASE_MAP_FILES` |
-| `src/web/views/codebase-page.ts` + components | Codebase frame and seven panels | VERIFIED | |
-| `spec-*`, `ai-spec-*`, `eval-review-*`, `dom-verify-*`, `reviews-*` handlers and pages | Five page families | VERIFIED | registered in kinds.ts and manifests.ts |
-| `user-setup-body.ts`, `user-setup-page.ts`, `-components.tsx`, `withhold-values.ts` | User setup page, value mask | HOLLOW on the mask | page works; mask leaks (CR-01, WR-01) |
-| `src/web/components/copy-command.tsx`, `status-meter.tsx`, `value-not-shown.tsx`, `clean-tree.tsx` | Shared pieces | VERIFIED | WR-05: copy cleaner leaves zero-width/format characters |
-| `test/helpers/made-up-examples.ts`, fixtures (Lendshed, Tidemark, Shapes) | Made-up rule and examples | VERIFIED | |
-| `test/e2e/mapped-not-started.spec.ts`, `deep-reload.spec.ts`, `phase-10-screenshots.spec.ts` | Browser gate | VERIFIED (not re-run, by instruction) | reported 5/5, 67/67, 112/112 |
+| `codebase.ts`, `codebase-lift.ts`, `fenced-sections.ts` | Fence-aware sections, lifts | VERIFIED | value withholding gap closed |
+| `project-map-state.ts`, `codebase-map.ts`, `target-path.ts` | map-only derivation and resolution | VERIFIED | |
+| Codebase, spec, AI spec, eval review, browser check, reviews pages | Six page families | VERIFIED | |
+| `user-setup-body.ts`, `user-setup-page.ts`, `-components.tsx`, `withhold-values.ts` | User setup page and value mask | HOLLOW on one form | page works; `readFieldLine` leaks `NAME=value` with a colon in the value |
+| `copy-command.tsx`, `status-meter.tsx`, `value-not-shown.tsx`, `clean-tree.tsx` | Shared pieces | VERIFIED | WR-05 fix (bab6fa5) strips invisible format characters, tested with escapes |
+| `test/helpers/made-up-examples.ts`, fixtures | Made-up rule and examples | VERIFIED | |
+| `test/helpers/written-value-forms.ts` | Shared planted-value list | PARTIAL | 21 forms; none has a colon inside the value |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|----|-----|--------|---------|
-| target-path.ts | codebase-files.ts | `CODEBASE_MAP_FILES` | WIRED | |
-| artifacts list | app shell tabs / dashboard address | `projectMapState` | WIRED | |
-| handlers/index.ts | six new kind handlers | registration | WIRED | |
-| manifests.ts | page composers | per-kind manifest | WIRED | user-setup carries `withholdDocumentInView` |
-| user-setup-body `fields` | rendered step fields | `readFields` -> `MaskedInline` | WIRED, UNMASKED | CR-01 |
-| `cleanText` | Integrations panel rows | `withholdInText` | WIRED, WEAK MASK | CR-02 |
+| `cleanText` | Integrations panel rows | `maskValues(withholdInText(...))` | WIRED | strong mask now applied |
+| user-setup-body `fields` | rendered step fields | `readFieldLine` -> `MaskedInline` | WIRED, LEAKS ONE FORM | `NAME=value:with:colon` |
+| user-setup-body `sections` | plain sections | `maskValueColumns` + `keep(maskSecretLabel())` | WIRED | all probed forms masked |
 
 ### Data-Flow Trace (Level 4)
 
 | Artifact | Data Variable | Source | Produces Real Data | Status |
 |----------|---------------|--------|--------------------|--------|
-| Codebase panels | `structured.codebase` | handler over real file | Yes (corpus test on this repo's maps) | FLOWING |
-| User setup step fields | `step.fields` | `readFieldLine` | Yes, including unmasked values | FLOWING (leak) |
-| Integrations rows | `group.lines`, `environment.groups[].lines` | `cleanText` | Yes, including unmasked values | FLOWING (leak) |
+| Integrations rows | `group.lines`, `environment.groups[].lines` | `cleanText` | Yes, masked | FLOWING |
+| User setup step fields | `step.fields` | `readFieldLine` | Yes, but `NAME=value-with-colon` text unmasked | FLOWING (leak, one form) |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| 12 phase test files (handlers, pages, made-up rule, target-path, map-state, corpus) | `npx vitest run <12 files>` | 429/429 passed | PASS |
-| CR-01 user setup field value | `node` script over `extractUserSetup` | value `sk_live_abc123` present in output | FAIL (confirms gap) |
-| CR-02 integrations value forms | `node` script over `withholdInText` and `extractCodebase` | 5 of 5 written forms unchanged; values stored | FAIL (confirms gap) |
-| WR-01 table cell | `node` script over `extractUserSetup` | `sk_live_cell` present | FAIL (confirms gap) |
+| 17 phase test files (handlers, pages, mask, made-up rule, target-path, map-state, corpus, ui-review corpus) | `npx vitest run <17 files>` | 672/672 passed | PASS |
+| Full suite (reported by caller) | `npm test` | 265 files, 6291 tests passing | PASS (not re-run) |
+| CR-01 original scenarios | temp vitest probe | masked | PASS |
+| CR-02 original scenarios plus 14 extras | temp vitest probe | none leak | PASS |
+| `- DATABASE_URL=postgres://u:pw@host/db` field line | temp vitest probe plus `renderToStaticMarkup` | `//u:pw@host/db` in markup | FAIL |
 
 ### Probe Execution
 
@@ -217,47 +180,33 @@ Step 7c: SKIPPED (no probes declared in any PLAN).
 
 ### Requirements Coverage
 
-All five IDs appear in PLAN frontmatter and in REQUIREMENTS.md (phase 10 rows); none orphaned.
+All five IDs appear in PLAN frontmatter and in REQUIREMENTS.md (phase 10 rows, all still unchecked); none orphaned.
 
-| Requirement | Source Plans | Description | Status | Evidence |
-|-------------|--------------|-------------|--------|----------|
-| VIEW-13 | 10-03, 05, 06, 08, 09, 10, 11, 12, 14, 23, 24 | Seven codebase-map documents open into designed pages | PARTIAL | pages verified; Integrations lifted rows leak values (truth 11) |
-| TGT-09 | 10-01, 05, 06, 10, 23, 24 | Map-only project opens, "mapped, not started" overview | SATISFIED | truth 2 |
-| VIEW-11 | 10-04, 13, 15, 16, 18, 19, 23 | Spec, AI spec, user setup pages | PARTIAL | spec and AI spec satisfied; user setup page leaks values (truth 5) |
-| VIEW-12 | 10-07, 15, 17, 20, 21, 22, 23 | Eval review, browser check, cross-AI reviews | SATISFIED | truths 6-8 |
-| VIEW-21 | 10-02, 04, 07, 23, 24 | Made-up examples, labelled | SATISFIED | truth 9 |
-
-REQUIREMENTS.md still shows all five unchecked; update after gap closure.
+| Requirement | Status | Evidence |
+|-------------|--------|----------|
+| VIEW-13 | SATISFIED | truths 1 and 11 |
+| TGT-09 | SATISFIED | truth 2 |
+| VIEW-11 | PARTIAL | spec and AI spec satisfied; user setup still leaks one written form (truth 5) |
+| VIEW-12 | SATISFIED | truths 6-8 |
+| VIEW-21 | SATISFIED | truths 9-10 |
 
 ### Anti-Patterns Found
 
-Debt-marker scan (TBD, FIXME, XXX) over the 56 reviewed source files found none. The code review findings are the anti-pattern record.
+No TBD/FIXME/XXX markers added by the fix commits (diff scanned).
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| user-setup-body.ts | 209-251 | name and value masked separately | BLOCKER | CR-01 value reaches View |
-| withhold-values.ts / codebase-lift.ts | 114-168 / ~1248 | weak scanner guards Integrations lines | BLOCKER | CR-02 value reaches View |
-| withhold-values.ts / user-setup-body.ts | 217-248 / 311-325 | table cells, multi-word, bracketed values | WARNING | WR-01 |
-| reviews-body.ts | 279-308 | prose words read as severity | WARNING | WR-02 wrong severity/agreement |
-| spec-body.ts | 232-263 | nested numbered list read as requirements | WARNING | WR-03 wrong counts |
-| reviews-overlap.ts, reviews-page-components.tsx | 156-183 / 161-199 | clipped marks, lanes dropped past three | WARNING | WR-04 |
-| withhold-values.ts | 179-191 | zero-width/format characters pass copy cleaner | WARNING | WR-05 |
-| codebase-lift.ts, ai-spec components | various | IN-01 to IN-03 | INFO | |
-
-All 10 review findings are still disposition `open` in 10-REVIEW-DISPOSITION.md.
+| user-setup-body.ts | readFieldLine (~259-285) | raw-line colon split before masking | BLOCKER | `- NAME=value:with:colon` leaks value to View |
+| user-setup-body.ts | readVariableTable (~170) | `source` cell kept as free text via `keep(cell)` | WARNING | a bare value typed in the Source column of the Variable table reaches `variables[].source` and "Get it from"; the plain section line for the same row is masked. Out of template meaning, so advisory |
+| withhold-values.ts | maskValues | prose forms (`NAME is v`, `NAME -> v`, `NAME := v`, `NAME - v`, `export NAME v`, `NAME (v)`) | INFO | heuristic limit, not an assignment form; no claim in the plans covers them |
 
 ### Human Verification Required
 
-None independent of the gaps. The visual and sketch comparison was done by 10-23 and 10-UI-REVIEW; the UI review's judgment items (accent "Complete map" chip, "Verified" chip over failed counts, Stack panel repetition, 16/24) are recorded there as warnings for the user to decide, not blockers.
+None independent of the gap. The fix report asks for a browser look at a crowded overlap region (WR-04); that is a polish item, not a must-have.
 
 ### Gaps Summary
 
-Two related gaps, both in the value-masking layer, share a root cause: two different scanners (`withholdInText` for Integrations, per-fragment `keep()` for user-setup fields) disagree with the stronger whole-line `maskValues`.
-
-1. User setup field lines and table cells carry variable values into View mode (truth 5; CR-01, WR-01).
-2. Integrations lifted rows and environment lines keep values written as `NAME = value`, `"NAME=value"`, `**NAME=value**` or `Auth: NAME: value` (truth 11; CR-02).
-
-Close both by routing every user-visible string through `maskValues`, then add tests that plant a value in each leaking written form and assert absence from the serialised structured record and the rendered markup. The existing tests passed because their plants used only the leading `NAME=value` form. The five warnings and three info items are independent and can be closed in the same round or deferred by the user; none falsifies a must-have truth.
+One gap remains, narrow and reproducible. `readFieldLine` must mask the whole line before it splits, or treat a leading upper-snake name followed by `=` as a variable key. Then add a colon-bearing form (`NAME=postgres://u:pw@host/db`, `NAME=sk:tag`) to `WRITTEN_FORMS` so the field-line, composer and markup tests plant it. Everything else claimed by the fix round was confirmed: CR-02, WR-01 (table cells, multi-word, bracketed), WR-02, WR-03, WR-04, WR-05 each have tests that pass, and the nine other truths show no regression.
 
 ---
 
