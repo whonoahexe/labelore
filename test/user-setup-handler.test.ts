@@ -332,6 +332,29 @@ describe('the User setup reader withholds a value written in any form (10-REVIEW
     ]);
   });
 
+  it('withholds a value with a colon in it (connection string, prefixed token) and keeps label lines exact (10-VERIFICATION truth 5)', () => {
+    const body = extractUserSetup(
+      [
+        '## Dashboard Configuration',
+        '',
+        '- [ ] **Add the database**',
+        '  - URL: https://host.example/db',
+        '  - DATABASE_URL=postgres://u:PLANTED-FIELD-0011@host/db',
+        '  - STRIPE_KEY=sk:PLANTED-FIELD-0012',
+        '  - Location: Settings → Database',
+        '  - Notes: DATABASE_URL=postgres://u:PLANTED-FIELD-0013@host/db',
+        '',
+      ].join('\n'),
+    );
+    expect(body.steps[0].fields).toEqual([
+      { key: 'URL', text: 'https://host.example/db' },
+      { key: 'Location', text: 'Settings → Database' },
+      { key: 'Notes', text: `DATABASE_URL=${VALUE_NOT_SHOWN_MARK}` },
+    ]);
+    expect(body.steps[0].notes).toEqual([`DATABASE_URL=${VALUE_NOT_SHOWN_MARK}`]);
+    expect(JSON.stringify(body)).not.toContain('PLANTED-FIELD');
+  });
+
   it('stores none of the planted secrets of any form, in the steps, fields, notes or sections', () => {
     const body = extractUserSetup(userSetupFormDoc());
     const text = JSON.stringify(body);
