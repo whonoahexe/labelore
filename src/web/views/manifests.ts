@@ -29,6 +29,7 @@ import { composeEvalReview } from './eval-review-page.ts';
 import { composeDomVerify } from './dom-verify-page.ts';
 import { composeReviews } from './reviews-page.ts';
 import { composeCodebase } from './codebase-page.ts';
+import { composePause } from './pause-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -472,6 +473,14 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     // nothing (Phase 10, 10-22, RESEARCH C1).
     reviewsPage: composeReviews,
   },
+  // Phase 11 (11-10, sketch-054 winner C): one view for HANDOFF.json and every .continue-here.md, reached through
+  // `viewKindOf`'s table. `promote` is the silent fallback when the page composes nothing (Phase 10 C1, X2).
+  pause: {
+    kind: 'pause',
+    lead: 'Where paused work stopped, what blocks resuming it and the one next action, from the handoff files.',
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+    pausePage: composePause,
+  },
 });
 
 /** Phase 10 (10-08, T-10-49): whether View mode may show the document's own HTML for this manifest - through
@@ -497,7 +506,8 @@ export function resolveViewFor(
   input: ViewInput,
   options?: { sourceEscape?: boolean },
 ): { manifest: ViewManifest; recognized: boolean } {
-  // Phase 10 (RESEARCH C8): the seven codebase-* kinds share the one `codebase` manifest.
+  // Phase 10 (RESEARCH C8): the seven codebase-* kinds share the one `codebase` manifest; Phase 11: handoff and
+  // continue-here share the one `pause` manifest.
   const resolved = resolveView(viewKindOf(kind));
   if (resolved.manifest) {
     return { manifest: resolved.manifest, recognized: true };
