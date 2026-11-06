@@ -173,6 +173,47 @@ describe('liftGraphReport', () => {
     expect(JSON.stringify(lifted)).not.toContain('Which of the loan routes');
   });
 
+  it("lifts the report's day, the Extraction shares, the thin communities and the import cycle count (11-19)", () => {
+    const lendshed = liftGraphReport(readFileSync(join(FX_PLANNING, 'graphs/GRAPH_REPORT.md'), 'utf8'));
+    expect(lendshed.reportDate).toBe('2026-09-14');
+    expect(lendshed.extraction).toEqual([
+      { label: 'EXTRACTED', percent: 88 },
+      { label: 'INFERRED', percent: 8 },
+      { label: 'AMBIGUOUS', percent: 3 },
+    ]);
+    expect(lendshed.thin).toBeNull();
+    expect(lendshed.importCycles).toBeNull();
+
+    const long = `- 9-file cycle: ${'a -> '.repeat(INDEX_BOUNDS.reportLineChars)}a`;
+    const text = [
+      '# Graph Report - Shed (2026-04-18)',
+      '',
+      '## Summary',
+      '- 19,525 nodes · 38,918 edges · 1,027 communities (824 shown, 203 thin omitted)',
+      '- Extraction: 87% EXTRACTED · 13% INFERRED · 0% AMBIGUOUS · INFERRED: 5037 edges (avg confidence: 0.94)',
+      '',
+      '## Import Cycles',
+      '- 2-file cycle: `a.ts -> b.ts -> a.ts`',
+      long,
+      '',
+      '## Communities (1027 total)',
+      '- 1 not a cycle',
+    ].join('\n');
+    const lifted = liftGraphReport(text);
+    expect(lifted.counts).toEqual({ nodes: 19_525, edges: 38_918, communities: 1_027 });
+    expect(lifted.thin).toBe(203);
+    expect(lifted.reportDate).toBe('2026-04-18');
+    expect(lifted.extraction).toEqual([
+      { label: 'EXTRACTED', percent: 87 },
+      { label: 'INFERRED', percent: 13 },
+      { label: 'AMBIGUOUS', percent: 0 },
+    ]);
+    expect(lifted.importCycles).toBe(2);
+    expect(JSON.stringify(lifted)).not.toContain('a -> a -> a');
+    // A section with no bullets is a count of zero, not an absent section.
+    expect(liftGraphReport('## Import Cycles\n\n## Next\n').importCycles).toBe(0);
+  });
+
   it('never lets a line over the cap into the counts', () => {
     const long = `- 99 nodes ${'x'.repeat(INDEX_BOUNDS.reportLineChars + 50)}`;
     const lifted = liftGraphReport(`## Summary\n${long}\n- 7 nodes · 9 edges\n`);

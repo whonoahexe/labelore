@@ -5,14 +5,15 @@
 // checks, and gives null on a project with no index file at all.
 //
 // Tiles, in the grid's order (UI-SPEC section 4): Graph, Architecture, Stack, File roles, API surface,
-// Dependencies; a project whose intel is the ingest-docs markdown family (SYNTHESIS.md and no JSON intel) orders
-// Synthesis, Graph. A tile is drawn only for a file the project holds, except Graph: with no graphs/ folder the
+// Dependencies, then a generic tile for each intel file the page does not know (title from its name, key names only);
+// a project whose intel is the ingest-docs markdown family (SYNTHESIS.md and no JSON intel) orders Synthesis, Graph. A tile is drawn only for a file the project holds, except Graph: with no graphs/ folder the
 // Graph tile is a "not-built" ghost. A file the summary could not shape (invalid JSON, over the text cap) is an
 // "unreadable" tile that still names its path.
 //
 // Addresses. Phase 7's /intel/{file} and /graphs/{file} stay the keys (RESEARCH C1): `openKey` names the tile the
 // open address belongs to (every graphs/ file opens Graph; each JSON file its own tile; SYNTHESIS.md and the four
-// ingest documents open Synthesis; the `.last-refresh.json` stamp and any unknown file open no tile).
+// ingest documents open Synthesis; an intel file the page does not know opens its own generic tile `file:{name}`;
+// the `.last-refresh.json` stamp opens no tile).
 import type { ArtifactDto, ProjectPresentation } from '../server/project-presentation.ts';
 import type { GraphArtifactRef, GraphSummary } from '../server/index-summary.ts';
 import { intelKindOf } from '../planning-repo/handlers/index-intel-lift.ts';
@@ -21,17 +22,13 @@ import type { IntelKind, IntelSummary } from '../planning-repo/handlers/index-in
 const INTEL_DIR = '.planning/intel/';
 const GRAPHS_DIR = '.planning/graphs/';
 
-export type IndexTileKey =
-  | 'graph'
-  | 'architecture'
-  | 'stack'
-  | 'file-roles'
-  | 'api-map'
-  | 'dependencies'
-  | 'synthesis';
+export type KnownTileKey = 'graph' | 'architecture' | 'stack' | 'file-roles' | 'api-map' | 'dependencies' | 'synthesis';
+
+/** A tile's key: one of the known seven, or `file:{name}` for an intel file the page does not know (a generic tile). */
+export type IndexTileKey = KnownTileKey | `file:${string}`;
 
 /** The grid's order for a project with JSON intel: Graph first, then Architecture, Stack, File roles, API surface and Dependencies. */
-export const INDEX_TILE_ORDER: readonly IndexTileKey[] = [
+export const INDEX_TILE_ORDER: readonly KnownTileKey[] = [
   'graph',
   'architecture',
   'stack',
@@ -41,7 +38,7 @@ export const INDEX_TILE_ORDER: readonly IndexTileKey[] = [
 ];
 
 /** The order for an ingest-docs project (SYNTHESIS.md, no JSON intel). */
-export const INGEST_TILE_ORDER: readonly IndexTileKey[] = ['synthesis', 'graph'];
+export const INGEST_TILE_ORDER: readonly KnownTileKey[] = ['synthesis', 'graph'];
 
 interface TileSpec {
   title: string;
@@ -51,7 +48,7 @@ interface TileSpec {
   kind: IntelKind | null;
 }
 
-const TILE_SPECS: Readonly<Record<IndexTileKey, TileSpec>> = {
+const TILE_SPECS: Readonly<Record<KnownTileKey, TileSpec>> = {
   graph: { title: 'Graph', span: 2, file: null, kind: null },
   architecture: { title: 'Architecture', span: 1, file: 'arch-decisions.json', kind: 'arch-decisions' },
   stack: { title: 'Stack', span: 1, file: 'stack.json', kind: 'stack' },
@@ -178,9 +175,29 @@ export function tileKeyOfPath(path: string): IndexTileKey | null {
     case 'synthesis':
     case 'ingest-doc':
       return 'synthesis';
+    case 'unknown':
+      return isGenericIntelPath(path) ? `file:${name}` : null;
     default:
       return null;
   }
+}
+
+/** A file directly inside intel/ that is JSON or markdown and that the page has no tile for (the `.last-refresh.json`
+ * stamp is not one: it is a known kind). Files in a sub-folder (classifications/) are counted, never tiled. */
+function isGenericIntelPath(path: string): boolean {
+  if (!path.startsWith(INTEL_DIR)) return false;
+  const name = path.slice(INTEL_DIR.length);
+  if (name === '' || name.includes('/')) return false;
+  const lower = name.toLowerCase();
+  return lower.endsWith('.json') || lower.endsWith('.md');
+}
+
+/** "notes.json" -> "Notes", "dead_links-2.json" -> "Dead links 2": the file's own words, sentence case. */
+function genericTitle(name: string): string {
+  const dot = name.lastIndexOf('.');
+  const stem = dot > 0 ? name.slice(0, dot) : name;
+  const words = stem.split('-').join(' ').split('_').join(' ').trim();
+  return words === '' ? name : `${words.charAt(0).toUpperCase()}${words.slice(1)}`;
 }
 
 function atPath(presentation: ProjectPresentation, path: string): ArtifactDto | undefined {
@@ -195,7 +212,7 @@ function keyOrNull(artifact: ArtifactDto | undefined): string | null {
 // The tiles
 // ---------------------------------------------------------------------------------------------------------
 
-function fileTile(key: IndexTileKey, artifact: ArtifactDto): IndexTile {
+function fileTile(key: KnownTileKey, artifact: ArtifactDto): IndexTile {
   const spec = TILE_SPECS[key];
   const summary = summaryOf(artifact, spec.kind);
   return {
@@ -204,6 +221,25 @@ function fileTile(key: IndexTileKey, artifact: ArtifactDto): IndexTile {
     path: artifact.path,
     url: keyOrNull(artifact),
     span: spec.span,
+    state: summary === null ? 'unreadable' : 'ok',
+    sizeBytes: artifact.sizeBytes,
+    meta: metaOf(artifact),
+    summary,
+    graph: null,
+    documents: [],
+  };
+}
+
+/** An intel file the page does not know: a tile titled from its name; never its content (UI-SPEC section 7). */
+function genericTile(artifact: ArtifactDto): IndexTile {
+  const name = baseName(artifact.path);
+  const summary = summaryOf(artifact, 'unknown');
+  return {
+    key: `file:${name}`,
+    title: genericTitle(name),
+    path: artifact.path,
+    url: keyOrNull(artifact),
+    span: 1,
     state: summary === null ? 'unreadable' : 'ok',
     sizeBytes: artifact.sizeBytes,
     meta: metaOf(artifact),
@@ -298,15 +334,22 @@ export function buildIndexesContext(
   }
   const synthesis = synthesisTile(presentation);
   const graphOne = graphTile(presentation, graph);
+  // Intel files the page does not know, one generic tile each, in file-name order, after the known tiles.
+  const generics = presentation.artifacts
+    .filter((artifact) => isGenericIntelPath(artifact.path) && intelKindOf(artifact.path) === 'unknown')
+    .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
+    .map(genericTile);
 
   let tiles: IndexTile[];
   if (synthesis !== null && jsonTiles.length === 0) {
     // The ingest-docs family: Synthesis, then Graph (a ghost when there is no graphs/ folder).
-    tiles = [synthesis, graphOne];
+    tiles = [synthesis, graphOne, ...generics];
   } else {
-    tiles = [graphOne, ...jsonTiles, ...(synthesis !== null ? [synthesis] : [])];
+    tiles = [graphOne, ...jsonTiles, ...generics, ...(synthesis !== null ? [synthesis] : [])];
     // Only intel files and a graph: a ghost Graph beside no intel file would be the whole page.
-    if (graphOne.state === 'not-built' && jsonTiles.length === 0 && synthesis === null) tiles = [graphOne];
+    if (graphOne.state === 'not-built' && jsonTiles.length === 0 && generics.length === 0 && synthesis === null) {
+      tiles = [graphOne];
+    }
   }
 
   const stamp = intelFileOf(presentation, '.last-refresh.json');

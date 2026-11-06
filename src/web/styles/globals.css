@@ -34717,7 +34717,7 @@ a.view-spikes-rel:hover {
 /* phase-11-spikes:end */
 
 /* phase-11-indexes:start */
-/* Phase 11 (11-18): the Indexes page, sketch 055 winner A (Instrument grid). The page renders five font sizes: the h1 as
+/* Phase 11 (11-18, 11-19): the Indexes page, sketch 055 winner A (Instrument grid). The page renders five font sizes: the h1 as
    ArtifactHeader draws it (--fs-display-3), the big counts (--fs-display-1, the fifth size the user approved at 11-01
    as X5), the open tile's title (--fs-7), Body (--fs-4) and Label (--fs-2). Where a shared class sets a size outside
    that set, the page takes it inside with a page-scoped rule below, so no shared class is edited. Every colour is a
@@ -34807,7 +34807,6 @@ a.view-spikes-rel:hover {
   margin: 0;
   padding: var(--space-4);
   border: 1px solid var(--border);
-  border-radius: 0;
   background: var(--card);
   color: inherit;
   font: inherit;
@@ -34819,7 +34818,7 @@ button.view-indexes-tile {
 }
 
 button.view-indexes-tile:hover:not(:disabled) {
-  background: color-mix(in oklch, var(--card) 80%, var(--muted));
+  background: var(--state-hover);
 }
 
 .view-indexes-tile[data-open='true'] {
@@ -34910,7 +34909,6 @@ button.view-indexes-tile:hover:not(:disabled) {
   min-height: var(--space-7);
   padding: 0;
   border: 1px solid var(--border);
-  border-radius: 0;
   background: none;
   color: inherit;
   cursor: pointer;
@@ -34995,6 +34993,308 @@ button.view-indexes-tile:hover:not(:disabled) {
   content: none;
 }
 
+.view-indexes-block {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-indexes-note {
+  margin: 0;
+}
+
+.view-indexes-split {
+  display: grid;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+
+.view-indexes-splitbar {
+  display: flex;
+  height: var(--space-3);
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-indexes-splitpart {
+  display: block;
+  height: 100%;
+}
+
+.view-indexes-splitpart + .view-indexes-splitpart {
+  border-left: 1px solid var(--background);
+}
+
+.view-indexes-splitpart[data-fill='a'],
+.view-indexes-swatch[data-fill='a'] {
+  background: var(--foreground);
+}
+
+.view-indexes-splitpart[data-fill='b'],
+.view-indexes-swatch[data-fill='b'] {
+  background: var(--muted-foreground);
+}
+
+.view-indexes-splitpart[data-fill='c'],
+.view-indexes-swatch[data-fill='c'] {
+  background: var(--border);
+}
+
+.view-indexes-splitpart[data-fill='d'],
+.view-indexes-swatch[data-fill='d'] {
+  background: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+}
+
+.view-indexes-splitkey {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-indexes-splitkeyrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.view-indexes-splitkeyrow b {
+  color: var(--foreground);
+  font-weight: var(--fw-semibold);
+}
+
+.view-indexes-swatch {
+  display: inline-block;
+  flex: none;
+  width: var(--space-2-5);
+  height: var(--space-2-5);
+  border: 1px solid var(--muted-foreground);
+}
+
+.view-indexes-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+
+.view-indexes-tag {
+  max-width: 100%;
+  padding: var(--space-0-5) var(--space-2);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.view-indexes-bars {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-indexes-bars li {
+  display: grid;
+  grid-template-columns: minmax(0, 14rem) minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-indexes-barlabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.view-indexes-bartrack {
+  display: block;
+  min-width: 0;
+}
+
+.view-indexes-barfill {
+  display: block;
+  height: var(--space-2);
+  background: var(--muted-foreground);
+}
+
+.view-indexes-barvalue {
+  color: var(--muted-foreground);
+}
+
+.view-indexes-layers {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.view-indexes-layer {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--space-6) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-indexes-layer + .view-indexes-layer::before {
+  content: '↓';
+  position: absolute;
+  top: calc(var(--space-2) * -1);
+  left: var(--space-4);
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  line-height: var(--lh-none);
+}
+
+.view-indexes-ix {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-indexes-layername {
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-indexes-keys {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-indexes-keyrow {
+  padding: var(--space-0-5) 0;
+  border-bottom: 1px solid var(--border-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-indexes-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-indexes-facts b {
+  color: var(--foreground);
+  font-weight: var(--fw-semibold);
+}
+
+.view-indexes-paths {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.view-indexes-dir {
+  display: grid;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.view-indexes-filerow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  padding-left: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-indexes-filerow .view-indexes-word {
+  flex: none;
+}
+
+.view-indexes-routes,
+.view-indexes-docs {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-indexes-routes li {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+  padding: var(--space-1-5) 0;
+  border-bottom: 1px solid var(--border-faint);
+}
+
+.view-indexes-method {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-indexes-routepath {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-indexes-routenote {
+  grid-column: 2;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.view-indexes-docs li {
+  display: grid;
+  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: baseline;
+  padding: var(--space-1-5) 0;
+  border-bottom: 1px solid var(--border-faint);
+}
+
+.view-indexes-withheld {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-indexes-withheld b {
+  color: var(--foreground);
+  font-weight: var(--fw-semibold);
+}
+
+.view-indexes-unread {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  min-width: 0;
+}
+
 @media (max-width: 56rem) {
   .view-indexes-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -35004,6 +35304,24 @@ button.view-indexes-tile:hover:not(:disabled) {
 @media (max-width: 34rem) {
   .view-indexes-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .view-indexes-bars li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .view-indexes-bartrack {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .view-indexes-docs li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .view-indexes-docs li > span:nth-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 
   .view-indexes-cellwrap[data-span='2'] {
