@@ -76,6 +76,11 @@ describe('fileTypeLabel', () => {
     ['kiln-curve.dat', 'binary', 'Binary file (.dat)'],
     ['kiln-log', 'binary', 'Binary file'],
     ['data.json', 'large', 'Text file'],
+    ['make_proxy.sh', 'listed', 'Shell script'],
+    ['probe.py', 'listed', 'Python script'],
+    ['result.json', 'listed', 'JSON file'],
+    ['runner', 'listed', 'File'],
+    ['out.dat', 'listed', 'File'],
   ] as [string, FileClass, string][])('%s (%s) reads %s', (name, fileClass, label) => {
     expect(fileTypeLabel(name, fileClass)).toBe(label);
   });
@@ -100,6 +105,10 @@ describe('the drawer badge', () => {
     expect(fileBadgeOf('kiln-log', 'binary', 12)).toEqual({
       visible: 'FILE · 12 B',
       spoken: ', Binary file, 12 B',
+    });
+    expect(fileBadgeOf('make_proxy.sh', 'listed', 2048)).toEqual({
+      visible: 'SH · 2 KB',
+      spoken: ', Shell script, 2 KB',
     });
   });
 });
@@ -142,6 +151,7 @@ describe('filePageKindOf', () => {
     ['image', MAX_IMAGE_BYTES + 1, 'image-over-cap'],
     ['binary', 10, 'binary'],
     ['large', 2_000_000, 'large'],
+    ['listed', 10, 'listed'],
   ] as [FileClass, number, string][])('%s at %i bytes is %s', (fileClass, size, kind) => {
     expect(filePageKindOf(fileClass, size)).toBe(kind);
   });

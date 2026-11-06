@@ -18,7 +18,7 @@ export type ArtifactLocation = 'root' | 'phase' | 'archived-phase' | 'quick' | '
  * is text above the size cap. Decided from position, extension, size and a bounded head sniff,
  * never from parsed content.
  */
-export type FileClass = 'text' | 'image' | 'binary' | 'large';
+export type FileClass = 'text' | 'image' | 'binary' | 'large' | 'listed';
 
 /** The universal base shape every parsed artifact carries, regardless of type. */
 export interface Artifact {

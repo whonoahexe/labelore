@@ -4,7 +4,7 @@
 // `phases/` is a live plan; the same filename under `milestones/vX.Y-phases/` is archived).
 import type { PlanningFilesystem } from '../planning-fs/types.ts';
 import type { ArtifactRef, ArtifactLocation, DiscoveryExclusion } from './types.ts';
-import type { PhaseIdentity } from '../domain/model.ts';
+import type { FileClass, PhaseIdentity } from '../domain/model.ts';
 import {
   parsePhaseDirName,
   parseQuickDirName,
@@ -12,7 +12,7 @@ import {
   parseMilestonePhasesDirName,
   comparePhaseNumbers,
 } from './naming.ts';
-import { kindOfPath } from './folders.ts';
+import { isListedPosition, kindOfPath } from './folders.ts';
 import { classifyFile, isInternalPath, needsHeadSniff, INTERNAL_EXCLUSION_REASON, SNIFF_BYTES } from './file-class.ts';
 
 const PLANNING_DIR = '.planning';
@@ -215,15 +215,19 @@ export async function discover(fs: PlanningFilesystem): Promise<DiscoveryResult>
         const sizeBytes = entry.size ?? 0;
         // D-09: only a name whose extension decides nothing is head-sniffed, and only SNIFF_BYTES bytes.
         // A head the port cannot read leaves the file text, so today's read-time warning path applies.
+        // Phase 11 D-01: a file in a spike folder (other than its README and .continue-here.md) is listed
+        // by name and stat size only. Its class is decided from its position here, before any head sniff,
+        // so not one byte of it is read.
         let head: Uint8Array | undefined;
-        if (fs.readHead && needsHeadSniff(entry.name)) {
+        const listed = isListedPosition(childRelUnderPlanning);
+        if (!listed && fs.readHead && needsHeadSniff(entry.name)) {
           try {
             head = await fs.readHead(childRel, SNIFF_BYTES);
           } catch {
             head = undefined;
           }
         }
-        const fileClass = classifyFile({ name: entry.name, size: entry.size, head });
+        const fileClass: FileClass = listed ? 'listed' : classifyFile({ name: entry.name, size: entry.size, head });
         refs.push({
           path: childRel,
           kind: isDebugSessionPath(childRelUnderPlanning) ? 'debug' : (positionKind(childRelUnderPlanning) ?? kindOfPath(childRelUnderPlanning, classification.location)),

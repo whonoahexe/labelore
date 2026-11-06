@@ -238,7 +238,7 @@ function phasePlaceOf(phase: PhaseDto, artifactsByPhase: ReadonlyMap<string, Art
       continue;
     }
     if (artifact.fileClass !== 'text') {
-      // An image, binary or large file reads by its full file name, extension included.
+      // An image, binary, large or listed file reads by its full file name, extension included.
       after.push({ row: { ...row, label: lastSegment(artifact.path) }, rank: NON_TEXT_RANK });
       continue;
     }
