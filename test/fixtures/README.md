@@ -57,6 +57,10 @@ whose own ledger is `fixtures/README.md`) and this repository's own `.planning` 
 | test/fixtures/lendshed/.planning/graphs/graph.json | graph | gsd-core/bin/lib/graphify.cjs | 1.19.0 | small graph, 40 nodes and 60 links in six communities, the marker keys at the top level, a 40-character invented hex `built_at_commit`, relations `contains`, `calls` and `references`, all three confidence words |
 | test/fixtures/lendshed/.planning/graphs/GRAPH_REPORT.md | graph-report | gsd-core/bin/lib/graphify.cjs | 1.19.0 | first-line comment marker, a Summary with node, edge and community counts and an extraction split, six God Nodes, a Knowledge Gaps line, one question line over 5 KB |
 | test/fixtures/lendshed/.planning/graphs/.last-build-status.json | graph | gsd-core/bin/lib/graphify.cjs | 1.19.0 | auto-update status `failed` with exit code 1 and a duration, the marker keys at the top level, `graphify_version` null |
+| test/fixtures/lendshed/.planning/spikes/MANIFEST.md | spikes-manifest | gsd-core/workflows/spike.md | 1.19.0 | verdict board input: two ideas each with Requirements, table rows out of id order (003b, 001, 004, 002), free-text verdicts after the keyword (`INVALIDATED (no spare test kiosk)`, `PARTIAL (resume untested)`), no row for spike 005, one standard and one comparison type, frontmatter marker |
+| test/fixtures/lendshed/.planning/spikes/003b-local-disk-staging/README.md | spike | gsd-core/workflows/spike.md | 1.19.0 | letter-suffixed id `003b` with a comparison type, frontmatter verdict `PENDING (needs a recording)` against a manifest row of VALIDATED, all the writer's sections plus one free section |
+
+The spike scripts and outputs are never marked and never read; they are listed by name only (class `listed`): `test/fixtures/lendshed/.planning/spikes/003b-local-disk-staging/make_bundle.sh` and `test/fixtures/lendshed/.planning/spikes/003b-local-disk-staging/out/bundle.log`.
 
 ## For later phases
 
