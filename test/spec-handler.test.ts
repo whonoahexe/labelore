@@ -211,6 +211,27 @@ describe('extractSpec - requirements', () => {
     expect(spec.sections.map((s) => s.heading)).toEqual(['Requirements', 'Boundaries']);
   });
 
+  // 10-REVIEW WR-03: a numbered list nested inside a requirement is part of that requirement.
+  it('does not read a nested numbered list as more requirements', () => {
+    const spec = extractSpec(
+      body(
+        '1. **Export**: Members export a CSV\n   - Acceptance: all of these hold\n   1. CSV opens in Excel\n   2. Headers match the sheet\n2. **Audit**: Every export is logged\n   - Target: logged',
+      ),
+    );
+    expect(spec.requirements.map((r) => [r.n, r.label])).toEqual([
+      [1, 'Export'],
+      [2, 'Audit'],
+    ]);
+    expect(spec.requirements[0].acceptance).toContain('CSV opens in Excel');
+    expect(spec.requirements[0].acceptance).toContain('Headers match the sheet');
+    expect(spec.requirements[1].target).toBe('logged');
+  });
+
+  it('keeps reading numbered requirements that are all indented the same amount', () => {
+    const spec = extractSpec(body('  1. **A**: s\n  2. **B**: t\n  3. **C**: u'));
+    expect(spec.requirements.map((r) => r.label)).toEqual(['A', 'B', 'C']);
+  });
+
   it('caps requirements at 200 and counts the rest', () => {
     const many = Array.from({ length: 230 }, (_, i) => `${i + 1}. **R${i + 1}**: s`).join('\n');
     const spec = extractSpec(body(many));
