@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 058 — Thread page</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 058: the thread page (VIEW-16, Phase 11 D-02, D-16). A thread is a small piece of work that carries across
+   sessions: its status, when it was created and last updated, the steps to take next, then its goal, context and
+   references. Three pictures of those fields: a status dial (A), a route (B), a day grid (C). Text is MADE UP (Lendshed)
+   in the layout GSD's thread workflow wrote. Tokens come from ../themes/default.css; every colour is a token or a
+   colour-mix of tokens. Four font sizes only: --fs-display-3 (the h1), --fs-7, --fs-4, --fs-2. */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --neutral-fill: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); overflow-x: hidden; }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; padding: 0 var(--space-0-5); background: var(--veil); overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.brand-trigger { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: var(--space-1) var(--space-2); border: 1px solid transparent; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+@media (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- page atoms (the four sizes: display h1 / heading fs-7 / body fs-4 / label fs-2) ---------- */
+.page { display: grid; gap: var(--space-8); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); min-width: 0; }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); overflow-wrap: anywhere; }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.meta { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.micro-label { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h2.sh { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.sentence { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); overflow-wrap: anywhere; }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; background: transparent; }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--neutral-fill); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); }
+.prose { max-width: 62ch; }
+.mono { font-family: var(--font-mono); }
+.ellip { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* closed bars (shared with every earlier sketch) */
+.bars { display: grid; border-top: 1px solid var(--border); }
+.bar { border-bottom: 1px solid var(--border); }
+.bar > summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding-inline: var(--space-2); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); min-width: 0; }
+.bar > summary::-webkit-details-marker { display: none; }
+.bar > summary:hover { background: var(--state-hover); }
+.bar[open] > summary .chev { transform: rotate(90deg); }
+.bar > summary .n { margin-left: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.bar-body { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--icon) + var(--space-4)); min-width: 0; }
+@media (max-width: 42rem) { .bar-body { padding-left: var(--space-2); } }
+
+
+/* the reference list (shared): only a reference that resolves is a link */
+.ref-list { display: grid; gap: var(--space-2); }
+.ref-list li { display: grid; grid-template-columns: var(--sq) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.ref-list .sq { transform: translateY(var(--space-0-5)); }
+.ref-list .path { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.ref-list a.path { text-decoration: underline; text-underline-offset: var(--space-0-5); text-decoration-color: var(--border); }
+.ref-list a.path:hover { text-decoration-color: var(--foreground); }
+.ref-list .why { display: block; color: var(--muted-foreground); }
+.dots { display: grid; gap: var(--space-2); }
+.dots li { display: grid; grid-template-columns: var(--sq) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.dots li::before { content: ''; width: var(--space-1-5); height: var(--space-1-5); margin: var(--space-1-5) var(--space-1); background: var(--muted-foreground); grid-column: 1; }
+.dots li > span { grid-column: 2; min-width: 0; overflow-wrap: anywhere; }
+.page section { display: grid; gap: var(--space-3); min-width: 0; align-content: start; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+.cols > div { display: grid; gap: var(--space-6); min-width: 0; align-content: start; }
+@media (max-width: 52rem) { .cols { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); } }
+
+/* the numbered next steps: the author's order, the first one boxed (status and the first next step are the focal point) */
+.steps-ol { display: grid; gap: var(--space-2); }
+.steps-ol li { display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.steps-ol .no { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); color: var(--muted-foreground); }
+.steps-ol .tx { min-width: 0; overflow-wrap: anywhere; }
+.steps-ol li.first { grid-template-columns: var(--space-6) minmax(0, 1fr); padding: var(--space-3) var(--space-4) var(--space-3) var(--space-3); border: 2px solid var(--foreground); background: var(--card); }
+.steps-ol li.first .no { color: var(--foreground); }
+.steps-ol li.first .tx { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.facts { display: grid; gap: var(--space-1); }
+.chip-big { font-size: var(--fs-7); letter-spacing: var(--ls-tight); padding: var(--space-1-5) var(--space-3); }
+.chip-big .sq { --sq: var(--space-3); }
+
+/* =====================================================================
+   A: Status dial — a half-dial of the three statuses with the needle on the thread's own, the next steps beside it
+   ===================================================================== */
+.dial-band { display: grid; grid-template-columns: calc(var(--space-8) * 11) minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+.dial-card { display: grid; gap: var(--space-4); padding: var(--space-5); border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.dial svg { display: block; width: 100%; height: auto; overflow: visible; }
+.dial .arc { fill: none; stroke: var(--border); stroke-width: 18; }
+.dial .arc[data-tone='in-flight'] { stroke: var(--in-flight-fill); }
+.dial .arc[data-tone='complete'] { stroke: var(--primary); }
+.dial .arc[data-tone='quiet'] { stroke: var(--muted-foreground); stroke-dasharray: 4 3; }
+.dial .needle { stroke: var(--foreground); stroke-width: 3; }
+.dial .hub { fill: var(--foreground); }
+.dial-words { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); text-align: center; gap: var(--space-1); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.dial-words .on { color: var(--foreground); font-weight: var(--fw-semibold); text-decoration: underline; text-underline-offset: var(--space-1); }
+.dial-center { display: grid; justify-items: center; gap: var(--space-2); text-align: center; }
+.dial-side { display: grid; gap: var(--space-6); min-width: 0; align-content: start; }
+.dial-side > section { display: grid; gap: var(--space-3); }
+@media (max-width: 52rem) { .dial-band { grid-template-columns: minmax(0, 1fr); } }
+
+/* =====================================================================
+   B: Route — a trail from where it started through the next steps to the goal; the status flag stands where it is
+   ===================================================================== */
+.route-grid { display: grid; grid-template-columns: minmax(0, 1fr) calc(var(--space-8) * 11); gap: var(--space-8); align-items: start; }
+.trail { position: relative; display: grid; gap: var(--space-5); padding-left: var(--space-8); min-width: 0; }
+.trail::before { content: ''; position: absolute; left: calc(var(--space-3) - 2px); top: var(--space-3); bottom: var(--space-3); border-left: 4px solid var(--muted-foreground); }
+.trail.bare::before { border-left-style: dashed; }
+.node { position: relative; display: grid; gap: var(--space-2); min-width: 0; }
+.node .pin { position: absolute; left: calc(var(--space-8) * -1 + var(--space-1)); top: var(--space-1); }
+.node .pin .sq { --sq: var(--space-4); background: var(--background); border: 3px solid var(--muted-foreground); }
+.node .pin .sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.node .pin .sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.node.start, .node.goal { padding: var(--space-3) var(--space-4); border: 1px solid var(--border); background: var(--card); }
+.node.goal { border: 2px dashed var(--muted-foreground); }
+.node.goal[data-tone='complete'] { border: 2px solid var(--primary-border); background: var(--primary-tint); }
+.node.stone .pin .sq { --sq: var(--space-3); border-width: 2px; background: var(--background); }
+.node.stone { padding-left: 0; }
+.here { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.route-sheet { display: grid; gap: var(--space-6); padding: var(--space-4); border: 1px solid var(--border); background: var(--card); min-width: 0; align-content: start; }
+.route-sheet > section { display: grid; gap: var(--space-3); }
+.route-sheet > section + section { padding-top: var(--space-4); border-top: 1px solid var(--border-faint); }
+@media (max-width: 62rem) { .route-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); } }
+
+/* =====================================================================
+   C: Day grid — one square a day from created to today (a week a column): the days with activity filled, the quiet days since
+   the last update empty
+   ===================================================================== */
+.dg { --cell: var(--space-8); border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.dg-bar { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); }
+.dg-bar .micro-label { color: var(--foreground); }
+.dg-body { display: grid; grid-template-columns: minmax(0, 1fr) calc(var(--space-8) * 10); gap: var(--space-6); padding: var(--space-5); align-items: start; }
+.dg-fig { display: grid; gap: var(--space-1-5); min-width: 0; }
+.dg-months { display: grid; grid-auto-flow: column; grid-auto-columns: var(--cell); gap: var(--space-0-5); height: var(--space-4); }
+.dg-months span { white-space: nowrap; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.dg-days { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, var(--cell)); grid-auto-columns: var(--cell); gap: var(--space-0-5); }
+.d { border: 1px dashed color-mix(in oklch, var(--muted-foreground) 55%, transparent); background: transparent; }
+.d[data-k='span'] { background: var(--in-flight-fill); border: 1px solid var(--in-flight-fill); }
+.dg[data-tone='complete'] .d[data-k='span'] { background: var(--primary); border-color: var(--primary); }
+.d[data-k='edge'] { background: var(--in-flight-fill); border: 1px solid var(--in-flight-fill); outline: 2px solid var(--foreground); outline-offset: 1px; }
+.dg[data-tone='complete'] .d[data-k='edge'] { background: var(--primary); border-color: var(--primary); }
+.d[data-k='edge-quiet'] { outline: 2px solid var(--foreground); outline-offset: 1px; border-style: solid; border-color: var(--muted-foreground); }
+.d.today { box-shadow: inset 0 calc(var(--space-1) * -1) 0 var(--foreground); }
+.dg-side { display: grid; gap: var(--space-4); min-width: 0; align-content: start; }
+.legend { display: grid; gap: var(--space-2); }
+.legend li { display: grid; grid-template-columns: var(--space-4) minmax(0, 1fr); gap: var(--space-2); align-items: center; }
+.legend .d { width: var(--space-4); height: var(--space-4); }
+.c-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+.c-cols > div { display: grid; gap: var(--space-6); min-width: 0; align-content: start; }
+@media (max-width: 62rem) { .dg-body { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 52rem) { .c-cols { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); } }
+@media (max-width: 42rem) { .dg { --cell: var(--space-4); } .dg-body { padding: var(--space-3); } }
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">058 thread</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Status dial</a>
+    <a data-tab="b" href="#b">B: Route</a>
+    <a data-tab="c" href="#c">C: Day grid</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="progress">In progress</button><button data-state="resolved">Resolved</button><button data-state="older">Older shape (## Status: OPEN)</button><button data-state="empty">Empty next steps</button></span>
+</nav>
+
+<header class="app-head" id="apphead"></header>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+// MADE-UP threads (Lendshed), written to the layout GSD's thread workflow produced on a scratch copy (read for shape
+// only): frontmatter slug, title, status (open | in_progress | resolved), created, updated; the body is `# Thread:
+// {description}`, then Goal, Context (an italic "Created {date}" note, then bullets), References and Next Steps
+// (plain bullets; the page numbers them). The workflow's placeholder bullets for References and Next Steps count as
+// empty. The older shape has no frontmatter: a `# Thread:` heading, a `## Status: OPEN` section in the body and no
+// updated date; its created date is the Context note's.
+const TODAY = '2026-04-21';
+const days = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
+const THREADS = {
+  progress: {
+    slug: 'loan-limit-policy', title: 'How many tools one member may hold at a time', status: 'in_progress', created: '2026-03-27', updated: '2026-04-12',
+    goal: 'Settle a per-member limit on open loans that stewards can live with, and decide whether a steward may lift it for one member.',
+    context: ['Stewards report a few members holding six or more tools for weeks, which leaves popular tools out of the sheds.', 'The roles work in phase 2 already lets a steward set what a member may do per shed, so a limit could ride on the same setting.'],
+    refs: [{ path: '.planning/PROJECT.md', desc: 'the core value a limit has to protect', ok: true }, { text: 'Steward desk request from the March sync, no ticket number' }],
+    steps: ['Count open loans per member from the last quarter and see how many exceed four.', 'Draft the limit as a per-shed setting and show it to two stewards.', 'Decide whether lifting the limit for one member needs a reason on record.'],
+  },
+  resolved: {
+    slug: 'kiosk-printer-swap', title: 'Replace the receipt printer at the east shed kiosk', status: 'resolved', created: '2026-02-02', updated: '2026-02-20',
+    goal: 'Get a printer that prints a loan receipt in under three seconds and does not jam on the shed’s damp days.',
+    context: ['The old printer jammed twice a week; members left without a receipt and sent messages asking for one.', 'A thermal model from the supplier list fits the kiosk case without drilling.'],
+    refs: [{ path: '.planning/ROADMAP.md', desc: 'the v1.0 transfer phase that added receipts', ok: true }],
+    steps: ['Order the thermal printer and fit it at the east shed', 'Print twenty test receipts and note any jam', 'Close this thread once a month passes with no jam report'],
+  },
+  older: {
+    slug: 'offline-mode', title: 'Let a kiosk keep taking loans when the shed’s network drops', status: 'open', created: '2026-01-22', updated: null,
+    goal: 'Let a kiosk record a loan while the network is down and send it on once the network is back.',
+    context: ['The west shed loses its connection for an hour most weeks. Members wait, then leave without borrowing.'],
+    refs: [], steps: [],
+  },
+  empty: {
+    // A fourth thread made up for this sketch only (not in the Lendshed fixture): the current shape with its two
+    // placeholder bullets never filled in, so the next steps are empty while the dates and the status are real.
+    slug: 'steward-rota-view', title: 'Show stewards who is on duty at each shed this week', status: 'open', created: '2026-04-14', updated: '2026-04-14',
+    goal: 'Give a steward a one-screen view of who covers which shed each day.',
+    context: ['Two stewards swapped weekends by message last month and a shed opened late.'],
+    refs: [{ path: '.planning/ROADMAP.md', desc: 'where the steward desk phase sits', ok: true }],
+    steps: [],
+  },
+};
+
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') === 'dark' ? 'dark' : 'light';
+const S = { state: Object.keys(THREADS).includes(params.get('state')) ? params.get('state') : 'progress' };
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const ICON = { down: '<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>', copy: '<svg class="i" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></svg>' };
+const cur = () => THREADS[S.state];
+const KNOWN = { open: 'in-flight', in_progress: 'in-flight', resolved: 'complete' };
+const tone = (t) => KNOWN[t.status] || 'quiet';
+const word = (t) => String(t.status).replace(/_/g, ' ');
+const chip = (t, big) => `<span class="status-chip${big ? ' chip-big' : ''}" data-tone="${tone(t)}">${esc(word(t))}</span>`;
+const since = (t) => (t.updated ? `${days(t.updated, TODAY)} days since the last update` : '');
+const dates = (t) => `<div class="facts"><span class="meta">Created ${esc(t.created)}</span>${t.updated ? `<span class="meta">Updated ${esc(t.updated)}</span>` : ''}${t.updated ? `<span class="meta">${since(t)}</span>` : ''}</div>`;
+
+function header() {
+  return `<span class="app-brand"><i></i>Labelore</span>
+    <button class="brand-trigger" data-act="noop">Lendshed ${ICON.down}</button>
+    <nav class="app-nav"><a href="#" data-act="noop">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Research</a><a href="#" data-act="noop">Files</a></nav>`;
+}
+function head(t) {
+  return `<nav class="crumbs"><span>Lendshed</span><span>/</span><span>Threads</span><span>/</span><span aria-current="page">${esc(t.slug)}</span></nav>
+    <div class="heading-block">
+      <p class="eyebrow">Thread</p>
+      <h1>${esc(t.title)}</h1>
+      <div class="meta-row"><span class="meta">${esc(t.slug)}</span>
+        <span class="seg"><button class="btn-xs" aria-pressed="true" data-act="noop">View</button><button class="btn-xs" aria-pressed="false" data-act="noop">Source</button></span>
+        <button class="btn-xs" data-act="noop" aria-label="Copy path" title="Copy path">${ICON.copy} Copy path</button></div>
+    </div>`;
+}
+const stepsOl = (t) => (t.steps.length ? `<section><h2 class="sh">Next steps</h2><ol class="steps-ol">${t.steps.map((x, i) => `<li${i === 0 ? ' class="first"' : ''}><span class="no">${i + 1}</span><span class="tx">${esc(x)}</span></li>`).join('')}</ol></section>` : '');
+const goalSec = (t) => `<section><h2 class="sh">Goal</h2><p class="prose">${esc(t.goal)}</p></section>`;
+const ctxSec = (t) => (t.context.length ? `<section><h2 class="sh">Context</h2><ul class="dots">${t.context.map((x) => `<li><span>${esc(x)}</span></li>`).join('')}</ul></section>` : '');
+const refLi = (r) => (r.path
+  ? `<li><span class="sq" data-tone="${r.ok ? 'complete' : 'quiet'}"></span><span>${r.ok ? `<a class="path" href="#" data-act="noop">${esc(r.path)}</a>` : `<span class="path">${esc(r.path)}</span><span class="status-chip" data-tone="quiet">Not found</span>`}<span class="why">${esc(r.desc || '')}</span></span></li>`
+  : `<li><span class="sq" data-tone="neutral"></span><span>${esc(r.text)}</span></li>`);
+const refSec = (t) => (t.refs.length ? `<section><h2 class="sh">References</h2><ul class="ref-list">${t.refs.map(refLi).join('')}</ul></section>` : '');
+
+const VIEWS = {}; const ACTS = {};
+
+// ---------- A: Status dial ----------
+VIEWS.a = () => {
+  const t = cur();
+  const R = 80; const C = 100;
+  const pt = (deg, r = R) => [C + r * Math.cos((deg * Math.PI) / 180), C - r * Math.sin((deg * Math.PI) / 180)];
+  const segs = [{ k: 'open', a: [180, 124], tone: 'in-flight' }, { k: 'in_progress', a: [118, 62], tone: 'in-flight' }, { k: 'resolved', a: [56, 0], tone: 'complete' }];
+  const arcs = segs.map((g) => { const [x0, y0] = pt(g.a[0]); const [x1, y1] = pt(g.a[1]); const on = t.status === g.k; return `<path class="arc" data-tone="${on ? g.tone : 'off'}" d="M${x0.toFixed(2)} ${y0.toFixed(2)} A${R} ${R} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}"/>`; }).join('');
+  const mids = { open: 152, in_progress: 90, resolved: 28 };
+  const known = mids[t.status] !== undefined;
+  const [nx, ny] = known ? pt(mids[t.status], 62) : [C, C];
+  const needle = known ? `<line class="needle" x1="${C}" y1="${C}" x2="${nx.toFixed(2)}" y2="${ny.toFixed(2)}"/><rect class="hub" x="${C - 5}" y="${C - 5}" width="10" height="10"/>` : `<rect class="hub" x="${C - 5}" y="${C - 5}" width="10" height="10"/>`;
+  return `<div class="page">${head(t)}
+    <div class="dial-band">
+      <div class="dial-card" aria-label="Status ${esc(word(t))}">
+        <div class="dial"><svg viewBox="0 0 200 112" role="img" aria-label="Status dial: ${esc(word(t))}">${arcs}${needle}</svg>
+          <div class="dial-words"><span class="${t.status === 'open' ? 'on' : ''}">Open</span><span class="${t.status === 'in_progress' ? 'on' : ''}">In progress</span><span class="${t.status === 'resolved' ? 'on' : ''}">Resolved</span></div></div>
+        <div class="dial-center">${chip(t, true)}${dates(t)}</div>
+      </div>
+      <div class="dial-side">${stepsOl(t)}${goalSec(t)}</div>
+    </div>
+    <div class="cols"><div>${ctxSec(t)}</div><div>${refSec(t)}</div></div></div>`;
+};
+
+// ---------- B: Route ----------
+VIEWS.b = () => {
+  const t = cur();
+  const resolved = t.status === 'resolved';
+  const startHere = !resolved;
+  const start = `<div class="node start"><span class="pin"><span class="sq" data-tone="${startHere ? tone(t) : 'neutral'}"></span></span>
+      ${startHere ? `<div class="here">${chip(t, true)}<span class="micro-label">You are here</span></div>` : ''}
+      <div class="facts"><span class="meta">Created ${esc(t.created)}</span>${t.updated ? `<span class="meta">Updated ${esc(t.updated)}${startHere ? ' · ' + since(t) : ''}</span>` : ''}</div></div>`;
+  const stones = t.steps.length
+    ? `<div class="node"><h2 class="sh">Next steps</h2></div>` + t.steps.map((x, i) => `<div class="node stone"><span class="pin"><span class="sq"></span></span><ol class="steps-ol" start="${i + 1}"><li${i === 0 ? ' class="first"' : ''}><span class="no">${i + 1}</span><span class="tx">${esc(x)}</span></li></ol></div>`).join('')
+    : '';
+  const goal = `<div class="node goal"${resolved ? ' data-tone="complete"' : ''}><span class="pin"><span class="sq" data-tone="${resolved ? 'complete' : ''}"></span></span>
+      ${resolved ? `<div class="here">${chip(t, true)}<span class="micro-label">Here</span></div><div class="facts"><span class="meta">Updated ${esc(t.updated)}</span></div>` : ''}
+      <span class="micro-label">Goal</span><p class="sentence">${esc(t.goal)}</p></div>`;
+  return `<div class="page">${head(t)}
+    <div class="route-grid">
+      <div class="trail${t.steps.length ? '' : ' bare'}">${start}${stones}${goal}</div>
+      <aside class="route-sheet">${ctxSec(t)}${refSec(t)}</aside>
+    </div></div>`;
+};
+
+// ---------- C: Day grid ----------
+VIEWS.c = () => {
+  const t = cur();
+  const n = days(t.created, TODAY) + 1;
+  const wd = (new Date(t.created + 'T00:00:00Z').getUTCDay() + 6) % 7; // Monday first
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const cells = []; const months = [];
+  for (let i = 0; i < n; i++) {
+    const dt = new Date(Date.parse(t.created + 'T00:00:00Z') + i * 864e5);
+    const iso = dt.toISOString().slice(0, 10);
+    const col = Math.floor((i + wd) / 7);
+    const isCreated = i === 0;
+    const isUpdated = t.updated && iso === t.updated;
+    const inSpan = t.updated && iso > t.created && iso < t.updated;
+    let k = 'quiet';
+    if (isCreated || isUpdated) k = (t.updated ? 'edge' : 'edge-quiet');
+    else if (inSpan) k = 'span';
+    const lbl = isCreated ? `Created ${iso}` : isUpdated ? `Updated ${iso}` : iso;
+    cells.push(`<span class="d${iso === TODAY ? ' today' : ''}" data-k="${k}" title="${lbl}"${i === 0 ? ` style="grid-row:${wd + 1}"` : ''}></span>`);
+    if (dt.getUTCDate() <= 7 && dt.getUTCDay() === 1 || i === 0) months.push({ col, m: MON[dt.getUTCMonth()] });
+  }
+  const seen = new Set(); const mlabels = months.filter((x) => (seen.has(x.col) ? false : seen.add(x.col))).map((x) => `<span style="grid-column:${x.col + 1};grid-row:1">${x.m}</span>`).join('');
+  const quietLegend = t.updated ? 'quiet days since the last update' : 'days since created, no update date in the file';
+  const body = `<div class="dg" data-tone="${tone(t)}">
+      <div class="dg-bar"><span class="micro-label">Created to today</span><span class="meta">${n - 1} days · a week a column</span></div>
+      <div class="dg-body">
+        <div class="dg-fig"><div class="dg-months">${mlabels}</div><div class="dg-days" role="img" aria-label="${n} days from created to today">${cells.join('')}</div></div>
+        <div class="dg-side">${chip(t, true)}${dates(t)}
+          <ul class="legend">
+            <li><span class="d" data-k="${t.updated ? 'edge' : 'edge-quiet'}"></span><span class="meta">Created${t.updated ? ' and Updated' : ''}</span></li>
+            ${t.updated ? '<li><span class="d" data-k="span"></span><span class="meta">days in between</span></li>' : ''}
+            <li><span class="d" data-k="quiet"></span><span class="meta">${quietLegend}</span></li>
+            <li><span class="d today"></span><span class="meta">today, ${TODAY}</span></li>
+          </ul></div>
+      </div></div>`;
+  return `<div class="page">${head(t)}${body}
+    <div class="c-cols"><div>${stepsOl(t)}${goalSec(t)}</div><div>${ctxSec(t)}${refSec(t)}</div></div></div>`;
+};
+
+// ---------- render orchestration ----------
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY; const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.getElementById('apphead').innerHTML = header();
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  window.scrollTo(0, y);
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+window.addEventListener('hashchange', render);
+render();
+</script>
+</body>
+</html>
