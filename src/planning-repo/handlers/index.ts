@@ -45,6 +45,7 @@ import {
   SpikesManifestHandler,
   SpikesWrapUpHandler,
 } from './spikes.ts';
+import { IndexIntelHandler } from './index-intel.ts';
 import { GenericMarkdownHandler } from './generic.ts';
 
 export const HANDLERS: ArtifactHandler[] = [
@@ -90,6 +91,7 @@ export const HANDLERS: ArtifactHandler[] = [
   SpikeReadmeHandler,
   SpikesWrapUpHandler,
   SpikesConventionsHandler,
+  IndexIntelHandler,
   ContinueHereHandler,
   GenericMarkdownHandler,
 ];
