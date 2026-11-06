@@ -27,15 +27,17 @@ const CHECKED_ROOTS = ALL_FIXTURE_ROOTS.filter((root) => !exemptAbsolute.has(roo
 const SHAPES_ROOT = join(REPO_ROOT, 'test/fixtures/shapes');
 const SHAPES_PREFIX = 'test/fixtures/shapes/.planning';
 // Every rule-kind file in Shapes, in the order the check reports them (sorted by path): the root pause, the
-// pause JSON, the three map documents, the phase pause, the three spike files.
+// pause JSON, the three map documents, the phase pause, the seed, the three spike files, the thread.
 const SHAPES_RULE_PATHS = [
   `${SHAPES_PREFIX}/.continue-here.md`,
   `${SHAPES_PREFIX}/HANDOFF.json`,
   ...['ARCHITECTURE', 'CONVENTIONS', 'STACK'].map((name) => `${SHAPES_PREFIX}/codebase/${name}.md`),
   `${SHAPES_PREFIX}/phases/02-glaze-recipes/.continue-here.md`,
+  `${SHAPES_PREFIX}/seeds/SEED-001-glaze-library.md`,
   `${SHAPES_PREFIX}/spikes/001-kiln-sensor/README.md`,
   `${SHAPES_PREFIX}/spikes/CONVENTIONS.md`,
   `${SHAPES_PREFIX}/spikes/MANIFEST.md`,
+  `${SHAPES_PREFIX}/threads/kiln-vendor-call.md`,
 ];
 
 const FRONTMATTER_MARKER = ['---', 'made_up_example: true', 'derived_from: gsd-core/templates/spec.md', 'gsd_core_version: 1.19.0', '---', ''].join('\n');
@@ -83,8 +85,8 @@ describe('made-up example markers and index (VIEW-21)', () => {
     expect(problems).toEqual(SHAPES_RULE_PATHS.map((path) => ({ path, kind: 'not-indexed' })));
   });
 
-  it('the rule covers the spec, check, map, intel, graph, pause and spike kinds', () => {
-    for (const kind of ['intel', 'graph', 'handoff', 'continue-here', 'spikes-manifest', 'spike', 'spikes-wrap-up', 'spikes-conventions']) expect(MADE_UP_EXAMPLE_KINDS.has(kind)).toBe(true);
+  it('the rule covers the spec, check, map, intel, graph, pause, spike, seed and thread kinds', () => {
+    for (const kind of ['intel', 'graph', 'handoff', 'continue-here', 'spikes-manifest', 'spike', 'spikes-wrap-up', 'spikes-conventions', 'seed', 'thread']) expect(MADE_UP_EXAMPLE_KINDS.has(kind)).toBe(true);
     for (const kind of ['spec', 'ai-spec', 'user-setup', 'eval-review', 'dom-verify', 'reviews']) expect(MADE_UP_EXAMPLE_KINDS.has(kind)).toBe(true);
     for (const name of ['stack', 'architecture', 'structure', 'conventions', 'testing', 'integrations', 'concerns']) {
       expect(MADE_UP_EXAMPLE_KINDS.has(`codebase-${name}`)).toBe(true);
