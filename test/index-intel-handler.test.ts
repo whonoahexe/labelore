@@ -307,7 +307,17 @@ describe('the ingest-docs markdown family', () => {
   it('lifts SYNTHESIS.md to a document count, classifications and the three conflict buckets', async () => {
     const artifacts = await loaded();
     const synthesis = summaryOf(artifacts['.planning/intel/SYNTHESIS.md'].structured.index as IntelSummary, 'synthesis');
-    expect(synthesis).toEqual({ kind: 'synthesis', documents: 5, classifications: 3, conflicts: { blockers: 1, competing: 2, autoResolved: 3 } });
+    expect(synthesis).toEqual({
+      kind: 'synthesis',
+      documents: 5,
+      classifications: 3,
+      classificationSplit: [
+        { label: 'ADR', count: 2 },
+        { label: 'SPEC', count: 2 },
+        { label: 'PRD', count: 1 },
+      ],
+      conflicts: { blockers: 1, competing: 2, autoResolved: 3 },
+    });
     expect(artifacts['.planning/intel/SYNTHESIS.md'].body).toContain('1 blockers, 2 competing variants, 3 auto-resolved');
   });
 
