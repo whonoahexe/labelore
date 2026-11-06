@@ -15,6 +15,8 @@ import { buildCodebaseContext } from '../presentation/codebase-map.ts';
 import type { CodebaseContext } from '../presentation/codebase-map.ts';
 import { buildPauseContext } from '../presentation/pause-context.ts';
 import type { PauseContext } from '../presentation/pause-context.ts';
+import { buildSpikesContext } from '../presentation/spikes-context.ts';
+import type { SpikesContext } from '../presentation/spikes-context.ts';
 import { buildProjectContext } from '../presentation/project-context.ts';
 import type { ProjectContext } from '../presentation/project-context.ts';
 import { buildReviewContext } from '../presentation/review-context.ts';
@@ -196,6 +198,19 @@ export function createProjectApi(
         return null;
       }
     })();
+    // Phase 11 (11-15): the Spikes page's lanes, counts, below-board folders and wrap-up, from this request's own bundle -
+    // built only for the spikes manifest, a spike README, CONVENTIONS and WRAP-UP-SUMMARY (null elsewhere).
+    const spikesContext = ((): SpikesContext | null => {
+      try {
+        const kind = lookup.artifact.kind;
+        if (kind !== 'spikes-manifest' && kind !== 'spike' && kind !== 'spikes-wrap-up' && kind !== 'spikes-conventions') {
+          return null;
+        }
+        return buildSpikesContext(activeDerived.presentation, lookup.artifact.path);
+      } catch {
+        return null;
+      }
+    })();
     const document = await (
       await renderer
     ).render(lookup.artifact, { referenceRegistry: activeDerived.referenceRegistry });
@@ -227,6 +242,7 @@ export function createProjectApi(
       projectContext,
       codebaseContext,
       pauseContext,
+      spikesContext,
       manualChecks,
       reviewContext,
     };

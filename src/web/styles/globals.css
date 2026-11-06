@@ -33932,3 +33932,403 @@ button.view-codebase-mark:hover {
   }
 }
 /* phase-11-pause:end */
+
+/* phase-11-spikes:start */
+/* Phase 11 (11-15): the Spikes page, sketch 053 winner A (Verdict board). The page renders five font sizes: the h1 as
+   ArtifactHeader draws it (--fs-display-3), the verdict-column counts (--fs-display-1, the fifth size the user
+   approved at 11-01 as X4), the lead line (--fs-7), Body (--fs-4) and Label (--fs-2). Where a shared class sets a size
+   outside that set, the page takes it inside with a page-scoped rule below, so no shared class is edited. Every colour
+   is a theme token: an invalidated spike is the `missing` tone, never destructive; a spike or folder with no verdict
+   is untoned and dashed. The board geometry is one custom property: the lane column's width. */
+.view-spikes-root {
+  --view-spikes-lane: calc(var(--space-8) * 7);
+
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-spikes-root > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-spikes-root) .artifact-lead {
+  max-width: none;
+  color: var(--foreground);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+}
+
+.artifact-page:has(.view-spikes-root) .status-chip,
+.artifact-page:has(.view-spikes-root) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.view-spikes-lead b {
+  font-family: var(--font-mono);
+  font-weight: var(--fw-semibold);
+}
+
+.view-spikes-meta {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-spikes-meta + .view-spikes-meta::before {
+  content: '·';
+  margin-right: var(--space-3);
+}
+
+.view-spikes-key {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-spikes-note {
+  margin: 0;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+/* The board: a head row of column counts, then one lane per idea. Both the head row and each lane are the same five
+   columns (the lane's name, then the four verdicts), so the column rules line up from the counts down. */
+.view-spikes-board-wrap {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-spikes-board {
+  display: grid;
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-spikes-heads,
+.view-spikes-lane {
+  display: grid;
+  grid-template-columns: var(--view-spikes-lane) repeat(4, minmax(0, 1fr));
+  min-width: 0;
+}
+
+.view-spikes-heads {
+  border-bottom: 1px solid var(--border);
+}
+
+.view-spikes-colhead {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-3);
+  border-left: 1px solid var(--border-faint);
+  min-width: 0;
+}
+
+.view-spikes-colhead[data-first='true'] {
+  border-left: 0;
+}
+
+.view-spikes-num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-display-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-none);
+}
+
+.view-spikes-lane {
+  border-top: 1px solid var(--border-faint);
+}
+
+.view-spikes-heads + .view-spikes-lane {
+  border-top: 0;
+}
+
+.view-spikes-lanehead {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-3);
+  min-width: 0;
+}
+
+.view-spikes-lane-title {
+  margin: 0;
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-spikes-desc {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.view-spikes-toggle {
+  justify-self: start;
+  min-height: var(--space-7);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: var(--space-0-5);
+  cursor: pointer;
+}
+
+.view-spikes-toggle:hover {
+  color: var(--foreground);
+}
+
+@media (pointer: coarse) {
+  .view-spikes-toggle {
+    min-height: var(--space-10);
+  }
+}
+
+/* A cell holds the tiles one lane has in one verdict. An empty cell is a dashed hairline with no count. */
+.view-spikes-cell {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-2);
+  border-left: 1px solid var(--border-faint);
+  min-height: calc(var(--space-8) * 3);
+  min-width: 0;
+}
+
+.view-spikes-cell[data-empty='true'] {
+  margin: var(--space-2);
+  padding: 0;
+  border: 1px dashed var(--border-faint);
+  min-height: calc(var(--space-8) * 2);
+}
+
+.view-spikes-tiles,
+.view-spikes-strip {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.view-spikes-tiles > li,
+.view-spikes-strip > li {
+  display: grid;
+  min-width: 0;
+}
+
+.view-spikes-strip {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 9)), 1fr));
+  gap: var(--space-3);
+}
+
+/* A tile: one link. The border carries the tone; an untoned or quiet tile is dashed on no ground. */
+.view-spikes-tile {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-2) var(--space-2-5);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  min-width: 0;
+}
+
+a.view-spikes-tile:hover {
+  background: var(--state-hover);
+}
+
+.view-spikes-tile[aria-current='page'] {
+  outline: 2px solid var(--foreground);
+  outline-offset: -2px;
+}
+
+.view-spikes-tile[data-tone='complete'] {
+  border-color: var(--primary-border);
+}
+
+.view-spikes-tile[data-tone='in-flight'] {
+  border-color: var(--in-flight-border);
+}
+
+.view-spikes-tile[data-tone='missing'] {
+  border-color: var(--missing-border);
+}
+
+.view-spikes-tile[data-tone='quiet'],
+.view-spikes-tile:not([data-tone]) {
+  border-style: dashed;
+  background: transparent;
+}
+
+.view-spikes-strip .view-spikes-tile {
+  padding: var(--space-3);
+}
+
+.view-spikes-top {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-width: 0;
+}
+
+.view-spikes-sq {
+  --status-square-size: var(--space-2-5);
+}
+
+.view-spikes-id {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  overflow-wrap: anywhere;
+}
+
+.view-spikes-word {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-spikes-name {
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-spikes-vtext {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-spikes-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-spikes-flag {
+  padding: 0 var(--space-1);
+  border: 1px dashed var(--muted-foreground);
+}
+
+/* Requirements open under the lane across every column. */
+.view-spikes-reqrow {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) var(--space-4) var(--space-3);
+  border-top: 1px dashed var(--border);
+  background: var(--code-veil);
+}
+
+.view-spikes-reqs {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-spikes-reqs > li {
+  display: grid;
+  grid-template-columns: var(--space-3) minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.view-spikes-reqs > li::before {
+  content: '';
+  width: var(--space-1-5);
+  height: var(--space-1-5);
+  background: var(--muted-foreground);
+}
+
+.view-spikes-below {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* The chip key stands in for the column heads under 48rem. */
+.view-spikes-chipkey {
+  display: none;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 48rem) {
+  .view-spikes-chipkey {
+    display: flex;
+  }
+
+  .view-spikes-heads {
+    display: none;
+  }
+
+  .view-spikes-lane {
+    grid-template-columns: minmax(0, 1fr);
+    border-top: 1px solid var(--border);
+  }
+
+  .view-spikes-cell {
+    border-left: 0;
+    min-height: 0;
+    padding: var(--space-1) var(--space-2) var(--space-2);
+  }
+
+  .view-spikes-cell[data-empty='true'] {
+    display: none;
+  }
+
+  .view-spikes-cell::before {
+    content: attr(data-word);
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: var(--fs-2);
+    letter-spacing: var(--ls-widest);
+    text-transform: uppercase;
+  }
+}
+/* phase-11-spikes:end */
