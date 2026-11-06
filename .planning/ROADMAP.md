@@ -464,7 +464,7 @@ the rest.
    template or workstream layout, and fall back to a readable generic page when a real file differs.
    *(VIEW-14, VIEW-15, VIEW-16, VIEW-17, VIEW-18, VIEW-19, VIEW-20)*
 
-**Plans**: 8/32 plans executed
+**Plans**: 11/32 plans executed
 
 Plans:
 **Wave 1**
@@ -486,9 +486,9 @@ Plans:
 - [x] 11-08-PLAN.md — Made-up seeds and threads in real shape
 
 **Wave 6** *(blocked on Wave 5 completion)*
-- [ ] 11-09-PLAN.md — Made-up reports, forensics and onboarding summaries in real shape
-- [ ] 11-10-PLAN.md — Pause page from sketch 054 C: wiring, head, the gate path, the shared record-disagreement block
-- [ ] 11-12-PLAN.md — Spikes lift and board context: free-text verdicts, folder-name ids, file lists, stable order, spike pause rule
+- [x] 11-09-PLAN.md — Made-up reports, forensics and onboarding summaries in real shape
+- [x] 11-10-PLAN.md — Pause page from sketch 054 C: wiring, head, the gate path, the shared record-disagreement block
+- [x] 11-12-PLAN.md — Spikes lift and board context: free-text verdicts, folder-name ids, file lists, stable order, spike pause rule
 - [ ] 11-14-PLAN.md — Sketches 057 (seed) and 058 (thread); the user picks the winners
 
 **Wave 7** *(blocked on Wave 6 completion)*
@@ -613,7 +613,7 @@ file, ID or project.
 | 8. Several Projects and a Switcher | v2.1 | 18/18 | Complete    | 2026-11-02 |
 | 9. Review, Audit and Root Document Pages | v2.1 | 16/16 | In Progress | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 24/24 | Complete    | 2026-11-06 |
-| 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 8/32 | In Progress | - |
+| 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 11/32 | In Progress | - |
 | 12. Project Settings, Source Mode and Reading Polish | v2.1 | 0/TBD | Not started | - |
 | 13. Search and Quick-Jump Palette | v2.1 | 0/TBD | Not started | - |
 
