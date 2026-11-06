@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 055 — Indexes page</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 055: the Indexes page (VIEW-20, Phase 11 D-04): a panel per intel file plus the graph panel, each a
+   BOUNDED SUMMARY (counts, a short top list, sizes); the raw JSON never reaches the page. Three kinds of picture: an
+   instrument grid (A), a reuse of the shipped rail + column with chips and lanes (B), and one system figure built
+   from the indexes together (C). Text is MADE UP in the shape of a real intel + graphify run. Tokens come from
+   ../themes/default.css; every colour is a theme token or a colour-mix of tokens. The atoms below are 050/052's. */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --neutral-fill: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; padding: 0 var(--space-0-5); background: var(--veil); overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.app-brand span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+@media (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- page atoms ---------- */
+.page { display: grid; gap: var(--space-8); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); min-width: 0; }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.meta { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.micro-label { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h2.sh { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+.btn-xs.icon { padding-inline: 0; width: var(--space-7); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } .btn-xs.icon { width: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; background: transparent; }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--neutral-fill); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); }
+.num { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.prose { max-width: 72ch; }
+.mono { font-family: var(--font-mono); }
+.vname { font-family: var(--font-mono); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+
+/* the lead and the shared status meter (048's drawing, reused) */
+.lead-line { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.lead-line b { font-family: var(--font-mono); }
+.status-meter { display: grid; gap: var(--space-1-5); min-width: 0; }
+.status-meter .cells { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.status-meter .cells .sq { --sq: var(--space-5); }
+.status-meter .cap { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); letter-spacing: var(--ls-wider); }
+.status-meter .cap b { color: var(--foreground); }
+
+/* the disagreement: the file's Status line beside the box count, never merged; quiet, not an alarm */
+.disagree { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; border: 1px dashed var(--muted-foreground); min-width: 0; }
+.disagree > div { display: grid; gap: var(--space-1); align-content: start; padding: var(--space-3) var(--space-4); min-width: 0; }
+.disagree .ne { display: grid; place-items: center; padding: 0 var(--space-2); border-inline: 1px dashed var(--border); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-7); }
+.disagree .foot { grid-column: 1 / -1; padding: var(--space-2) var(--space-4); border-top: 1px dashed var(--border); color: var(--muted-foreground); }
+.disagree .val { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.agree { display: inline-flex; gap: var(--space-2); align-items: center; }
+
+/* the step dock (shared) */
+.dock { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.dock-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.dock-head h3 { font-size: inherit; font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.dock-head .x { margin-left: auto; }
+.dock > h3 { font-size: inherit; font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.fields { display: grid; gap: var(--space-2); }
+.fields > div { display: grid; grid-template-columns: calc(var(--space-8) * 3.5) minmax(0, 1fr); gap: var(--space-3); }
+.fields dt { padding-top: var(--space-0-5); }
+.fields dd { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 42rem) { .fields > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-0-5); } }
+.dock-empty { padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); color: var(--muted-foreground); }
+.vfacts { display: grid; gap: var(--space-2); }
+.vfacts li { display: grid; grid-template-columns: var(--icon) minmax(0, 1fr); gap: var(--space-2); align-items: center; min-width: 0; overflow-wrap: anywhere; }
+.vfacts .i { color: var(--muted-foreground); }
+.cell .status-chip, .bar summary .status-chip, .tag .status-chip { white-space: normal; }
+.goes { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); align-items: baseline; }
+
+/* closed bars + the In the source only strip (shared) */
+.bars-wrap { display: grid; gap: var(--space-3); }
+.bars { display: grid; border-top: 1px solid var(--border); }
+.bar-group { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-8); padding: var(--space-3) var(--space-2) var(--space-1); border-bottom: 1px solid var(--border-faint); }
+.bar { border-bottom: 1px solid var(--border); }
+.bar > summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding-inline: var(--space-2); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); min-width: 0; }
+.bar > summary > span:not(.sq):not(.n) { min-width: 0; overflow-wrap: anywhere; }
+.bar > summary::-webkit-details-marker { display: none; }
+.bar > summary:hover { background: var(--state-hover); }
+.bar[open] > summary .chev { transform: rotate(90deg); }
+.bar > summary .n { margin-left: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.bar-body { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--icon) + var(--space-4)); min-width: 0; }
+@media (max-width: 42rem) { .bar-body { padding-left: var(--space-2); } }
+.only { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); }
+.only a { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; text-decoration: underline; text-underline-offset: var(--space-0-5); text-decoration-color: var(--border); }
+.blocks { display: grid; gap: var(--space-3); min-width: 0; }
+/* the shipped copy-command row (10-10): the command as selectable mono text, then the Copy command button */
+.copy-command { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-3); border: 1px solid var(--border-faint); background: var(--veil); min-width: 0; }
+.copy-command code { flex: 1 1 16rem; background: none; padding: 0; font-size: var(--fs-2); line-height: var(--lh-snug); min-width: 0; }
+.cmd-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+
+/* the missing tone (document content: the missing family only) */
+:root { --missing-border: color-mix(in oklch, var(--missing-fill) 55%, var(--border)); }
+.status-chip[data-tone='missing'] { border-color: var(--missing-border); color: var(--missing-fill); background: transparent; }
+.sq[data-tone='missing'] { background: transparent; border: 2px solid var(--missing-fill); }
+.status-chip.big { font-size: var(--fs-7); letter-spacing: var(--ls-tight); padding: var(--space-1-5) var(--space-3); }
+.status-chip.big .sq { --sq: var(--space-3); }
+.facts { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); }
+.facts span { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.facts b { color: var(--foreground); font-weight: var(--fw-semibold); }
+.score { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.word { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.tgt { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: 0 var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); white-space: nowrap; }
+.steps { display: grid; gap: var(--space-2); counter-reset: none; }
+.step { display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.step .no { font-family: var(--font-mono); font-weight: var(--fw-semibold); color: var(--muted-foreground); }
+.step .tx { min-width: 0; overflow-wrap: anywhere; }
+.step .tx .tgt { margin-left: var(--space-1); }
+.zero { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--muted-foreground); }
+
+
+/* ---------- 055 shared ---------- */
+:root { --missing-border: color-mix(in oklch, var(--missing-fill) 55%, var(--border)); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.chip { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: var(--space-0-5) var(--space-2); border: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); white-space: nowrap; }
+.chip.k { border-style: dashed; color: var(--muted-foreground); }
+.bigs { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); }
+.bigs > div { display: grid; gap: 0; }
+.bigs .num { font-size: var(--fs-display-1); line-height: var(--lh-none); }
+.split { display: flex; height: var(--space-3); border: 1px solid var(--border); min-width: 0; }
+.split > span { display: block; height: 100%; }
+.split > span + span { border-left: 1px solid var(--background); }
+.split-key { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.split-key b { color: var(--foreground); }
+.f-a { background: var(--foreground); } .f-b { background: var(--muted-foreground); } .f-c { background: var(--border); } .f-d { background: var(--hatch); }
+.hbars { display: grid; gap: var(--space-1); }
+.hbars li { display: grid; grid-template-columns: minmax(0, 14rem) minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; font-family: var(--font-mono); font-size: var(--fs-2); }
+.hbars .lbl2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hbars .bar2 { height: var(--space-2); background: var(--muted-foreground); }
+.hbars .v { color: var(--muted-foreground); }
+@media (max-width: 42rem) { .hbars li { grid-template-columns: minmax(0, 1fr) auto; } .hbars .bar2 { grid-column: 1 / -1; grid-row: 2; } }
+.layers { display: grid; gap: var(--space-1); }
+.layer { display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; padding: var(--space-2) var(--space-3); border: 1px solid var(--border); background: var(--card); }
+.layer .ix { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.layer .nm { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.layer .n { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.layer + .layer { position: relative; }
+.layer + .layer::before { content: '↓'; position: absolute; left: var(--space-4); top: calc(var(--space-2) * -1 - 2px); font-size: var(--fs-2); color: var(--muted-foreground); line-height: 1; background: var(--background); }
+.routes { display: grid; }
+.routes li { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: var(--space-1) var(--space-3); padding: var(--space-1-5) 0; border-bottom: 1px solid var(--border-faint); align-items: baseline; }
+.routes .m { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); }
+.routes .p { font-family: var(--font-mono); font-size: var(--fs-2); overflow-wrap: anywhere; }
+.routes .d { grid-column: 2; color: var(--muted-foreground); }
+.paths { display: grid; gap: var(--space-2); }
+.paths .dir { display: grid; gap: var(--space-0-5); }
+.paths .dir > span:first-child { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.paths .row { display: flex; gap: var(--space-2); align-items: baseline; font-family: var(--font-mono); font-size: var(--fs-2); padding-left: var(--space-3); overflow-wrap: anywhere; }
+.paths .row .word { flex: none; }
+.withheld { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); align-items: center; padding: var(--space-2) var(--space-3); border: 1px dashed var(--border); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.withheld b { color: var(--foreground); }
+.fresh { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: var(--space-2); }
+.fresh > div { display: grid; gap: var(--space-0-5); padding: var(--space-2) var(--space-3); border: 1px solid var(--border-faint); }
+.fresh .val { font-family: var(--font-mono); font-weight: var(--fw-semibold); }
+.fresh > div[data-tone='missing'] { border-color: var(--missing-border); }
+.fresh > div[data-tone='in-flight'] { border-color: var(--in-flight-border); }
+.panel { display: grid; gap: var(--space-4); min-width: 0; }
+.panel-head { display: grid; gap: var(--space-1); }
+.panel-head h2 { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.pfoot { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); padding-top: var(--space-2); border-top: 1px solid var(--border-faint); }
+.md ul { list-style: square; padding-left: var(--space-5); display: grid; gap: var(--space-1); }
+
+/* =====================================================================
+   A: Instrument grid — a tile per index file with its key figure; a tile opens to full width in place
+   ===================================================================== */
+.igrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); grid-auto-flow: dense; }
+.itile { display: grid; gap: var(--space-3); align-content: start; padding: var(--space-4); border: 1px solid var(--border); background: var(--card); text-align: left; min-width: 0; }
+button.itile:hover { background: color-mix(in oklch, var(--card) 80%, var(--muted)); }
+.itile.wide { grid-column: span 2; }
+.itile.open { grid-column: 1 / -1; border-color: var(--foreground); cursor: default; }
+.itile .t { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+.itile .t .vname { font-size: var(--fs-4); }
+.itile .fig .num { font-size: var(--fs-display-1); line-height: var(--lh-none); }
+.itile.absent { border-style: dashed; background: var(--hatch); }
+.itile .x { justify-self: end; }
+@media (max-width: 56rem) { .igrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 34rem) { .igrid { grid-template-columns: minmax(0, 1fr); } .itile.wide { grid-column: auto; } }
+
+/* =====================================================================
+   B: Reuse — 042 A rail + column, the shipped chips (045 C) and lanes as the panel figures
+   ===================================================================== */
+.rc { display: grid; grid-template-columns: calc(var(--space-8) * 7) minmax(0, 1fr); gap: var(--space-8); align-items: start; min-width: 0; }
+.rail { position: sticky; top: calc(var(--space-10) * 2); display: grid; gap: var(--space-4); }
+.rail .grp-list { display: grid; }
+.rail button { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); padding: var(--space-1-5) var(--space-2); text-align: left; border-left: 2px solid transparent; }
+.rail button:hover { background: var(--state-hover); }
+.rail button[aria-current='true'] { border-left-color: var(--foreground); background: var(--muted); }
+.rail .n { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.rail-select { display: none; }
+.lanes { display: grid; grid-template-columns: repeat(var(--k), minmax(0, 1fr)); gap: var(--space-3); }
+.lanes > div { display: grid; gap: var(--space-1-5); align-content: start; padding: var(--space-2); border: 1px solid var(--border-faint); }
+@media (max-width: 48rem) {
+  .rc { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+  .rail { display: none; }
+  .rail-select { display: flex; gap: var(--space-2); overflow-x: auto; padding-bottom: var(--space-1); margin-bottom: var(--space-4); }
+  .rail-select button { flex: none; }
+  .lanes { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* =====================================================================
+   C: System figure — one drawing: the arch layers as bands, files and routes placed in their layer, dependencies
+   along the bottom, the graph's counts as the frame; a part opens its file's panel under the figure
+   ===================================================================== */
+.sysfig { display: grid; gap: 0; border: 1px solid var(--foreground); min-width: 0; }
+.sysfig > .frame { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-5); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--foreground); background: var(--muted); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.sysfig > .frame b { font-weight: var(--fw-semibold); }
+.sysfig > .frame button { text-decoration: underline; text-underline-offset: var(--space-0-5); text-decoration-color: var(--muted-foreground); }
+.band { display: grid; grid-template-columns: calc(var(--space-8) * 6) minmax(0, 1fr) minmax(0, 0.9fr); border-top: 1px solid var(--border); min-width: 0; }
+.band:first-of-type { border-top: 0; }
+.band > div { padding: var(--space-3); min-width: 0; display: grid; gap: var(--space-1-5); align-content: start; }
+.band > div + div { border-left: 1px dashed var(--border); }
+.band .bname { display: grid; gap: var(--space-0-5); }
+.band .bname .nm { font-weight: var(--fw-semibold); }
+.band .bname .ix { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.fchip { display: inline-flex; gap: var(--space-1-5); align-items: center; padding: var(--space-0-5) var(--space-2); border: 1px solid var(--border); background: var(--card); font-family: var(--font-mono); font-size: var(--fs-2); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fchip:hover { background: var(--state-hover); }
+.fchip.entry { border-color: var(--foreground); }
+.fchip .m { font-weight: var(--fw-semibold); }
+.band .stack { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.band-head { display: grid; grid-template-columns: calc(var(--space-8) * 6) minmax(0, 1fr) minmax(0, 0.9fr); border-bottom: 1px solid var(--border); }
+.band-head > span { padding: var(--space-1-5) var(--space-3); }
+.band-head > span + span { border-left: 1px dashed var(--border); }
+.deps-row { display: grid; gap: var(--space-2); padding: var(--space-3); border-top: 1px solid var(--foreground); background: var(--veil); }
+.sys-pick { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.sys-pick .btn-xs[aria-pressed='true'] { background: var(--foreground); color: var(--background); border-color: var(--foreground); }
+.under { padding: var(--space-5); border: 1px solid var(--foreground); border-top: 0; background: var(--card); }
+@media (max-width: 52rem) {
+  .band, .band-head { grid-template-columns: minmax(0, 1fr); }
+  .band > div + div, .band-head > span + span { border-left: 0; border-top: 1px dashed var(--border); }
+  .band-head { display: none; }
+  .band > div:nth-child(2)::before { content: 'Files'; } .band > div:nth-child(3)::before { content: 'Routes'; }
+  .band > div:nth-child(n+2)::before { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+  .under { padding: var(--space-4); }
+}
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">055 indexes page</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Instrument grid ★ Selected</a>
+    <a data-tab="b" href="#b">B: Reuse — rail + chips and lanes</a>
+    <a data-tab="c" href="#c">C: System figure</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="json">Intel JSON + a large stale graph, last build failed</button><button data-state="ingest">Ingest-docs intel, no graph (inferred shape)</button></span>
+</nav>
+
+<header class="app-head"><span class="app-brand"><i></i>Labelore <span>/ Lendshed</span></span>
+  <nav class="app-nav"><a href="#" data-act="noop">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Research</a><a href="#" data-act="noop">Codebase</a></nav></header>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+// MADE-UP indexes. The JSON family's shape (`_meta{updated_at,version}` + `entries`, file-role types, dependency
+// types, the graph's counts, freshness and build status, GRAPH_REPORT's God Nodes and Import Cycles) comes from a real
+// run of gsd-intel-updater and `graphify update .` on a scratch copy, read for shape only. The ingest-docs family is
+// inferred from GSD's ingest-docs workflow (no real run). This is the BOUNDED SUMMARY the server would send: counts,
+// at most a short top list, and file sizes. The raw JSON never reaches the page.
+const IDX = {
+  json: {
+    refresh: { timestamp: '2026-04-19T14:02:11Z', files: 5 },
+    stack: { updated: '2026-04-19', version: 2, size: '0.9 KB', languages: ['TypeScript', 'SQL', 'CSS'], frameworks: ['Fastify 5', 'React 19', 'Vite 8', 'better-sqlite3 12', 'TanStack Query 5'], tools: ['Vitest', 'Playwright', 'ESLint 10', 'Prettier'], build_system: 'npm scripts + vite build', test_framework: 'Vitest (unit), Playwright (e2e)', package_manager: 'npm', content_formats: ['CSV (loan exports)', 'ZIP (monthly archive)', 'JSON (config)'] },
+    roles: { updated: '2026-04-19', version: 2, size: '6.8 KB', count: 31, types: [['module', 24], ['entry-point', 3], ['type-def', 2], ['config', 2]],
+      top: [['src/server', [['index.ts', 'entry-point'], ['routes/loans.ts', 'module'], ['routes/exports.ts', 'module'], ['routes/sheds.ts', 'module']]], ['src/server/services', [['loan-service.ts', 'module'], ['export-service.ts', 'module'], ['reminder-service.ts', 'module']]], ['src/server/repo', [['loans-repo.ts', 'module'], ['db.ts', 'module']]], ['src/web', [['main.tsx', 'entry-point'], ['loan-page.tsx', 'module']]], ['src/shared', [['types.ts', 'type-def']]]] },
+    api: { updated: '2026-04-19', version: 2, size: '3.9 KB', count: 14, methods: [['GET', 8], ['POST', 4], ['DELETE', 1], ['PATCH', 1]],
+      routes: [['GET', '/api/sheds', 'List sheds the member belongs to', 'src/server/routes/sheds.ts'], ['GET', '/api/sheds/:shed/loans', 'Loans for one shed, newest first', 'src/server/routes/loans.ts'], ['POST', '/api/sheds/:shed/loans', 'Lend a tool to a member', 'src/server/routes/loans.ts'], ['PATCH', '/api/loans/:id', 'Return or extend a loan', 'src/server/routes/loans.ts'], ['POST', '/api/sheds/:shed/exports', 'Start a monthly export job', 'src/server/routes/exports.ts'], ['GET', '/api/exports/:job', 'Export job status', 'src/server/routes/exports.ts']] },
+    deps: { updated: '2026-04-19', version: 2, size: '2.7 KB', count: 16, types: [['production', 10], ['development', 6]],
+      top: [['fastify', '5.6.0', 'production', 7], ['better-sqlite3', '12.2.0', 'production', 5], ['react', '19.2.8', 'production', 9], ['archiver', '7.0.1', 'production', 1], ['zod', '4.1.3', 'production', 6], ['vitest', '4.1.11', 'development', 22]] },
+    arch: { updated: '2026-04-19', version: 2, size: '2.4 KB', count: 9,
+      pattern: 'Routes -> services -> repository -> SQLite', layers: [['Routes', 'src/server/routes'], ['Services', 'src/server/services'], ['Repository', 'src/server/repo'], ['SQLite', 'db file']],
+      keys: [['overview', 'A shed-scoped lending server with a small React client'], ['data-flow', 'Routes validate with zod, services own transactions, the repository is the only SQL'], ['auth', 'Session cookie; the steward role is checked in services, never in routes'], ['exports', 'Jobs stream a zip from a cursor; staging on the shed box'], ['jobs', 'One worker loop in-process; no queue service'], ['config', 'Env read once at startup into Config'], ['testing', 'Unit tests on services; e2e on three flows'], ['client', 'React with TanStack Query; no global store'], ['deploy', 'One binary per shed box behind Caddy']] },
+    graph: { exists: true, nodes: 41280, edges: 96514, hyperedges: 0, communities: 2310, thin: 412, extraction: [['EXTRACTED', 84], ['INFERRED', 15], ['AMBIGUOUS', 1]],
+      built_at_commit: '3f1e2a0', current_commit: '9c04d17', commits_behind: 12, age_hours: 61, last_build: '2026-04-18T20:11:04Z',
+      status: { status: 'failed', exit_code: 1, duration_ms: 8231, ts: '2026-04-21T08:40:02Z', head_at_build: '9c04d17' },
+      sizes: [['graph.json', '47.3 MB'], ['.last-build-snapshot.json', '58.9 MB'], ['graph.html', '1.9 MB'], ['GRAPH_REPORT.md', '512 KB']],
+      hubs: [['LoanService', 612], ['vitest', 540], ['db()', 401], ['Shed', 377], ['react', 301], ['ExportJob', 254], ['zod', 233], ['loansRepo', 219], ['Member', 188], ['Config', 140]],
+      cycles: 2 },
+  },
+  ingest: {
+    refresh: null,
+    synthesis: { size: '6.1 KB', docs: 14, types: [['ADR', 5], ['PRD', 3], ['SPEC', 4], ['DOC', 1], ['UNKNOWN', 1]], conflicts: [['Auto-resolved', 3, 'quiet'], ['Competing variants', 2, 'in-flight'], ['Unresolved blockers', 1, 'missing']] },
+    files: [['decisions.md', '2.8 KB', '5 decisions, 2 locked'], ['requirements.md', '4.4 KB', '11 requirements, 2 kept as variants'], ['constraints.md', '1.9 KB', '4 constraints'], ['context.md', '3.0 KB', '1 note, 1 unclassified source']],
+    classifications: 14,
+    graph: { exists: false },
+  },
+};
+
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') === 'dark' ? 'dark' : 'light';
+const S = { state: params.get('state') === 'ingest' ? 'ingest' : 'json', sel: null };
+const D = () => IDX[S.state];
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const n = (x) => x.toLocaleString('en-GB');
+const ICON = { x: '<svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>', copy: '<svg class="i" viewBox="0 0 24 24"><path d="M9 9h11v11H9z"/><path d="M5 15H4V4h11v1"/></svg>' };
+const FILL = ['f-a', 'f-b', 'f-c', 'f-d'];
+const split = (parts) => { const t = parts.reduce((a, p) => a + p[1], 0); return `<div class="split">${parts.map((p, i) => `<span class="${FILL[i % 4]}" style="width:${(p[1] / t) * 100}%" title="${esc(p[0])} ${p[1]}"></span>`).join('')}</div>
+  <div class="split-key">${parts.map((p, i) => `<span><span class="sq" style="background:var(--${['foreground', 'muted-foreground', 'border', 'muted'][i % 4]});border-color:var(--muted-foreground)"></span> ${esc(p[0])} <b>${p[1]}</b></span>`).join('')}</div>`; };
+const hbars = (rows, max) => `<ul class="hbars">${rows.map(([l, v]) => `<li><span class="lbl2">${esc(l)}</span><span class="bar2" style="width:${(v / max) * 100}%"></span><span class="v">${n(v)}</span></li>`).join('')}</ul>`;
+const foot = (f, name) => `<div class="pfoot"><span class="meta">.planning/intel/${name}</span>${f.updated ? `<span class="meta">updated ${f.updated} · version ${f.version}</span>` : ''}<span class="meta">${f.size}</span></div>`;
+
+// ---------- panels: the bounded summary per file (shared) ----------
+const PANELS = {
+  stack: { title: 'Stack', file: 'stack.json', body: (d) => { const s = d.stack; return `<div class="blocks">${[['Languages', s.languages], ['Frameworks', s.frameworks], ['Tools', s.tools], ['Content formats', s.content_formats]].map(([k, v]) => `<div class="blocks"><span class="micro-label">${k}</span><div class="chips">${v.map((x) => `<span class="chip">${esc(x)}</span>`).join('')}</div></div>`).join('')}
+      <div class="facts"><span>Build <b>${esc(s.build_system)}</b></span><span>Tests <b>${esc(s.test_framework)}</b></span><span>Packages <b>${esc(s.package_manager)}</b></span></div></div>${foot(s, 'stack.json')}`; } },
+  roles: { title: 'File roles', file: 'file-roles.json', body: (d) => { const r = d.roles; return `${split(r.types)}<div class="paths">${r.top.map(([dir, fs]) => `<div class="dir"><span>${esc(dir)}/</span>${fs.map(([f, t]) => `<span class="row"><span>${esc(f)}</span><span class="word">${t}</span></span>`).join('')}</div>`).join('')}</div>
+      <p class="source-note">${r.top.reduce((a, x) => a + x[1].length, 0)} of ${r.count} entries shown; exports and imports stay in the file.</p>${foot(r, 'file-roles.json')}`; } },
+  api: { title: 'API surface', file: 'api-map.json', body: (d) => { const a = d.api; return `<div class="chips">${a.methods.map(([m, c]) => `<span class="chip"><b>${m}</b> ${c}</span>`).join('')}</div><ul class="routes">${a.routes.map(([m, p, desc, f]) => `<li><span class="m">${m}</span><span class="p">${esc(p)}</span><span class="d">${esc(desc)} · <span class="mono" style="font-size:var(--fs-2)">${esc(f)}</span></span></li>`).join('')}</ul>
+      <p class="source-note">${a.routes.length} of ${a.count} routes shown.</p>${foot(a, 'api-map.json')}`; } },
+  deps: { title: 'Dependencies', file: 'dependency-graph.json', body: (d) => { const x = d.deps; return `${split(x.types)}<span class="micro-label">Most used, by files that import them</span>${hbars(x.top.map(([nm, v, t, u]) => [`${nm} ${v}${t === 'development' ? ' · dev' : ''}`, u]), Math.max(...x.top.map((t) => t[3])))}${foot(x, 'dependency-graph.json')}`; } },
+  arch: { title: 'Architecture', file: 'arch-decisions.json', body: (d) => { const a = d.arch; return `<div class="layers">${a.layers.map(([nm, where], i) => `<div class="layer"><span class="ix">${i + 1}</span><span class="nm">${esc(nm)}</span><span class="n">${esc(where)}</span></div>`).join('')}</div>
+      <p class="source-note">Drawn from the overview’s pattern as written: “${esc(a.pattern)}”.</p>
+      <ul class="kv">${a.keys.map(([k, v]) => `<li><span class="word">${esc(k)}</span><span>${esc(v)}</span></li>`).join('')}</ul>${foot(a, 'arch-decisions.json')}`; } },
+  graph: { title: 'Knowledge graph', file: 'graphs/', body: (d) => {
+    const g = d.graph;
+    if (!g.exists) return `<p class="dock-empty">No graph built: <code>.planning/graphs/</code> does not exist. GSD builds one with <code>/gsd-graphify build</code>.</p>`;
+    const st = g.status;
+    return `<div class="bigs"><div><span class="num">${n(g.nodes)}</span><span class="micro-label">nodes</span></div><div><span class="num">${n(g.edges)}</span><span class="micro-label">edges</span></div><div><span class="num">${n(g.communities)}</span><span class="micro-label">communities (${g.thin} thin)</span></div><div><span class="num">${g.cycles}</span><span class="micro-label">import cycles</span></div></div>
+      <div class="fresh">
+        <div data-tone="in-flight"><span class="micro-label">Built from</span><span class="val">${g.built_at_commit}</span><span class="source-note">${g.commits_behind} commits behind ${g.current_commit}</span></div>
+        <div><span class="micro-label">Last good build</span><span class="val">${g.last_build.slice(0, 10)}</span><span class="source-note">${g.age_hours} hours ago</span></div>
+        <div data-tone="${st.status === 'failed' ? 'missing' : st.status === 'running' ? 'in-flight' : 'quiet'}"><span class="micro-label">Last auto-update</span><span class="val">${st.status}${st.exit_code != null ? ` · exit ${st.exit_code}` : ''}</span><span class="source-note">${st.ts.slice(0, 10)} · ${(st.duration_ms / 1000).toFixed(1)} s · the graph above is the one before it</span></div>
+      </div>
+      <span class="micro-label">How the edges were found</span>${split(g.extraction)}
+      <span class="micro-label">Most connected (top 10 of ${n(g.nodes)})</span>${hbars(g.hubs, g.hubs[0][1])}
+      <div class="withheld"><span>Not sent to this page:</span>${g.sizes.map(([f, z]) => `<span><b>${esc(f)}</b> ${z}</span>`).join('<span>·</span>')}</div>`; } },
+  synthesis: { title: 'Synthesis', file: 'SYNTHESIS.md', body: (d) => { const s = d.synthesis; return `<div class="bigs"><div><span class="num">${s.docs}</span><span class="micro-label">documents ingested</span></div>${s.conflicts.map(([k, c]) => `<div><span class="num">${c}</span><span class="micro-label">${k.toLowerCase()}</span></div>`).join('')}</div>
+      <span class="micro-label">Classified as</span>${split(s.types)}
+      <div class="chips">${s.conflicts.map(([k, c, t]) => `<span class="status-chip" data-tone="${t}"><span class="sq" data-tone="${t}"></span>${c} ${k}</span>`).join('')}</div>
+      <ul class="kv">${d.files.map(([f, z, what]) => `<li><span class="mono" style="font-size:var(--fs-2)">${f}</span><span>${what}</span><span class="source-note">${z}</span></li>`).join('')}</ul>
+      <p class="source-note">${d.classifications} classification files in <code>intel/classifications/</code>, counted, not shown. Inferred shape: no real ingest-docs run.</p>
+      <div class="pfoot"><span class="meta">.planning/intel/SYNTHESIS.md</span><span class="meta">${s.size}</span></div>`; } },
+};
+const ORDER = () => (S.state === 'json' ? ['graph', 'arch', 'stack', 'roles', 'api', 'deps'] : ['synthesis', 'graph']);
+const panel = (k) => `<article class="panel"><div class="panel-head"><span class="micro-label">${esc(PANELS[k].file)}</span><h2>${PANELS[k].title}</h2></div>${PANELS[k].body(D())}</article>`;
+
+function head() {
+  const d = D();
+  const files = S.state === 'json' ? '5 intel files · 1 graph' : '1 synthesis · 4 intel documents · no graph';
+  return `<div class="heading-block">
+    <nav class="crumbs"><span>Lendshed</span><span>/</span><span aria-current="page">Indexes</span></nav>
+    <p class="eyebrow">Exploration · Indexes</p><h1>Indexes</h1>
+    <div class="meta-row"><span class="meta">${files}</span>${d.refresh ? `<span class="meta">Intel refreshed ${d.refresh.timestamp.slice(0, 10)}</span>` : ''}
+      <span class="addr meta">/lendshed/<b>indexes${S.sel ? `/${S.sel}` : ''}</b></span></div>
+    <p class="source-note prose">What GSD’s intel and graph tools wrote about this codebase, summarised. Counts and short top lists only; the raw files stay on disk.</p>
+  </div>`;
+}
+
+const VIEWS = {}; const ACTS = {}; const AFTER = [];
+
+// ---------- A: Instrument grid ----------
+function figA(k) {
+  const d = D();
+  if (k === 'graph') { const g = d.graph; if (!g.exists) return '<span class="source-note">Not built</span>'; return `<div class="bigs"><div><span class="num">${n(g.nodes)}</span><span class="micro-label">nodes</span></div><div><span class="num">${n(g.edges)}</span><span class="micro-label">edges</span></div></div><div class="chips"><span class="status-chip" data-tone="in-flight">${g.commits_behind} commits behind</span><span class="status-chip" data-tone="missing">Last update failed</span></div>`; }
+  if (k === 'arch') return `<div class="layers">${d.arch.layers.map(([nm], i) => `<div class="layer"><span class="ix">${i + 1}</span><span class="nm">${esc(nm)}</span><span></span></div>`).join('')}</div>`;
+  if (k === 'stack') return `<div class="chips">${d.stack.frameworks.map((x) => `<span class="chip">${esc(x)}</span>`).join('')}</div>`;
+  if (k === 'roles') return `<span class="num">${d.roles.count}</span>${split(d.roles.types)}`;
+  if (k === 'api') return `<span class="num">${d.api.count}</span><div class="chips">${d.api.methods.map(([m, c]) => `<span class="chip"><b>${m}</b> ${c}</span>`).join('')}</div>`;
+  if (k === 'deps') return `<span class="num">${d.deps.count}</span>${split(d.deps.types)}`;
+  if (k === 'synthesis') return `<span class="num">${d.synthesis.docs}</span><div class="chips">${d.synthesis.conflicts.map(([kk, c, t]) => `<span class="status-chip" data-tone="${t}">${c} ${kk}</span>`).join('')}</div>`;
+  return '';
+}
+VIEWS.a = () => {
+  const tiles = ORDER().map((k) => {
+    if (S.sel === k) return `<div class="itile open"><div class="t"><span class="vname">${PANELS[k].title}</span><button class="btn-xs icon x" data-act="close" aria-label="Close">${ICON.x}</button></div>${panel(k)}</div>`;
+    const absent = k === 'graph' && !D().graph.exists;
+    const wide = ['graph', 'synthesis', 'roles', 'deps'].includes(k);
+    return `<button class="itile${wide ? ' wide' : ''}${absent ? ' absent' : ''}" data-act="open" data-k="${k}"><div class="t"><span class="vname">${PANELS[k].title}</span><span class="meta">${esc(PANELS[k].file)}</span></div><div class="fig">${figA(k)}</div></button>`;
+  }).join('');
+  return `<div class="page">${head()}<div class="igrid">${tiles}</div></div>`;
+};
+
+// ---------- B: Reuse — rail + column ----------
+VIEWS.b = () => {
+  const d = D(); const sel = S.sel || ORDER()[0];
+  const cnt = { graph: d.graph.exists ? n(d.graph.nodes) : '—', arch: d.arch && d.arch.count, stack: d.stack && d.stack.frameworks.length, roles: d.roles && d.roles.count, api: d.api && d.api.count, deps: d.deps && d.deps.count, synthesis: d.synthesis && d.synthesis.docs };
+  const groups = S.state === 'json' ? [['Graph', ['graph']], ['Intel', ['arch', 'stack', 'roles', 'api', 'deps']]] : [['Intel', ['synthesis']], ['Graph', ['graph']]];
+  const rail = groups.map(([g, ks]) => `<div class="grp-list"><span class="micro-label">${g}</span>${ks.map((k) => `<button data-act="open" data-k="${k}" aria-current="${sel === k}"><span>${PANELS[k].title}</span><span class="n">${cnt[k]}</span></button>`).join('')}</div>`).join('');
+  const select = `<div class="rail-select">${ORDER().map((k) => `<button class="btn-xs" data-act="open" data-k="${k}" aria-pressed="${sel === k}">${PANELS[k].title}</button>`).join('')}</div>`;
+  // the API panel reuses the shipped lanes (one lane per method); others as shared
+  let body = panel(sel);
+  if (sel === 'api') { const a = d.api; const ms = a.methods.map((m) => m[0]); body = `<article class="panel"><div class="panel-head"><span class="micro-label">api-map.json</span><h2>API surface</h2></div><div class="lanes" style="--k:${ms.length}">${ms.map((m) => `<div><span class="micro-label">${m} · ${a.methods.find((x) => x[0] === m)[1]}</span>${a.routes.filter((r) => r[0] === m).map((r) => `<span class="chip" title="${esc(r[2])}">${esc(r[1])}</span>`).join('') || '<span class="source-note">Not in the top list</span>'}</div>`).join('')}</div><p class="source-note">${a.routes.length} of ${a.count} routes shown.</p>${foot(a, 'api-map.json')}</article>`; }
+  return `<div class="page">${head()}<div class="rc"><nav class="rail" aria-label="Index files">${rail}</nav><div>${select}${body}</div></div></div>`;
+};
+
+// ---------- C: System figure ----------
+VIEWS.c = () => {
+  const d = D();
+  if (S.state !== 'json') {
+    return `<div class="page">${head()}<div class="sysfig"><div class="frame"><span>No graph · no architecture index</span></div>
+      <div style="padding:var(--space-4)"><p class="dock-empty">This project’s intel comes from ingest-docs (documents, not code), so there is no system to draw. The synthesis opens below.</p></div></div>
+      <div class="under">${panel('synthesis')}</div></div>`;
+  }
+  const g = d.graph; const a = d.arch;
+  const allFiles = d.roles.top.flatMap(([dir, fs]) => fs.map(([f, t]) => [`${dir}/${f}`, t]));
+  const layerOf = (p) => a.layers.findIndex(([, where]) => p.startsWith(`${where}/`));
+  const filesIn = (where) => allFiles.filter(([p]) => p.startsWith(`${where}/`));
+  const outside = allFiles.filter(([p]) => layerOf(p) < 0);
+  const routesIn = (where) => d.api.routes.filter((r) => r[3].startsWith(where));
+  const bands = a.layers.map(([nm, where], i) => `<div class="band">
+    <div class="bname"><span class="ix">Layer ${i + 1} · ${esc(where)}</span><span class="nm">${esc(nm)}</span></div>
+    <div><div class="stack">${filesIn(where).map(([p, t]) => `<button class="fchip${t === 'entry-point' ? ' entry' : ''}" data-act="open" data-k="roles" title="${esc(p)} · ${t}">${esc(p.split('/').pop())}</button>`).join('') || '<span class="source-note">—</span>'}</div></div>
+    <div><div class="stack">${routesIn(where).map((r) => `<button class="fchip" data-act="open" data-k="api" title="${esc(r[2])}"><span class="m">${r[0]}</span>${esc(r[1])}</button>`).join('') || '<span class="source-note">—</span>'}</div></div></div>`).join('');
+  const pick = `<div class="sys-pick">${ORDER().map((k) => `<button class="btn-xs" data-act="open" data-k="${k}" aria-pressed="${S.sel === k}">${PANELS[k].title}</button>`).join('')}</div>`;
+  return `<div class="page">${head()}
+    <div>
+      <div class="sysfig">
+        <div class="frame"><span><b>${n(g.nodes)}</b> nodes</span><span><b>${n(g.edges)}</b> edges</span><span><b>${n(g.communities)}</b> communities</span>
+          <span class="status-chip" data-tone="in-flight">${g.commits_behind} commits behind</span><span class="status-chip" data-tone="missing">Last update failed</span>
+          <button data-act="open" data-k="graph">graph details</button><span style="margin-left:auto">${esc(a.pattern)}</span></div>
+        <div class="band-head"><span class="micro-label">Layer (arch-decisions)</span><span class="micro-label">Files (file-roles)</span><span class="micro-label">Routes (api-map)</span></div>
+        ${bands}
+        <div class="band"><div class="bname"><span class="ix">No layer</span><span class="nm">Outside the pattern</span></div><div><div class="stack">${outside.map(([p, t]) => `<button class="fchip${t === 'entry-point' ? ' entry' : ''}" data-act="open" data-k="roles" title="${esc(p)} · ${t}">${esc(p)}</button>`).join('')}</div></div><div><span class="source-note">Files whose folder no layer names</span></div></div>
+        <div class="deps-row"><span class="micro-label">Underneath · ${d.deps.count} dependencies (dependency-graph)</span><div class="stack" style="display:flex;flex-wrap:wrap;gap:var(--space-1)">${d.deps.top.map(([nm, v, t]) => `<button class="fchip" data-act="open" data-k="deps">${esc(nm)} ${v}${t === 'development' ? ' · dev' : ''}</button>`).join('')}<button class="fchip" data-act="open" data-k="stack">stack: ${d.stack.frameworks.length} frameworks</button></div></div>
+      </div>
+      ${S.sel ? `<div class="under"><div style="display:flex;justify-content:space-between;gap:var(--space-2);margin-bottom:var(--space-4)">${pick}<button class="btn-xs icon" data-act="close" aria-label="Close">${ICON.x}</button></div>${panel(S.sel)}</div>` : `<div class="under">${pick}<p class="source-note" style="margin-top:var(--space-3)">A layer, a file, a route or a dependency opens the index it came from.</p></div>`}
+    </div></div>`;
+};
+
+// ---------- render orchestration ----------
+ACTS.open = (el) => { S.sel = el.dataset.k; render(); };
+ACTS.close = () => { S.sel = null; render(); };
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY; const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  window.scrollTo(0, y);
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; S.sel = null; return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.sel) ACTS.close(); });
+window.addEventListener('hashchange', () => { S.sel = null; render(); });
+render();
+</script>
+</body>
+</html>
