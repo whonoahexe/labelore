@@ -252,6 +252,42 @@ describe('extractReviews - odd shapes', () => {
   });
 });
 
+// 10-REVIEW WR-02: inside a Concerns list, an ordinary sentence that opens with High, Medium or Low is a concern with no
+// severity, not a severity with the word cut off the text.
+describe('extractReviews - severity words that open an ordinary sentence (WR-02)', () => {
+  const concernsOf = (list: string) =>
+    read(`---\nreviewers: [claude]\n---\n\n## Claude Review\n\n## 01-01\n\n### Concerns\n${list}`).reviewers[0].concerns.map((c) => [c.severity, c.text]);
+
+  it('keeps the whole sentence and invents no severity for "High availability", "Low test coverage", "Medium-sized"', () => {
+    expect(
+      concernsOf('- High availability is not handled\n- Low test coverage on the exporter\n- Medium-sized refactor needed\n- Medium effort to migrate\n'),
+    ).toEqual([
+      [null, 'High availability is not handled'],
+      [null, 'Low test coverage on the exporter'],
+      [null, 'Medium-sized refactor needed'],
+      [null, 'Medium effort to migrate'],
+    ]);
+  });
+
+  it('still reads a severity written with a separator, in marks or in capitals', () => {
+    expect(
+      concernsOf('- High: no retry\n- **High** no backoff\n- [MEDIUM] no timeout\n- LOW stale comment\n- `high` - spaced dash\n- **Low:** nit\n'),
+    ).toEqual([
+      ['HIGH', 'no retry'],
+      ['HIGH', 'no backoff'],
+      ['MEDIUM', 'no timeout'],
+      ['LOW', 'stale comment'],
+      ['HIGH', 'spaced dash'],
+      ['LOW', 'nit'],
+    ]);
+  });
+
+  it('reads a bare risk word in a Risk Assessment line as before', () => {
+    const file = read('---\nreviewers: [claude]\n---\n\n## Claude Review\n\n## 01-01\n\n### Risk Assessment\nMedium overall\n');
+    expect(file.reviewers[0].plans[0].risk).toBe('MEDIUM');
+  });
+});
+
 describe('extractReviews - growth (T-10-42)', () => {
   const head = '## Claude Review\n\n## 01-01\n\n### Concerns\n- **LOW:** a\n\n';
 
