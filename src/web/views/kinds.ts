@@ -12,7 +12,9 @@
 // through `viewKindOf`, whose wire kinds are `codebase-stack` ... `codebase-concerns`) and registers the six
 // specification and check kinds (`spec`, `ai-spec`, `user-setup`, `eval-review`, `dom-verify`, `reviews`), each
 // with a lead and a promote fallback until its page plan adds a composer. Phase 11 (11-10) adds `pause` (the pause
-// page; the two wire kinds `handoff` and `continue-here` both map to it through the `viewKindOf` table).
+// page; the two wire kinds `handoff` and `continue-here` both map to it through the `viewKindOf` table). Phase 11
+// (11-15) adds `spikes` (the Spikes page; the four wire kinds `spikes-manifest`, `spike`, `spikes-wrap-up` and
+// `spikes-conventions` all map to it through the same table).
 export const VIEW_KINDS = [
   'discussion-log',
   'verification',
@@ -46,6 +48,7 @@ export const VIEW_KINDS = [
   'dom-verify',
   'reviews',
   'pause',
+  'spikes',
 ] as const;
 
 export type ViewKind = (typeof VIEW_KINDS)[number];
@@ -57,11 +60,15 @@ const CODEBASE_KIND_PREFIX = 'codebase-';
 const VIEW_KIND_TABLE: ReadonlyMap<string, string> = new Map([
   ['handoff', 'pause'],
   ['continue-here', 'pause'],
+  ['spikes-manifest', 'spikes'],
+  ['spike', 'spikes'],
+  ['spikes-wrap-up', 'spikes'],
+  ['spikes-conventions', 'spikes'],
 ]);
 
 /** The view kind a wire `artifact.kind` is looked up under: every `codebase-*` kind (the seven map documents)
  * shares the one `codebase` view, a kind with a row in the table shares that row's view (the two pause files
- * share `pause`), any other kind is its own view kind (Phase 10, RESEARCH C8; Phase 11, RESEARCH Pattern 3). Pure. */
+ * share `pause`, the four spike files share `spikes`), any other kind is its own view kind (Phase 10, RESEARCH C8; Phase 11, RESEARCH Pattern 3). Pure. */
 export function viewKindOf(kind: string): string {
   if (kind.startsWith(CODEBASE_KIND_PREFIX)) return 'codebase';
   return VIEW_KIND_TABLE.get(kind) ?? kind;

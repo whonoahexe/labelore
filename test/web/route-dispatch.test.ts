@@ -2,6 +2,7 @@
 // page. Over the committed Shapes and Lendshed payloads every URL the server emits opens something, every
 // redirect goes where the payload says, and every miss (an internal file, a bare folder, a phase or plan
 // that does not exist) is the same not-found outcome.
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   buildPhaseUrl,
@@ -572,5 +573,42 @@ describe('presentationRoutePatterns', () => {
       'sketches',
       'research',
     ]);
+  });
+});
+
+describe('the bare /spikes (Phase 11, 11-15, RESEARCH C1)', () => {
+  const manifest = lendshed.artifacts.find((artifact) => artifact.kind === 'spikes-manifest');
+  const noManifest: ProjectPresentation = {
+    ...lendshed,
+    artifacts: lendshed.artifacts.filter((artifact) => artifact.kind !== 'spikes-manifest'),
+  };
+
+  it("redirects to the manifest's own address where the project has one", () => {
+    expect(manifest).toBeDefined();
+    expect(resolve('/spikes', lendshed)).toEqual({ kind: 'redirect', to: manifest!.key });
+    expect(manifest!.key).toBe('/spikes/manifest');
+  });
+
+  it("redirects to the first spike's README by id order where the project has no manifest", () => {
+    const readmes = noManifest.artifacts.filter((artifact) => artifact.kind === 'spike');
+    expect(readmes.length).toBeGreaterThan(1);
+    // Listed last in the payload, the 001 spike still leads: the order is the id's, not the payload's.
+    const reversed: ProjectPresentation = { ...noManifest, artifacts: [...noManifest.artifacts].reverse() };
+    const first = readmes.find((artifact) => artifact.path === '.planning/spikes/001-badge-reader-latency/README.md');
+    expect(first).toBeDefined();
+    expect(resolve('/spikes', noManifest)).toEqual({ kind: 'redirect', to: first!.key });
+    expect(resolve('/spikes', reversed)).toEqual({ kind: 'redirect', to: first!.key });
+  });
+
+  it('is not-found where the project has no spikes', async () => {
+    const tidemark = (await loadProject(join(FX_ROOT, '..', 'tidemark'))).presentation;
+    expect(resolve('/spikes', tidemark)).toEqual({ kind: 'not-found' });
+    expect(resolve('/spikes', shapes)).toMatchObject({ kind: 'redirect' });
+  });
+
+  it('opens each spike address as a document, never a redirect', () => {
+    for (const artifact of lendshed.artifacts.filter((a) => a.kind.startsWith('spike'))) {
+      expect(resolve(artifact.key, lendshed), artifact.key).toMatchObject({ kind: 'document', url: artifact.key });
+    }
   });
 });
