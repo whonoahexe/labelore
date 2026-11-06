@@ -391,3 +391,52 @@ describe('/api/documents carries the pause context for a pause file', () => {
     expect(pauseContext?.stop).toMatchObject({ task: 2, totalTasks: 5, status: 'paused' });
   });
 });
+
+describe('/api/documents carries the spikes context for a spike file', () => {
+  interface SpikesBody {
+    found: true;
+    spikesContext: {
+      activeKey: string | null;
+      lanes: Array<{ key: string; count: number }>;
+      counts: { validated: number; partial: number; invalidated: number; pending: number };
+      notInManifest: Array<{ folder: string }>;
+      manifest: { path: string; readable: boolean } | null;
+    } | null;
+  }
+
+  async function bodyOf(app: App, path: string): Promise<SpikesBody> {
+    const presentation = await presentationOf(app);
+    const artifact = presentation.artifacts.find((candidate) => candidate.path === path);
+    expect(artifact, path).toBeDefined();
+    const response = await documentRequest(app, artifact?.key ?? '');
+    expect(response.status).toBe(200);
+    return (await response.json()) as SpikesBody;
+  }
+
+  it("gives Lendshed's MANIFEST.md two lanes, the column totals and the folders the manifest does not list", async () => {
+    const app = await appOver(FX_ROOT);
+    const { spikesContext } = await bodyOf(app, '.planning/spikes/MANIFEST.md');
+    expect(spikesContext).not.toBeNull();
+    expect(spikesContext?.lanes.map((lane) => lane.key)).toEqual(['kiosk-handover', 'export-staging']);
+    expect(spikesContext?.counts).toEqual({ validated: 2, partial: 1, invalidated: 1, pending: 0 });
+    expect(spikesContext?.notInManifest.map((entry) => entry.folder)).toEqual(['005-pdf-receipts', 'SPIKE-006']);
+    expect(spikesContext?.manifest).toMatchObject({ path: '.planning/spikes/MANIFEST.md', readable: true });
+    expect(spikesContext?.activeKey).toBeNull();
+  });
+
+  it('gives a spike README, the wrap-up and the conventions the same page, each naming its own panel', async () => {
+    const app = await appOver(FX_ROOT);
+    const readme = await bodyOf(app, '.planning/spikes/003b-local-disk-staging/README.md');
+    expect(readme.spikesContext?.activeKey).toBe('003b-local-disk-staging');
+    const wrap = await bodyOf(app, '.planning/spikes/WRAP-UP-SUMMARY.md');
+    expect(wrap.spikesContext?.activeKey).toBe('wrap-up-summary');
+    const conventions = await bodyOf(app, '.planning/spikes/CONVENTIONS.md');
+    expect(conventions.spikesContext?.activeKey).toBe('conventions');
+  });
+
+  it('is null for a document that is not a spike file', async () => {
+    const app = await appOver(FX_ROOT);
+    const { spikesContext } = await bodyOf(app, '.planning/PROJECT.md');
+    expect(spikesContext).toBeNull();
+  });
+});

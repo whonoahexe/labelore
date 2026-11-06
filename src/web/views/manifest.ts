@@ -81,6 +81,10 @@ import type { ComposedReviews } from './reviews-page.ts';
 import type { ComposedPause } from './pause-page.ts';
 // Type-only import - the pause context is built server-side (Phase 11, 11-10).
 import type { PauseContext } from '../../presentation/pause-context.ts';
+// Type-only import - same reason as `pausePage` above (Phase 11, 11-15, sketch-053 winner A, the Spikes page).
+import type { ComposedSpikes } from './spikes-page.ts';
+// Type-only import - the spikes context is built server-side (Phase 11, 11-15).
+import type { SpikesContext } from '../../presentation/spikes-context.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -206,6 +210,11 @@ export interface ViewManifest {
    * compose one (no `pauseContext`, or the active file's lift is missing), and the page falls back to the
    * promoted-section view, which the manifest keeps as `promote`, with no notice (Phase 10 C1, X2). */
   pausePage?: (input: ViewInput) => ComposedPause | null;
+  /** Phase 11 (11-15, sketch-053 winner A): the Spikes page a manifest opts into in View mode - the one `spikes`
+   * manifest, shared by the spikes manifest, every spike README, CONVENTIONS and WRAP-UP-SUMMARY (D-01). Returns
+   * `null` when the input can't compose one (no `spikesContext`), and the page falls back to the promoted-section
+   * view, which the manifest keeps as `promote`, with no notice (Phase 10 C1, X2). */
+  spikesPage?: (input: ViewInput) => ComposedSpikes | null;
   /** Phase 10 (10-08): true for a kind whose document text must never reach View mode through the generic
    * fallback (promoted sections or the whole document) - `user-setup`, whose file can hold a pasted value
    * (CONTEXT D-11). The Source toggle stays the way to the text. See `documentHtmlAllowedInView`. */
@@ -330,6 +339,9 @@ export interface ViewInput {
    * `readAt`, the day the age counts to), built server-side and passed through from the document response -
    * `null`/absent when the artifact is not a pause file. */
   pauseContext?: PauseContextPayload | null;
+  /** Phase 11 (11-15): the Spikes page's lanes, counts, below-board folders and wrap-up, built server-side and passed
+   * through from the document response - `null`/absent when the artifact is not one of the four spike files. */
+  spikesContext?: SpikesContext | null;
 }
 
 export type ComposedBlock = { id: string; label: string } & (
