@@ -45,7 +45,27 @@ export interface OverlapLayout {
   /** The empty dashed circles of lanes that did not run, with the name's position. */
   absent: { cx: number; cy: number; r: number; labelX: number; labelY: number }[];
   squares: OverlapSquare[];
+  /** A region with more concerns than its place in the box can hold shows what fits and a "+N" count where the rest would
+   * be (the list beside the drawing holds every concern). */
+  overflow: OverlapOverflow[];
+  /** The lanes that did not run past the three the box has room for, with the position of their "+N" label; else null. */
+  absentMore: { count: number; x: number; y: number } | null;
 }
+
+export interface OverlapOverflow {
+  /** The region's bit mask. */
+  mask: number;
+  /** How many concerns of the region are not drawn as squares. */
+  count: number;
+  x: number;
+  y: number;
+  size: number;
+}
+
+/** Empty dashed circles the box has room for. */
+const ABSENT_CAP = 3;
+/** The margin kept clear at the top and bottom of the box, in box units. */
+const EDGE = 8;
 
 const BASE_WIDTH = 600;
 const BASE_HEIGHT = 480;
@@ -127,7 +147,7 @@ export function layoutOverlap(width: number, circleCount: number, marks: readonl
   const w = Number.isFinite(width) && width > 0 ? width : BASE_WIDTH;
   const k = w / BASE_WIDTH;
   const height = Math.round(BASE_HEIGHT * k);
-  if (venn === undefined) return { width: w, height, circles: [], absent: [], squares: [] };
+  if (venn === undefined) return { width: w, height, circles: [], absent: [], squares: [], overflow: [], absentMore: null };
   const P = (v: number): number => v * k;
   const circles: OverlapCircle[] = venn.c.map(([cx, cy], i) => ({
     cx: P(cx),
@@ -138,15 +158,18 @@ export function layoutOverlap(width: number, circleCount: number, marks: readonl
     anchor: venn.lab[i][2],
   }));
   const absent: OverlapLayout['absent'] = [];
-  for (let i = 0; i < absentCount && i < 3; i += 1) {
+  for (let i = 0; i < absentCount && i < ABSENT_CAP; i += 1) {
     const cx = P(548);
     const cy = P(392 - i * 90);
     absent.push({ cx, cy, r: P(34), labelX: cx, labelY: cy + P(34) + 14 });
   }
+  const absentMore =
+    absentCount > ABSENT_CAP ? { count: absentCount - ABSENT_CAP, x: P(548), y: P(392 - ABSENT_CAP * 90) } : null;
   const big = Math.max(18, 28 * k);
   const small = Math.max(12, 18 * k);
   const gap = Math.max(5, 7 * k);
   const squares: OverlapSquare[] = [];
+  const overflow: OverlapOverflow[] = [];
   const regions = new Map<number, OverlapMark[]>();
   for (const mark of marks) {
     const list = regions.get(mark.mask);
@@ -157,14 +180,27 @@ export function layoutOverlap(width: number, circleCount: number, marks: readonl
     const at = venn.at.get(mask);
     if (at === undefined) continue;
     const perRow = 3;
-    const rows: OverlapMark[][] = [];
-    for (let i = 0; i < items.length; i += perRow) rows.push(items.slice(i, i + perRow));
+    // The rows stack centred on the region's anchor, so the room is the nearer box edge twice over; what does not fit is
+    // counted, not drawn off the edge of the box (10-REVIEW WR-04).
+    const room = Math.min(P(at[1]) - P(EDGE), height - P(EDGE) - P(at[1]));
+    const maxRows = Math.max(1, Math.floor((2 * room) / (big + gap)));
+    const capacity = maxRows * perRow;
+    const counted = items.length > capacity;
+    const shown = counted ? items.slice(0, capacity - 1) : items;
+    const rows: (OverlapMark | null)[][] = [];
+    const cells: (OverlapMark | null)[] = counted ? [...shown, null] : shown;
+    for (let i = 0; i < cells.length; i += perRow) rows.push(cells.slice(i, i + perRow));
     rows.forEach((row, ri) => {
-      const larges = row.filter((m) => m.large).length;
-      const rowW = row.reduce((sum, m) => sum + (m.large ? big : small) + gap, -gap) + 22 * larges;
+      const larges = row.filter((m) => m !== null && m.large).length;
+      const rowW = row.reduce((sum, m) => sum + (m !== null && m.large ? big : small) + gap, -gap) + 22 * larges;
       let x = P(at[0]) - rowW / 2;
       const y = P(at[1]) - (rows.length * (big + gap)) / 2 + ri * (big + gap);
       for (const m of row) {
+        if (m === null) {
+          overflow.push({ mask, count: items.length - shown.length, x, y: y + (big - small) / 2, size: small });
+          x += small + gap;
+          continue;
+        }
         const size = m.large ? big : small;
         const top = y + (big - size) / 2;
         squares.push({
@@ -181,5 +217,5 @@ export function layoutOverlap(width: number, circleCount: number, marks: readonl
       }
     });
   }
-  return { width: w, height, circles, absent, squares };
+  return { width: w, height, circles, absent, squares, overflow, absentMore };
 }

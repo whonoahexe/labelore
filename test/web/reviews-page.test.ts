@@ -9,6 +9,8 @@ import { describe, expect, it } from 'vitest';
 import { composeReviews, normaliseConcern } from '../../src/web/views/reviews-page.ts';
 import type { ComposedReviews } from '../../src/web/views/reviews-page.ts';
 import { ReviewsView, reviewsHeaderProps } from '../../src/web/views/reviews-page-components.tsx';
+import { layoutOverlap } from '../../src/web/views/reviews-overlap.ts';
+import type { OverlapMark } from '../../src/web/views/reviews-overlap.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { ReviewsHandler } from '../../src/planning-repo/handlers/reviews.ts';
 import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
@@ -427,6 +429,64 @@ describe('composeReviews - growth and markup safety', () => {
     const model = composeFile('---\nreviewers: [a]\n---\n\n## constructor Review\n\n## 01-01\n\n### Concerns\n- **LOW:** a b c d\n\n## __proto__ Review\n\n## 01-01\n\n### Concerns\n- **LOW:** a b c d\n')!;
     expect(model.reviewers.map((r) => r.name)).toEqual(['constructor', '__proto__']);
     expect(model.agreed).toHaveLength(1);
+  });
+});
+
+// 10-REVIEW WR-04: a region holds as many squares as fit between the box edges; the rest are counted, and lanes that did
+// not run past the three the box has room for are counted too.
+describe('layoutOverlap - squares stay inside the box (WR-04)', () => {
+  const single = (i: number, mask: number): OverlapMark => ({ id: `c${i}`, mask, large: false, no: null });
+  const many = (count: number, mask: number): OverlapMark[] => Array.from({ length: count }, (_, i) => single(i, mask));
+
+  function inside(layout: ReturnType<typeof layoutOverlap>): void {
+    for (const sq of layout.squares) {
+      expect(sq.y, sq.id).toBeGreaterThanOrEqual(0);
+      expect(sq.y + sq.size, sq.id).toBeLessThanOrEqual(layout.height);
+      expect(sq.x, sq.id).toBeGreaterThanOrEqual(0);
+      expect(sq.x + sq.size, sq.id).toBeLessThanOrEqual(layout.width);
+    }
+    for (const more of layout.overflow) {
+      expect(more.y + more.size).toBeLessThanOrEqual(layout.height);
+      expect(more.y).toBeGreaterThanOrEqual(0);
+    }
+  }
+
+  it('draws every square of a region that fits, and counts nothing', () => {
+    const layout = layoutOverlap(600, 3, many(9, 1 << 2), 0);
+    expect(layout.squares).toHaveLength(9);
+    expect(layout.overflow).toEqual([]);
+    inside(layout);
+  });
+
+  it('keeps the squares of a crowded region inside the box and counts the rest, at 600 and at 390 pixels', () => {
+    for (const width of [600, 390, 320]) {
+      for (const circles of [1, 2, 3]) {
+        const mask = 1 << (circles - 1);
+        const layout = layoutOverlap(width, circles, many(120, mask), 0);
+        inside(layout);
+        expect(layout.overflow, `${width}/${circles}`).toHaveLength(1);
+        expect(layout.squares.length + layout.overflow[0].count).toBe(120);
+        expect(layout.overflow[0].count).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('counts the lanes that did not run past three instead of dropping them', () => {
+    expect(layoutOverlap(600, 2, [], 3).absentMore).toBeNull();
+    const layout = layoutOverlap(600, 2, [], 5);
+    expect(layout.absent).toHaveLength(3);
+    expect(layout.absentMore).toMatchObject({ count: 2 });
+  });
+});
+
+describe('the overlap drawing says what it did not draw (WR-04)', () => {
+  it('shows a "+N" count for a crowded region and keeps every concern in the list', () => {
+    const concerns = Array.from({ length: 40 }, (_, i) => `- **LOW:** distinct concern number ${i} about topic${i}`).join('\n');
+    const model = composeFile(`---\nreviewers: [claude]\n---\n\n## Claude Review\n\n## 01-01\n\n### Concerns\n${concerns}\n`)!;
+    const html = markup(model);
+    expect(html).toContain('data-more="true"');
+    expect(html).toMatch(/>\+\d+<title>/);
+    for (let i = 0; i < 40; i += 1) expect(html, `list holds ${i}`).toContain(`distinct concern number ${i} `);
   });
 });
 

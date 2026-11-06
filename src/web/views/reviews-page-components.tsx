@@ -197,6 +197,17 @@ function Drawing({
               </text>
             </g>
           ))}
+          {layout.absentMore !== null ? (
+            <text className="view-reviews-circle-name" data-small="true" x={layout.absentMore.x} y={layout.absentMore.y} textAnchor="middle">
+              {`+${layout.absentMore.count} more did not run`}
+            </text>
+          ) : null}
+          {layout.overflow.map((more) => (
+            <text key={`more${more.mask}`} className="view-reviews-no" x={more.x} y={more.y + more.size * 0.8} data-more="true">
+              {`+${more.count}`}
+              <title>{`${more.count} more in this region, in the list beside the drawing`}</title>
+            </text>
+          ))}
           {layout.squares.map((sq) => {
             const tone = toneOfMark(sq.id);
             return (
