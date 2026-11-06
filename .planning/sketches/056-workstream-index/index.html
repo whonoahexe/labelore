@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 056 — Workstream index</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 056: the workstream index and the header scope chip (VIEW-19, Phase 11 D-09..D-13). In workstream mode the
+   project's first screen is an index of workstreams under the project head; inside one, a scope chip beside the
+   project name switches workstreams and the drawer shows Shared above the workstream's own files. Three pictures:
+   cards (A), phase lanes (B), a shared-root tree (C). Text is MADE UP in the layout a real gsd-tools workstream
+   run produced on a scratch copy. Tokens come from ../themes/default.css; every colour is a token or a colour-mix. */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --neutral-fill: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; padding: 0 var(--space-0-5); background: var(--veil); overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.app-brand span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+@media (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- page atoms ---------- */
+.page { display: grid; gap: var(--space-8); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); min-width: 0; }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.meta { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.micro-label { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h2.sh { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+.btn-xs.icon { padding-inline: 0; width: var(--space-7); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } .btn-xs.icon { width: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; background: transparent; }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--neutral-fill); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); }
+.num { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.prose { max-width: 72ch; }
+.mono { font-family: var(--font-mono); }
+.vname { font-family: var(--font-mono); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+
+/* the lead and the shared status meter (048's drawing, reused) */
+.lead-line { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.lead-line b { font-family: var(--font-mono); }
+.status-meter { display: grid; gap: var(--space-1-5); min-width: 0; }
+.status-meter .cells { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.status-meter .cells .sq { --sq: var(--space-5); }
+.status-meter .cap { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); letter-spacing: var(--ls-wider); }
+.status-meter .cap b { color: var(--foreground); }
+
+/* the disagreement: the file's Status line beside the box count, never merged; quiet, not an alarm */
+.disagree { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; border: 1px dashed var(--muted-foreground); min-width: 0; }
+.disagree > div { display: grid; gap: var(--space-1); align-content: start; padding: var(--space-3) var(--space-4); min-width: 0; }
+.disagree .ne { display: grid; place-items: center; padding: 0 var(--space-2); border-inline: 1px dashed var(--border); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-7); }
+.disagree .foot { grid-column: 1 / -1; padding: var(--space-2) var(--space-4); border-top: 1px dashed var(--border); color: var(--muted-foreground); }
+.disagree .val { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.agree { display: inline-flex; gap: var(--space-2); align-items: center; }
+
+/* the step dock (shared) */
+.dock { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.dock-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.dock-head h3 { font-size: inherit; font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.dock-head .x { margin-left: auto; }
+.dock > h3 { font-size: inherit; font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.fields { display: grid; gap: var(--space-2); }
+.fields > div { display: grid; grid-template-columns: calc(var(--space-8) * 3.5) minmax(0, 1fr); gap: var(--space-3); }
+.fields dt { padding-top: var(--space-0-5); }
+.fields dd { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 42rem) { .fields > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-0-5); } }
+.dock-empty { padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); color: var(--muted-foreground); }
+.vfacts { display: grid; gap: var(--space-2); }
+.vfacts li { display: grid; grid-template-columns: var(--icon) minmax(0, 1fr); gap: var(--space-2); align-items: center; min-width: 0; overflow-wrap: anywhere; }
+.vfacts .i { color: var(--muted-foreground); }
+.cell .status-chip, .bar summary .status-chip, .tag .status-chip { white-space: normal; }
+.goes { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); align-items: baseline; }
+
+/* closed bars + the In the source only strip (shared) */
+.bars-wrap { display: grid; gap: var(--space-3); }
+.bars { display: grid; border-top: 1px solid var(--border); }
+.bar-group { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-8); padding: var(--space-3) var(--space-2) var(--space-1); border-bottom: 1px solid var(--border-faint); }
+.bar { border-bottom: 1px solid var(--border); }
+.bar > summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding-inline: var(--space-2); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); min-width: 0; }
+.bar > summary > span:not(.sq):not(.n) { min-width: 0; overflow-wrap: anywhere; }
+.bar > summary::-webkit-details-marker { display: none; }
+.bar > summary:hover { background: var(--state-hover); }
+.bar[open] > summary .chev { transform: rotate(90deg); }
+.bar > summary .n { margin-left: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.bar-body { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--icon) + var(--space-4)); min-width: 0; }
+@media (max-width: 42rem) { .bar-body { padding-left: var(--space-2); } }
+.only { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); }
+.only a { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; text-decoration: underline; text-underline-offset: var(--space-0-5); text-decoration-color: var(--border); }
+.blocks { display: grid; gap: var(--space-3); min-width: 0; }
+/* the shipped copy-command row (10-10): the command as selectable mono text, then the Copy command button */
+.copy-command { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-3); border: 1px solid var(--border-faint); background: var(--veil); min-width: 0; }
+.copy-command code { flex: 1 1 16rem; background: none; padding: 0; font-size: var(--fs-2); line-height: var(--lh-snug); min-width: 0; }
+.cmd-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+
+/* the missing tone (document content: the missing family only) */
+:root { --missing-border: color-mix(in oklch, var(--missing-fill) 55%, var(--border)); }
+.status-chip[data-tone='missing'] { border-color: var(--missing-border); color: var(--missing-fill); background: transparent; }
+.sq[data-tone='missing'] { background: transparent; border: 2px solid var(--missing-fill); }
+.status-chip.big { font-size: var(--fs-7); letter-spacing: var(--ls-tight); padding: var(--space-1-5) var(--space-3); }
+.status-chip.big .sq { --sq: var(--space-3); }
+.facts { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); }
+.facts span { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.facts b { color: var(--foreground); font-weight: var(--fw-semibold); }
+.score { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.word { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.tgt { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: 0 var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); white-space: nowrap; }
+.steps { display: grid; gap: var(--space-2); counter-reset: none; }
+.step { display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.step .no { font-family: var(--font-mono); font-weight: var(--fw-semibold); color: var(--muted-foreground); }
+.step .tx { min-width: 0; overflow-wrap: anywhere; }
+.step .tx .tgt { margin-left: var(--space-1); }
+.zero { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--muted-foreground); }
+
+
+/* ---------- 056 shared: the header with the project switcher (039 A) and the scope chip beside it ---------- */
+:root { --missing-border: color-mix(in oklch, var(--missing-fill) 55%, var(--border)); }
+.app-head { position: relative; }
+.brand-trigger { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: var(--space-1) var(--space-2); border: 1px solid transparent; font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.brand-trigger:hover { border-color: var(--border); }
+.scope-chip { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: var(--space-1) var(--space-2-5); border: 1px solid var(--foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); white-space: nowrap; }
+.scope-chip:hover, .scope-chip[aria-expanded='true'] { background: var(--muted); }
+.scope-chip .k { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.pop { position: absolute; top: calc(100% + var(--space-1)); z-index: 30; width: min(calc(var(--space-8) * 11), calc(100vw - var(--space-8))); display: grid; padding: var(--space-2); border: 1px solid var(--border); background: var(--background); box-shadow: 0 var(--space-2) var(--space-6) color-mix(in oklch, var(--foreground) 12%, transparent); }
+.pop .micro-label { padding: var(--space-1-5) var(--space-2) var(--space-1); }
+.pop button { display: grid; grid-template-columns: var(--sq) minmax(0, 1fr) auto; gap: var(--space-2); align-items: center; padding: var(--space-2); text-align: left; }
+.pop button:hover { background: var(--state-hover); }
+.pop button[aria-current='true'] { background: var(--muted); }
+.pop .sub { grid-column: 2 / -1; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.pop hr { border: 0; border-top: 1px solid var(--border-faint); margin: var(--space-1) 0; }
+@media (max-width: 42rem) { .pop { left: var(--space-4) !important; right: var(--space-4); width: auto; } .app-head { flex-wrap: wrap; } }
+.active-mark { display: inline-flex; gap: var(--space-1); align-items: center; padding: 0 var(--space-1-5); border: 1px solid var(--foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.meter2 { display: grid; gap: var(--space-0-5); min-width: 0; }
+.meter2 .cells { display: flex; gap: 2px; }
+.meter2 .cells span { flex: 1; height: var(--space-2); border: 1px solid var(--border); }
+.meter2 .cells span.on { background: var(--primary); border-color: var(--primary); }
+.meter2 .cap { display: flex; justify-content: space-between; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.meter2 .cap b { color: var(--foreground); }
+.plain-bar { height: var(--space-2); border: 1px solid var(--border); position: relative; }
+.plain-bar i { position: absolute; inset: 0 auto 0 0; background: var(--muted-foreground); }
+.disc { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); border-left: 2px dashed var(--muted-foreground); padding-left: var(--space-2); }
+.completed { border-top: 1px solid var(--border); }
+.completed > summary { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding-inline: var(--space-2); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); }
+.completed > summary::-webkit-details-marker { display: none; }
+.completed[open] > summary .chev { transform: rotate(90deg); }
+.completed > summary .n { margin-left: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.completed ul { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-2) var(--space-4) calc(var(--icon) + var(--space-4)); }
+.completed li { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); align-items: baseline; }
+.project-head { display: grid; gap: var(--space-3); max-width: 72ch; }
+.project-head .what { font-size: var(--fs-fluid-1); line-height: var(--lh-snug); }
+.pointer-note { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); align-items: center; }
+
+/* =====================================================================
+   A: Cards — one card per workstream (D-10 literally): name, current phase, status, both progress counts
+   ===================================================================== */
+.wcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--space-8) * 10)), 1fr)); gap: var(--space-3); }
+.wcard { display: grid; gap: var(--space-3); align-content: start; padding: var(--space-4); border: 1px solid var(--border); background: var(--card); text-align: left; min-width: 0; }
+.wcard:hover { background: color-mix(in oklch, var(--card) 80%, var(--muted)); }
+.wcard.is-active { border: 2px solid var(--foreground); }
+.wcard .top { display: flex; align-items: center; gap: var(--space-2); justify-content: space-between; }
+.wcard .vname { font-size: var(--fs-7); letter-spacing: var(--ls-tight); }
+.wcard .phase { display: grid; gap: var(--space-0-5); }
+.wcard .phase .nm { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.wcard.empty { border-style: dashed; background: transparent; }
+
+/* =====================================================================
+   B: Phase lanes — each workstream a lane of its roadmap's phases, so where each stands is one picture
+   ===================================================================== */
+.wlanes { display: grid; border: 1px solid var(--border); }
+.wlane { display: grid; grid-template-columns: calc(var(--space-8) * 7) minmax(0, 1fr) calc(var(--space-8) * 4.5); gap: var(--space-4); align-items: center; padding: var(--space-3) var(--space-4); text-align: left; min-width: 0; }
+.wlane + .wlane { border-top: 1px solid var(--border-faint); }
+.wlane:hover { background: var(--state-hover); }
+.wlane.is-active { box-shadow: inset 3px 0 0 var(--foreground); }
+.wlane .who { display: grid; gap: var(--space-0-5); min-width: 0; }
+.wlane .who .vname { font-size: var(--fs-4); }
+.pcells { display: flex; gap: var(--space-1); min-width: 0; }
+.pcell { flex: 1 1 0; min-width: var(--space-6); display: grid; gap: var(--space-0-5); padding: var(--space-1) var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); overflow: hidden; }
+.pcell .pn { font-weight: var(--fw-semibold); }
+.pcell .pt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted-foreground); }
+.pcell[data-tone='complete'] { background: var(--primary); border-color: var(--primary); color: var(--background); }
+.pcell[data-tone='complete'] .pt { color: color-mix(in oklch, var(--background) 80%, transparent); }
+.pcell[data-tone='in-flight'] { border: 2px solid var(--in-flight-fill); }
+.pcell[data-tone='quiet'] { border-style: dashed; }
+.pcells.none { padding: var(--space-2) var(--space-3); border: 1px dashed var(--border); color: var(--muted-foreground); background: var(--hatch); }
+.wlane .nums { display: grid; gap: var(--space-0-5); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.wlane .nums b { color: var(--foreground); }
+@media (max-width: 52rem) { .wlane { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); } .pcell .pt { display: none; } }
+
+/* =====================================================================
+   C: Shared root — a tree figure: the project's shared files at the root, each workstream a branch with its own
+   files and its progress; a branch opens its dashboard
+   ===================================================================== */
+.tree { display: grid; gap: 0; min-width: 0; }
+.root-node { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; padding: var(--space-4); border: 1px solid var(--foreground); background: var(--muted); }
+.root-node .files { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.branches { display: grid; grid-template-columns: repeat(var(--k), minmax(0, 1fr)); gap: var(--space-3); position: relative; padding-top: var(--space-8); }
+.branches::before { content: ''; position: absolute; top: 0; left: calc(100% / var(--k) / 2); right: calc(100% / var(--k) / 2); height: var(--space-4); border: 2px solid var(--foreground); border-top: 0; border-left: 0; border-right: 0; }
+.branches::after { content: ''; position: absolute; top: 0; left: 50%; height: var(--space-4); border-left: 2px solid var(--foreground); }
+.branch { position: relative; display: grid; gap: var(--space-3); align-content: start; padding: var(--space-3); border: 1px solid var(--border); background: var(--card); text-align: left; min-width: 0; }
+.branch::before { content: ''; position: absolute; bottom: 100%; left: 50%; height: var(--space-4); border-left: 2px solid var(--foreground); }
+.branch:hover { background: color-mix(in oklch, var(--card) 80%, var(--muted)); }
+.branch.is-active { border: 2px solid var(--foreground); }
+.branch.empty { border-style: dashed; background: transparent; }
+.branch .vname { font-size: var(--fs-4); }
+.ring { width: calc(var(--space-8) * 2); height: calc(var(--space-8) * 2); }
+.ring circle { fill: none; stroke-width: 6; }
+.ring .bg { stroke: var(--border); } .ring .fg { stroke: var(--primary); }
+.ring text { font-family: var(--font-mono); font-size: 13px; font-weight: 600; fill: var(--foreground); }
+.own { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.own span, .root-node .files span { display: inline-flex; padding: 0 var(--space-1-5); border: 1px solid var(--border-faint); font-family: var(--font-mono); font-size: var(--fs-2); background: var(--background); }
+@media (max-width: 52rem) {
+  .branches { grid-template-columns: minmax(0, 1fr); padding-top: var(--space-4); padding-left: var(--space-5); }
+  .branches::before { left: var(--space-2); right: auto; top: 0; bottom: var(--space-6); height: auto; border: 0; border-left: 2px solid var(--foreground); }
+  .branches::after { display: none; }
+  .branch::before { bottom: auto; top: var(--space-6); left: calc(var(--space-5) * -1 + var(--space-2)); width: calc(var(--space-5) - var(--space-2)); height: 0; border-left: 0; border-top: 2px solid var(--foreground); }
+}
+
+/* ---------- inside a workstream: the scoped dashboard head and the drawer with Shared above the workstream ---------- */
+.inside { display: grid; grid-template-columns: calc(var(--space-8) * 8) minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+.drawer { display: grid; gap: var(--space-4); padding: var(--space-3); border: 1px solid var(--border); background: var(--sidebar); }
+.drawer .grp-list { display: grid; gap: var(--space-0-5); }
+.drawer .grp-list a { display: flex; gap: var(--space-2); padding: var(--space-1) var(--space-2); font-family: var(--font-mono); font-size: var(--fs-2); }
+.drawer .grp-list a:hover { background: var(--state-hover); }
+.drawer .grp-list.shared { padding-bottom: var(--space-3); border-bottom: 1px dashed var(--border); }
+.scoped { display: grid; gap: var(--space-4); }
+.scope-line { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; }
+@media (max-width: 52rem) { .inside { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">056 workstreams</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Cards</a>
+    <a data-tab="b" href="#b">B: Phase lanes</a>
+    <a data-tab="c" href="#c">C: Shared root ★ Selected</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="pointer">Index, active pointer on disk</button><button data-state="nopointer">Index, no pointer file</button><button data-state="inside">Inside a workstream (scope chip + drawer)</button></span>
+</nav>
+
+<header class="app-head" id="apphead"></header>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+// MADE-UP workstream project in the layout GSD's `workstream create | set | complete` produced on a scratch copy
+// (read for shape only): ROADMAP.md, STATE.md, REQUIREMENTS.md and phases/ move into workstreams/<name>/; PROJECT.md,
+// config.json, milestones/, research/, codebase/, todos/ stay at the root; a new workstream has a STATE.md and an
+// empty phases/ (no ROADMAP); a completed one is archived to milestones/ws-<name>-<date>/ (STATE.md + phases/).
+// `.planning/active-workstream` exists only when the pointer was set outside an agent session.
+const WS = [
+  { name: 'payments', status: 'executing', phase: { n: 3, title: 'Card Deposits' }, phases: [2, 5], plans: [9, 14], roadmap: ['Deposit Ledger', 'Refund Rules', 'Card Deposits', 'Payouts', 'Statements'], updated: '2026-04-20' },
+  { name: 'check-in', status: 'verifying', phase: { n: 6, title: 'Offline Scans' }, phases: [4, 6], plans: [22, 22], roadmap: ['Labels', 'Phone Scan', 'Kiosk Mode', 'Returns Desk', 'Damage Notes', 'Offline Scans'], updated: '2026-04-18', note: 'Every plan has a summary; STATE counts 4 of 6 phases complete.' },
+  { name: 'reminders', status: 'planning', phase: { n: 2, title: 'Email Digest' }, phases: [1, 3], plans: [4, 8], roadmap: ['Overdue Rules', 'Email Digest', 'Opt-out'], updated: '2026-04-11' },
+  { name: 'exports-v2', status: 'Not started', phase: null, phases: null, plans: null, roadmap: null, updated: '2026-04-21' },
+];
+const DONE = [{ name: 'member-profiles', folder: 'milestones/ws-member-profiles-2026-03-19', phases: 4 }, { name: 'sign-in', folder: 'milestones/ws-sign-in-2026-02-27', phases: 3 }];
+const SHARED = ['PROJECT.md', 'config.json', 'milestones/', 'research/', 'codebase/', 'todos/'];
+const OWN = (w) => (w.roadmap ? ['ROADMAP.md', 'STATE.md', 'REQUIREMENTS.md', `phases/ (${w.roadmap.length})`] : ['STATE.md', 'phases/ (empty)']);
+
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') === 'dark' ? 'dark' : 'light';
+const S = { state: ['pointer', 'nopointer', 'inside'].includes(params.get('state')) ? params.get('state') : 'pointer', pop: false, scope: 'payments' };
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const active = () => (S.state === 'pointer' || S.state === 'inside' ? 'payments' : null);
+const ICON = { chev: '<svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>', down: '<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>' };
+const statusTone = (w) => (!w.roadmap ? 'quiet' : w.status === 'complete' ? 'complete' : 'in-flight');
+
+function header() {
+  const inside = S.state === 'inside';
+  return `<span class="app-brand"><i></i>Labelore</span>
+    <button class="brand-trigger" data-act="noop">Lendshed ${ICON.down}</button>
+    ${inside ? `<button class="scope-chip" data-act="pop" aria-expanded="${S.pop}"><span class="k">ws:</span>${esc(S.scope)} ${ICON.down}</button>` : '<span class="meta">4 workstreams</span>'}
+    <nav class="app-nav"><a href="#" data-act="noop">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Research</a><a href="#" data-act="noop">Files</a></nav>
+    ${inside && S.pop ? `<div class="pop" style="left:calc(var(--space-fluid-3) + var(--space-8) * 6)">
+      <span class="micro-label">Workstreams</span>
+      ${WS.map((w) => `<button data-act="scope" data-w="${w.name}" aria-current="${S.scope === w.name}"><span class="sq" data-tone="${statusTone(w)}"></span><span class="vname">${esc(w.name)}</span>${active() === w.name ? '<span class="active-mark">Active</span>' : '<span></span>'}<span class="sub">${w.phase ? `Phase ${w.phase.n} · ${esc(w.status)}` : 'Not started · no roadmap'}</span></button>`).join('')}
+      <hr><button data-act="scope" data-w="*"><span></span><span>All workstreams</span><span></span><span class="sub">The workstream index</span></button></div>` : ''}`;
+}
+function projectHead(extra = '') {
+  return `<div class="project-head">
+    <nav class="crumbs"><span aria-current="page">Lendshed</span></nav>
+    <p class="eyebrow">Project · workstream mode</p>
+    <h1>Lendshed</h1>
+    <p class="what">A lending library for community tool sheds: members borrow, stewards keep the shelves honest.</p>
+    ${pointerNote()}${extra}
+  </div>`;
+}
+function pointerNote() {
+  if (active()) return `<div class="pointer-note"><span class="meta">Active workstream <b>payments</b>, from <code>.planning/active-workstream</code></span></div>`;
+  return `<div class="pointer-note"><span class="meta">No active workstream on disk: GSD keeps the active one per agent session, which Labelore cannot see.</span></div>`;
+}
+const completed = () => `<details class="completed"><summary>${ICON.chev}<span>Completed</span><span class="n">${DONE.length} workstreams</span></summary><ul>${DONE.map((d) => `<li><span class="vname">${esc(d.name)}</span><span class="meta">${esc(d.folder)}/</span><span class="meta">${d.phases} phases archived</span></li>`).join('')}</ul></details>`;
+const meter = (label, pair) => pair ? `<div class="meter2"><div class="cap"><span>${label}</span><span><b>${pair[0]}</b> / ${pair[1]}</span></div><div class="plain-bar"><i style="width:${(pair[0] / pair[1]) * 100}%"></i></div></div>` : '';
+const phaseCells = (w) => w.roadmap ? `<div class="meter2"><div class="cap"><span>Phases</span><span><b>${w.phases[0]}</b> / ${w.phases[1]}</span></div><div class="cells">${w.roadmap.map((_, i) => `<span class="${i < w.phases[0] ? 'on' : ''}"></span>`).join('')}</div></div>` : '';
+const chip = (w) => { const t = statusTone(w); return `<span class="status-chip" data-tone="${t}">${esc(w.status)}</span>`; };
+
+const VIEWS = {}; const ACTS = {};
+function insideView(frame) {
+  const w = WS.find((x) => x.name === S.scope);
+  return `<div class="page">
+    <div class="inside">
+      <aside class="drawer" aria-label="Planning files">
+        <div class="grp-list shared"><span class="micro-label">Shared · project</span>${SHARED.map((f) => `<a href="#" data-act="noop">${esc(f)}</a>`).join('')}</div>
+        <div class="grp-list"><span class="micro-label">ws: ${esc(w.name)}</span>${OWN(w).map((f) => `<a href="#" data-act="noop">${esc(f)}</a>`).join('')}</div>
+      </aside>
+      <div class="scoped">
+        <nav class="crumbs"><span>Lendshed</span><span>/</span><span>Workstreams</span><span>/</span><span aria-current="page">${esc(w.name)}</span></nav>
+        <p class="eyebrow">Workstream · ${esc(w.name)}</p><h1>${w.phase ? esc(w.phase.title) : esc(w.name)}</h1>
+        <div class="scope-line"><span class="addr meta">/lendshed/workstreams/${esc(w.name)}/</span>${chip(w)}${active() === w.name ? '<span class="active-mark">Active</span>' : ''}</div>
+        ${w.roadmap ? `${phaseCells(w)}${meter('Plans', w.plans)}` : '<p class="dock-empty">No ROADMAP.md yet: this workstream has a STATE.md and an empty phases folder.</p>'}
+        <p class="source-note prose">Below here the normal dashboard runs, scoped to this workstream’s STATE and ROADMAP. Shared files open at their usual project URLs. (Index frame: ${frame}.)</p>
+      </div>
+    </div></div>`;
+}
+
+// ---------- A: Cards ----------
+VIEWS.a = () => {
+  if (S.state === 'inside') return insideView('A cards');
+  return `<div class="page">${projectHead()}
+    <div class="wcards">${WS.map((w) => `<button class="wcard${active() === w.name ? ' is-active' : ''}${w.roadmap ? '' : ' empty'}" data-act="enter" data-w="${w.name}">
+      <div class="top"><span class="vname">${esc(w.name)}</span>${active() === w.name ? '<span class="active-mark">Active</span>' : ''}</div>
+      <div class="phase">${w.phase ? `<span class="micro-label">Phase ${w.phase.n} of ${w.roadmap.length}</span><span class="nm">${esc(w.phase.title)}</span>` : '<span class="micro-label">No roadmap yet</span><span class="source-note">STATE.md only</span>'}</div>
+      <div class="meta-row">${chip(w)}<span class="meta">updated ${w.updated}</span></div>
+      ${phaseCells(w)}${meter('Plans', w.plans)}
+      ${w.note ? `<span class="disc">${esc(w.note)}</span>` : ''}
+      <span class="meta">/lendshed/workstreams/${esc(w.name)}/</span></button>`).join('')}</div>
+    ${completed()}</div>`;
+};
+
+// ---------- B: Phase lanes ----------
+VIEWS.b = () => {
+  if (S.state === 'inside') return insideView('B phase lanes');
+  return `<div class="page">${projectHead()}
+    <div class="wlanes">${WS.map((w) => `<button class="wlane${active() === w.name ? ' is-active' : ''}" data-act="enter" data-w="${w.name}">
+      <div class="who"><span class="vname">${esc(w.name)} ${active() === w.name ? '<span class="active-mark">Active</span>' : ''}</span><div class="meta-row">${chip(w)}</div></div>
+      ${w.roadmap ? `<div class="pcells">${w.roadmap.map((t, i) => `<span class="pcell" data-tone="${i < w.phases[0] ? 'complete' : i + 1 === w.phase.n ? 'in-flight' : 'quiet'}" title="Phase ${i + 1}: ${esc(t)}"><span class="pn">${i + 1}${i + 1 === w.phase.n ? ' ◆' : ''}</span><span class="pt">${esc(t)}</span></span>`).join('')}</div>` : '<div class="pcells none">No ROADMAP.md yet</div>'}
+      <div class="nums">${w.roadmap ? `<span>Phases <b>${w.phases[0]}/${w.phases[1]}</b></span><span>Plans <b>${w.plans[0]}/${w.plans[1]}</b></span>` : '<span>STATE.md only</span>'}<span>updated ${w.updated}</span>${w.note ? `<span class="disc">${esc(w.note)}</span>` : ''}</div>
+    </button>`).join('')}</div>
+    <div class="split-key" style="display:flex;flex-wrap:wrap;gap:var(--space-1) var(--space-4);font-family:var(--font-mono);font-size:var(--fs-2);color:var(--muted-foreground)"><span><span class="sq" data-tone="complete"></span> complete (STATE count)</span><span><span class="sq" data-tone="in-flight"></span> ◆ current phase</span><span><span class="sq" data-tone="quiet"></span> ahead</span></div>
+    ${completed()}</div>`;
+};
+
+// ---------- C: Shared root ----------
+VIEWS.c = () => {
+  if (S.state === 'inside') return insideView('C shared root');
+  const ring = (w) => { if (!w.roadmap) return ''; const r = 26; const c = 2 * Math.PI * r; const f = w.phases[0] / w.phases[1]; return `<svg class="ring" viewBox="0 0 64 64" aria-label="${w.phases[0]} of ${w.phases[1]} phases"><circle class="bg" cx="32" cy="32" r="${r}"/><circle class="fg" cx="32" cy="32" r="${r}" stroke-dasharray="${c * f} ${c}" transform="rotate(-90 32 32)"/><text x="32" y="36" text-anchor="middle">${w.phases[0]}/${w.phases[1]}</text></svg>`; };
+  return `<div class="page">${projectHead()}
+    <div class="tree">
+      <div class="root-node"><div><span class="micro-label">Shared by every workstream · .planning/</span><span class="vname" style="display:block;font-size:var(--fs-7)">Lendshed</span></div><span class="meta">${pointerNote().includes('Active') ? 'active-workstream → payments' : 'no active-workstream file'}</span>
+        <div class="files">${SHARED.map((f) => `<span>${esc(f)}</span>`).join('')}</div></div>
+      <div class="branches" style="--k:${WS.length}">${WS.map((w) => `<button class="branch${active() === w.name ? ' is-active' : ''}${w.roadmap ? '' : ' empty'}" data-act="enter" data-w="${w.name}">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-2)"><span class="vname">${esc(w.name)}</span>${active() === w.name ? '<span class="active-mark">Active</span>' : ''}</div>
+        <div style="display:flex;gap:var(--space-3);align-items:center">${ring(w)}<div class="phase" style="display:grid;gap:var(--space-0-5)">${w.phase ? `<span class="micro-label">Phase ${w.phase.n}</span><span style="font-weight:var(--fw-semibold)">${esc(w.phase.title)}</span>` : '<span class="micro-label">No roadmap yet</span>'}${chip(w)}</div></div>
+        ${meter('Plans', w.plans)}${w.note ? `<span class="disc">${esc(w.note)}</span>` : ''}
+        <div class="own">${OWN(w).map((f) => `<span>${esc(f)}</span>`).join('')}</div></button>`).join('')}</div>
+    </div>
+    ${completed()}</div>`;
+};
+
+// ---------- render orchestration ----------
+ACTS.enter = (el) => { S.scope = el.dataset.w; S.state = 'inside'; S.pop = false; render(); window.scrollTo(0, 0); };
+ACTS.pop = () => { S.pop = !S.pop; render(); };
+ACTS.scope = (el) => { if (el.dataset.w === '*') { S.state = active() ? 'pointer' : 'pointer'; S.pop = false; return render(); } S.scope = el.dataset.w; S.pop = false; render(); };
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY; const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.getElementById('apphead').innerHTML = header();
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  window.scrollTo(0, y);
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) { if (S.pop) { S.pop = false; render(); } return; }
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; S.pop = S.state === 'inside'; return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.pop) { S.pop = false; render(); } });
+window.addEventListener('hashchange', render);
+if (S.state === 'inside') S.pop = true;
+render();
+</script>
+</body>
+</html>
