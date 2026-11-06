@@ -6,7 +6,7 @@ import { readFile } from 'node:fs/promises';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { buildSpikesContext } from '../../src/presentation/spikes-context.ts';
 import {
@@ -14,26 +14,32 @@ import {
   fileWords,
   requirementWords,
 } from '../../src/web/views/spikes-page.ts';
-import type { ComposedSpikes, ComposedSpikesTile } from '../../src/web/views/spikes-page.ts';
-import { SpikesView, spikesHeaderProps } from '../../src/web/views/spikes-page-components.tsx';
+import type { ComposedSpikes, ComposedSpikesSheet, ComposedSpikesSpikeSheet, ComposedSpikesTile } from '../../src/web/views/spikes-page.ts';
+import { SheetBody, SpikesView, spikesHeaderProps } from '../../src/web/views/spikes-page-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
+import type { DocumentSectionGroup } from '../../src/web/views/document-sections.ts';
 import { loadFixtureProject } from '../helpers/fixture-project.ts';
 import { loadShapesProject } from '../helpers/shapes-project.ts';
 
 const MANIFEST = '.planning/spikes/MANIFEST.md';
 const README_001 = '.planning/spikes/001-badge-reader-latency/README.md';
 
-function inputOf(presentation: ProjectPresentation, path = MANIFEST): ViewInput {
-  const kind = path === MANIFEST ? 'spikes-manifest' : 'spike';
+function inputOf(presentation: ProjectPresentation, path = MANIFEST, groups: DocumentSectionGroup[] = []): ViewInput {
+  const artifact = presentation.artifacts.find((candidate) => candidate.path === path);
   return {
-    kind,
-    frontmatter: {},
-    structured: {},
-    groups: [],
+    kind: artifact?.kind ?? (path === MANIFEST ? 'spikes-manifest' : 'spike'),
+    frontmatter: artifact?.frontmatter ?? {},
+    structured: artifact?.structured ?? {},
+    groups,
     planSegments: [],
     spikesContext: buildSpikesContext(presentation, path),
   };
 }
+
+const README_003B = '.planning/spikes/003b-local-disk-staging/README.md';
+const WRAP_UP = '.planning/spikes/WRAP-UP-SUMMARY.md';
+const CONVENTIONS = '.planning/spikes/CONVENTIONS.md';
+const group = (heading: string | null, html: string): DocumentSectionGroup => ({ id: heading === null ? null : heading.toLowerCase().split(' ').join('-'), heading, html: `<h2>${heading ?? ''}</h2>${html}` });
 
 function planted(presentation: ProjectPresentation, change: (copy: ProjectPresentation) => void): ProjectPresentation {
   const copy = structuredClone(presentation);
@@ -41,8 +47,8 @@ function planted(presentation: ProjectPresentation, change: (copy: ProjectPresen
   return copy;
 }
 
-function modelOf(presentation: ProjectPresentation, path = MANIFEST): ComposedSpikes {
-  const model = composeSpikes(inputOf(presentation, path));
+function modelOf(presentation: ProjectPresentation, path = MANIFEST, groups: DocumentSectionGroup[] = []): ComposedSpikes {
+  const model = composeSpikes(inputOf(presentation, path, groups));
   expect(model).not.toBeNull();
   return model!;
 }
@@ -264,6 +270,221 @@ describe('SpikesView: static markup', () => {
 });
 
 // ---------------------------------------------------------------------------
+// 11-16: the sheet. A spike README, the wrap-up and the conventions open over the board at their own address.
+// ---------------------------------------------------------------------------
+
+const sheetOf = (model: ComposedSpikes): ComposedSpikesSheet => {
+  expect(model.sheet).not.toBeNull();
+  return model.sheet!;
+};
+const spikeSheetOf = (model: ComposedSpikes): ComposedSpikesSpikeSheet => {
+  const sheet = sheetOf(model);
+  expect(sheet.kind).toBe('spike');
+  return sheet as ComposedSpikesSpikeSheet;
+};
+const renderBody = (sheet: ComposedSpikesSheet): string =>
+  render(
+    createElement(SheetBody, {
+      sheet,
+      titleId: 'sheet-title',
+      renderHtml: (html: string) => createElement('div', { 'data-doc': 'true' }, html),
+    }),
+  );
+const lift = (copy: ProjectPresentation, path: string): Record<string, unknown> =>
+  (copy.artifacts.find((artifact) => artifact.path === path)!.structured.spikes as Record<string, Record<string, unknown>>).readme;
+
+describe('composeSpikes: the sheet at a spike README', () => {
+  it("opens 003b's sheet with the manifest's and the README's verdicts apart, never merged", async () => {
+    const model = modelOf(await lendshed(), README_003B);
+    const sheet = spikeSheetOf(model);
+    expect(sheet).toMatchObject({
+      eyebrow: 'Spike 003b · export-staging · comparison',
+      title: 'local-disk-staging',
+      address: '003b-local-disk-staging/README.md',
+      closeTo: '/spikes/manifest',
+      focus: '003b-local-disk-staging',
+      verdict: { word: 'Validated', tone: 'complete', freeText: '' },
+    });
+    expect(sheet.disagreement).toMatchObject({
+      manifest: { label: 'MANIFEST.md', value: 'VALIDATED' },
+      readme: { label: 'README.md', value: 'PENDING (needs a recording)' },
+    });
+    const markup = renderBody(sheet);
+    expect(markup).toContain('Verdict · MANIFEST.md');
+    expect(markup).toContain('Verdict · README.md');
+    expect(textOf(markup)).toContain('VALIDATED');
+    expect(textOf(markup)).toContain('PENDING (needs a recording)');
+    expect(markup).toContain('differs from');
+    expect(markup).toContain('aria-hidden="true"');
+  });
+
+  it('draws no disagreement block where the two files agree', async () => {
+    const sheet = spikeSheetOf(modelOf(await lendshed(), README_001));
+    expect(sheet.disagreement).toBeNull();
+    expect(renderBody(sheet)).not.toContain('record-disagreement');
+  });
+
+  it("shows 001's id, idea and type, Given / When / Then, the files with their kind and size, and the by-name line", async () => {
+    const results = group('Results', '<p>Validated. The slowest cold lookup took 840 ms.</p>');
+    const trail = group('Investigation Trail', '<p>Cold lookups were the slow ones.</p>');
+    const model = modelOf(await lendshed(), README_001, [group('What This Validates', '<p>x</p>'), group('Research', '<p>r</p>'), results, trail]);
+    const sheet = spikeSheetOf(model);
+    expect(sheet.eyebrow).toBe('Spike 001 · kiosk-handover · standard');
+    expect(sheet.validates).toMatchObject({ kind: 'gwt', given: expect.stringContaining('badge on the reader') });
+    expect(sheet.files.map((file) => [file.name, file.kind])).toEqual([
+      ['README.md', 'notes'],
+      ['out/latency.csv', 'output'],
+      ['probe.sh', 'script'],
+    ]);
+    for (const file of sheet.files) expect(file.size).toMatch(/^\d+(\.\d)? (B|KB|MB)$/);
+    expect(sheet.filesTitle).toBe('Files in 001-badge-reader-latency/');
+    expect(sheet.tags).toEqual(['kiosk', 'latency']);
+    // Results as written; the remaining sections become closed bars, the two the sheet draws itself do not.
+    expect(sheet.resultsHtml).toContain('840 ms');
+    expect(sheet.bars.map((bar) => bar.title)).toEqual(['Research', 'Investigation Trail']);
+    const markup = renderBody(sheet);
+    for (const word of ['Given', 'When', 'Then', 'What this validates', 'Results', 'Related']) expect(markup).toContain(word);
+    expect(markup).toContain('Listed by name only. Labelore never runs or opens these files.');
+    expect(markup).toContain('Files in 001-badge-reader-latency/');
+    expect(markup).toContain('<details class="view-spikes-bar">');
+    expect(markup).not.toContain('<details class="view-spikes-bar" open');
+  });
+
+  it('lists a script and an output by name with no anchor, and issues no request for them', async () => {
+    const sheet = spikeSheetOf(modelOf(await lendshed(), README_001));
+    const markup = renderBody(sheet);
+    const files = markup.slice(markup.indexOf('view-spikes-files'));
+    const rows = files.slice(0, files.indexOf('Listed by name only'));
+    expect(rows).toContain('probe.sh');
+    expect(rows).toContain('out/latency.csv');
+    expect(rows).not.toContain('<a ');
+    expect(rows).not.toContain('href=');
+    for (const file of sheet.files) expect(Object.keys(file).sort()).toEqual(['kind', 'name', 'size']);
+    const spy = vi.fn();
+    const original = globalThis.fetch;
+    globalThis.fetch = spy as unknown as typeof fetch;
+    try {
+      renderBody(sheet);
+    } finally {
+      globalThis.fetch = original;
+    }
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('keeps a validates with no Given whole', async () => {
+    const whole = planted(await lendshed(), (copy) => {
+      lift(copy, README_001).validates = { whole: 'Badge lookups feel instant on the kiosk' };
+    });
+    const sheet = spikeSheetOf(modelOf(whole, README_001));
+    expect(sheet.validates).toEqual({ kind: 'whole', text: 'Badge lookups feel instant on the kiosk' });
+    const markup = renderBody(sheet);
+    expect(markup).toContain('Badge lookups feel instant on the kiosk');
+    expect(markup).not.toContain('>Given<');
+  });
+
+  it('resolves a related id to its panel and leaves an unresolved one as plain text', async () => {
+    const odd = planted(await lendshed(), (copy) => {
+      lift(copy, README_001).related = ['002', '099'];
+    });
+    const sheet = spikeSheetOf(modelOf(odd, README_001));
+    expect(sheet.related.map((chip) => [chip.id, chip.to, chip.tone])).toEqual([
+      ['002', '/spikes/002-offline-ledger-queue/readme', 'missing'],
+      ['099', null, null],
+    ]);
+    const markup = renderBody(sheet);
+    expect(markup).toContain('href="/spikes/002-offline-ledger-queue/readme"');
+    expect(markup).toContain('<span class="view-spikes-rel" data-plain="true">');
+    expect(markup).not.toContain('href="/099');
+  });
+
+  it('shows the Paused work link from the tile when the folder holds a pause file', async () => {
+    const paused = planted(await lendshed(), (copy) => {
+      const base = copy.artifacts.find((artifact) => artifact.path.endsWith('SPIKE-006/.continue-here.md'))!;
+      copy.artifacts.push({ ...base, path: '.planning/spikes/001-badge-reader-latency/.continue-here.md', key: '/spikes/001-badge-reader-latency/continue-here' });
+    });
+    const sheet = spikeSheetOf(modelOf(paused, README_001));
+    expect(sheet.pauseTo).toBe('/spikes/001-badge-reader-latency/continue-here');
+    expect(renderBody(sheet)).toContain('Paused work');
+    expect(renderBody(spikeSheetOf(modelOf(await lendshed(), README_001)))).not.toContain('Paused work');
+  });
+
+  it('says a folder with no manifest row is not in the manifest and quotes its README', async () => {
+    const sheet = spikeSheetOf(modelOf(await lendshed(), '.planning/spikes/005-pdf-receipts/README.md'));
+    expect(sheet.verdict).toEqual({ word: 'Not in the manifest', tone: null, freeText: '' });
+    expect(sheet.orphanNote).toContain('This folder has no row in MANIFEST.md');
+    expect(sheet.orphanNote).toContain('Its README says');
+    expect(sheet.disagreement).toBeNull();
+  });
+
+  it('writes an unknown keyword as written, untoned, with its free text', async () => {
+    const unknown = planted(await lendshed(), (copy) => {
+      const rows = (copy.artifacts.find((a) => a.path === MANIFEST)!.structured.spikes as { manifest: { rows: Array<{ id: string; verdictKeyword: string; verdictText: string }> } }).manifest.rows;
+      const row = rows.find((candidate) => candidate.id === '001')!;
+      row.verdictKeyword = 'DEFERRED';
+      row.verdictText = 'until the kiosk arrives';
+    });
+    const sheet = spikeSheetOf(modelOf(unknown, README_001));
+    expect(sheet.verdict).toEqual({ word: 'DEFERRED', tone: null, freeText: 'until the kiosk arrives' });
+    expect(renderBody(sheet)).toContain('data-plain="true"');
+  });
+
+  it('closes to the manifest, or hides in place when the project has none', async () => {
+    expect(sheetOf(modelOf(await lendshed(), README_001)).closeTo).toBe('/spikes/manifest');
+    const bare = planted(await lendshed(), (copy) => {
+      copy.artifacts = copy.artifacts.filter((artifact) => artifact.kind !== 'spikes-manifest');
+    });
+    expect(sheetOf(modelOf(bare, README_001)).closeTo).toBeNull();
+  });
+
+  it('opens no sheet at the manifest address', async () => {
+    expect(modelOf(await lendshed()).sheet).toBeNull();
+  });
+});
+
+describe('composeSpikes: the sheet at the wrap-up and the conventions', () => {
+  it('shows the processed spikes as chips and names those not processed', async () => {
+    const model = modelOf(await lendshed(), WRAP_UP, [group('Key Findings', '<p>Stream the archive from a cursor.</p>'), group('Processed Spikes', '<p>t</p>')]);
+    const sheet = sheetOf(model);
+    expect(sheet.kind).toBe('wrap-up');
+    if (sheet.kind !== 'wrap-up') return;
+    expect(sheet.title).toBe('Wrap-up, 2026-03-30');
+    expect(sheet.processed.map((chip) => chip.id)).toEqual(['001', '002']);
+    expect(sheet.processed.map((chip) => chip.to)).toEqual(['/spikes/001-badge-reader-latency/readme', '/spikes/002-offline-ledger-queue/readme']);
+    expect(sheet.notProcessed).toContain('003b');
+    expect(sheet.notProcessed).toContain('004');
+    expect(sheet.findingsHtml).toContain('Stream the archive');
+    const markup = renderBody(sheet);
+    expect(markup).toContain('Processed spikes');
+    expect(markup).toContain('Key findings');
+    expect(textOf(markup)).toContain('Not processed: 003b');
+  });
+
+  it('shows the conventions as their sections, each a closed bar', async () => {
+    const headings = ['Stack', 'Structure', 'Patterns', 'Tools & Libraries'];
+    const model = modelOf(await lendshed(), CONVENTIONS, headings.map((heading) => group(heading, `<p>${heading} text</p>`)));
+    const sheet = sheetOf(model);
+    expect(sheet.kind).toBe('conventions');
+    if (sheet.kind !== 'conventions') return;
+    expect(sheet.sections.map((section) => section.title)).toEqual(headings);
+    const markup = renderBody(sheet);
+    expect(markup.split('<details class="view-spikes-bar">')).toHaveLength(5);
+  });
+});
+
+describe('SpikesView: the sheet shell', () => {
+  it('renders the board with no sheet at the manifest and keeps the Dialog out of the markup until it is open', async () => {
+    const markup = render(createElement(SpikesView, { model: modelOf(await lendshed()) }));
+    expect(markup).not.toContain('view-spikes-sheet');
+  });
+
+  it('marks the open spike tile as current and gives each linked tile its folder for focus to return to', async () => {
+    const markup = render(createElement(SpikesView, { model: modelOf(await lendshed(), README_003B) }));
+    expect(markup).toContain('data-spike-folder="003b-local-disk-staging"');
+    expect(markup).toContain('aria-current="page"');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // The view contract: source-text checks in the pause-page idiom (no AST tooling). Comments are stripped before every
 // negative check.
 // ---------------------------------------------------------------------------
@@ -348,7 +569,8 @@ describe('spikes view contract - the real sources', () => {
     expect(code).toContain("from '../pages/research-atoms.tsx'");
     expect(code).toContain('<ResearchInline text={tile.name} />');
     expect(code).toContain('<ResearchInline text={tile.freeText} />');
-    expect(code).toContain("import { Link } from '../nav.tsx'");
+    expect(code).toContain("from '../nav.tsx'");
+    expect(code).toMatch(/import \{ Link[^}]*\} from '\.\.\/nav\.tsx'/);
     expect(code).toContain('to={tile.to}');
     expect(code).toContain('aria-label={tile.label}');
     expect(code).toContain('aria-expanded={open}');
@@ -377,7 +599,7 @@ describe('spikes view contract - the real sources', () => {
 
   it('artifact-page.tsx draws the page from the composed model in View mode and the manifest keeps its fallback', async () => {
     const page = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
-    expect(page).toContain('<SpikesView key={artifact.path} model={spikesCover} />');
+    expect(page).toContain('<SpikesView key="spikes" model={spikesCover} renderHtml={renderHtml} />');
     expect(page).toContain('manifest.spikesPage?.(viewInput)');
     expect(page).toContain('spikesContext: query.data.spikesContext ?? null');
     expect(page).not.toMatch(/artifact\.kind === ['"](spike|spikes|spikes-manifest)['"]/);
