@@ -31,6 +31,8 @@ export const MADE_UP_EXAMPLE_KINDS: ReadonlySet<string> = new Set([
   'codebase-concerns',
   'intel',
   'graph',
+  'handoff',
+  'continue-here',
 ]);
 
 export interface ExemptRoot {

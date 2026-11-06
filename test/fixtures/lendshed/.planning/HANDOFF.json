@@ -1,0 +1,54 @@
+{
+  "made_up_example": true,
+  "derived_from": "gsd-core/workflows/pause-work.md",
+  "gsd_core_version": "1.19.0",
+  "version": "1.0",
+  "timestamp": "2026-04-06T17:42:11.000Z",
+  "phase": "03",
+  "phase_name": "Account Admin & Sessions",
+  "phase_dir": ".planning/phases/03-account-admin-and-sessions",
+  "plan": 3,
+  "task": 3,
+  "total_tasks": 6,
+  "status": "paused",
+  "completed_tasks": [
+    { "id": 1, "name": "Add the disabled flag to the member table and the sign-in check", "status": "done", "commit": "a41c9e2" },
+    { "id": 2, "name": "Cut a disabled member's open socket on the next frame", "status": "done", "commit": "b7d03f5" },
+    { "id": 3, "name": "Keep a deleted member's loans attributed in the loan log", "status": "in_progress", "progress": "migration written and applied to the dev copy; the loan log still reads the name from the member row" }
+  ],
+  "remaining_tasks": [
+    { "id": 4, "name": "Show who is signed in, from where, and when they last acted", "status": "not_started" },
+    { "id": 5, "name": "Add the cut-off button to the signed-in list", "status": "not_started" },
+    {
+      "id": "03-04",
+      "name": "Run the member lifecycle end to end",
+      "wave": 3,
+      "status": "not_started",
+      "tasks": [
+        { "id": 1, "name": "Walk create, reset, disable and delete as one steward session" },
+        { "id": 2, "name": "Record the lifecycle walk in the verification file" }
+      ]
+    }
+  ],
+  "blockers": [
+    { "description": "The loan log joins members by id, so a deleted member leaves a hole instead of a name", "type": "technical", "workaround": "Snapshot the display name onto each loan row at delete time" },
+    { "description": "The steward group has not yet said how long a disabled account is kept before deletion", "type": "external", "workaround": "Build the delete path now, leave the retention window as a setting" }
+  ],
+  "human_actions_pending": [
+    { "action": "Confirm the retention window for disabled accounts", "context": "Task 3 stores a name snapshot at delete time; the window decides when delete is allowed", "blocking": true },
+    { "action": "Set EXAMPLE_TOKEN=placeholder in the staging environment file", "context": "The signed-in list calls the staging session service and cannot start without it", "blocking": true },
+    { "action": "Review the wording of the cut-off confirmation", "context": "The text ships with task 5; it can be settled before then", "blocking": false }
+  ],
+  "decisions": [
+    { "decision": "Snapshot the display name onto the loan row at delete time", "rationale": "A join cannot survive the member row going away, and the loan log must stay readable", "phase": "03" },
+    { "decision": "Disable closes sockets on the next frame, not on a timer", "rationale": "A timer leaves a window where a disabled member can still act", "phase": "03" }
+  ],
+  "uncommitted_files": [
+    " M server/db/migrations/0042_loan_name_snapshot.sql",
+    " M server/loans/log.js",
+    "?? server/loans/snapshot.js"
+  ],
+  "next_action": "Point the loan log at the name snapshot column, then rerun the loan log tests",
+  "context_notes": "Paused with the loan log half moved over. The migration is applied to the dev copy only, so the dev copy and the committed schema agree but the loan log does not read the new column yet. I was part way through deciding whether the name snapshot should also carry the member's shed, and leaned towards no: the log already shows the shed from the loan row, and a second copy would drift. The tests for the log pin the old join, so expect three red tests until the read moves; they are the right red, not a regression. After the read moves, the signed-in list is the next piece and it needs the staging session service, which is why the first pending human action is marked blocking. Keep the cut-off wording for last: it is the one thing the steward group has asked to see before it ships.",
+  "retention_window_days": 30
+}
