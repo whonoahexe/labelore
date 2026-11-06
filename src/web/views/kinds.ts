@@ -14,7 +14,8 @@
 // with a lead and a promote fallback until its page plan adds a composer. Phase 11 (11-10) adds `pause` (the pause
 // page; the two wire kinds `handoff` and `continue-here` both map to it through the `viewKindOf` table). Phase 11
 // (11-15) adds `spikes` (the Spikes page; the four wire kinds `spikes-manifest`, `spike`, `spikes-wrap-up` and
-// `spikes-conventions` all map to it through the same table).
+// `spikes-conventions` all map to it through the same table). Phase 11 (11-18) adds `indexes` (the Indexes page; the
+// two wire kinds `intel` and `graph` both map to it through the same table) and `viewOwnsLargeFile`.
 export const VIEW_KINDS = [
   'discussion-log',
   'verification',
@@ -49,6 +50,7 @@ export const VIEW_KINDS = [
   'reviews',
   'pause',
   'spikes',
+  'indexes',
 ] as const;
 
 export type ViewKind = (typeof VIEW_KINDS)[number];
@@ -64,11 +66,20 @@ const VIEW_KIND_TABLE: ReadonlyMap<string, string> = new Map([
   ['spike', 'spikes'],
   ['spikes-wrap-up', 'spikes'],
   ['spikes-conventions', 'spikes'],
+  ['intel', 'indexes'],
+  ['graph', 'indexes'],
 ]);
+
+/** Wire kinds whose designed page reads a bounded summary of a file too large to read as text (Phase 11, 11-18,
+ * RESEARCH C2): a `large` intel or graph file opens the Indexes page instead of the File details card. Listed,
+ * binary and image files keep their own pages. Pure. */
+export function viewOwnsLargeFile(kind: string): boolean {
+  return kind === 'intel' || kind === 'graph';
+}
 
 /** The view kind a wire `artifact.kind` is looked up under: every `codebase-*` kind (the seven map documents)
  * shares the one `codebase` view, a kind with a row in the table shares that row's view (the two pause files
- * share `pause`, the four spike files share `spikes`), any other kind is its own view kind (Phase 10, RESEARCH C8; Phase 11, RESEARCH Pattern 3). Pure. */
+ * share `pause`, the four spike files share `spikes`, `intel` and `graph` share `indexes`), any other kind is its own view kind (Phase 10, RESEARCH C8; Phase 11, RESEARCH Pattern 3). Pure. */
 export function viewKindOf(kind: string): string {
   if (kind.startsWith(CODEBASE_KIND_PREFIX)) return 'codebase';
   return VIEW_KIND_TABLE.get(kind) ?? kind;
