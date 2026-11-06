@@ -464,7 +464,84 @@ the rest.
    template or workstream layout, and fall back to a readable generic page when a real file differs.
    *(VIEW-14, VIEW-15, VIEW-16, VIEW-17, VIEW-18, VIEW-19, VIEW-20)*
 
-**Plans**: TBD
+**Plans**: 32 plans
+
+Plans:
+**Wave 1**
+- [ ] 11-01-PLAN.md — The user confirms the research deviations C1 to C14 and the plan-review items X1 to X6 (type-size exceptions included); answers recorded in the summary and CONTEXT
+- [ ] 11-02-PLAN.md — Real shapes: the user runs six GSD writers on a scratch clone (seed, thread, session report, milestone summary, forensics, onboarding); outputs read for shape only
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 11-03-PLAN.md — Recognition: the `listed` class (spike scripts and outputs never read), intel and graphs markdown recognised, a workstream project is never map-only
+- [ ] 11-04-PLAN.md — The made-up rule reads JSON and fence-line markers; made-up intel and graph in Lendshed
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 11-05-PLAN.md — Made-up spikes tree in Lendshed: free-text verdicts, coercion traps, scripts and outputs
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 11-06-PLAN.md — Made-up pause pair and nested pauses; spike, handoff and continue-here kinds join the rule with Shapes' markers
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [ ] 11-07-PLAN.md — Pause lift and context: HANDOFF.json and .continue-here.md, pairing, date source, moved on, disagreements
+- [ ] 11-08-PLAN.md — Made-up seeds and threads in real shape
+
+**Wave 6** *(blocked on Wave 5 completion)*
+- [ ] 11-09-PLAN.md — Made-up reports, forensics and onboarding summaries in real shape
+- [ ] 11-10-PLAN.md — Pause page from sketch 054 C: wiring, head, the gate path, the shared record-disagreement block
+- [ ] 11-12-PLAN.md — Spikes lift and board context: free-text verdicts, folder-name ids, file lists, stable order, spike pause rule
+- [ ] 11-14-PLAN.md — Sketches 057 (seed) and 058 (thread); the user picks the winners
+
+**Wave 7** *(blocked on Wave 6 completion)*
+- [ ] 11-11-PLAN.md — Pause page finished: moved on, nested heads, the folded rest, the roadmap's phase link, beside 054 C
+- [ ] 11-13-PLAN.md — Bounded index summaries: intel handler and the server-side graph scan, never the raw JSON
+- [ ] 11-17-PLAN.md — Sketches 059 (session report and milestone summary) and 060 (forensics); the user picks the winners
+
+**Wave 8** *(blocked on Wave 7 completion)*
+- [ ] 11-15-PLAN.md — Spikes page board from sketch 053 A: wiring, lanes and tiles, below the board, bare /spikes
+- [ ] 11-20-PLAN.md — Seed, thread, report, forensics and onboarding lifts; the onboarding context beside the map-only head
+- [ ] 11-21-PLAN.md — Sketch 061 (onboarding); the user picks the winner
+
+**Wave 9** *(blocked on Wave 8 completion)*
+- [ ] 11-16-PLAN.md — Spikes page sheet at each spike's address, files listed by name only, browser spec, beside 053 A
+
+**Wave 10** *(blocked on Wave 9 completion)*
+- [ ] 11-18-PLAN.md — Indexes page from sketch 055 A: wiring, large-file bypass, graph tile, bare /indexes
+
+**Wave 11** *(blocked on Wave 10 completion)*
+- [ ] 11-19-PLAN.md — Indexes page finished: every tile and panel, ghost and unreadable states, beside 055 A
+
+**Wave 12** *(blocked on Wave 11 completion)*
+- [ ] 11-22-PLAN.md — Seed page from its winner, and the seed and thread links context
+
+**Wave 13** *(blocked on Wave 12 completion)*
+- [ ] 11-23-PLAN.md — Thread page from its winner
+
+**Wave 14** *(blocked on Wave 13 completion)*
+- [ ] 11-24-PLAN.md — Report page (session report and milestone summary) from its winner
+
+**Wave 15** *(blocked on Wave 14 completion)*
+- [ ] 11-25-PLAN.md — Forensics page from its winner
+
+**Wave 16** *(blocked on Wave 15 completion)*
+- [ ] 11-26-PLAN.md — Onboarding page from its winner (VIEW_KINDS at 39)
+
+**Wave 17** *(workstreams, cuttable per D-17)*
+- [ ] 11-27-PLAN.md — Brinkwater, the made-up workstream project: root files and the intake workstream, loaded as today's flat model
+
+**Wave 18**
+- [ ] 11-28-PLAN.md — Brinkwater's ledger, notices and archived workstream; the user confirms the scope design (adapter, tag-and-split or cut)
+
+**Wave 19**
+- [ ] 11-29-PLAN.md — Workstream scope on the server: read-only scope adapter, a runtime per workstream, the /ws mount, realPath, the inventory
+
+**Wave 20**
+- [ ] 11-30-PLAN.md — Workstream scope in the web app: scoped URLs, requests, query keys and copy-path
+
+**Wave 21**
+- [ ] 11-31-PLAN.md — The workstream index from sketch 056 C as the first screen, with the header gated
+
+**Wave 22**
+- [ ] 11-32-PLAN.md — Scope chip, the drawer's Shared group, and browser checks that flat projects are unchanged
 **UI hint**: yes
 
 ### Phase 12: Project Settings, Source Mode and Reading Polish
