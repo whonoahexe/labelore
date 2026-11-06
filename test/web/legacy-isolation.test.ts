@@ -24,7 +24,11 @@ const MOVED_COPY = /has moved|moved to|old link/i;
 
 // Reviewed, unrelated wording: a todo that was filed away reads "Moved to todos/completed/". It describes a
 // file on disk, not a link. An exact list, so a stale entry fails the test as surely as a new one does.
-const MOVED_COPY_ALLOWED = [{ file: 'src/web/views/todo-lifecycle.ts', phrase: 'moved to' }];
+// The pause page's "Work has moved on since" note (11-11, D-08) is about the work, not a redirected link.
+const MOVED_COPY_ALLOWED = [
+  { file: 'src/web/views/pause-page.ts', phrase: 'has moved' },
+  { file: 'src/web/views/todo-lifecycle.ts', phrase: 'moved to' },
+];
 
 /** True when `source` (comments blanked) imports the legacy module, statically or dynamically. */
 function importsLegacy(source: string): boolean {
