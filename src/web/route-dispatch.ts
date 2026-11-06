@@ -14,6 +14,8 @@ import {
   resolveUnprefixedAddress,
 } from '../presentation/legacy-routes.ts';
 import { projectMapState } from '../presentation/project-map-state.ts';
+import { compareSpikeIds } from '../presentation/spikes-context.ts';
+import { spikeFolderIdentity } from '../planning-repo/handlers/spikes-lift.ts';
 import { archivedCopyTarget, hasSourceFlag, rootDocumentRedirect } from '../presentation/root-redirects.ts';
 import {
   buildPhaseUrl,
@@ -66,6 +68,21 @@ function firstMapDocumentKey(presentation: ProjectPresentation): string | null {
   const path = `.planning/codebase/${first}`;
   const artifact = presentation.artifacts.find((candidate) => candidate.path === path);
   return artifact !== undefined && artifact.key !== '' ? artifact.key : null;
+}
+
+/** The address the bare /spikes leads to (Phase 11, 11-15, RESEARCH C1): the manifest's own key, else the first
+ * spike README's key by id order. Taken from the payload artifact's key, never from the typed address (T-11-25).
+ * Null when the project holds neither. */
+function spikesLandingKey(presentation: ProjectPresentation): string | null {
+  const manifest = presentation.artifacts.find(
+    (candidate) => candidate.kind === 'spikes-manifest' && candidate.key !== '',
+  );
+  if (manifest !== undefined) return manifest.key;
+  const readmes = presentation.artifacts
+    .filter((candidate) => candidate.kind === 'spike' && candidate.key !== '')
+    .map((candidate) => ({ key: candidate.key, id: spikeFolderIdentity(candidate.path.split('/')[2] ?? '').id }));
+  readmes.sort((a, b) => compareSpikeIds(a.id, b.id) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  return readmes[0]?.key ?? null;
 }
 
 function pageOrOverviewOutcome(
@@ -181,6 +198,12 @@ export function resolveProjectRoute(
       if (route.url === '/codebase') {
         if (projectMapState(presentation.artifacts).mapOnly) return redirectTo('/');
         const key = firstMapDocumentKey(presentation);
+        return key === null ? NOT_FOUND : redirectTo(key);
+      }
+      // Phase 11 (11-15, RESEARCH C1): the bare /spikes has no file behind it. It sends the reader to the manifest, else
+      // the first spike's README, and is not-found where the project has no spikes. The target is a payload key.
+      if (route.url === '/spikes') {
+        const key = spikesLandingKey(presentation);
         return key === null ? NOT_FOUND : redirectTo(key);
       }
       // D-03: a live alias has one address, the file's own.
