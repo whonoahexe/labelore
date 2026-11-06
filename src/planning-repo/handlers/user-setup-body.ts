@@ -10,7 +10,7 @@
 // variable's name, so the Variable cell goes through `withholdValue` (only the name is kept and the fact that a value
 // was written) and every other string that is stored goes through `keep` below, which is `maskValues` over a capped
 // string. Line scans over `eachLineOutsideFences` and `scanFencedLines` only: no regular expression, none built from
-// document text. An indented `- Key: value` line whose key is a variable name is masked as one string, a line labelled as
+// document text. An indented `- Key: value` line whose key is a variable name, or whose text before the first colon holds an `=`, is masked as one string (10-VERIFICATION truth 5), a line labelled as
 // a secret (`- Value: ...`) and the cells under a Value column are masked whole (10-REVIEW CR-01, WR-01). The body is
 // capped at FENCED_BODY_CAP characters (250,000), steps and variables at 200, sections at 200, lines per section at 2,000 and every cell, field and line at 400 characters (T-10-35).
 import { eachLineOutsideFences, scanFencedLines, splitBodyLines } from './fenced-sections.ts';
@@ -255,6 +255,13 @@ function isBlankCode(code: number): boolean {
  * An indented `- Key: value` line, or null. The whole line is masked before it is split, so `- STRIPE_KEY: sk_live_x`
  * reaches `maskValues` as one string with the name and the value together (10-REVIEW CR-01). A line whose key is itself
  * a secret's label (`- Value: ...`) keeps the key and the quiet mark, never the text.
+ *
+ * When the text before the first raw colon holds an `=` (`- DATABASE_URL=postgres://u:PW@host/db`, `- STRIPE_KEY=sk:TAG`,
+ * `- Set NAME=a:b`), that colon sits inside (or after) an assignment's value, so the whole line must reach `keep`
+ * (`maskValues`) as one string before any split (phase 10 re-verification gap, truth 5, T-10-33). The split is then taken
+ * at the first colon of the MASKED string; when the masked string has no colon the line is not a field and null is
+ * returned (the line is still stored masked in the sections). Plain labels (`URL`, `Location`, `Notes`) never hold an `=`,
+ * so they keep the label branch.
  */
 function readFieldLine(line: string): UserSetupField | null {
   const first = line.charCodeAt(0);
@@ -268,8 +275,9 @@ function readFieldLine(line: string): UserSetupField | null {
   const rawKey = rest.slice(0, colon).trim();
   let key: string;
   let text: string;
-  if (isVariableKey(rawKey)) {
-    // The key is a variable's name: mask the key and the text as one string, so the name and its value are seen together.
+  if (isVariableKey(rawKey) || rawKey.includes('=')) {
+    // The key is a variable's name, or holds an assignment: mask the key and the text as one string, so the name and its
+    // value are seen together.
     const masked = keep(rest);
     const maskedColon = masked.indexOf(':');
     if (maskedColon <= 0) return null;
