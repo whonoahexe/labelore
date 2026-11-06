@@ -85,8 +85,8 @@ describe('made-up example markers and index (VIEW-21)', () => {
     expect(problems).toEqual(SHAPES_RULE_PATHS.map((path) => ({ path, kind: 'not-indexed' })));
   });
 
-  it('the rule covers the spec, check, map, intel, graph, pause, spike, seed and thread kinds', () => {
-    for (const kind of ['intel', 'graph', 'handoff', 'continue-here', 'spikes-manifest', 'spike', 'spikes-wrap-up', 'spikes-conventions', 'seed', 'thread']) expect(MADE_UP_EXAMPLE_KINDS.has(kind)).toBe(true);
+  it('the rule covers the spec, check, map, intel, graph, pause, spike, seed, thread, report, forensics and onboarding kinds', () => {
+    for (const kind of ['intel', 'graph', 'handoff', 'continue-here', 'spikes-manifest', 'spike', 'spikes-wrap-up', 'spikes-conventions', 'seed', 'thread', 'report', 'forensics', 'onboarding']) expect(MADE_UP_EXAMPLE_KINDS.has(kind)).toBe(true);
     for (const kind of ['spec', 'ai-spec', 'user-setup', 'eval-review', 'dom-verify', 'reviews']) expect(MADE_UP_EXAMPLE_KINDS.has(kind)).toBe(true);
     for (const name of ['stack', 'architecture', 'structure', 'conventions', 'testing', 'integrations', 'concerns']) {
       expect(MADE_UP_EXAMPLE_KINDS.has(`codebase-${name}`)).toBe(true);
