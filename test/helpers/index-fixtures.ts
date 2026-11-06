@@ -99,7 +99,11 @@ const MARKER_COMMENT = `<!-- made-up example · derived from ${DERIVED_SYNTH} ·
 const SYNTHESIS = `${MARKER_COMMENT}
 # Ingest Synthesis
 
-Docs synthesized: 5 (2 ADR, 2 SPEC, 1 PRD)
+Docs synthesized: 5
+Doc counts by type:
+- ADR: 2
+- SPEC: 2
+- PRD: 1
 Decisions locked: 3
 Requirements: 4
 Conflicts: 1 blockers, 2 competing-variants, 3 auto-resolved

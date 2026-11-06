@@ -19,6 +19,8 @@ export interface IndexBounds {
   readonly reportLineChars: number;
   /** Items a stack list (languages, frameworks, tools, content formats) shows. */
   readonly listItems: number;
+  /** Characters of one stack list item (a language, framework or tool name). */
+  readonly listItemChars: number;
   /** Characters of one label, name, path or description in a summary. */
   readonly labelChars: number;
   /** Keys an arch-decisions summary names (every key of a real file; a cap against a hostile one). */
@@ -41,6 +43,7 @@ export const INDEX_BOUNDS: IndexBounds = Object.freeze({
   digestBytes: 2048,
   reportLineChars: 400,
   listItems: 12,
+  listItemChars: 40,
   labelChars: 120,
   archKeys: 40,
   layers: 8,

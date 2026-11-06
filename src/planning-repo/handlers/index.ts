@@ -91,7 +91,7 @@ export const HANDLERS: ArtifactHandler[] = [
   SpikeReadmeHandler,
   SpikesWrapUpHandler,
   SpikesConventionsHandler,
-  ContinueHereHandler,
   IndexIntelHandler,
+  ContinueHereHandler,
   GenericMarkdownHandler,
 ];
