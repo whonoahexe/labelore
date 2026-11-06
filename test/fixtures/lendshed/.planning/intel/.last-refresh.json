@@ -1,0 +1,14 @@
+{
+  "made_up_example": true,
+  "derived_from": "agents/gsd-intel-updater.md",
+  "gsd_core_version": "1.19.0",
+  "hashes": {
+    "file-roles.json": "3f1c9a7be2d04a5c8e61b7d20f94a3c5d8e07b12a6c4f9035de81b2c7a4f60d9",
+    "api-map.json": "a82d5e0c91b34f67d1e8a03c5b9f2e64710d8c3ab5e49f26c07d1a83e5b92f04",
+    "dependency-graph.json": "c40e7b19d3a85f2601e9b4c7a8d30f5e12b6a9d4c81e07f35a2b9d6e40c18f7a",
+    "stack.json": "5b9d2f8e01c74a36e8d5b1f09c3a7e24d60b8f15a9c2e7d34b01f68a5e9d3c27",
+    "arch-decisions.json": "e17a3c85f092d4b6a1e8c5d37f0b92a46c8e1d5f3a07b92c4e68d1a5f3b07c9e"
+  },
+  "timestamp": "2026-09-14T09:13:02.000Z",
+  "version": 1
+}

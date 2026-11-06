@@ -7,13 +7,15 @@ every fixture root through the real repository and fails when a file of a rule k
 marked file has no row here, or when a row names a file that does not exist. The UI never reads the marker.
 The rule binds every later type with no real example on this machine, Phase 11's included.
 
-Two marker forms, both carrying the same three facts (it is made up, the GSD source it was derived from, the
+Marker forms, all carrying the same three facts (it is made up, the GSD source it was derived from, the
 gsd-core version it was derived at):
 
 - A file with frontmatter carries the keys `made_up_example: true`, `derived_from: <path under ~/.claude>`
   and `gsd_core_version: <version>`.
 - A file with no frontmatter carries, as its first line, an HTML comment:
   `<!-- made-up example · derived from <path under ~/.claude> · gsd-core <version> -->`.
+- A raw JSON file carries the same three keys at the top level or inside a top-level `_meta` object. A markdown
+  file whose YAML fails to parse still counts when the three `key: value` lines sit inside its `---` fence.
 
 Two roots are exempt by name, each with a reason: `fixtures/dense` (a frozen golden, `test/__golden__/dense.json`,
 whose own ledger is `fixtures/README.md`) and this repository's own `.planning` (real planning files).
@@ -46,6 +48,15 @@ whose own ledger is `fixtures/README.md`) and this repository's own `.planning` 
 | test/fixtures/lendshed/.planning/phases/04-bulk-loan-export/04-EVAL-REVIEW.md | eval-review | agents/gsd-eval-auditor.md | 1.19.0 | NEEDS WORK at 64/100: five dimensions mixing COVERED, PARTIAL and MISSING with Code, LLM Judge and Human measurements, an Infrastructure Audit in the auditor's own status words, no Critical gaps, a three-group Remediation Plan |
 | test/fixtures/lendshed/.planning/phases/01-member-sign-in-sessions/01-REVIEWS.md | reviews | gsd-core/workflows/review.md | 1.19.0 | single reviewer: one lane (claude), one plan, an empty Plan-Revision Conflicts block, a Consensus Summary that says there is nothing to compare |
 | test/fixtures/lendshed/.planning/phases/04-bulk-loan-export/04-REVIEWS.md | reviews | gsd-core/workflows/review.md | 1.19.0 | disagreeing reviewers: four lanes, three substantive at overall risk LOW, MEDIUM and HIGH, one approve-versus-revise split on plan 04-03, qwen a failed-lane stub, a `models` value of `"unknown"`, a `plan_coverage` block, a Plan-Revision Conflicts entry between its markers, a `## 04-02` heading inside a reviewer's body, two concerns raised by more than one reviewer, the writer's Consensus Summary |
+| test/fixtures/lendshed/.planning/intel/stack.json | intel | agents/gsd-intel-updater.md | 1.19.0 | tracer intel file in the writer's own shape: `_meta` (updated_at, version 3) holding the marker, then flat lists (languages, frameworks, tools, content_formats) and string fields (build_system, test_framework, package_manager) instead of an `entries` object |
+| test/fixtures/lendshed/.planning/intel/file-roles.json | intel | agents/gsd-intel-updater.md | 1.19.0 | `{_meta, entries}` with the marker in `_meta`; thirteen entries across entry-point, module, type-def, style, config, test and script, each with exports and imports lists (an empty exports list on a style file and on the web entry) |
+| test/fixtures/lendshed/.planning/intel/api-map.json | intel | agents/gsd-intel-updater.md | 1.19.0 | `{_meta, entries}` with the marker in `_meta`; eight entries keyed `METHOD /path`, a path with a `:id` parameter, entries with an empty params list, and one description naming a file export |
+| test/fixtures/lendshed/.planning/intel/dependency-graph.json | intel | agents/gsd-intel-updater.md | 1.19.0 | `{_meta, entries}` with the marker in `_meta`; four production and four development dependencies, `used_by` lists mixing files and folders, an `invocation` of `require` and of `implicit` |
+| test/fixtures/lendshed/.planning/intel/arch-decisions.json | intel | agents/gsd-intel-updater.md | 1.19.0 | `{_meta, entries}` with the marker in `_meta`; `overview.pattern` written as `A -> B -> C`, a `data-flow` entry, a `conventions` entry, three `component:{Name}` keys and a free-named `security` entry |
+| test/fixtures/lendshed/.planning/intel/.last-refresh.json | intel | agents/gsd-intel-updater.md | 1.19.0 | the stamp the writer saves: `hashes` (five file names to 64-character hex strings), `timestamp` and `version`, the marker keys at the top level, a dotfile the intel folder glob does not match |
+| test/fixtures/lendshed/.planning/graphs/graph.json | graph | gsd-core/bin/lib/graphify.cjs | 1.19.0 | small graph, 40 nodes and 60 links in six communities, the marker keys at the top level, a 40-character invented hex `built_at_commit`, relations `contains`, `calls` and `references`, all three confidence words |
+| test/fixtures/lendshed/.planning/graphs/GRAPH_REPORT.md | graph-report | gsd-core/bin/lib/graphify.cjs | 1.19.0 | first-line comment marker, a Summary with node, edge and community counts and an extraction split, six God Nodes, a Knowledge Gaps line, one question line over 5 KB |
+| test/fixtures/lendshed/.planning/graphs/.last-build-status.json | graph | gsd-core/bin/lib/graphify.cjs | 1.19.0 | auto-update status `failed` with exit code 1 and a duration, the marker keys at the top level, `graphify_version` null |
 
 ## For later phases
 

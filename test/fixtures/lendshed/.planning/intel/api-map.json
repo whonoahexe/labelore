@@ -1,0 +1,85 @@
+{
+  "_meta": {
+    "updated_at": "2026-09-14T09:12:40.000Z",
+    "version": 3,
+    "made_up_example": true,
+    "derived_from": "agents/gsd-intel-updater.md",
+    "gsd_core_version": "1.19.0"
+  },
+  "entries": {
+    "GET /api/sheds": {
+      "method": "GET",
+      "path": "/api/sheds",
+      "params": [],
+      "file": "src/server/routes/sheds.ts",
+      "description": "List every shed with its live stock count"
+    },
+    "GET /api/tools": {
+      "method": "GET",
+      "path": "/api/tools",
+      "params": [
+        "shed",
+        "category",
+        "page"
+      ],
+      "file": "src/server/routes/sheds.ts",
+      "description": "Browse the catalogue by shed and category"
+    },
+    "POST /api/loans": {
+      "method": "POST",
+      "path": "/api/loans",
+      "params": [
+        "toolId",
+        "memberId"
+      ],
+      "file": "src/server/routes/loans.ts",
+      "description": "Lend one tool to a member"
+    },
+    "POST /api/loans/:id/return": {
+      "method": "POST",
+      "path": "/api/loans/:id/return",
+      "params": [
+        "id",
+        "condition"
+      ],
+      "file": "src/server/routes/loans.ts",
+      "description": "Record a return with a condition note"
+    },
+    "GET /api/loans/export": {
+      "method": "GET",
+      "path": "/api/loans/export",
+      "params": [
+        "month"
+      ],
+      "file": "src/server/routes/loans.ts",
+      "description": "Export one month of loans as a single CSV file"
+    },
+    "POST /api/session": {
+      "method": "POST",
+      "path": "/api/session",
+      "params": [
+        "username",
+        "password"
+      ],
+      "file": "src/server/session.ts",
+      "description": "Sign in and start a session"
+    },
+    "DELETE /api/session": {
+      "method": "DELETE",
+      "path": "/api/session",
+      "params": [],
+      "file": "src/server/session.ts",
+      "description": "Sign out"
+    },
+    "POST /api/members": {
+      "method": "POST",
+      "path": "/api/members",
+      "params": [
+        "username",
+        "role"
+      ],
+      "file": "src/server/routes/members.ts",
+      "description": "Create a member with a forced first sign-in password change"
+    }
+  }
+}
