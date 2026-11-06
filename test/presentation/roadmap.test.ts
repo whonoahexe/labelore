@@ -597,4 +597,25 @@ describe('milestone record fields (09 D-03, amended 2026-11-02)', () => {
     expect(requirements?.text).toContain('Known Deferred Items');
     expect(requirements?.items.length).toBeGreaterThan(0);
   });
+  it('links Lendshed phase 3 to the .continue-here.md in its folder and leaves phase 1 without one (D-07)', async () => {
+    const { FX_ROOT, loadProject } = await import('../helpers/fixture-project.ts');
+    const presentation = (await loadProject(FX_ROOT)).presentation;
+    const view = buildRoadmapViewModel(presentation);
+    const rows = [...(view.active?.phases ?? []), ...view.history.flatMap((flow) => flow.phases)];
+    const three = rows.find((row) => row.number === '3' || row.number === '03');
+    const one = rows.find((row) => row.number === '1' || row.number === '01');
+    const nested = presentation.artifacts.find(
+      (artifact) =>
+        artifact.kind === 'continue-here' && artifact.path === '.planning/phases/03-account-admin-and-sessions/.continue-here.md',
+    );
+    expect(nested).toBeDefined();
+    expect(three?.pausedHereUrl).toBe(nested?.key);
+    expect(one?.pausedHereUrl).toBeNull();
+    // Only the payload key is used: no row carries a link built from file text.
+    for (const row of rows) {
+      expect(row.pausedHereUrl === null || presentation.artifacts.some((artifact) => artifact.key === row.pausedHereUrl)).toBe(
+        true,
+      );
+    }
+  });
 });
