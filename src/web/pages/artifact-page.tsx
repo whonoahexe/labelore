@@ -1651,7 +1651,7 @@ export function ArtifactPage({
       ) : pauseCover ? (
         <PauseView key={artifact.path} model={pauseCover} renderHtml={renderHtml} />
       ) : spikesCover ? (
-        <SpikesView key={artifact.path} model={spikesCover} />
+        <SpikesView key="spikes" model={spikesCover} renderHtml={renderHtml} />
       ) : specPageCover ? (
         <SpecView key={artifact.path} model={specPageCover} renderHtml={renderHtml} onShowSource={showSource} />
       ) : aiSpecPageCover ? (

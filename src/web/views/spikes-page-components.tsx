@@ -11,18 +11,26 @@
 // list; each tile is one link whose accessible name reads "{id} {name}, {verdict} {free text}" and whose flags
 // (file count, "README says", "Wrapped up") are its description. Under 48rem the stylesheet turns the board into one
 // stack per idea with a chip key; the markup is the same.
-import { Fragment, useId, useState } from 'react';
+import { Fragment, useEffect, useId, useRef, useState } from 'react';
+import { Dialog } from '@base-ui/react/dialog';
+import { ChevronRight, FileCode, FileOutput, FileText, X } from 'lucide-react';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
-import { Link } from '../nav.tsx';
+import { RecordDisagreement } from '../components/record-disagreement.tsx';
+import { Link, useProjectLocation, useProjectNavigate } from '../nav.tsx';
 import { ResearchInline } from '../pages/research-atoms.tsx';
+import { stripLeadingHeading } from './document-sections.ts';
 import type {
   ComposedSpikes,
+  ComposedSpikesBar,
+  ComposedSpikesChip,
   ComposedSpikesColumn,
+  ComposedSpikesFile,
   ComposedSpikesLane,
+  ComposedSpikesSheet,
   ComposedSpikesTile,
   ComposedSpikesWrapTile,
 } from './spikes-page.ts';
-import { WRAPPED_UP_WORDS } from './spikes-page.ts';
+import { SHEET_CLOSE_LABEL, WRAPPED_UP_WORDS } from './spikes-page.ts';
 
 /** Every field optional on purpose: the page spreads this over ArtifactHeader's own props. */
 export type SpikesHeaderProps = Partial<{
@@ -112,6 +120,7 @@ function Tile({ tile }: { tile: ComposedSpikesTile }): React.JSX.Element {
       aria-label={tile.label}
       aria-describedby={footId}
       aria-current={tile.active ? 'page' : undefined}
+      data-spike-folder={tile.folder ?? undefined}
     >
       {body}
     </Link>
@@ -240,11 +249,312 @@ function WrapTile({ tile }: { tile: ComposedSpikesWrapTile }): React.JSX.Element
   );
 }
 
-/** The Spikes page: the verdict board grouped by idea, then the folders the manifest does not list and the wrap-up. */
-export function SpikesView({ model }: { model: ComposedSpikes }): React.JSX.Element {
-  const { notInManifest, wrapUp } = model;
+// ---------------------------------------------------------------------------------------------------------
+// The sheet (11-16, D-01, D-07): the shared Dialog docked right. Esc and the scrim close it by going to the manifest's
+// address (or hiding it in place when the project has no manifest); a router state key carries the opening tile's
+// folder across that navigation so focus returns to it. File rows are names and sizes in text: no anchor, no request,
+// no preview. Section bodies reach the DOM only through the page's sanitised `renderHtml`.
+// ---------------------------------------------------------------------------------------------------------
+
+type RenderHtml = ((html: string) => React.ReactNode) | undefined;
+
+const FILE_ICON = { notes: FileText, script: FileCode, output: FileOutput } as const;
+
+function Chip({ chip }: { chip: ComposedSpikesChip }): React.JSX.Element {
+  const body = (
+    <>
+      <i className="status-square view-spikes-sq" data-tone={chip.tone ?? undefined} aria-hidden="true" />
+      <span>
+        <ResearchInline text={chip.label} />
+      </span>
+    </>
+  );
+  // An id that names no spike with a README stays plain text.
+  if (chip.to === null) {
+    return (
+      <span className="view-spikes-rel" data-plain="true">
+        {body}
+      </span>
+    );
+  }
   return (
-    <div className="view-spikes-root">
+    <Link className="view-spikes-rel" to={chip.to}>
+      {body}
+    </Link>
+  );
+}
+
+function ChipRow({ label, chips }: { label: string; chips: ComposedSpikesChip[] }): React.JSX.Element | null {
+  if (chips.length === 0) return null;
+  return (
+    <div className="view-spikes-block">
+      <span className="view-spikes-key">{label}</span>
+      <ul className="view-spikes-rels">
+        {chips.map((chip, index) => (
+          <li key={`${chip.id}-${index}`}>
+            <Chip chip={chip} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function FilesList({ title, files }: { title: string; files: ComposedSpikesFile[] }): React.JSX.Element {
+  return (
+    <div className="view-spikes-block">
+      <span className="view-spikes-key">{title}</span>
+      <div className="view-spikes-files">
+        <ul>
+          {files.map((file) => {
+            const Icon = FILE_ICON[file.kind];
+            return (
+              <li key={file.name}>
+                <Icon className="view-spikes-file-icon" aria-hidden="true" />
+                <span className="view-spikes-file-name">{file.name}</span>
+                <span className="view-spikes-file-kind">{file.kind}</span>
+                <span className="view-spikes-file-size">{file.size}</span>
+              </li>
+            );
+          })}
+        </ul>
+        <p className="view-spikes-files-note">Listed by name only. Labelore never runs or opens these files.</p>
+      </div>
+    </div>
+  );
+}
+
+function Bars({ bars, renderHtml }: { bars: ComposedSpikesBar[]; renderHtml: RenderHtml }): React.JSX.Element | null {
+  if (bars.length === 0) return null;
+  return (
+    <div className="view-spikes-bars">
+      {bars.map((bar) => (
+        <details key={bar.key} className="view-spikes-bar">
+          <summary className="view-spikes-bar-sum">
+            <ChevronRight className="view-spikes-bar-chev" aria-hidden="true" />
+            <span className="view-spikes-bar-name">
+              <ResearchInline text={bar.title} />
+            </span>
+          </summary>
+          <div className="view-spikes-bar-body view-spikes-md">{renderHtml ? renderHtml(stripLeadingHeading(bar.html)) : null}</div>
+        </details>
+      ))}
+    </div>
+  );
+}
+
+function Head({ sheet, titleId }: { sheet: ComposedSpikesSheet; titleId: string }): React.JSX.Element {
+  return (
+    <div className="view-spikes-sheet-head">
+      <span className="view-spikes-key">
+        <ResearchInline text={sheet.eyebrow} />
+      </span>
+      <h2 className="view-spikes-sheet-title" id={titleId}>
+        <ResearchInline text={sheet.title} />
+      </h2>
+    </div>
+  );
+}
+
+/** The sheet's content for the open panel; the Dialog shell around it supplies the close button and the title id. */
+export function SheetBody({
+  sheet,
+  titleId,
+  renderHtml,
+}: {
+  sheet: ComposedSpikesSheet;
+  titleId: string;
+  renderHtml?: (html: string) => React.ReactNode;
+}): React.JSX.Element {
+  if (sheet.kind === 'conventions') {
+    return (
+      <article className="view-spikes-panel">
+        <Head sheet={sheet} titleId={titleId} />
+        <Bars bars={sheet.sections} renderHtml={renderHtml} />
+      </article>
+    );
+  }
+  if (sheet.kind === 'wrap-up') {
+    return (
+      <article className="view-spikes-panel">
+        <Head sheet={sheet} titleId={titleId} />
+        {sheet.skill !== null ? (
+          <p className="view-spikes-note">
+            Packaged into the project skill <code>{sheet.skill}</code>
+          </p>
+        ) : null}
+        <ChipRow label="Processed spikes" chips={sheet.processed} />
+        {sheet.findingsHtml !== null ? (
+          <div className="view-spikes-block">
+            <span className="view-spikes-key">Key findings</span>
+            <div className="view-spikes-md">{renderHtml ? renderHtml(stripLeadingHeading(sheet.findingsHtml)) : null}</div>
+          </div>
+        ) : null}
+        {sheet.notProcessed !== null ? <p className="view-spikes-note">{sheet.notProcessed}</p> : null}
+      </article>
+    );
+  }
+  const { verdict, disagreement, validates } = sheet;
+  return (
+    <article className="view-spikes-panel">
+      <Head sheet={sheet} titleId={titleId} />
+      <div className="view-spikes-verdict">
+        <span className="status-chip view-spikes-chip-big" data-tone={verdict.tone ?? undefined} data-plain={verdict.tone === null ? 'true' : undefined}>
+          {verdict.tone !== null ? <i className="status-square" data-tone={verdict.tone} aria-hidden="true" /> : null}
+          {verdict.word}
+        </span>
+        {verdict.freeText !== '' ? (
+          <span className="view-spikes-vtext-open">
+            <ResearchInline text={verdict.freeText} />
+          </span>
+        ) : null}
+      </div>
+      {disagreement !== null ? (
+        <div className="view-spikes-block">
+          <RecordDisagreement field={disagreement.field} left={disagreement.manifest} right={disagreement.readme} />
+          <p className="view-spikes-note">{disagreement.note}</p>
+        </div>
+      ) : null}
+      {sheet.orphanNote !== null ? <p className="view-spikes-note">{sheet.orphanNote}</p> : null}
+      {validates !== null ? (
+        <div className="view-spikes-block">
+          <span className="view-spikes-key">What this validates</span>
+          {validates.kind === 'gwt' ? (
+            <dl className="view-spikes-gwt">
+              {(
+                [
+                  ['Given', validates.given],
+                  ['When', validates.when],
+                  ['Then', validates.then],
+                ] as const
+              ).map(([word, value]) => (
+                <div key={word}>
+                  <dt className="view-spikes-key">{word}</dt>
+                  <dd>
+                    <ResearchInline text={value} />
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="view-spikes-whole">
+              <ResearchInline text={validates.text} />
+            </p>
+          )}
+        </div>
+      ) : null}
+      {sheet.resultsHtml !== null ? (
+        <div className="view-spikes-block">
+          <span className="view-spikes-key">Results</span>
+          <div className="view-spikes-md">{renderHtml ? renderHtml(stripLeadingHeading(sheet.resultsHtml)) : null}</div>
+        </div>
+      ) : null}
+      <ChipRow label="Related" chips={sheet.related} />
+      <FilesList title={sheet.filesTitle} files={sheet.files} />
+      {sheet.pauseTo !== null ? (
+        <p className="view-spikes-note">
+          <Link className="view-spikes-pause" to={sheet.pauseTo}>
+            Paused work
+          </Link>
+        </p>
+      ) : null}
+      {sheet.tags.length > 0 ? (
+        <p className="view-spikes-tags">
+          <span className="view-spikes-key">Tags</span> <span>{sheet.tags.join(', ')}</span>
+        </p>
+      ) : null}
+      <Bars bars={sheet.bars} renderHtml={renderHtml} />
+    </article>
+  );
+}
+
+function Sheet({
+  sheet,
+  renderHtml,
+  onClose,
+}: {
+  sheet: ComposedSpikesSheet;
+  renderHtml: RenderHtml;
+  onClose: () => void;
+}): React.JSX.Element {
+  const titleId = useId();
+  return (
+    <Dialog.Root
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Backdrop className="view-spikes-scrim" />
+        <Dialog.Popup className="view-spikes-sheet" aria-labelledby={titleId} finalFocus={false}>
+          <div className="view-spikes-sheet-bar">
+            <span className="view-spikes-addr">{sheet.address}</span>
+            <Dialog.Close className="view-spikes-close" aria-label={SHEET_CLOSE_LABEL}>
+              <X aria-hidden="true" />
+            </Dialog.Close>
+          </div>
+          <SheetBody sheet={sheet} titleId={titleId} renderHtml={renderHtml} />
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+/** The folder a close navigation asks focus to return to, read from the router state it was sent with. */
+function focusKeyOf(state: unknown): string | null {
+  if (typeof state !== 'object' || state === null || !Object.hasOwn(state, 'spikesFocus')) return null;
+  const key = (state as { spikesFocus?: unknown }).spikesFocus;
+  return typeof key === 'string' && key !== '' ? key : null;
+}
+
+/** The Spikes page: the verdict board grouped by idea, then the folders the manifest does not list and the wrap-up;
+ * when the address names a spike, the wrap-up or the conventions, that panel opens over the board in a sheet. */
+export function SpikesView({
+  model,
+  renderHtml,
+}: {
+  model: ComposedSpikes;
+  /** Renders a section of the open file through the document's sanitised path; without it those sections hold no body. */
+  renderHtml?: (html: string) => React.ReactNode;
+}): React.JSX.Element {
+  const { notInManifest, wrapUp, sheet } = model;
+  const rootRef = useRef<HTMLDivElement>(null);
+  const navigate = useProjectNavigate();
+  const { state } = useProjectLocation();
+  // A sheet hidden in place (the project has no manifest to go back to) stays hidden until the address names another.
+  const [hidden, setHidden] = useState<string | null>(null);
+  const [localFocus, setLocalFocus] = useState<string | null>(null);
+  const open = sheet !== null && hidden !== sheet.key;
+  const focusKey = localFocus ?? focusKeyOf(state);
+
+  useEffect(() => {
+    if (open || focusKey === null) return;
+    const frame = window.requestAnimationFrame(() => {
+      const root = rootRef.current;
+      if (root === null) return;
+      for (const tile of root.querySelectorAll<HTMLElement>('[data-spike-folder]')) {
+        if (tile.dataset.spikeFolder === focusKey) {
+          tile.focus();
+          break;
+        }
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [open, focusKey]);
+
+  function close(): void {
+    if (sheet === null) return;
+    if (sheet.closeTo === null) {
+      setLocalFocus(sheet.focus);
+      setHidden(sheet.key);
+      return;
+    }
+    navigate(sheet.closeTo, { state: { spikesFocus: sheet.focus } });
+  }
+
+  return (
+    <div className="view-spikes-root" ref={rootRef}>
       {model.lanes !== null ? <Board model={model} lanes={model.lanes} /> : null}
       {model.boardNote !== null ? <p className="view-spikes-note">{model.boardNote}</p> : null}
       {notInManifest !== null ? (
@@ -276,6 +586,7 @@ export function SpikesView({ model }: { model: ComposedSpikes }): React.JSX.Elem
         </section>
       ) : null}
       {wrapUp.note !== null ? <p className="view-spikes-note">{wrapUp.note}</p> : null}
+      {open && sheet !== null ? <Sheet key={sheet.key} sheet={sheet} renderHtml={renderHtml} onClose={close} /> : null}
     </div>
   );
 }

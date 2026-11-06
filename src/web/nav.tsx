@@ -125,10 +125,10 @@ export function useProjectHref(to: string): string {
 /** The location with the slug taken off the pathname, so pages and query keys see the same
  * project-relative path they saw before the slug existed. Outside a project route it is the
  * location unchanged. */
-export function useProjectLocation(): { pathname: string; search: string; hash: string } {
-  const { pathname, search, hash } = useLocation();
+export function useProjectLocation(): { pathname: string; search: string; hash: string; state: unknown } {
+  const { pathname, search, hash, state } = useLocation();
   const slug = useProjectSlug();
-  return { pathname: slug === null ? pathname : splitProjectPath(pathname).rest, search, hash };
+  return { pathname: slug === null ? pathname : splitProjectPath(pathname).rest, search, hash, state };
 }
 
 export function useProjectPathname(): string {
