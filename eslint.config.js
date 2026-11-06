@@ -13,7 +13,7 @@ export default tseslint.config(
     // of version-controlled source); linting it the same way `fixtures/**` and
     // `test/__golden__/**` are already excluded below keeps `npm run lint` scoped to the code
     // this project actually ships.
-    ignores: ['node_modules/**', 'dist/**', 'fixtures/**', 'test/__golden__/**', '.planning/**'],
+    ignores: ['node_modules/**', 'dist/**', 'fixtures/**', 'test/__golden__/**', '.planning/**', 'test/fixtures/**/.planning/**'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
