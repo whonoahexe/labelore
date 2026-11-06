@@ -28,7 +28,7 @@ import { UatHandler } from './uat.ts';
 import { VerificationHandler } from './verification.ts';
 import { FrontmatterOnlyHandler } from './frontmatter-only.ts';
 import { JsonConfigHandler } from './json-config.ts';
-import { PauseHandler } from './pause.ts';
+import { PauseHandler, ContinueHereHandler } from './pause.ts';
 import { WindowsHandler } from './windows.ts';
 import { MilestoneAuditHandler } from './milestone-audit.ts';
 import { CoverageHandler } from './coverage.ts';
@@ -80,5 +80,6 @@ export const HANDLERS: ArtifactHandler[] = [
   EvalReviewHandler,
   DomVerifyHandler,
   ReviewsHandler,
+  ContinueHereHandler,
   GenericMarkdownHandler,
 ];
