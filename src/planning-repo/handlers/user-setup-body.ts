@@ -10,10 +10,11 @@
 // variable's name, so the Variable cell goes through `withholdValue` (only the name is kept and the fact that a value
 // was written) and every other string that is stored goes through `keep` below, which is `maskValues` over a capped
 // string. Line scans over `eachLineOutsideFences` and `scanFencedLines` only: no regular expression, none built from
-// document text. The body is capped at FENCED_BODY_CAP characters (250,000), steps and variables at 200, sections at
-// 200, lines per section at 2,000 and every cell, field and line at 400 characters (T-10-35).
+// document text. An indented `- Key: value` line whose key is a variable name is masked as one string, a line labelled as
+// a secret (`- Value: ...`) and the cells under a Value column are masked whole (10-REVIEW CR-01, WR-01). The body is
+// capped at FENCED_BODY_CAP characters (250,000), steps and variables at 200, sections at 200, lines per section at 2,000 and every cell, field and line at 400 characters (T-10-35).
 import { eachLineOutsideFences, scanFencedLines, splitBodyLines } from './fenced-sections.ts';
-import { maskValues, withholdValue } from './withhold-values.ts';
+import { VALUE_NOT_SHOWN_MARK, maskValues, withholdValue } from './withhold-values.ts';
 
 /** The most steps and the most variables kept. */
 export const USER_SETUP_STEP_CAP = 200;
@@ -205,7 +206,56 @@ function readItemLine(line: string): { done: boolean | null; text: string } | nu
   return { done, text: line.slice(at) };
 }
 
-/** An indented `- Key: value` line, or null. */
+/** Keys whose text is a secret by name (`- Value: ...`, `- Password: ...`): the text is never kept, whatever it holds. */
+const VALUE_KEYS: ReadonlySet<string> = new Set([
+  'value',
+  'values',
+  'secret',
+  'secret key',
+  'secret value',
+  'password',
+  'passphrase',
+  'token',
+  'api key',
+  'private key',
+  'credential',
+  'credentials',
+  'current value',
+  'default value',
+]);
+
+/**
+ * The line with its text replaced by the quiet mark when it is a list item or a plain line labelled as a secret
+ * (`- Value: ...`, `**Password:** ...`). Any other line is returned as written.
+ */
+function maskSecretLabel(line: string): string {
+  let at = 0;
+  while (isBlankCode(line.charCodeAt(at))) at += 1;
+  const marker = line.charCodeAt(at);
+  if ((marker === 45 || marker === 42 || marker === 43) && line.charCodeAt(at + 1) === 32) {
+    at += 2;
+    while (isBlankCode(line.charCodeAt(at))) at += 1;
+  }
+  let from = at;
+  while (line.charCodeAt(from) === 42) from += 1;
+  const colon = line.indexOf(':', from);
+  if (colon < 0 || colon - from > 30) return line;
+  const key = line.slice(from, colon).split('*').join('').split('`').join('').trim().toLowerCase();
+  if (!VALUE_KEYS.has(key)) return line;
+  let text = colon + 1;
+  while (isBlankCode(line.charCodeAt(text)) || line.charCodeAt(text) === 42) text += 1;
+  return text >= line.length ? line : `${line.slice(0, text)}${VALUE_NOT_SHOWN_MARK}`;
+}
+
+function isBlankCode(code: number): boolean {
+  return code === 32 || code === 9;
+}
+
+/**
+ * An indented `- Key: value` line, or null. The whole line is masked before it is split, so `- STRIPE_KEY: sk_live_x`
+ * reaches `maskValues` as one string with the name and the value together (10-REVIEW CR-01). A line whose key is itself
+ * a secret's label (`- Value: ...`) keeps the key and the quiet mark, never the text.
+ */
 function readFieldLine(line: string): UserSetupField | null {
   const first = line.charCodeAt(0);
   if (first !== 32 && first !== 9) return null;
@@ -215,7 +265,31 @@ function readFieldLine(line: string): UserSetupField | null {
   const rest = line.slice(at + 2);
   const colon = rest.indexOf(':');
   if (colon <= 0) return null;
-  return { key: keep(rest.slice(0, colon).trim()), text: keep(rest.slice(colon + 1).trim()) };
+  const rawKey = rest.slice(0, colon).trim();
+  let key: string;
+  let text: string;
+  if (isVariableKey(rawKey)) {
+    // The key is a variable's name: mask the key and the text as one string, so the name and its value are seen together.
+    const masked = keep(rest);
+    const maskedColon = masked.indexOf(':');
+    if (maskedColon <= 0) return null;
+    key = masked.slice(0, maskedColon).trim();
+    text = masked.slice(maskedColon + 1).trim();
+  } else {
+    key = keep(rawKey);
+    text = keep(rest.slice(colon + 1).trim());
+  }
+  if (VALUE_KEYS.has(key.toLowerCase()) && text !== '') return { key, text: VALUE_NOT_SHOWN_MARK };
+  return { key, text };
+}
+
+/** True when a field's key is an upper-snake variable name (`STRIPE_KEY`, in backticks or not). `URL` is a label the
+ * template writes, not a variable. */
+function isVariableKey(key: string): boolean {
+  const bare = stripTicks(key).split('*').join('').split('"').join('').split("'").join('').trim();
+  if (bare === 'URL') return false;
+  const found = withholdValue(bare);
+  return found !== null && found.name === bare;
 }
 
 function stepKindOf(group: string): UserSetupStepKind {
@@ -308,6 +382,35 @@ function readSteps(lines: readonly string[], ranges: readonly { heading: string;
   return collected;
 }
 
+/** Column headings that name a value: every cell under one is masked, whatever it holds (10-REVIEW WR-01). */
+const VALUE_HEADERS: ReadonlySet<string> = new Set(['value', 'values', 'secret', 'secrets', 'current value', 'default value', 'env value']);
+
+/** `lines` with the cells under a value-named column of any table masked. A table starts at a row followed by a separator
+ * row; it ends at the first line that is not a table row. */
+function maskValueColumns(lines: readonly string[]): string[] {
+  const out = [...lines];
+  let columns: number[] = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const t = lines[i].trim();
+    if (t.charCodeAt(0) !== 124) {
+      columns = [];
+      continue;
+    }
+    if (i + 1 < lines.length && isSeparatorRow(lines[i + 1]) && !isSeparatorRow(t)) {
+      columns = [];
+      splitCells(t).forEach((cell, index) => {
+        if (VALUE_HEADERS.has(cell.toLowerCase().replaceAll('*', '').replaceAll('`', '').trim())) columns.push(index);
+      });
+      continue;
+    }
+    if (columns.length === 0 || isSeparatorRow(t)) continue;
+    const cells = splitCells(t);
+    for (const index of columns) if (index < cells.length && cells[index] !== '') cells[index] = VALUE_NOT_SHOWN_MARK;
+    out[i] = `| ${cells.join(' | ')} |`;
+  }
+  return out;
+}
+
 /** Every `##` section as masked lines. */
 function readSections(
   lines: readonly string[],
@@ -318,7 +421,7 @@ function readSections(
     if (sections.length >= USER_SETUP_SECTION_CAP) break;
     const stored: string[] = [];
     const to = Math.min(range.endLine, range.startLine + 1 + USER_SETUP_LINE_CAP);
-    for (let i = range.startLine + 1; i < to; i += 1) stored.push(keep(lines[i]));
+    for (const line of maskValueColumns(lines.slice(range.startLine + 1, to))) stored.push(keep(maskSecretLabel(line)));
     sections.push({ heading: keep(range.heading), lines: stored });
   }
   return sections;

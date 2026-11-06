@@ -12,6 +12,7 @@ import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { UserSetupHandler } from '../../src/planning-repo/handlers/user-setup.ts';
 import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
 import { fxRead } from '../helpers/fixture-project.ts';
+import { allFormSecrets, formTag, userSetupFormDoc } from '../helpers/written-value-forms.ts';
 
 const PART = fxRead('phases/04-bulk-loan-export/04-USER-SETUP.md');
 const PENDING = fxRead('phases/02-roles-and-permissions/02-USER-SETUP.md');
@@ -459,6 +460,61 @@ function userSetupBlock(css: string): string {
   expect(end).toBeGreaterThan(start);
   return css.slice(start, end);
 }
+
+// 10-REVIEW CR-01 and WR-01: the same planted forms, through the handler, the composer and the components.
+describe('the View draws no value written in any form (10-REVIEW CR-01, WR-01)', () => {
+  const TABLES = [
+    '# Phase 9: User Setup Required',
+    '',
+    '## Keys',
+    '',
+    '| Variable | Value |',
+    '| --- | --- |',
+    '| STRIPE_KEY | PLANTED-TABLE-0001 |',
+    '',
+    '## Names',
+    '',
+    '| Name | Value |',
+    '| --- | --- |',
+    '| stripe_key | PLANTED-TABLE-0002 |',
+    '',
+    '## Where',
+    '',
+    '| Env var | Where |',
+    '| --- | --- |',
+    '| `STRIPE_KEY` | PLANTED-TABLE-0003 | PLANTED-TABLE-0004 |',
+    '',
+  ].join('\n');
+
+  it('keeps every planted secret of every form out of the model, the markup and any attribute', () => {
+    const { model, html, title } = viewOf(userSetupFormDoc());
+    expect(model).not.toBeNull();
+    expect(html).toContain('Value not shown');
+    for (const secret of allFormSecrets()) {
+      expect(html, secret).not.toContain(secret);
+      expect(JSON.stringify(model), secret).not.toContain(secret);
+      expect(title, secret).not.toContain(secret);
+    }
+    expect(html).not.toMatch(/(title|aria-label|data-[a-z-]+|value|href)="[^"]*PLANTED-FORM/);
+    expect(formTag(0)).toBe('PLANTED-FORM-01');
+  });
+
+  it('draws a `- NAME: value` field as the name and the quiet mark', () => {
+    const { html } = viewOf(
+      '# Phase 9: User Setup Required\n\n## Dashboard Configuration\n\n- [ ] **Add the key**\n  - STRIPE_KEY: PLANTED-FIELD-0001\n  - Value: PLANTED-FIELD-0002\n',
+    );
+    expect(html).not.toContain('PLANTED-FIELD');
+    expect(html).toContain('STRIPE_KEY');
+    expect(html).toContain('<span class="value-not-shown">Value not shown</span>');
+  });
+
+  it('draws no value from a table cell, under any header', () => {
+    const { model, html } = viewOf(TABLES);
+    expect(model).not.toBeNull();
+    expect(html).not.toContain('PLANTED-TABLE');
+    expect(JSON.stringify(model)).not.toContain('PLANTED-TABLE');
+  });
+});
 
 describe('user setup view contract - helpers catch planted violations', () => {
   it('flags each forbidden thing in an in-memory string', () => {

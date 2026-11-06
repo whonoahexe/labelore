@@ -48,3 +48,26 @@ export function formTag(index: number): string {
 export function allFormSecrets(): string[] {
   return WRITTEN_FORMS.flatMap((form, index) => form.secrets(formTag(index)));
 }
+
+/** A USER-SETUP.md with every form planted as a checklist item's field line, as a Notes line, and as a plain line of an
+ * unclaimed section, so a reader that masks fragment by fragment, or only some places, shows a secret. */
+export function userSetupFormDoc(): string {
+  const asField = WRITTEN_FORMS.map((form, i) => `  - ${form.line(formTag(i)).replace(/^- /, '')}`);
+  const asNote = WRITTEN_FORMS.map((form, i) => `  - Notes: ${form.line(formTag(i))}`);
+  const asLine = WRITTEN_FORMS.map((form, i) => form.line(formTag(i)));
+  return [
+    '# Phase 9: User Setup Required',
+    '',
+    '## Dashboard Configuration',
+    '',
+    '- [ ] **Add the key**',
+    '  - URL: https://host.example/keys',
+    ...asField,
+    ...asNote,
+    '',
+    '## Local Development',
+    '',
+    ...asLine,
+    '',
+  ].join('\n');
+}
