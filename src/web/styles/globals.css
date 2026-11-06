@@ -34715,3 +34715,299 @@ a.view-spikes-rel:hover {
   }
 }
 /* phase-11-spikes:end */
+
+/* phase-11-indexes:start */
+/* Phase 11 (11-18): the Indexes page, sketch 055 winner A (Instrument grid). The page renders five font sizes: the h1 as
+   ArtifactHeader draws it (--fs-display-3), the big counts (--fs-display-1, the fifth size the user approved at 11-01
+   as X5), the open tile's title (--fs-7), Body (--fs-4) and Label (--fs-2). Where a shared class sets a size outside
+   that set, the page takes it inside with a page-scoped rule below, so no shared class is edited. Every colour is a
+   theme token: a failed last update is the `missing` tone, never destructive; a graph that was never built is a
+   hatched, dashed ghost. The grid is three columns, two under 56rem and one under 34rem. */
+.view-indexes-root {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-indexes-root > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-indexes-root) .artifact-lead {
+  max-width: 72ch;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.artifact-page:has(.view-indexes-root) .status-chip,
+.artifact-page:has(.view-indexes-root) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.view-indexes-meta {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-indexes-meta + .view-indexes-meta::before {
+  content: '·';
+  margin-right: var(--space-3);
+}
+
+.view-indexes-word {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-indexes-note {
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.view-indexes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-flow: dense;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-indexes-cellwrap {
+  display: grid;
+  min-width: 0;
+}
+
+.view-indexes-cellwrap[data-span='2'] {
+  grid-column: span 2;
+}
+
+.view-indexes-cellwrap[data-open='true'] {
+  grid-column: 1 / -1;
+}
+
+.view-indexes-tile {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.view-indexes-tile {
+  cursor: pointer;
+}
+
+button.view-indexes-tile:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--card) 80%, var(--muted));
+}
+
+.view-indexes-tile[data-open='true'] {
+  border-color: var(--foreground);
+  cursor: default;
+}
+
+.view-indexes-tile[data-ghost='true'] {
+  border-style: dashed;
+  background: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+  color: var(--muted-foreground);
+}
+
+.view-indexes-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-indexes-name {
+  flex: none;
+  font-weight: var(--fw-semibold);
+}
+
+.view-indexes-title {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+.view-indexes-path {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.view-indexes-fig {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-indexes-line {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-indexes-bigs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+}
+
+.view-indexes-big {
+  display: grid;
+  gap: 0;
+}
+
+.view-indexes-num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-display-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-none);
+}
+
+.view-indexes-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.view-indexes-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--space-7);
+  min-height: var(--space-7);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.view-indexes-close:hover {
+  background: var(--state-hover);
+}
+
+.view-indexes-close svg {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+@media (pointer: coarse) {
+  .view-indexes-close {
+    width: var(--space-10);
+    min-height: var(--space-10);
+  }
+}
+
+.view-indexes-panel {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.view-indexes-cells {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: var(--space-2);
+}
+
+.view-indexes-cell {
+  display: grid;
+  gap: var(--space-0-5);
+  align-content: start;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-faint);
+  min-width: 0;
+}
+
+.view-indexes-cell[data-tone='complete'] {
+  border-color: var(--primary-border);
+}
+
+.view-indexes-cell[data-tone='in-flight'] {
+  border-color: var(--in-flight-border);
+}
+
+.view-indexes-cell[data-tone='missing'] {
+  border-color: var(--missing-border);
+}
+
+.view-indexes-cell[data-tone='quiet'] {
+  border-style: dashed;
+}
+
+.view-indexes-val {
+  font-family: var(--font-mono);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-indexes-report {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0 0 0 var(--space-5);
+  list-style: square;
+}
+
+.view-indexes-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-faint);
+}
+
+.view-indexes-foot .view-indexes-meta + .view-indexes-meta::before {
+  content: none;
+}
+
+@media (max-width: 56rem) {
+  .view-indexes-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 34rem) {
+  .view-indexes-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .view-indexes-cellwrap[data-span='2'] {
+    grid-column: auto;
+  }
+}
+/* phase-11-indexes:end */

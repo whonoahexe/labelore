@@ -2,13 +2,18 @@
 // text artifact of the two committed fixture projects (Shapes, Lendshed) is served by the very URL
 // /api/presentation reports as its key; an unknown address, a traversal spelling, an internal file's
 // file/ address and a malformed percent sequence are all 404s with `found: false`.
+import { mkdtempSync, rmSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { createApp } from '../../src/server/index.ts';
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
 import type { CommitLog } from '../../src/server/commit-times.ts';
+import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
 import { FX_ROOT, loadProject } from '../helpers/fixture-project.ts';
+import { writeLargeGraph } from '../helpers/index-fixtures.ts';
 import { SHAPES_ROOT } from '../helpers/shapes-project.ts';
 import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
@@ -438,5 +443,129 @@ describe('/api/documents carries the spikes context for a spike file', () => {
     const app = await appOver(FX_ROOT);
     const { spikesContext } = await bodyOf(app, '.planning/PROJECT.md');
     expect(spikesContext).toBeNull();
+  });
+});
+
+describe('/api/documents carries the bounded indexes context for an intel or graph file', () => {
+  interface IndexesBody {
+    found: true;
+    document: { html: string };
+    indexesContext: {
+      openKey: string | null;
+      intelFiles: number;
+      tiles: Array<{
+        key: string;
+        state: string;
+        url: string | null;
+        path: string | null;
+        graph: {
+          counts: { nodes: number; links: number | null; communities: number | null } | null;
+          hubs: Array<{ id: string }>;
+          status: { state: string | null; exitCode: number | null } | null;
+        } | null;
+        summary: { kind: string } | null;
+      }>;
+    } | null;
+  }
+
+  /** An app over a repository on the real filesystem, so the graph summary can read graph.json through it. */
+  async function liveAppOver(root: string): Promise<App> {
+    const repository = new PlanningRepository(new LocalFsPlanningFilesystem(root), root, { loadTheme: null });
+    await repository.load();
+    return createApp(repository, true, '.', NO_COMMITS);
+  }
+
+  async function rawBodyOf(app: App, path: string): Promise<{ text: string; body: IndexesBody }> {
+    const presentation = await presentationOf(app);
+    const artifact = presentation.artifacts.find((candidate) => candidate.path === path);
+    expect(artifact, path).toBeDefined();
+    const response = await documentRequest(app, artifact?.key ?? '');
+    expect(response.status).toBe(200);
+    const text = await response.text();
+    return { text, body: JSON.parse(text) as IndexesBody };
+  }
+
+  it("opens Lendshed's graph.json on the Graph tile with the last good counts, the failed status and a small response", async () => {
+    const app = await liveAppOver(FX_ROOT);
+    const { text, body } = await rawBodyOf(app, '.planning/graphs/graph.json');
+    const context = body.indexesContext;
+    expect(context).not.toBeNull();
+    expect(context?.openKey).toBe('graph');
+    expect(context?.tiles.map((tile) => tile.key)).toEqual([
+      'graph',
+      'architecture',
+      'stack',
+      'file-roles',
+      'api-map',
+      'dependencies',
+    ]);
+    const graph = context?.tiles[0].graph;
+    expect(graph?.counts).toMatchObject({ nodes: 40, links: 60, communities: 6 });
+    expect(graph?.status).toMatchObject({ state: 'failed', exitCode: 1 });
+    expect(text.length).toBeLessThan(32 * 1024);
+
+    // No node id beyond the hubs reaches the response: the page names at most ten.
+    const raw = JSON.parse(await readFile(join(FX_ROOT, '.planning/graphs/graph.json'), 'utf8')) as { nodes: Array<{ id: string }> };
+    const hubIds = new Set((graph?.hubs ?? []).map((hub) => hub.id));
+    expect(hubIds.size).toBeLessThanOrEqual(10);
+    const others = raw.nodes.map((node) => node.id).filter((id) => !hubIds.has(id));
+    expect(others.length).toBeGreaterThan(10);
+    for (const id of others) expect(text, id).not.toContain(`"${id}"`);
+  });
+
+  it('gives every other intel or graph file of the project the same page with its own tile open, and the stamp none', async () => {
+    const app = await liveAppOver(FX_ROOT);
+    const expected: Array<[string, string | null]> = [
+      ['.planning/graphs/GRAPH_REPORT.md', 'graph'],
+      ['.planning/graphs/.last-build-status.json', 'graph'],
+      ['.planning/intel/stack.json', 'stack'],
+      ['.planning/intel/arch-decisions.json', 'architecture'],
+      ['.planning/intel/dependency-graph.json', 'dependencies'],
+      ['.planning/intel/.last-refresh.json', null],
+    ];
+    for (const [path, openKey] of expected) {
+      const { body } = await rawBodyOf(app, path);
+      expect(body.indexesContext?.openKey, path).toBe(openKey);
+    }
+  });
+
+  it("sends no raw key of Lendshed's stack.json, only the bounded lift", async () => {
+    const app = await liveAppOver(FX_ROOT);
+    const { text, body } = await rawBodyOf(app, '.planning/intel/stack.json');
+    const stack = body.indexesContext?.tiles.find((tile) => tile.key === 'stack');
+    expect(stack?.summary?.kind).toBe('stack');
+    const raw = JSON.parse(await readFile(join(FX_ROOT, '.planning/intel/stack.json'), 'utf8')) as Record<string, unknown>;
+    const rawKeys = Object.keys(raw).filter((key) => key.includes('_') && !['_meta', 'made_up_example', 'derived_from', 'gsd_core_version'].includes(key));
+    expect(rawKeys.length).toBeGreaterThan(0);
+    for (const key of rawKeys) expect(text, key).not.toContain(key);
+    expect(body.document.html).not.toContain('{');
+  });
+
+  it('is null for a document that is not an intel or graph file', async () => {
+    const app = await liveAppOver(FX_ROOT);
+    const { body } = await rawBodyOf(app, '.planning/PROJECT.md');
+    expect(body.indexesContext).toBeNull();
+  });
+
+  it('opens a graph.json above the text cap on the Graph tile, summarised, with the response far below the file', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'labelore-indexes-'));
+    try {
+      writeLargeGraph(dir, 12_000);
+      const app = await liveAppOver(dir);
+      const presentation = await presentationOf(app);
+      const artifact = presentation.artifacts.find((candidate) => candidate.path === '.planning/graphs/graph.json');
+      expect(artifact?.fileClass).toBe('large');
+      expect(artifact?.sizeBytes).toBeGreaterThan(1_048_576);
+      const { text, body } = await rawBodyOf(app, '.planning/graphs/graph.json');
+      const graph = body.indexesContext?.tiles.find((tile) => tile.key === 'graph');
+      expect(body.indexesContext?.openKey).toBe('graph');
+      expect(graph?.state).toBe('ok');
+      expect(graph?.graph?.counts?.nodes).toBe(12_000);
+      expect(graph?.graph?.hubs.length).toBeLessThanOrEqual(10);
+      expect(text.length).toBeLessThan(32 * 1024);
+      expect(text).not.toContain('"n11999"');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

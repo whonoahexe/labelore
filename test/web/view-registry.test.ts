@@ -1,13 +1,13 @@
-// VIEW-05's registry-completeness test: every kind in `VIEW_KINDS` (33 total: UI-SPEC's own 16
+// VIEW-05's registry-completeness test: every kind in `VIEW_KINDS` (34 total: UI-SPEC's own 16
 // plus `review-fix`, `findings`, `debug`, `todo` and `note`, RESEARCH.md § Open Question 1's recommended corpus-grep
 // gap and discovery's directory-position kind, the Phase 9 kinds, and Phase 10's `codebase` plus the six specification
-// and check kinds, and Phase 11's `pause` and `spikes`) must have a registered `VIEW_MANIFESTS` entry with a non-empty `lead` and at least one
+// and check kinds, and Phase 11's `pause`, `spikes` and `indexes`) must have a registered `VIEW_MANIFESTS` entry with a non-empty `lead` and at least one
 // `promote` entry — and no manifest may exist for a kind that isn't a `VIEW_KINDS` member. Both
 // directions are asserted via a single sorted-keys `toEqual`, so a new kind added to either list
 // without a matching update on the other fails this suite immediately.
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { VIEW_KINDS, viewKindOf } from '../../src/web/views/kinds.ts';
+import { VIEW_KINDS, viewKindOf, viewOwnsLargeFile } from '../../src/web/views/kinds.ts';
 import { VIEW_MANIFESTS, documentHtmlAllowedInView, resolveView, resolveViewFor } from '../../src/web/views/manifests.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import type { BlockComponentKey } from '../../src/web/views/manifest.ts';
@@ -20,8 +20,8 @@ const KNOWN_COMPONENTS: readonly BlockComponentKey[] = [
 ];
 
 describe('view registry completeness (VIEW-05)', () => {
-  it('VIEW_KINDS has exactly 33 members', () => {
-    expect(VIEW_KINDS.length).toBe(33);
+  it('VIEW_KINDS has exactly 34 members', () => {
+    expect(VIEW_KINDS.length).toBe(34);
   });
 
   it('VIEW_MANIFESTS keys and VIEW_KINDS are the same set, both directions', () => {
@@ -245,6 +245,46 @@ describe('view registry completeness (VIEW-05)', () => {
     it('a spikes input with no context composes nothing, so the promoted sections render with no notice', () => {
       const manifest = VIEW_MANIFESTS.spikes;
       expect(manifest?.spikesPage?.({ ...EMPTY_INPUT, kind: 'spikes-manifest' })).toBeNull();
+    });
+  });
+
+  describe('Phase 11: the indexes view kind, its two wire kinds and the large-file rule', () => {
+    const EMPTY_INPUT: ViewInput = { kind: '', frontmatter: {}, structured: {}, groups: [], planSegments: [] };
+
+    it('viewKindOf maps intel and graph to indexes and leaves the other rows alone', () => {
+      expect(viewKindOf('intel')).toBe('indexes');
+      expect(viewKindOf('graph')).toBe('indexes');
+      expect(viewKindOf('indexes')).toBe('indexes');
+      expect(viewKindOf('spike')).toBe('spikes');
+      expect(viewKindOf('handoff')).toBe('pause');
+      expect(viewKindOf('sketch')).toBe('sketch');
+    });
+
+    it('resolveViewFor gives intel and graph the one indexes manifest, recognised', () => {
+      for (const kind of ['intel', 'graph']) {
+        const resolved = resolveViewFor(kind, { ...EMPTY_INPUT, kind });
+        expect(resolved.recognized, kind).toBe(true);
+        expect(resolved.manifest, kind).toBe(VIEW_MANIFESTS.indexes);
+      }
+    });
+
+    it('the indexes manifest opts into the page, keeps a silent promote-every-section fallback and has its verbatim lead', () => {
+      const manifest = VIEW_MANIFESTS.indexes;
+      expect(typeof manifest?.indexesPage).toBe('function');
+      expect(manifest?.lead).toBe('What the codebase indexes say, one tile per file, as short summaries; the raw data stays on disk.');
+      expect(manifest?.promote).toHaveLength(1);
+      expect(documentHtmlAllowedInView(manifest ?? null)).toBe(true);
+    });
+
+    it('an indexes input with no context composes nothing, so the promoted sections render with no notice', () => {
+      expect(VIEW_MANIFESTS.indexes?.indexesPage?.({ ...EMPTY_INPUT, kind: 'intel' })).toBeNull();
+    });
+
+    it('viewOwnsLargeFile is true for intel and graph only', () => {
+      const owners = [...VIEW_KINDS, 'intel', 'graph', 'spike', 'handoff', 'unknown', 'sketch', 'codebase-stack'].filter(
+        (kind) => viewOwnsLargeFile(kind),
+      );
+      expect([...new Set(owners)].sort()).toEqual(['graph', 'intel']);
     });
   });
 });
