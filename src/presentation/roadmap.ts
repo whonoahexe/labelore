@@ -56,6 +56,9 @@ export interface RoadmapPhaseRow {
     url: string | null;
   }>;
   waveBands: WaveBand[];
+  /** Phase 11 (11-11, D-07): the artifact key of a `.continue-here.md` that sits in this phase's own folder, else
+   * null. Read from the payload's artifacts by folder; never built from file text. */
+  pausedHereUrl: string | null;
 }
 
 /** A milestone's entry in MILESTONES.md: what shipped, when, and what the author noted at close. */
@@ -217,6 +220,18 @@ function hasProgressDisagreement(
   );
 }
 
+const CONTINUE_HERE_NAME = '.continue-here.md';
+
+/** The key of the `.continue-here.md` in the phase's folder (T-11-55: a payload key found by folder). */
+function pausedHereUrlOf(phase: PhaseDto, presentation: ProjectPresentation): string | null {
+  if (phase.dirPath === null) return null;
+  const wanted = `${phase.dirPath.replace(/\/+$/, '')}/${CONTINUE_HERE_NAME}`;
+  const found = presentation.artifacts.find(
+    (artifact) => artifact.kind === 'continue-here' && artifact.path === wanted,
+  );
+  return found?.key ?? null;
+}
+
 function phaseRow(phase: PhaseDto, presentation: ProjectPresentation): RoadmapPhaseRow {
   const requirementArtifact = presentation.artifacts.find(
     (artifact) => artifact.kind === 'requirements' && artifact.milestoneKey === null,
@@ -252,6 +267,7 @@ function phaseRow(phase: PhaseDto, presentation: ProjectPresentation): RoadmapPh
       };
     }),
     waveBands: waveBands(phase),
+    pausedHereUrl: pausedHereUrlOf(phase, presentation),
   };
 }
 

@@ -33722,4 +33722,213 @@ button.view-codebase-mark:hover {
     border-block: 1px dashed var(--border);
   }
 }
+/* Phase 11 (11-11, D-08): the lead's date and the quiet "Work has moved on since" note sit side by side; the note is
+   dashed and quiet (never an alarm), and a plain fact about the project, apart from the handoff's own fields. */
+.view-pause-ago {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.view-pause-moved {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-1) var(--space-2-5);
+  border: 1px dashed var(--muted-foreground);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-wider);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.view-pause-moved b {
+  color: var(--foreground);
+  font-weight: var(--fw-semibold);
+}
+
+/* The rest of the handoff: closed bars, each tagged with its file (the shared bar pattern, in this page's own names). */
+.view-pause-rest {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-pause-bars {
+  display: grid;
+  border-top: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-pause-bar {
+  border-bottom: 1px solid var(--border);
+  min-width: 0;
+}
+
+.view-pause-bar-sum {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-10);
+  padding-inline: var(--space-2);
+  font-weight: var(--fw-semibold);
+  list-style: none;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.view-pause-bar-sum::-webkit-details-marker {
+  display: none;
+}
+
+.view-pause-bar-sum:hover {
+  background: var(--state-hover);
+}
+
+.view-pause-bar-chev {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--muted-foreground);
+}
+
+.view-pause-bar[open] .view-pause-bar-chev {
+  transform: rotate(90deg);
+}
+
+.view-pause-bar-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-pause-bar-count {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  white-space: nowrap;
+}
+
+.view-pause-bar-sum .view-pause-src {
+  margin-left: auto;
+}
+
+.view-pause-bar-body {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--space-4) + var(--space-4));
+  min-width: 0;
+}
+
+.view-pause-kv {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-pause-kv > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+/* Uncommitted files as the status listing wrote them: one mono line each, ended with an ellipsis (the full value is
+   the title). */
+.view-pause-paths {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px dashed var(--border);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  min-width: 0;
+}
+
+.view-pause-paths > li {
+  padding: var(--space-1) var(--space-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre;
+  min-width: 0;
+}
+
+.view-pause-paths > li + li {
+  border-top: 1px solid var(--border-faint);
+}
+
+.view-pause-prose {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-pause-prose p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.view-pause-prose ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-5);
+  overflow-wrap: anywhere;
+}
+
+/* A note section renders the shared document markup, whose sizes are fluid and larger than this page's scale; it is
+   taken inside the four sizes here, so no shared document class is edited. */
+.view-pause-plain-section .artifact-document {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-pause-plain-section .artifact-document > :first-child {
+  margin-top: 0;
+}
+
+.view-pause-plain-section .artifact-document :is(h3, h4, h5, h6) {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+.view-pause-plain-section .artifact-document :is(h3, h4, h5, h6) .heading-copy {
+  font-size: var(--fs-2);
+}
+
+.view-pause-plain-section .artifact-document table,
+.view-pause-plain-section .artifact-document pre:not([data-figure-island] *) {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-pause-plain-section .artifact-document :not(pre) > code {
+  font-size: var(--fs-4);
+}
+
+.view-pause-plain-section .artifact-document [data-figure-island] * {
+  font-size: var(--fs-2);
+}
+
+@media (max-width: 42rem) {
+  .view-pause-bar-body {
+    padding-left: var(--space-2);
+  }
+}
 /* phase-11-pause:end */
