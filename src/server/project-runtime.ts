@@ -12,7 +12,8 @@ import { buildRouteTable } from '../presentation/route-table.ts';
 import type { RouteTable } from '../presentation/route-table.ts';
 import { buildArtifactIndex } from './artifact-index.ts';
 import { createCommitLog, type CommitLog } from './commit-times.ts';
-import { createFileDates, type FileDates } from './file-dates.ts';
+import { createFileDates, createGitRunner, type FileDates, type GitRunner } from './file-dates.ts';
+import { createIndexSummary, type IndexSummary } from './index-summary.ts';
 import { toProjectPresentation } from './project-presentation.ts';
 import { createSearchIndexState } from './search-index.ts';
 
@@ -40,6 +41,8 @@ export interface DerivedViews {
   artifactIndex: ReturnType<typeof buildArtifactIndex>;
   referenceRegistry: ReturnType<typeof buildReferenceRegistry>;
   searchIndexState: ReturnType<typeof createSearchIndexState>;
+  /** The Indexes page's graph summary service (11-13): built with the bundle, so a refresh drops what it cached. */
+  indexSummary: IndexSummary;
 }
 
 /** What one refresh came to; the handler maps each to today's JSON body and status. */
@@ -62,10 +65,13 @@ export class ProjectRuntime {
   inFlightRequests: number;
   disposed: boolean;
   private inFlight: Promise<ProjectSnapshot> | null;
+  private readonly runGit: GitRunner;
 
-  constructor(source: SnapshotSource, slug: string, commitLog?: CommitLog) {
+  constructor(source: SnapshotSource, slug: string, commitLog?: CommitLog, runGit?: GitRunner) {
     this.source = source;
     this.slug = slug;
+    // The commits-behind figure of the graph summary: a short timeout and a small buffer, one number back.
+    this.runGit = runGit ?? createGitRunner(3000, 64 * 1024);
     this.inFlightRequests = 0;
     this.disposed = false;
     this.inFlight = null;
@@ -88,7 +94,13 @@ export class ProjectRuntime {
     // on index readiness.
     const searchIndexState = createSearchIndexState();
     searchIndexState.buildFrom(snapshot, routeTable);
-    return { routeTable, presentation, artifactIndex, referenceRegistry, searchIndexState };
+    // Creating the summary does no read: the graph is scanned only when the Indexes page asks (11-13, D-04).
+    const indexSummary = createIndexSummary({
+      fs: () => this.planningFilesystem(),
+      git: this.runGit,
+      root: presentation.rootPath,
+    });
+    return { routeTable, presentation, artifactIndex, referenceRegistry, searchIndexState, indexSummary };
   }
 
   /** Re-reads the source and swaps the bundle (T-04-01-01: concurrent callers share one walk). */
