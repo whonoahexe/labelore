@@ -53,7 +53,7 @@ function WarningIndicator({
   );
 }
 
-/** One file in the drawer. A non-text file (image, binary, large text) carries `data-file-class` and a
+/** One file in the drawer. A non-text file (image, binary, large text, listed) carries `data-file-class` and a
  * quiet type-and-size badge: `{EXT} · {size}` for the eye (aria-hidden) and `, {Type}, {size}` for a
  * screen reader. No tone, no icon, no accent: the mark is information, not status (Phase 7, D-09). */
 export function FileRow({

@@ -1,5 +1,6 @@
 // The File details card (Phase 7: D-09): what a file is when Labelore does not show its contents - a
-// binary, a text file over the size limit, or an image above the image cap. One static page: a header,
+// binary, a text file over the size limit, an image above the image cap, or a file in a spike folder that
+// Labelore lists by name only (Phase 11). One static page: a header,
 // one card of four facts. No preview, no download, no link to the bytes and no button but the header's
 // copy-path (D-09). Every value is React text; the facts come from the payload alone.
 import { MAX_IMAGE_BYTES, MAX_TEXT_BYTES } from '../../planning-repo/file-class.ts';
@@ -14,7 +15,7 @@ import type { ArtifactDto, ProjectPresentation } from '../../server/project-pres
 import { ArtifactHeader } from '../components/artifact-header.tsx';
 import { documentCrumbsOf } from './document-crumbs.ts';
 
-export type FileDetailsVariant = 'binary' | 'large' | 'image-over-cap';
+export type FileDetailsVariant = 'binary' | 'large' | 'image-over-cap' | 'listed';
 
 const COPY: Record<FileDetailsVariant, { eyebrow: string; lead: string }> = {
   binary: { eyebrow: 'Binary file', lead: "Labelore does not show this file's contents." },
@@ -22,6 +23,7 @@ const COPY: Record<FileDetailsVariant, { eyebrow: string; lead: string }> = {
     eyebrow: 'Large file',
     lead: `Labelore does not read text files larger than ${formatByteSize(MAX_TEXT_BYTES)}.`,
   },
+  listed: { eyebrow: 'Listed file', lead: 'Listed by name only. Labelore never runs or opens these files.' },
   'image-over-cap': {
     eyebrow: 'Image',
     lead: `This image is larger than ${formatByteSize(MAX_IMAGE_BYTES)}, so Labelore does not load it.`,
