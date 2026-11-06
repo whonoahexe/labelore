@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 057 — Seed page</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 057: the seed page (VIEW-15, Phase 11 D-02, D-16). A seed is one idea planted for later: the idea, when it
+   should surface, how big it is, where and when it was planted, and the files it points at. Three pictures of those
+   fields: a dormant-to-surface timeline (A), a fan of references (B), a seed packet (C). Text is MADE UP (Lendshed) in
+   the layout GSD's plant-seed writer produced. Tokens come from ../themes/default.css; every colour is a token or a
+   colour-mix of tokens. Four font sizes only: --fs-display-3 (the h1), --fs-7, --fs-4, --fs-2. */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --neutral-fill: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); overflow-x: hidden; }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; padding: 0 var(--space-0-5); background: var(--veil); overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.brand-trigger { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: var(--space-1) var(--space-2); border: 1px solid transparent; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+@media (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- page atoms (the four sizes: display h1 / heading fs-7 / body fs-4 / label fs-2) ---------- */
+.page { display: grid; gap: var(--space-8); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); min-width: 0; }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); overflow-wrap: anywhere; }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.meta { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.micro-label { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h2.sh { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.sentence { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); overflow-wrap: anywhere; }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; background: transparent; }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--neutral-fill); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); }
+.prose { max-width: 62ch; }
+.mono { font-family: var(--font-mono); }
+.ellip { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* closed bars (shared with every earlier sketch) */
+.bars { display: grid; border-top: 1px solid var(--border); }
+.bar { border-bottom: 1px solid var(--border); }
+.bar > summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding-inline: var(--space-2); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); min-width: 0; }
+.bar > summary::-webkit-details-marker { display: none; }
+.bar > summary:hover { background: var(--state-hover); }
+.bar[open] > summary .chev { transform: rotate(90deg); }
+.bar > summary .n { margin-left: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.bar-body { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--icon) + var(--space-4)); min-width: 0; }
+@media (max-width: 42rem) { .bar-body { padding-left: var(--space-2); } }
+
+/* the breadcrumb list (shared by A and C): only a reference that resolves is a link */
+.crumb-list { display: grid; gap: var(--space-2); }
+.crumb-list li { display: grid; grid-template-columns: var(--sq) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.crumb-list .sq { transform: translateY(var(--space-0-5)); }
+.crumb-list .path { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.crumb-list a.path { text-decoration: underline; text-underline-offset: var(--space-0-5); text-decoration-color: var(--border); }
+.crumb-list a.path:hover { text-decoration-color: var(--foreground); }
+.crumb-list .why { display: block; color: var(--muted-foreground); }
+.crumb-list .status-chip { margin-left: var(--space-2); vertical-align: baseline; }
+
+/* the scope scale: three notches, the seed's own filled; unknown leaves all three quiet */
+.scale { display: inline-flex; gap: var(--space-1); align-items: center; }
+.scale span { display: grid; place-items: center; min-width: var(--space-8); padding: var(--space-1) var(--space-2); border: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); color: var(--muted-foreground); }
+.scale span.on { background: var(--neutral-fill); border-color: var(--muted-foreground); color: var(--background); }
+.scale.unknown span { border-style: dashed; }
+.audit-line { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); align-items: baseline; padding: var(--space-2) var(--space-3); border: 1px dashed var(--border); }
+.audit-line .k { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); }
+
+/* =====================================================================
+   A: Dormant to surface — a banner across the top: a time axis from planted to today, then a dashed run to the gate
+   ===================================================================== */
+.band { border: 1px solid var(--border); background: var(--card); padding: var(--space-6) var(--space-6); min-width: 0; }
+.tl { display: grid; grid-template-columns: minmax(0, 1fr) calc(var(--space-8) * 4) minmax(0, calc(var(--space-8) * 11)); gap: 0; align-items: stretch; }
+.tl-elapsed { position: relative; min-height: calc(var(--space-8) * 7); margin-right: 0; }
+.tl-line { position: absolute; left: 0; right: 0; top: 50%; height: 0; border-top: 4px solid var(--muted-foreground); transform: translateY(-50%); }
+.tl-line[data-tone='in-flight'] { border-top-color: var(--in-flight-fill); }
+.tl-ticks { position: absolute; left: 0; right: 0; top: 50%; height: var(--space-3); transform: translateY(var(--space-1)); background: repeating-linear-gradient(90deg, var(--muted-foreground) 0 1px, transparent 1px calc(100% / var(--wk))); opacity: 0.7; pointer-events: none; }
+.tl-caption { position: absolute; right: 0; bottom: 0; }
+.tl-mark { position: absolute; left: var(--at, 0); top: 50%; transform: translate(-50%, -50%); }
+.tl-mark.end { transform: translate(-100%, -50%); }
+.tl-mark.start { transform: translate(0, -50%); }
+.tl-mark .sq { --sq: var(--space-4); }
+.tl-label { position: absolute; display: grid; gap: var(--space-0-5); max-width: 46%; }
+.tl-label.up { bottom: calc(50% + var(--space-4)); }
+.tl-label.down { top: calc(50% + var(--space-4)); }
+.tl-label.mid { transform: translateX(-50%); text-align: center; justify-items: center; }
+.tl-label.at-start { left: 0; }
+.tl-label.mid { left: var(--at); }
+.tl-label.at-end { right: 0; text-align: right; justify-items: end; }
+.tl-gap { display: grid; grid-template-rows: 1fr 0 1fr; justify-items: center; padding-inline: var(--space-1); text-align: center; }
+.tl-gap .dash { grid-row: 2; width: 100%; border-top: 4px dashed var(--muted-foreground); transform: translateY(-50%); }
+.tl-gap .meta { grid-row: 3; align-self: start; padding-top: var(--space-4); }
+.tl-gap .meta { overflow-wrap: anywhere; }
+.gate { display: grid; gap: var(--space-3); align-content: center; padding: var(--space-4); border: 2px solid var(--foreground); border-left-width: var(--space-2); background: var(--background); min-width: 0; }
+.gate[data-status='active'], .gate[data-status='triggered'] { border-left-color: var(--in-flight-fill); }
+.gate[data-status='dormant'] { border-left-color: var(--muted-foreground); }
+.gate.none { border: 2px dashed var(--muted-foreground); border-left-width: 2px; }
+.gate .chips, .sheet .chips { display: flex; flex-wrap: wrap; gap: var(--space-1-5) var(--space-2); align-items: center; }
+.page > section, .letter > section { display: grid; gap: var(--space-3); min-width: 0; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+.cols > section { display: grid; gap: var(--space-3); min-width: 0; }
+@media (max-width: 52rem) {
+  .band { padding: var(--space-4); }
+  .tl { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .tl-elapsed { min-height: 0; display: grid; gap: var(--space-5); padding: 0 0 var(--space-3) var(--space-6); border-left: 4px solid var(--muted-foreground); margin-left: var(--space-2); }
+  .tl-line, .tl-ticks, .tl-caption { display: none; }
+  .tl-item { position: relative; display: grid; }
+  .tl-item .tl-mark, .tl-item .tl-mark.end, .tl-item .tl-mark.start { position: absolute; left: calc(var(--space-6) * -1 - var(--space-2) - 2px); top: var(--space-0-5); transform: none; }
+  .tl-label, .tl-label.up, .tl-label.down, .tl-label.mid, .tl-label.at-end, .tl-label.at-start { position: static; max-width: none; transform: none; text-align: left; justify-items: start; }
+  .tl-gap { grid-template-rows: none; grid-auto-flow: column; justify-content: start; align-items: center; gap: var(--space-3); margin: 0 0 var(--space-4) var(--space-2); }
+  .tl-gap .dash { grid-row: auto; width: 0; height: var(--space-8); border-top: 0; border-left: 4px dashed var(--muted-foreground); transform: none; }
+  .tl-gap .meta { grid-row: auto; padding: 0; text-align: left; }
+  .cols { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
+}
+
+/* =====================================================================
+   B: Fan of references — the seed on the left, one wire to each file it points at (solid: it resolves)
+   ===================================================================== */
+.b-grid { display: grid; grid-template-columns: minmax(0, 1fr) calc(var(--space-8) * 10); gap: var(--space-6); align-items: start; }
+.stage { border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.stage-bar { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); }
+.stage-bar .micro-label { color: var(--foreground); }
+.fan { --rowh: calc(var(--space-8) * 2); position: relative; display: grid; grid-template-columns: calc(var(--space-8) * 7) minmax(var(--space-8), 1fr) minmax(0, calc(var(--space-8) * 11)); grid-auto-rows: minmax(var(--rowh), auto); padding: var(--space-4); align-items: center; }
+.fan-seed { grid-column: 1; grid-row: 1 / span var(--n); align-self: center; display: grid; gap: var(--space-2); padding: var(--space-3); border: 2px solid var(--foreground); background: var(--background); }
+.fan-links { grid-column: 2; grid-row: 1 / span var(--n); position: relative; align-self: stretch; min-height: 100%; }
+.fan-links svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+.fan-links path { fill: none; stroke: var(--foreground); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.fan-links path.no { stroke: var(--muted-foreground); stroke-dasharray: 4 4; stroke-width: 1.5; }
+.fan-files { display: contents; }
+.fan-file { grid-column: 3; grid-row: var(--r); display: grid; grid-template-columns: var(--sq) minmax(0, 1fr); gap: var(--space-2); align-items: center; padding: var(--space-2) var(--space-3); border: 1px solid var(--border); background: var(--background); min-width: 0; text-align: left; }
+.fan-file:hover { background: var(--state-hover); }
+.fan-file[aria-pressed='true'] { border: 2px solid var(--foreground); padding: calc(var(--space-2) - 1px) calc(var(--space-3) - 1px); }
+.fan-file.no { border-style: dashed; }
+.fan-file .path { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); }
+.fan-file .sub { grid-column: 2; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.fan.bare { grid-template-columns: calc(var(--space-8) * 7) minmax(var(--space-8), 1fr) minmax(0, calc(var(--space-8) * 11)); }
+.fan-stub { grid-column: 2 / -1; grid-row: 1; display: flex; align-items: center; gap: var(--space-3); color: var(--muted-foreground); }
+.fan-stub::before { content: ''; flex: 0 0 calc(var(--space-8) * 2); border-top: 2px dashed var(--muted-foreground); }
+.dock { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-top: 1px solid var(--border); background: var(--veil); }
+.dock .row { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; }
+.sheet { display: grid; gap: var(--space-4); padding: var(--space-4); border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.sheet > div { display: grid; gap: var(--space-1-5); min-width: 0; }
+.sheet > div + div { padding-top: var(--space-3); border-top: 1px solid var(--border-faint); }
+.sheet .sentence { font-size: var(--fs-7); }
+@media (max-width: 62rem) { .b-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 42rem) {
+  .fan { grid-template-columns: minmax(0, 1fr); grid-auto-rows: auto; row-gap: var(--space-3); padding: var(--space-3); }
+  .fan-seed { grid-column: 1; grid-row: auto; }
+  .fan-links { display: none; }
+  .fan-files { display: grid; gap: var(--space-3); border-left: 2px solid var(--foreground); margin-left: var(--space-3); padding-left: var(--space-6); }
+  .fan-file { grid-column: auto; grid-row: auto; position: relative; }
+  .fan-file::before { content: ''; position: absolute; right: 100%; top: 50%; width: var(--space-6); border-top: 2px solid var(--foreground); }
+  .fan-file.no::before { border-top: 2px dashed var(--muted-foreground); }
+  .fan-stub { grid-column: 1; grid-row: auto; margin-left: var(--space-6); }
+}
+
+/* =====================================================================
+   C: Seed packet — an envelope: postmark, stamp, the surface-when line as the address, the status as the seal
+   ===================================================================== */
+.letter { width: min(100%, calc(var(--space-8) * 24)); margin: 0 auto; display: grid; gap: var(--space-8); min-width: 0; }
+.packet { position: relative; display: grid; gap: var(--space-6); padding: var(--space-6); border: 2px solid var(--foreground); background: var(--card); min-width: 0; }
+.packet-flap { position: absolute; inset: 0 0 auto 0; height: calc(var(--space-8) * 2); pointer-events: none; }
+.packet-flap svg { width: 100%; height: 100%; display: block; }
+.packet-flap line { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.p-top { position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-4); align-items: flex-start; }
+.p-from { display: grid; gap: var(--space-1); max-width: 22rem; min-width: 0; }
+.p-marks { display: flex; align-items: flex-start; gap: 0; }
+.postmark { display: grid; gap: var(--space-0-5); justify-items: center; padding: var(--space-2) var(--space-3); border: 2px solid var(--muted-foreground); color: var(--muted-foreground); transform: rotate(-5deg); margin-right: var(--space-3); margin-top: var(--space-3); max-width: calc(var(--space-8) * 4); background: transparent; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-align: center; }
+.stamp { display: grid; gap: var(--space-0-5); justify-items: center; align-content: center; width: calc(var(--space-8) * 3); aspect-ratio: 4 / 5; padding: var(--space-2); border: 3px dashed var(--foreground); outline: 1px solid var(--background); outline-offset: -5px; background: var(--muted); }
+.stamp .sentence { line-height: var(--lh-none); }
+.stamp.unknown { border-color: var(--muted-foreground); background: transparent; }
+.stamp .word { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; text-align: center; }
+.p-address { position: relative; display: grid; gap: var(--space-2); padding: var(--space-6) 0 var(--space-6) var(--space-4); border-left: 2px solid var(--foreground); }
+.p-address.none { border-left-style: dashed; border-left-color: var(--muted-foreground); }
+.p-foot { position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-3); padding-top: var(--space-3); border-top: 1px dashed var(--border); }
+.seal { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); border: 2px solid var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.seal[data-tone='in-flight'] { border-color: var(--in-flight-fill); color: var(--in-flight-fill); }
+.seal[data-tone='quiet'] { border-style: dashed; color: var(--muted-foreground); }
+@media (max-width: 42rem) { .packet { padding: var(--space-4); } .p-top { flex-direction: column; } .stamp { width: calc(var(--space-8) * 2.5); } }
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">057 seed</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Dormant to surface</a>
+    <a data-tab="b" href="#b">B: Fan of references</a>
+    <a data-tab="c" href="#c">C: Seed packet</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="trigger">Trigger + audit</button><button data-state="notrigger">No surfacing condition</button><button data-state="unknown">Scope unknown, placeholders</button><button data-state="crumbs">Breadcrumbs that do not resolve</button></span>
+</nav>
+
+<header class="app-head" id="apphead"></header>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+// MADE-UP seeds (Lendshed), written to the layout GSD's plant-seed writer produced on a scratch copy (read for shape
+// only): six frontmatter keys (id, status, planted, planted_during, trigger_when, scope) plus audit_acknowledged
+// when present; # SEED-id: idea, then Why This Matters, When to Surface, Scope Estimate, Breadcrumbs, Notes. The
+// writer's own placeholders (the Why "To be filled in", the Scope "Unknown", "No breadcrumbs collected yet", the stock
+// "will surface during /gsd-new-milestone" sentence, the Notes line) stay in the file; the page treats the unfilled
+// ones as absent. `ok` on a breadcrumb is what the app computes by checking the path exists.
+const TODAY = '2026-04-21';
+const days = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
+const STOCK = 'This seed will surface during `/gsd-new-milestone` when the milestone scope matches.';
+const NOTES = '_Captured via one-shot seed capture. Enrich with trigger, why, and scope at your convenience._';
+const SEEDS = {
+  trigger: {
+    id: 'SEED-260304-k7q', status: 'dormant', planted: '2026-03-04',
+    during: { raw: 'v1.0 / Phase 4 (Shed-to-Shed Transfers)', milestone: 'v1.0', phase: 'Phase 4' },
+    trigger: 'when stewards ask to be told before a shed runs out of a popular tool', scope: 'medium',
+    audit: { milestone: 'v1.0', at: '2026-03-20', status: 'dormant' },
+    idea: 'Alert a steward when a shed’s stock of a popular tool runs low',
+    why: 'Stewards learn a shed has run out of ladders or extension leads only when a member complains. A low-stock alert would let them move spares between sheds before the shelf is empty, which is the point of the transfer feature that shipped in v1.0.',
+    estimate: { size: 'Medium', gloss: 'a per-tool threshold setting, a nightly check against the inventory counts, and a place on the steward desk to show the alerts. Two to three phases.' },
+    crumbs: [
+      { path: '.planning/ROADMAP.md', desc: 'the v1.0 transfer phase this idea grew out of', ok: true },
+      { path: 'frontend/app/globals.css', desc: 'the alert badge would reuse the existing status colours', ok: true },
+      { path: 'frontend/app/stock-alerts.tsx', desc: 'where the alert list was first sketched, never committed', ok: false },
+    ],
+  },
+  notrigger: {
+    id: 'SEED-260411-m2x', status: 'active', planted: '2026-04-11',
+    during: { raw: 'v1.1 / Phase 4 (Bulk Loan Export)', milestone: 'v1.1', phase: 'Phase 4' },
+    trigger: null, scope: 'small', audit: null,
+    idea: 'Remind borrowers a day before a tool is due back',
+    why: 'Late returns are the most common reason a tool is missing from a shed when the next member arrives. A short reminder the day before the due date costs almost nothing and would cut the number of chasing messages stewards send by hand.',
+    estimate: { size: 'Small', gloss: 'one scheduled job that reads the loans list and sends a message through the channel members already use. Under one phase.' },
+    crumbs: [
+      { path: '.planning/PROJECT.md', desc: 'the core value this serves: a member can borrow without asking a steward', ok: true },
+      { path: 'frontend/app/globals.css', desc: 'nothing to reuse here yet, listed only because the reminder text would need a colour', ok: true },
+    ],
+  },
+  unknown: {
+    id: 'SEED-003', status: 'dormant', planted: '2026-01-18',
+    during: { raw: 'v1.0 / Phase 1 (Member Data Foundation)', milestone: 'v1.0', phase: 'Phase 1' },
+    trigger: 'when relevant', scope: null, audit: null,
+    idea: 'Print a paper borrowing form for sheds with no kiosk',
+    why: null, estimate: null, crumbs: [],
+  },
+  crumbs: {
+    // A fourth seed made up for this sketch only (not in the Lendshed fixture): the triggered status, a large scope,
+    // and breadcrumbs that mostly no longer resolve.
+    id: 'SEED-260402-w9d', status: 'triggered', planted: '2026-04-02',
+    during: { raw: 'v1.1 / Phase 2 (Kiosk Check-in)', milestone: 'v1.1', phase: 'Phase 2' },
+    trigger: 'when a shed outside the first region asks to join', scope: 'large', audit: null,
+    idea: 'Let each shed choose the language its kiosk speaks',
+    why: 'Two sheds in bilingual towns share one kiosk with the screen in one language. Members borrow less there, and stewards translate by hand at the desk.',
+    estimate: { size: 'Large', gloss: 'a language setting per shed, translated receipts and reminders, and a review pass over every kiosk screen. Three or more phases.' },
+    crumbs: [
+      { path: 'frontend/app/kiosk/screen.tsx', desc: 'the one screen all copy would have to come out of', ok: true },
+      { path: '.planning/phases/02-kiosk-check-in/02-CONTEXT.md', desc: 'the decision to keep kiosk copy in code', ok: false },
+      { path: 'frontend/app/i18n.ts', desc: 'where the string table was first drafted', ok: false },
+      { path: 'docs/regions.md', desc: 'which regions the sheds sit in', ok: false },
+    ],
+  },
+};
+
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') === 'dark' ? 'dark' : 'light';
+const S = { state: Object.keys(SEEDS).includes(params.get('state')) ? params.get('state') : 'trigger', pick: 0 };
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const inline = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/^_(.*)_$/, '$1');
+const ICON = { chev: '<svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>', down: '<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>', copy: '<svg class="i" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></svg>' };
+const cur = () => SEEDS[S.state];
+const statusTone = (s) => (s.status === 'dormant' ? 'quiet' : s.status === 'active' || s.status === 'triggered' ? 'in-flight' : 'quiet');
+const statusChip = (s) => `<span class="status-chip" data-tone="${statusTone(s)}">${esc(s.status)}</span>`;
+const scopeChip = (s) => (s.scope ? `<span class="status-chip">${esc(s.scope[0].toUpperCase() + s.scope.slice(1))}</span>` : '<span class="status-chip" data-tone="quiet">Scope not stated</span>');
+const triggerChip = () => '<span class="status-chip" data-tone="quiet">No surfacing condition</span>';
+const ageOf = (s) => `${days(s.planted, TODAY)} days since planted`;
+const scale = (s) => `<span class="scale${s.scope ? '' : ' unknown'}" aria-label="${s.scope ? 'Scope ' + s.scope : 'Scope not stated'}">${['small', 'medium', 'large'].map((k) => `<span class="${s.scope === k ? 'on' : ''}">${k[0].toUpperCase()}</span>`).join('')}</span>`;
+
+function header() {
+  return `<span class="app-brand"><i></i>Labelore</span>
+    <button class="brand-trigger" data-act="noop">Lendshed ${ICON.down}</button>
+    <nav class="app-nav"><a href="#" data-act="noop">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Research</a><a href="#" data-act="noop">Files</a></nav>`;
+}
+function head(s) {
+  return `<nav class="crumbs"><span>Lendshed</span><span>/</span><span>Seeds</span><span>/</span><span aria-current="page">${esc(s.id)}</span></nav>
+    <div class="heading-block">
+      <p class="eyebrow">Seed</p>
+      <h1>${esc(s.idea)}</h1>
+      <div class="meta-row"><span class="meta">${esc(s.id)}</span>
+        <span class="seg"><button class="btn-xs" aria-pressed="true" data-act="noop">View</button><button class="btn-xs" aria-pressed="false" data-act="noop">Source</button></span>
+        <button class="btn-xs" data-act="noop" aria-label="Copy path" title="Copy path">${ICON.copy} Copy path</button></div>
+    </div>`;
+}
+const crumbLi = (c) => `<li><span class="sq" data-tone="${c.ok ? 'complete' : 'quiet'}"></span><span>${c.ok ? `<a class="path" href="#" data-act="noop">${esc(c.path)}</a>` : `<span class="path">${esc(c.path)}</span><span class="status-chip" data-tone="quiet">Not found</span>`}<span class="why">${esc(c.desc)}</span></span></li>`;
+const crumbList = (s) => (s.crumbs.length ? `<ul class="crumb-list">${s.crumbs.map(crumbLi).join('')}</ul>` : '');
+const crumbSection = (s) => (s.crumbs.length ? `<section><h2 class="sh">Breadcrumbs</h2>${crumbList(s)}</section>` : '');
+const whySection = (s) => (s.why ? `<section><h2 class="sh">Why this matters</h2><p class="prose">${esc(s.why)}</p></section>` : '');
+function bars(s, open = []) {
+  const bar = (k, label, n, body) => `<details class="bar"${open.includes(k) ? ' open' : ''}><summary>${ICON.chev}<span>${label}</span>${n ? `<span class="n">${n}</span>` : ''}</summary><div class="bar-body">${body}</div></details>`;
+  return `<div class="bars">
+    ${s.estimate ? bar('est', 'Scope estimate', esc(s.estimate.size), `<p class="prose"><b>${esc(s.estimate.size)}</b> — ${esc(s.estimate.gloss)}</p>`) : ''}
+    ${bar('when', 'When to surface', '', `${s.trigger ? `<p class="prose"><span class="micro-label">Trigger</span><br>${esc(s.trigger)}</p>` : ''}<p class="prose source-note">${inline(STOCK)}</p>`)}
+    ${bar('notes', 'Notes', '', `<p class="prose source-note">${inline(NOTES)}</p>`)}
+  </div>`;
+}
+const auditLine = (s) => (s.audit ? `<div class="audit-line"><span class="k">audit_acknowledged</span><span class="meta">${esc(s.audit.milestone)} · ${esc(s.audit.at)} · ${esc(s.audit.status)}</span></div>` : '');
+
+const VIEWS = {}; const ACTS = {};
+
+// ---------- A: Dormant to surface ----------
+VIEWS.a = () => {
+  const s = cur();
+  const span = Math.max(days(s.planted, TODAY), 1);
+  const auditAt = s.audit ? Math.min(Math.max((days(s.planted, s.audit.at) / span) * 100, 12), 88) : null;
+  const elapsed = `
+    <div class="tl-elapsed">
+      <div class="tl-line" data-tone="${statusTone(s)}"></div><div class="tl-ticks" style="--wk:${(span / 7).toFixed(3)}"></div>
+      <div class="tl-item"><span class="tl-mark start"><span class="sq" data-tone="neutral"></span></span>
+        <div class="tl-label up at-start"><span class="micro-label">Planted ${esc(s.planted)}</span><span>Planted during ${esc(s.during.raw)}</span></div></div>
+      ${s.audit ? `<div class="tl-item"><span class="tl-mark" style="--at:${auditAt}%"><span class="sq" data-tone="quiet"></span></span>
+        <div class="tl-label down mid" style="--at:${auditAt}%"><span class="micro-label">audit_acknowledged</span><span class="meta">${esc(s.audit.milestone)} · ${esc(s.audit.at)} · ${esc(s.audit.status)}</span></div></div>` : ''}
+      <div class="tl-item"><span class="tl-mark end" style="--at:100%"><span class="sq" data-tone="${statusTone(s)}"></span></span>
+        <div class="tl-label up at-end"><span class="micro-label">Today ${TODAY}</span><span class="meta">${ageOf(s)}</span></div></div>
+      <span class="meta tl-caption">one tick a week</span>
+    </div>`;
+  const gate = s.trigger
+    ? `<div class="gate" data-status="${esc(s.status)}"><span class="micro-label">Surface when</span><p class="sentence">${esc(s.trigger)}</p><div class="chips">${statusChip(s)}<span class="micro-label">Scope</span>${scopeChip(s)}</div></div>`
+    : `<div class="gate none" data-status="${esc(s.status)}"><span class="micro-label">Surface when</span>${triggerChip()}<div class="chips">${statusChip(s)}<span class="micro-label">Scope</span>${scopeChip(s)}</div></div>`;
+  return `<div class="page">${head(s)}
+    <div class="band"><div class="tl">${elapsed}<div class="tl-gap" aria-hidden="true"><span class="dash"></span><span class="meta">next /gsd-new-milestone</span></div>${gate}</div></div>
+    <div class="cols">${whySection(s)}${crumbSection(s)}</div>
+    ${bars(s)}</div>`;
+};
+
+// ---------- B: Fan of references ----------
+VIEWS.b = () => {
+  const s = cur();
+  const n = Math.max(s.crumbs.length, 1);
+  const mid = n * 50;
+  const paths = s.crumbs.map((c, i) => `<path class="${c.ok ? '' : 'no'}" d="M0 ${mid} C 55 ${mid}, 45 ${i * 100 + 50}, 100 ${i * 100 + 50}"/>`).join('');
+  if (S.pick >= s.crumbs.length) S.pick = 0;
+  const seedNode = `<div class="fan-seed"><span class="micro-label">${esc(s.id)}</span><div class="chips">${statusChip(s)}${scopeChip(s)}</div><span class="meta">Planted ${esc(s.planted)}</span></div>`;
+  const files = s.crumbs.length
+    ? '<div class="fan-files">' + s.crumbs.map((c, i) => `<button class="fan-file${c.ok ? '' : ' no'}" style="--r:${i + 1}" data-act="pick" data-i="${i}" aria-pressed="${S.pick === i}"><span class="sq" data-tone="${c.ok ? 'complete' : 'quiet'}"></span><span class="path ellip" title="${esc(c.path)}">${esc(c.path)}</span>${c.ok ? '' : '<span class="sub">Not found</span>'}</button>`).join('') + '</div>'
+    : '<div class="fan-stub meta">No breadcrumbs</div>';
+  const c = s.crumbs[S.pick];
+  const dock = c ? `<div class="dock"><div class="row"><span class="sq" data-tone="${c.ok ? 'complete' : 'quiet'}"></span><span class="mono" style="font-size:var(--fs-2);font-weight:var(--fw-semibold);overflow-wrap:anywhere">${esc(c.path)}</span>${c.ok ? '<a class="text-link" href="#" data-act="noop">Open</a>' : '<span class="status-chip" data-tone="quiet">Not found</span>'}</div><p>${esc(c.desc)}</p></div>` : '';
+  const trig = s.trigger ? `<p class="sentence">${esc(s.trigger)}</p>` : triggerChip();
+  const sheet = `<aside class="sheet" aria-label="Seed facts">
+    <div><span class="micro-label">Surface when</span>${trig}</div>
+    <div><span class="micro-label">Scope</span><div class="chips">${scale(s)}${scopeChip(s)}</div></div>
+    <div><span class="micro-label">Planted ${esc(s.planted)}</span><span class="meta">${ageOf(s)}</span></div>
+    <div><span class="micro-label">Planted during</span><span>${esc(s.during.raw)}</span></div>
+    ${s.audit ? `<div><span class="micro-label">audit_acknowledged</span><span class="meta">${esc(s.audit.milestone)} · ${esc(s.audit.at)} · ${esc(s.audit.status)}</span></div>` : ''}
+  </aside>`;
+  return `<div class="page">${head(s)}
+    <div class="b-grid">
+      <figure class="stage"><div class="stage-bar"><span class="micro-label">Breadcrumbs</span><span class="meta">${s.crumbs.length ? s.crumbs.length + (s.crumbs.length === 1 ? ' reference' : ' references') + ' · ' + s.crumbs.filter((x) => x.ok).length + ' resolve' : ''}</span></div>
+        <div class="fan" style="--n:${n}">${seedNode}${s.crumbs.length ? `<div class="fan-links"><svg viewBox="0 0 100 ${n * 100}" preserveAspectRatio="none" aria-hidden="true">${paths}</svg></div>` : ''}${files}</div>${dock}</figure>
+      ${sheet}
+    </div>
+    ${whySection(s)}${bars(s)}</div>`;
+};
+
+// ---------- C: Seed packet ----------
+VIEWS.c = () => {
+  const s = cur();
+  const stamp = s.scope
+    ? `<div class="stamp"><span class="sentence">${esc(s.scope[0].toUpperCase())}</span><span class="word">Scope</span><span class="word">${esc(s.scope[0].toUpperCase() + s.scope.slice(1))}</span></div>`
+    : `<div class="stamp unknown"><span class="sentence">?</span><span class="word">Scope not stated</span></div>`;
+  return `<div class="page">${head(s)}
+    <div class="letter">
+      <article class="packet" aria-label="Seed packet">
+        <div class="packet-flap" aria-hidden="true"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="0" y1="0" x2="50" y2="100"/><line x1="100" y1="0" x2="50" y2="100"/></svg></div>
+        <div class="p-top">
+          <div class="p-from"><span class="micro-label">Planted during</span><span>${esc(s.during.raw)}</span></div>
+          <div class="p-marks"><div class="postmark" aria-label="Planted ${esc(s.planted)}"><span>Planted</span><span style="white-space:nowrap">${esc(s.planted)}</span></div>${stamp}</div>
+        </div>
+        <div class="p-address${s.trigger ? '' : ' none'}"><span class="micro-label">Surface when</span>${s.trigger ? `<p class="sentence">${esc(s.trigger)}</p>` : triggerChip()}</div>
+        <div class="p-foot"><span class="meta">${esc(s.id)} · ${ageOf(s)}</span><span class="seal" data-tone="${statusTone(s)}"><span class="sq" data-tone="${statusTone(s)}"></span>${esc(s.status)}</span></div>
+      </article>
+      ${auditLine(s)}
+      ${whySection(s)}${crumbSection(s)}
+      ${bars(s)}
+    </div></div>`;
+};
+
+// ---------- render orchestration ----------
+ACTS.pick = (el) => { S.pick = Number(el.dataset.i); render(); };
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY; const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.getElementById('apphead').innerHTML = header();
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  window.scrollTo(0, y);
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; S.pick = 0; return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+window.addEventListener('hashchange', render);
+render();
+</script>
+</body>
+</html>
