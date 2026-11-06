@@ -31,6 +31,7 @@ import { composeReviews } from './reviews-page.ts';
 import { composeCodebase } from './codebase-page.ts';
 import { composePause } from './pause-page.ts';
 import { composeSpikes } from './spikes-page.ts';
+import { composeIndexes } from './indexes-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -490,6 +491,14 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     lead: "What each spike tried and what it found, grouped by idea, with each spike's notes one click away.",
     promote: [{ type: 'section', heading: /\S/, all: true }],
     spikesPage: composeSpikes,
+  },
+  // Phase 11 (11-18, sketch-055 winner A): one view for every intel and graph file, reached through `viewKindOf`'s
+  // table. `promote` is the silent fallback when the page composes nothing (Phase 10 C1, X2).
+  indexes: {
+    kind: 'indexes',
+    lead: 'What the codebase indexes say, one tile per file, as short summaries; the raw data stays on disk.',
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+    indexesPage: composeIndexes,
   },
 });
 

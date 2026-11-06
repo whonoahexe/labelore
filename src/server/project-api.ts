@@ -17,6 +17,8 @@ import { buildPauseContext } from '../presentation/pause-context.ts';
 import type { PauseContext } from '../presentation/pause-context.ts';
 import { buildSpikesContext } from '../presentation/spikes-context.ts';
 import type { SpikesContext } from '../presentation/spikes-context.ts';
+import { buildIndexesContext, graphArtifactsOf } from '../presentation/indexes-context.ts';
+import type { IndexesContext } from '../presentation/indexes-context.ts';
 import { buildProjectContext } from '../presentation/project-context.ts';
 import type { ProjectContext } from '../presentation/project-context.ts';
 import { buildReviewContext } from '../presentation/review-context.ts';
@@ -211,6 +213,24 @@ export function createProjectApi(
         return null;
       }
     })();
+    // Phase 11 (11-18): the Indexes page's tiles, from this request's own bundle - built only for an intel or graph
+    // file (null elsewhere). The graph summary is awaited once here (cached per bundle, capped by 11-13) and a failure
+    // leaves the graph tile at "counts not read"; the raw intel and graph JSON is never part of the response.
+    const indexesContext = await (async (): Promise<IndexesContext | null> => {
+      try {
+        const kind = lookup.artifact.kind;
+        if (kind !== 'intel' && kind !== 'graph') return null;
+        const presentation = activeDerived.presentation;
+        const graphFiles = graphArtifactsOf(presentation);
+        const graph =
+          graphFiles.length === 0
+            ? null
+            : await activeDerived.indexSummary.graph(graphFiles, presentation.readAt).catch(() => null);
+        return buildIndexesContext(presentation, lookup.artifact.path, graph);
+      } catch {
+        return null;
+      }
+    })();
     const document = await (
       await renderer
     ).render(lookup.artifact, { referenceRegistry: activeDerived.referenceRegistry });
@@ -243,6 +263,7 @@ export function createProjectApi(
       codebaseContext,
       pauseContext,
       spikesContext,
+      indexesContext,
       manualChecks,
       reviewContext,
     };

@@ -85,6 +85,10 @@ import type { PauseContext } from '../../presentation/pause-context.ts';
 import type { ComposedSpikes } from './spikes-page.ts';
 // Type-only import - the spikes context is built server-side (Phase 11, 11-15).
 import type { SpikesContext } from '../../presentation/spikes-context.ts';
+// Type-only import - same reason as `pausePage` above (Phase 11, 11-18, sketch-055 winner A, the Indexes page).
+import type { ComposedIndexes } from './indexes-page.ts';
+// Type-only import - the indexes context is built server-side (Phase 11, 11-18).
+import type { IndexesContext } from '../../presentation/indexes-context.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -215,6 +219,11 @@ export interface ViewManifest {
    * `null` when the input can't compose one (no `spikesContext`), and the page falls back to the promoted-section
    * view, which the manifest keeps as `promote`, with no notice (Phase 10 C1, X2). */
   spikesPage?: (input: ViewInput) => ComposedSpikes | null;
+  /** Phase 11 (11-18, sketch-055 winner A): the Indexes page a manifest opts into in View mode - the one `indexes`
+   * manifest, shared by every intel and graph file (D-04). Returns `null` when the input can't compose one (no
+   * `indexesContext`), and the page falls back to the promoted-section view, which the manifest keeps as `promote`,
+   * with no notice (Phase 10 C1, X2). */
+  indexesPage?: (input: ViewInput) => ComposedIndexes | null;
   /** Phase 10 (10-08): true for a kind whose document text must never reach View mode through the generic
    * fallback (promoted sections or the whole document) - `user-setup`, whose file can hold a pasted value
    * (CONTEXT D-11). The Source toggle stays the way to the text. See `documentHtmlAllowedInView`. */
@@ -342,6 +351,9 @@ export interface ViewInput {
   /** Phase 11 (11-15): the Spikes page's lanes, counts, below-board folders and wrap-up, built server-side and passed
    * through from the document response - `null`/absent when the artifact is not one of the four spike files. */
   spikesContext?: SpikesContext | null;
+  /** Phase 11 (11-18): the Indexes page's tiles (bounded summaries only), built server-side and passed through from
+   * the document response - `null`/absent when the artifact is not an intel or graph file. */
+  indexesContext?: IndexesContext | null;
 }
 
 export type ComposedBlock = { id: string; label: string } & (
