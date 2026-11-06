@@ -14,7 +14,7 @@
 import { eachLineOutsideFences, fenceMarker, scanFencedLines, splitBodyLines } from './fenced-sections.ts';
 import type { FencedSection } from './fenced-sections.ts';
 import { parseTree, treeCounts } from '../../rendering/ascii-tree.ts';
-import { stripControlCharacters, withholdInText, withholdValue } from './withhold-values.ts';
+import { maskValues, stripControlCharacters, withholdInText, withholdValue } from './withhold-values.ts';
 
 // ---------------------------------------------------------------------------------------------------------
 // Heading normalisation and keys
@@ -1245,8 +1245,11 @@ function tickSpans(text: string): string[] {
   return spans;
 }
 
+/** A line of an Integrations bullet or Environment line with every value beside a variable name removed: the leading
+ * `NAME=value` forms by `withholdInText`, then every other written form (spaced `=`, bold or quoted names, a colon after a
+ * label, a table row) by `maskValues`, the one mask the User setup page shares (10-REVIEW CR-02). */
 function cleanText(text: string): string {
-  const scrubbed = withholdInText(text).text;
+  const scrubbed = maskValues(withholdInText(text).text);
   return scrubbed.length > INTEGRATION_TEXT_CAP ? scrubbed.slice(0, INTEGRATION_TEXT_CAP) : scrubbed;
 }
 
@@ -1358,7 +1361,7 @@ export function liftIntegrations(sections: readonly KeyedSection[], lines: reado
       const group: IntegrationGroup = {
         section: section.key,
         sectionHeading: section.heading,
-        label: label.replaceAll('`', '').replaceAll('*', '').slice(0, 120),
+        label: cleanText(label).replaceAll('`', '').replaceAll('*', '').slice(0, 120),
         inUse: true,
         firstLine: '',
         rows: [],
@@ -1420,7 +1423,7 @@ function liftEnvironment(
     const bold = boldLabel(line);
     if (bold !== null) {
       flush();
-      label = bold.replaceAll('`', '').replaceAll('*', '').slice(0, 120);
+      label = cleanText(bold).replaceAll('`', '').replaceAll('*', '').slice(0, 120);
       current = { label, names: [], lines: [] };
       return;
     }

@@ -14,6 +14,8 @@ import {
   matchKey,
   normaliseHeading,
 } from '../src/planning-repo/handlers/codebase-lift.ts';
+import { VALUE_NOT_SHOWN_MARK } from '../src/planning-repo/handlers/withhold-values.ts';
+import { WRITTEN_FORMS, formTag } from './helpers/written-value-forms.ts';
 
 const TIDEMARK = new URL('./fixtures/tidemark/.planning/codebase/', import.meta.url);
 
@@ -363,6 +365,43 @@ describe('the Integrations lift (10-14)', () => {
       ['FOUR_KEY', 'ONE_KEY', 'SEVEN_KEY', 'SIX_KEY', 'THREE_KEY', 'TWO_KEY'].sort(),
     );
     expect(found.groups[0].rows[0].authVariable).toBe('SEVEN_KEY');
+  });
+
+  // 10-REVIEW CR-02: cleanText ran only the leading-form scanner, so a value written any other way was stored and drawn.
+  it('stores no value written in any form a person may use, in a group row, a sub-bullet, an Environment bullet or line', () => {
+    const rows = WRITTEN_FORMS.map((form, index) => `- Svc ${index} - uses ${form.line(formTag(index))}`);
+    const subs = WRITTEN_FORMS.map((form, index) => `- Svc ${index + 100} - use\n  - Note: ${form.line(formTag(index))}`);
+    const envBullets = WRITTEN_FORMS.map((form, index) => `- ${form.line(formTag(index))}`);
+    const envLines = WRITTEN_FORMS.map((form, index) => form.line(formTag(index)));
+    const body = [
+      '## APIs & External Services',
+      '',
+      '**Payments:**',
+      ...rows,
+      '',
+      '**Billing:**',
+      ...subs,
+      '',
+      '## Environment Configuration',
+      '',
+      '**Required env vars:**',
+      ...envBullets,
+      '',
+      '**Notes:**',
+      ...envLines,
+    ].join('\n');
+    const found = integrations(body);
+    const text = JSON.stringify(found);
+    expect(found.groups.length).toBeGreaterThan(0);
+    expect(found.environment?.groups.length).toBeGreaterThan(0);
+    for (const [index, form] of WRITTEN_FORMS.entries()) {
+      for (const secret of form.secrets(formTag(index))) expect(text, `${form.label}: ${secret}`).not.toContain(secret);
+    }
+  });
+
+  it('keeps a row about a variable readable once its value is withheld', () => {
+    const found = integrations('## APIs & External Services\n\n**Payments:**\n- Stripe - charges\n  - Auth: STRIPE_KEY = sk_live_abc\n');
+    expect(found.groups[0].lines).toEqual(['Stripe - charges', `Auth: STRIPE_KEY = ${VALUE_NOT_SHOWN_MARK}`]);
   });
 
   it('keeps a placeholder as not a value', () => {

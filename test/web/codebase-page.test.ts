@@ -22,7 +22,9 @@ import {
 } from '../../src/web/views/codebase-page.ts';
 import { CodebaseView } from '../../src/web/views/codebase-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
+import { extractCodebase } from '../../src/planning-repo/handlers/codebase-lift.ts';
 import { loadProject } from '../helpers/fixture-project.ts';
+import { WRITTEN_FORMS, formTag } from '../helpers/written-value-forms.ts';
 import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
 import { SHAPES_ROOT } from '../helpers/shapes-project.ts';
 
@@ -370,6 +372,42 @@ describe('composeCodebase - the Integrations panel (10-14, sketch 045 C)', () =>
     expect(html).not.toContain(PLANTED);
     expect(JSON.stringify(model)).not.toContain(PLANTED);
     expect(JSON.stringify(input.structured.codebase)).not.toContain(PLANTED);
+  });
+
+  // 10-REVIEW CR-02: the planted forms go through the real extractor and the real components, and reach neither the model
+  // nor the markup (text or attribute).
+  it('draws no value written in any of the forms, in the text or in an attribute', async () => {
+    const lines = WRITTEN_FORMS.map((form, index) => form.line(formTag(index)));
+    const body = [
+      '# External Integrations',
+      '',
+      '## APIs & External Services',
+      '',
+      '**Payments:**',
+      ...lines.map((line, index) => `- Svc ${index} - uses ${line}\n  - Auth: ${line}`),
+      '',
+      '## Environment Configuration',
+      '',
+      '**Required env vars:**',
+      ...lines.map((line) => `- ${line}`),
+      '',
+      '**Notes:**',
+      ...lines,
+      '',
+    ].join('\n');
+    const input = await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS');
+    const planted: ViewInput = { ...input, structured: { ...input.structured, codebase: extractCodebase('integrations', {}, body) } };
+    const model = composeCodebase(planted)!;
+    const html = renderPage(model);
+    const htmlLifted = renderPage({ ...model, active: { ...model.active, plain: [], plainSections: [] } });
+    expect(html).toContain('Value not shown');
+    for (const [index, form] of WRITTEN_FORMS.entries()) {
+      for (const secret of form.secrets(formTag(index))) {
+        expect(html, `${form.label}: ${secret}`).not.toContain(secret);
+        expect(htmlLifted, `${form.label}: ${secret}`).not.toContain(secret);
+        expect(JSON.stringify(model), `${form.label}: ${secret}`).not.toContain(secret);
+      }
+    }
   });
 
   it('renders the lifted rows alone free of the value too, when the plain sections are left out', async () => {
