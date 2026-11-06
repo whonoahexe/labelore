@@ -15,6 +15,7 @@ import {
 } from '../presentation/legacy-routes.ts';
 import { projectMapState } from '../presentation/project-map-state.ts';
 import { compareSpikeIds } from '../presentation/spikes-context.ts';
+import { buildIndexesContext, firstTileUrl } from '../presentation/indexes-context.ts';
 import { spikeFolderIdentity } from '../planning-repo/handlers/spikes-lift.ts';
 import { archivedCopyTarget, hasSourceFlag, rootDocumentRedirect } from '../presentation/root-redirects.ts';
 import {
@@ -83,6 +84,13 @@ function spikesLandingKey(presentation: ProjectPresentation): string | null {
     .map((candidate) => ({ key: candidate.key, id: spikeFolderIdentity(candidate.path.split('/')[2] ?? '').id }));
   readmes.sort((a, b) => compareSpikeIds(a.id, b.id) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
   return readmes[0]?.key ?? null;
+}
+
+/** The address the bare /indexes leads to (Phase 11, 11-18, RESEARCH C1): the first tile in grid order that has an
+ * address, taken from the payload artifact's key, never from the typed address (T-11-25). Null when the project holds
+ * no intel or graph file with an address. */
+function indexesLandingKey(presentation: ProjectPresentation): string | null {
+  return firstTileUrl(buildIndexesContext(presentation, null, null));
 }
 
 function pageOrOverviewOutcome(
@@ -204,6 +212,13 @@ export function resolveProjectRoute(
       // the first spike's README, and is not-found where the project has no spikes. The target is a payload key.
       if (route.url === '/spikes') {
         const key = spikesLandingKey(presentation);
+        return key === null ? NOT_FOUND : redirectTo(key);
+      }
+      // Phase 11 (11-18, RESEARCH C1): the bare /indexes has no file behind it. It sends the reader to the first tile in
+      // grid order (Graph, else the first intel tile; Synthesis for an ingest-docs project) and is not-found where the
+      // project has neither intel nor graphs. No header tab leads here (Claude's discretion). The target is a payload key.
+      if (route.url === '/indexes') {
+        const key = indexesLandingKey(presentation);
         return key === null ? NOT_FOUND : redirectTo(key);
       }
       // D-03: a live alias has one address, the file's own.

@@ -80,6 +80,8 @@ import type { ComposedPause } from '../views/pause-page.ts';
 import { PauseView, pauseHeaderProps } from '../views/pause-page-components.tsx';
 import type { ComposedSpikes } from '../views/spikes-page.ts';
 import { SpikesView, spikesHeaderProps } from '../views/spikes-page-components.tsx';
+import type { ComposedIndexes } from '../views/indexes-page.ts';
+import { IndexesView, indexesHeaderProps } from '../views/indexes-page-components.tsx';
 import type { ComposedSpec } from '../views/spec-page.ts';
 import { SpecView, specHeaderProps } from '../views/spec-page-components.tsx';
 import type { ComposedAiSpec } from '../views/ai-spec-page.ts';
@@ -119,6 +121,7 @@ import type { ProjectContext } from '../../presentation/project-context.ts';
 import type { CodebaseContext } from '../../presentation/codebase-map.ts';
 import type { PauseContextPayload } from '../views/manifest.ts';
 import type { SpikesContext } from '../../presentation/spikes-context.ts';
+import type { IndexesContext } from '../../presentation/indexes-context.ts';
 import type { ComposedReviewThreads } from '../views/review-threads.ts';
 import { ReviewThreadsView } from '../views/review-threads-components.tsx';
 import type { ComposedUiSpec } from '../views/ui-spec.ts';
@@ -258,6 +261,8 @@ export interface ArtifactDocumentResponse {
   pauseContext?: PauseContextPayload | null;
   /** Phase 11 (11-15): the Spikes page's lanes, counts, below-board folders and wrap-up (null for every other document). */
   spikesContext?: SpikesContext | null;
+  /** Phase 11 (11-18): the Indexes page's tiles, bounded summaries only (null for every other document). */
+  indexesContext?: IndexesContext | null;
 }
 
 const WARNING_DISCLOSURE_LABELS: Record<Exclude<ArtifactWarningTone, null>, string> = {
@@ -783,6 +788,7 @@ export function ArtifactPage({
       codebaseContext: query.data.codebaseContext ?? null,
       pauseContext: query.data.pauseContext ?? null,
       spikesContext: query.data.spikesContext ?? null,
+      indexesContext: query.data.indexesContext ?? null,
     };
   }, [query.data, groups, planSegments, planProgress, planContext, phaseRequirementIds, phaseName, shown, siblingArtifacts]);
   // VIEW-06: a registered manifest, or fallback.ts's synthesized structural-read manifest — one
@@ -981,6 +987,13 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.spikesPage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // Phase 11 (11-18, sketch 055 A): the Indexes page, when the resolved manifest opts into one - `null` for every other
+  // kind and for an intel or graph file the page cannot shape (no `indexesContext`), where the promoted-section view
+  // renders with no notice. The composer is pure, so two Indexes pages open at once each compose from their own response.
+  const indexesPage = useMemo<ComposedIndexes | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.indexesPage?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // Phase 10 (10-16, sketch 047 B): the Spec page, when the resolved manifest opts into one - `null` for every other
   // kind and for a SPEC the page cannot shape (no `structured.spec`, or no score, requirement, dimension, goal or
   // scope), where the promoted-section view renders with no notice. The composer is pure, so two spec pages open at
@@ -1085,6 +1098,7 @@ export function ArtifactPage({
     codebase !== null ||
     pausePage !== null ||
     spikesPage !== null ||
+    indexesPage !== null ||
     specPage !== null ||
     aiSpecPage !== null ||
     userSetupPage !== null ||
@@ -1407,6 +1421,9 @@ export function ArtifactPage({
   // counts as the lead and a copy button for the manifest) rides the same spread; the page carries what the metadata
   // disclosure would repeat.
   const spikesCover = spikesPage && mode === 'view' ? spikesPage : null;
+  // The Indexes page's header override (eyebrow "Exploration · Indexes", h1 "Indexes", the facts as meta) rides the same
+  // spread; the page carries what the metadata disclosure would repeat.
+  const indexesCover = indexesPage && mode === 'view' ? indexesPage : null;
   // The Spec page's header override ("Phase N · Spec", the phase name as the h1, created date and requirement count
   // as meta) rides the same spread; the page's strip carries what the metadata disclosure would repeat.
   const specPageCover = specPage && mode === 'view' ? specPage : null;
@@ -1439,6 +1456,7 @@ export function ArtifactPage({
     (codebaseCover ? codebaseHeaderProps(codebaseCover) : null) ??
     (pauseCover ? pauseHeaderProps(pauseCover, artifact.title) : null) ??
     (spikesCover ? spikesHeaderProps(spikesCover) : null) ??
+    (indexesCover ? indexesHeaderProps(indexesCover) : null) ??
     (specPageCover ? specHeaderProps(specPageCover, artifact.title) : null) ??
     (aiSpecPageCover ? aiSpecHeaderProps(aiSpecPageCover, artifact.title) : null) ??
     (userSetupPageCover ? userSetupHeaderProps(userSetupPageCover, artifact.title) : null) ??
@@ -1535,6 +1553,7 @@ export function ArtifactPage({
         codebaseCover ||
         pauseCover ||
         spikesCover ||
+        indexesCover ||
         specPageCover ||
         aiSpecPageCover ||
         userSetupPageCover ||
@@ -1652,6 +1671,8 @@ export function ArtifactPage({
         <PauseView key={artifact.path} model={pauseCover} renderHtml={renderHtml} />
       ) : spikesCover ? (
         <SpikesView key="spikes" model={spikesCover} renderHtml={renderHtml} />
+      ) : indexesCover ? (
+        <IndexesView key="indexes" model={indexesCover} />
       ) : specPageCover ? (
         <SpecView key={artifact.path} model={specPageCover} renderHtml={renderHtml} onShowSource={showSource} />
       ) : aiSpecPageCover ? (
