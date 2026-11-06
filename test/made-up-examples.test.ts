@@ -25,7 +25,18 @@ const exemptAbsolute = new Set(EXEMPT_ROOTS.map((root) => (root.path === '' ? RE
 const CHECKED_ROOTS = ALL_FIXTURE_ROOTS.filter((root) => !exemptAbsolute.has(root));
 
 const SHAPES_ROOT = join(REPO_ROOT, 'test/fixtures/shapes');
-const SHAPES_MAP_PATHS = ['ARCHITECTURE', 'CONVENTIONS', 'STACK'].map((name) => `test/fixtures/shapes/.planning/codebase/${name}.md`);
+const SHAPES_PREFIX = 'test/fixtures/shapes/.planning';
+// Every rule-kind file in Shapes, in the order the check reports them (sorted by path): the root pause, the
+// pause JSON, the three map documents, the phase pause, the three spike files.
+const SHAPES_RULE_PATHS = [
+  `${SHAPES_PREFIX}/.continue-here.md`,
+  `${SHAPES_PREFIX}/HANDOFF.json`,
+  ...['ARCHITECTURE', 'CONVENTIONS', 'STACK'].map((name) => `${SHAPES_PREFIX}/codebase/${name}.md`),
+  `${SHAPES_PREFIX}/phases/02-glaze-recipes/.continue-here.md`,
+  `${SHAPES_PREFIX}/spikes/001-kiln-sensor/README.md`,
+  `${SHAPES_PREFIX}/spikes/CONVENTIONS.md`,
+  `${SHAPES_PREFIX}/spikes/MANIFEST.md`,
+];
 
 const FRONTMATTER_MARKER = ['---', 'made_up_example: true', 'derived_from: gsd-core/templates/spec.md', 'gsd_core_version: 1.19.0', '---', ''].join('\n');
 const COMMENT_MARKER = '<!-- made-up example · derived from gsd-core/templates/spec.md · gsd-core 1.19.0 -->\n';
@@ -67,13 +78,13 @@ describe('made-up example markers and index (VIEW-21)', () => {
     expect(EXEMPT_ROOTS.map((root) => root.path)).toEqual(['fixtures/dense', '']);
   });
 
-  it('the real check sees Shapes map documents: with no index they are three not-indexed problems', async () => {
+  it('the real check sees Shapes rule-kind files: with no index each is a not-indexed problem', async () => {
     const problems = await findMadeUpProblems({ roots: [SHAPES_ROOT], indexRows: [], repoRoot: REPO_ROOT });
-    expect(problems).toEqual(SHAPES_MAP_PATHS.map((path) => ({ path, kind: 'not-indexed' })));
+    expect(problems).toEqual(SHAPES_RULE_PATHS.map((path) => ({ path, kind: 'not-indexed' })));
   });
 
-  it('the rule covers the spec, check, map, intel and graph kinds', () => {
-    for (const kind of ['intel', 'graph']) expect(MADE_UP_EXAMPLE_KINDS.has(kind)).toBe(true);
+  it('the rule covers the spec, check, map, intel, graph, pause and spike kinds', () => {
+    for (const kind of ['intel', 'graph', 'handoff', 'continue-here', 'spikes-manifest', 'spike', 'spikes-wrap-up', 'spikes-conventions']) expect(MADE_UP_EXAMPLE_KINDS.has(kind)).toBe(true);
     for (const kind of ['spec', 'ai-spec', 'user-setup', 'eval-review', 'dom-verify', 'reviews']) expect(MADE_UP_EXAMPLE_KINDS.has(kind)).toBe(true);
     for (const name of ['stack', 'architecture', 'structure', 'conventions', 'testing', 'integrations', 'concerns']) {
       expect(MADE_UP_EXAMPLE_KINDS.has(`codebase-${name}`)).toBe(true);

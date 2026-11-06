@@ -1,3 +1,4 @@
+<!-- made-up example · derived from gsd-core/workflows/spike.md · gsd-core 1.19.0 -->
 # Spike manifest
 
 | Spike | Question | Verdict |
