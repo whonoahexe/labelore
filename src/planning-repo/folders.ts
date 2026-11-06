@@ -97,10 +97,12 @@ const markdownKind =
   (kind: string) =>
   (segments: readonly string[]): string =>
     hasSuffix(segments, '.md') ? kind : UNKNOWN;
-const jsonKind =
+// The intel and graphs folders hold both machine JSON and the markdown reports their writers add
+// (SYNTHESIS.md, decisions.md, GRAPH_REPORT.md): any other extension stays unknown.
+const indexKind =
   (kind: string) =>
   (segments: readonly string[]): string =>
-    hasSuffix(segments, '.json') ? kind : UNKNOWN;
+    hasSuffix(segments, '.json') || hasSuffix(segments, '.md') ? kind : UNKNOWN;
 const unknownKind = (): string => UNKNOWN;
 
 // gsd-core/workflows/map-codebase.md writes exactly these seven UPPERCASE documents into .planning/codebase/.
@@ -193,12 +195,12 @@ export const FOLDER_RULES: readonly FolderRule[] = [
     source: 'gsd-core/workflows/onboard.md (.planning/onboarding/SUMMARY.md)',
   },
   {
-    folder: 'intel', urlSegment: 'intel', nameRule: 'keep-all', kindOf: jsonKind('intel'),
-    source: 'gsd-core/references/agent-contracts.md (gsd-intel-updater writes .planning/intel/*.json)',
+    folder: 'intel', urlSegment: 'intel', nameRule: 'keep-all', kindOf: indexKind('intel'),
+    source: 'gsd-core/references/agent-contracts.md (gsd-intel-updater writes .planning/intel/*.json); agents/gsd-doc-synthesizer.md (the ingest-docs family writes SYNTHESIS.md and decisions.md)',
   },
   {
-    folder: 'graphs', urlSegment: 'graphs', nameRule: 'keep-all', kindOf: jsonKind('graph'),
-    source: 'gsd-core/references/planner-graphify-auto-update.md (.planning/graphs/graph.json)',
+    folder: 'graphs', urlSegment: 'graphs', nameRule: 'keep-all', kindOf: indexKind('graph'),
+    source: 'gsd-core/references/planner-graphify-auto-update.md (.planning/graphs/graph.json); gsd-core/bin/lib/graphify.cjs (GRAPH_REPORT.md)',
   },
   {
     folder: 'ui-reviews', urlSegment: 'ui-reviews', nameRule: 'keep-all', kindOf: unknownKind,
@@ -213,6 +215,21 @@ export const FOLDER_RULES: readonly FolderRule[] = [
     source: 'gsd-core/workflows/new-milestone.md (.planning/workstreams/<name>/); reserved, Phase 11 owns the view',
   },
 ];
+
+/**
+ * True for a file Labelore lists by name and size only: anything inside a spike folder
+ * (`spikes/<dir>/...` at any depth) except the spike's own `README.md` (depth two under the folder) and a
+ * `.continue-here.md` anywhere. Pure position and name work, decided before discovery reads a byte, so a
+ * spike's scripts and outputs are never read, indexed or served (Phase 11 D-01, RESEARCH C4).
+ */
+export function isListedPosition(relUnderPlanning: string): boolean {
+  const segments = relUnderPlanning.split('/');
+  if (segments.length < 3 || segments[0] !== 'spikes') return false;
+  const name = lastOf(segments);
+  if (name === '.continue-here.md') return false;
+  if (name === 'README.md' && segments.length === 3) return false;
+  return true;
+}
 
 /** The folder row for a path under `.planning/`, by its first segment only, or null for a root file or an
  * unlisted folder. */
