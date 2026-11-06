@@ -36,6 +36,7 @@ export const NOT_IN_MANIFEST_TITLE = 'Not in the manifest';
 export const WRAP_UP_TITLE = 'Wrap-up';
 export const NOT_WRAPPED_UP_NOTE =
   'Not wrapped up yet: no WRAP-UP-SUMMARY.md or CONVENTIONS.md in .planning/spikes/.';
+export const NO_WRAP_UP_NOTE = 'Not wrapped up yet: no WRAP-UP-SUMMARY.md in .planning/spikes/.';
 export const NO_MANIFEST_NOTE =
   'There is no MANIFEST.md in .planning/spikes/, so there is no board. Every spike folder is listed below with its own README verdict.';
 export const UNREADABLE_MANIFEST_NOTE =
@@ -303,7 +304,9 @@ function wrapUpOf(context: SpikesContext): ComposedSpikes['wrapUp'] {
       active: context.activeKey === 'conventions',
     });
   }
-  return { title: WRAP_UP_TITLE, tiles, note: tiles.length === 0 ? NOT_WRAPPED_UP_NOTE : null };
+  // The line stands in for the wrap-up summary: it shows whenever that file is absent, naming only what is missing.
+  const note = wrap !== null ? null : context.conventions === null ? NOT_WRAPPED_UP_NOTE : NO_WRAP_UP_NOTE;
+  return { title: WRAP_UP_TITLE, tiles, note };
 }
 
 // ---------------------------------------------------------------------------------------------------------
