@@ -32,7 +32,7 @@ function walk(root: string): string[] {
     for (const entry of readdirSync(dir)) {
       const abs = join(dir, entry);
       if (statSync(abs).isDirectory()) {
-        if (entry === 'sketches' || entry === 'node_modules' || entry === 'worktrees' || isResearchFolder(entry) || entry === '.cache') continue;
+        if (entry === 'sketches' || entry === 'spikes' || entry === 'node_modules' || entry === 'worktrees' || isResearchFolder(entry) || entry === '.cache') continue;
         stack.push(abs);
       } else if (entry.endsWith('SUMMARY.md')) {
         found.push(abs);
@@ -73,7 +73,7 @@ function compose(a: ProjectPresentation['artifacts'][number]): ComposedSummaryRu
 }
 
 const isSummary = (path: string): boolean =>
-  path.endsWith('SUMMARY.md') && !path.split('/').slice(0, -1).some(isResearchFolder) && !path.includes('/sketches/');
+  path.endsWith('SUMMARY.md') && !path.split('/').slice(0, -1).some(isResearchFolder) && !path.includes('/sketches/') && !path.includes('/spikes/');
 
 describe('SUMMARY corpus — every file extracts and composes', () => {
   it('finds the same files on disk and in the presentation (labelore)', () => {
