@@ -337,3 +337,57 @@ describe('/api/documents carries the codebase context for a map document', () =>
     expect(body.codebaseContext?.mapOnly).toBe(false);
   });
 });
+
+// Phase 11 (11-10): the pause page's pairing, date, stop, gates and disagreements ride the /documents response for
+// HANDOFF.json and a .continue-here.md only.
+describe('/api/documents carries the pause context for a pause file', () => {
+  interface PauseBody {
+    found: true;
+    pauseContext: {
+      active: 'handoff' | 'continue-here';
+      readAt: string;
+      contextLabel: string | null;
+      stop: { task: number | string | null; totalTasks: number | string | null; status: string | null };
+      files: { handoff: { path: string } | null; continueHere: { path: string } | null };
+    } | null;
+  }
+
+  async function bodyOf(app: App, path: string): Promise<PauseBody> {
+    const presentation = await presentationOf(app);
+    const artifact = presentation.artifacts.find((candidate) => candidate.path === path);
+    expect(artifact, path).toBeDefined();
+    const response = await documentRequest(app, artifact?.key ?? '');
+    expect(response.status).toBe(200);
+    return (await response.json()) as PauseBody;
+  }
+
+  it("gives Lendshed's HANDOFF.json task 3 of 6, its partner and the day the project was read", async () => {
+    const app = await appOver(FX_ROOT);
+    const { pauseContext } = await bodyOf(app, '.planning/HANDOFF.json');
+    expect(pauseContext).not.toBeNull();
+    expect(pauseContext?.active).toBe('handoff');
+    expect(pauseContext?.stop).toMatchObject({ task: 3, totalTasks: 6, status: 'paused' });
+    expect(pauseContext?.files.handoff?.path).toBe('.planning/HANDOFF.json');
+    expect(pauseContext?.files.continueHere).not.toBeNull();
+    expect(Number.isNaN(Date.parse(pauseContext?.readAt ?? ''))).toBe(false);
+  });
+
+  it("gives a .continue-here.md the same page's context, headed by its own file", async () => {
+    const app = await appOver(FX_ROOT);
+    const { pauseContext } = await bodyOf(app, '.planning/phases/03-account-admin-and-sessions/.continue-here.md');
+    expect(pauseContext).not.toBeNull();
+    expect(pauseContext?.active).toBe('continue-here');
+  });
+
+  it('is null for a document that is not a pause file', async () => {
+    const app = await appOver(FX_ROOT);
+    const { pauseContext } = await bodyOf(app, '.planning/PROJECT.md');
+    expect(pauseContext).toBeNull();
+  });
+
+  it("reads Shapes' older HANDOFF layout (paused_at, no task lists) as task 2 of 5", async () => {
+    const app = await appOver(SHAPES_ROOT);
+    const { pauseContext } = await bodyOf(app, '.planning/HANDOFF.json');
+    expect(pauseContext?.stop).toMatchObject({ task: 2, totalTasks: 5, status: 'paused' });
+  });
+});

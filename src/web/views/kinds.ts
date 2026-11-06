@@ -11,7 +11,8 @@
 // ledger (Phase 9, 09-10). Phase 10 (10-08) adds `codebase` (one view kind for the seven map documents, reached
 // through `viewKindOf`, whose wire kinds are `codebase-stack` ... `codebase-concerns`) and registers the six
 // specification and check kinds (`spec`, `ai-spec`, `user-setup`, `eval-review`, `dom-verify`, `reviews`), each
-// with a lead and a promote fallback until its page plan adds a composer.
+// with a lead and a promote fallback until its page plan adds a composer. Phase 11 (11-10) adds `pause` (the pause
+// page; the two wire kinds `handoff` and `continue-here` both map to it through the `viewKindOf` table).
 export const VIEW_KINDS = [
   'discussion-log',
   'verification',
@@ -44,16 +45,26 @@ export const VIEW_KINDS = [
   'eval-review',
   'dom-verify',
   'reviews',
+  'pause',
 ] as const;
 
 export type ViewKind = (typeof VIEW_KINDS)[number];
 
 const CODEBASE_KIND_PREFIX = 'codebase-';
 
+/** Wire kinds that share another kind's view (Phase 11, RESEARCH Pattern 3): `handoff` and `continue-here` are
+ * one pause page. Later plans add rows (spikes, indexes) to this one table. */
+const VIEW_KIND_TABLE: ReadonlyMap<string, string> = new Map([
+  ['handoff', 'pause'],
+  ['continue-here', 'pause'],
+]);
+
 /** The view kind a wire `artifact.kind` is looked up under: every `codebase-*` kind (the seven map documents)
- * shares the one `codebase` view, any other kind is its own view kind (Phase 10, RESEARCH C8). Pure. */
+ * shares the one `codebase` view, a kind with a row in the table shares that row's view (the two pause files
+ * share `pause`), any other kind is its own view kind (Phase 10, RESEARCH C8; Phase 11, RESEARCH Pattern 3). Pure. */
 export function viewKindOf(kind: string): string {
-  return kind.startsWith(CODEBASE_KIND_PREFIX) ? 'codebase' : kind;
+  if (kind.startsWith(CODEBASE_KIND_PREFIX)) return 'codebase';
+  return VIEW_KIND_TABLE.get(kind) ?? kind;
 }
 
 /** The D-09 reserved view-local class-prefix namespace: every registered kind plus the literal
