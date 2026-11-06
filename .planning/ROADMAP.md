@@ -464,7 +464,7 @@ the rest.
    template or workstream layout, and fall back to a readable generic page when a real file differs.
    *(VIEW-14, VIEW-15, VIEW-16, VIEW-17, VIEW-18, VIEW-19, VIEW-20)*
 
-**Plans**: 11/32 plans executed
+**Plans**: 13/32 plans executed
 
 Plans:
 **Wave 1**
@@ -492,8 +492,8 @@ Plans:
 - [ ] 11-14-PLAN.md — Sketches 057 (seed) and 058 (thread); the user picks the winners
 
 **Wave 7** *(blocked on Wave 6 completion)*
-- [ ] 11-11-PLAN.md — Pause page finished: moved on, nested heads, the folded rest, the roadmap's phase link, beside 054 C
-- [ ] 11-13-PLAN.md — Bounded index summaries: intel handler and the server-side graph scan, never the raw JSON
+- [x] 11-11-PLAN.md — Pause page finished: moved on, nested heads, the folded rest, the roadmap's phase link, beside 054 C
+- [x] 11-13-PLAN.md — Bounded index summaries: intel handler and the server-side graph scan, never the raw JSON
 - [ ] 11-17-PLAN.md — Sketches 059 (session report and milestone summary) and 060 (forensics); the user picks the winners
 
 **Wave 8** *(blocked on Wave 7 completion)*
@@ -613,7 +613,7 @@ file, ID or project.
 | 8. Several Projects and a Switcher | v2.1 | 18/18 | Complete    | 2026-11-02 |
 | 9. Review, Audit and Root Document Pages | v2.1 | 16/16 | In Progress | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 24/24 | Complete    | 2026-11-06 |
-| 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 11/32 | In Progress | - |
+| 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 13/32 | In Progress | - |
 | 12. Project Settings, Source Mode and Reading Polish | v2.1 | 0/TBD | Not started | - |
 | 13. Search and Quick-Jump Palette | v2.1 | 0/TBD | Not started | - |
 
