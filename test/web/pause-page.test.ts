@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { buildPauseContext } from '../../src/presentation/pause-context.ts';
-import { composePause, daysAgoWords, gateWords } from '../../src/web/views/pause-page.ts';
+import { composePause, daysAgoWords, gateWords, movedOnLineOf } from '../../src/web/views/pause-page.ts';
 import type { ComposedPause } from '../../src/web/views/pause-page.ts';
 import { GateBar, PauseView, pauseHeaderProps } from '../../src/web/views/pause-page-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
@@ -391,6 +391,211 @@ describe('Mark as read - view state only', () => {
   });
 });
 
+const PHASE3_NESTED = '.planning/phases/03-account-admin-and-sessions/.continue-here.md';
+const SPIKE6_NOTE = '.planning/spikes/SPIKE-006/.continue-here.md';
+const ROOT_NOTE = '.planning/.continue-here.md';
+
+function headerMarkup(model: ComposedPause): string {
+  const props = pauseHeaderProps(model, 'HANDOFF.json');
+  return renderToStaticMarkup(createElement('div', null, props.lead, props.meta));
+}
+
+function withHandoffPause(
+  presentation: ProjectPresentation,
+  change: (pause: Record<string, unknown>) => void,
+): ProjectPresentation {
+  return planted(presentation, (copy) => {
+    const artifact = copy.artifacts.find((candidate) => candidate.path === HANDOFF)!;
+    change(artifact.structured!.pause as Record<string, unknown>);
+  });
+}
+
+describe('composePause - nested pauses are headed with their own context (D-07)', () => {
+  it('heads the phase 3 folder note "Paused in phase 4" from its phase frontmatter, with no moved-on note and no HANDOFF', async () => {
+    const model = pauseOf(await lendshed(), PHASE3_NESTED);
+    expect(model.head.eyebrow).toBe('Paused work · phase 4');
+    expect(model.head.title).toBe('Bulk Loan Export');
+    expect(model.head.dateLine).toBe('Paused in phase 4, 2026-04-10 · 11 days ago');
+    expect(model.head.movedOn).toBeNull();
+    expect(model.head.movedOnLine).toBeNull();
+    expect(model.head.files.map((file) => file.path)).toEqual([PHASE3_NESTED]);
+    expect(model.head.missingPartner).toBe('No HANDOFF.json');
+    expect(headerMarkup(model)).toContain('No HANDOFF.json');
+    expect(headerMarkup(model)).not.toContain('Work has moved on since');
+  });
+
+  it('heads the spike folder note "Paused in spike SPIKE-006" from its context frontmatter and location', async () => {
+    const model = pauseOf(await lendshed(), SPIKE6_NOTE);
+    expect(model.head.eyebrow).toBe('Paused work · spike SPIKE-006');
+    expect(model.head.title).toBe('Spike SPIKE-006');
+    expect(model.head.dateLine).toBe('Paused in spike SPIKE-006, 2026-04-12 · 9 days ago');
+    expect(model.head.movedOn).toBeNull();
+    expect(model.head.missingPartner).toBe('No HANDOFF.json');
+  });
+});
+
+describe('PauseView head - the moved-on note, the copy-path buttons and the missing partner (D-08)', () => {
+  it('shows "Work has moved on since" for Lendshed phase 3 beside the date, apart from the stop and gate fields', async () => {
+    const model = pauseOf(await lendshed());
+    expect(model.head.movedOnLine).toBe(
+      'Work has moved on since: Phase 3 Account Admin & Sessions is behind the current phase 4 Bulk Loan Export (STATE, 2026-04-14)',
+    );
+    const head = headerMarkup(model);
+    expect(head).toContain('view-pause-moved');
+    expect(head).toContain('Work has moved on since:');
+    expect(head).toContain('(STATE, 2026-04-14)');
+    expect(head.indexOf('view-pause-lead')).toBeLessThan(head.indexOf('view-pause-moved'));
+    // The page body (the stop, the gates, the rest) never carries the note.
+    expect(markup(model)).not.toContain('Work has moved on since');
+  });
+
+  it('leaves the date out of the note when the source states none, and draws nothing without a note', () => {
+    expect(movedOnLineOf({ what: 'spike 003 is marked VALIDATED in the manifest', source: 'MANIFEST', date: null })).toBe(
+      'Work has moved on since: spike 003 is marked VALIDATED in the manifest (MANIFEST)',
+    );
+    expect(movedOnLineOf(null)).toBeNull();
+  });
+
+  it('draws a copy-path button per file, labelled with the file name, and titled with its path', async () => {
+    const model = pauseOf(await lendshed());
+    const head = headerMarkup(model);
+    expect(count(head, 'view-pause-copy"')).toBe(2);
+    expect(head).toContain('aria-label="Copy path of HANDOFF.json"');
+    expect(head).toContain('aria-label="Copy path of .continue-here.md"');
+    expect(head).toContain('title=".planning/HANDOFF.json"');
+  });
+
+  it('draws one copy-path button and "No .continue-here.md beside it" when the HANDOFF stands alone', async () => {
+    const alone = planted(await shapes(), (copy) => {
+      copy.artifacts = copy.artifacts.filter((artifact) => artifact.kind !== 'continue-here');
+    });
+    const model = pauseOf(alone);
+    expect(model.head.files.map((file) => file.name)).toEqual(['HANDOFF.json']);
+    const head = headerMarkup(model);
+    expect(count(head, 'view-pause-copy"')).toBe(1);
+    expect(head).toContain('No .continue-here.md beside it');
+  });
+
+  it('draws Shapes (older layout) with its root pair, both files copyable', async () => {
+    const model = pauseOf(await shapes(), HANDOFF, '2026-05-10T00:00:00Z');
+    expect(model.head.files.map((file) => file.name)).toEqual(['HANDOFF.json', '.continue-here.md']);
+    expect(model.head.missingPartner).toBeNull();
+  });
+});
+
+describe('PauseView - the rest of the handoff', () => {
+  it('lists closed bars for Lendshed in order, each tagged with its file, lists carrying their count', async () => {
+    const model = pauseOf(await lendshed());
+    expect(model.rest.map((bar) => [bar.title, bar.file, bar.count])).toEqual([
+      ['Blockers', 'HANDOFF.json', '2'],
+      ['Decisions', 'HANDOFF.json', '2'],
+      ['Uncommitted files', 'HANDOFF.json', '3'],
+      ['Context notes', 'HANDOFF.json', null],
+      ['Other keys', 'HANDOFF.json', '1'],
+      ['Current state', '.continue-here.md', null],
+      ['Completed work', '.continue-here.md', null],
+      ['Remaining work', '.continue-here.md', null],
+      ['Decisions made', '.continue-here.md', null],
+      ['Blockers', '.continue-here.md', null],
+      ['Context', '.continue-here.md', null],
+    ]);
+    const html = markup(model);
+    expect(html).toContain('The rest of the handoff');
+    expect(count(html, '<details')).toBe(model.rest.length);
+    expect(html).not.toMatch(/<details[^>]* open/);
+  });
+
+  it('keeps unknown keys by name only', async () => {
+    const model = pauseOf(await lendshed());
+    const other = model.rest.find((bar) => bar.title === 'Other keys')!;
+    expect(other.body.kind).toBe('items');
+    if (other.body.kind === 'items') {
+      for (const item of other.body.items) {
+        expect(item.detail).toBeNull();
+        expect(item.text).toMatch(/^[\w.-]+$/);
+      }
+    }
+  });
+
+  it('folds a planted 40-file uncommitted list into one closed bar with 40 in its summary and the full value in each title', async () => {
+    const files = Array.from(
+      { length: 40 },
+      (_, index) => ` M src/area-${index}/${'deeply/nested/'.repeat(8)}file-${index}.ts`,
+    );
+    const model = pauseOf(withHandoffPause(await lendshed(), (pause) => (pause.uncommittedFiles = files)));
+    const bars = model.rest.filter((bar) => bar.title === 'Uncommitted files');
+    expect(bars).toHaveLength(1);
+    expect(bars[0].count).toBe('40');
+    const html = markup(model);
+    expect(html).toContain('view-pause-bar-count">40<');
+    expect(count(html, 'class="view-pause-paths"')).toBe(1);
+    expect(count(html, 'title=" M src/area-')).toBe(40);
+    // The full value is in the title, so an ellipsised line loses nothing.
+    expect(html).toContain(`title="${files[39]}"`);
+  });
+
+  it('gives a long context note one closed bar and keeps its paragraphs and list', async () => {
+    const note = ['First paragraph.', '', 'Second paragraph over', 'two lines.', '', '- one', '- two', '', 'x'.repeat(3000)].join('\n');
+    const model = pauseOf(withHandoffPause(await lendshed(), (pause) => (pause.contextNotes = note)));
+    const bar = model.rest.find((candidate) => candidate.title === 'Context notes')!;
+    expect(bar.body.kind).toBe('blocks');
+    if (bar.body.kind === 'blocks') {
+      expect(bar.body.blocks.map((block) => block.kind)).toEqual(['paragraph', 'paragraph', 'list', 'paragraph']);
+      expect(bar.body.blocks[1]).toEqual({ kind: 'paragraph', text: 'Second paragraph over\ntwo lines.' });
+    }
+    const html = markup(model);
+    expect(html).toContain('Second paragraph over\ntwo lines.');
+    expect(html).not.toMatch(/<details[^>]* open/);
+  });
+
+  it('sends a continue-here section the document also renders through that sanitised HTML, a later heading claiming first', async () => {
+    const presentation = planted(await lendshed(), (copy) => {
+      const note = copy.artifacts.find((candidate) => candidate.path === ROOT_NOTE)!;
+      const pause = note.structured!.pause as { sections?: { heading: string; text: string }[] };
+      pause.sections = [
+        { heading: 'Required Reading', text: 'Read the saved list notes.' },
+        { heading: 'Context', text: 'A heading section named like a tag.' },
+      ];
+    });
+    const input: ViewInput = {
+      ...inputOf(presentation, ROOT_NOTE),
+      groups: [
+        {
+          id: 'required-reading',
+          heading: 'Required Reading',
+          html: '<h2>Required Reading</h2><p>Read the <em>saved</em> list notes.</p>',
+        },
+        { id: 'context', heading: 'Context', html: '<h2>Context</h2><p>A heading section named like a tag.</p>' },
+      ],
+    };
+    const model = composePause(input)!;
+    const reading = model.rest.find((bar) => bar.title === 'Required Reading')!;
+    expect(reading.file).toBe('.continue-here.md');
+    expect(reading.body).toEqual({
+      kind: 'html',
+      html: '<h2>Required Reading</h2><p>Read the <em>saved</em> list notes.</p>',
+    });
+    // Two sections are named Context (the tag, then the heading); the later one takes the document's HTML.
+    const contexts = model.rest.filter((bar) => bar.title === 'Context');
+    expect(contexts.map((bar) => bar.body.kind)).toEqual(['blocks', 'html']);
+    const html = renderToStaticMarkup(
+      createElement(PauseView, {
+        model,
+        renderHtml: (value: string) => createElement('div', { 'data-html': 'true' }, value),
+      }),
+    );
+    expect(html).toContain('view-pause-plain-section');
+    // The leading heading is stripped by the browser's DOMParser (absent here), so the body is the section's HTML.
+    expect(html).toContain('Read the &lt;em&gt;saved&lt;/em&gt; list notes.');
+  });
+
+  it('draws no rest section when the files hold nothing below the path', async () => {
+    const model = pauseOf(await lendshed());
+    const empty: ComposedPause = { ...model, rest: [] };
+    expect(markup(empty)).not.toContain('The rest of the handoff');
+  });
+});
+
 describe('the dashboard shows no Paused mark (D-06)', () => {
   it('no dashboard module reads HANDOFF.json or .continue-here.md', async () => {
     const files: string[] = [];
@@ -529,6 +734,20 @@ describe('pause view contract - the real sources', () => {
     expect(stripSourceComments(await source(SHARED))).toContain('differs from');
   });
 
+  it('writes the moved-on words, the rest-of-the-handoff heading and the ellipsised mono paths', async () => {
+    const composer = stripSourceComments(await source(COMPOSER));
+    expect(composer).toContain('Work has moved on since');
+    const components = stripSourceComments(await source(COMPONENTS));
+    expect(components).toContain('The rest of the handoff');
+    expect(components).toContain('<details');
+    expect(components).not.toMatch(/<details[^>]*\bopen\b/);
+    const css = await source('src/web/styles/globals.css');
+    const block = stripCssComments(css.slice(css.indexOf(START), css.indexOf(END)));
+    const paths = block.slice(block.indexOf('.view-pause-paths > li'));
+    expect(paths.slice(0, paths.indexOf('}'))).toContain('text-overflow: ellipsis');
+    expect(block.slice(block.indexOf('.view-pause-moved {'))).toContain('border: 1px dashed var(--muted-foreground)');
+  });
+
   it('the composer builds no regular expression, uses no regex literal, imports no filesystem module and reads no clock', async () => {
     const code = stripSourceComments(await source(COMPOSER));
     expect(buildsRegExp(code)).toBe(false);
@@ -548,7 +767,7 @@ describe('pause view contract - the real sources', () => {
 
   it('artifact-page.tsx draws the page from the composed model in View mode and the manifest keeps its fallback', async () => {
     const code = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
-    expect(code).toContain('<PauseView key={artifact.path} model={pauseCover} />');
+    expect(code).toContain('<PauseView key={artifact.path} model={pauseCover} renderHtml={renderHtml} />');
     expect(code).toContain('manifest.pausePage?.(viewInput)');
     expect(code).toContain('pauseContext: query.data.pauseContext ?? null');
     expect(code).not.toMatch(/artifact\.kind === ['"](handoff|continue-here|pause)['"]/);

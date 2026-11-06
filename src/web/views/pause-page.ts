@@ -19,6 +19,7 @@ import type {
   PauseDisagreement,
   PauseGate,
   PauseMovedOn,
+  PauseRestSection,
   PauseText,
 } from '../../presentation/pause-context.ts';
 import type { PauseTaskRow } from '../../planning-repo/handlers/pause-lift.ts';
@@ -95,8 +96,10 @@ export interface ComposedPauseHead {
   /** The day and the age pieces of the line, for a page that bolds the count. */
   date: string | null;
   age: string | null;
-  /** "Work has moved on since": a quiet fact beside the date (built by 11-11's note; carried now). */
+  /** "Work has moved on since": a quiet fact beside the date, apart from the handoff's own fields (D-08). */
   movedOn: PauseMovedOn | null;
+  /** The note as one sentence: "Work has moved on since: Phase 3 ... is complete (ROADMAP, 2026-04-09)". */
+  movedOnLine: string | null;
   files: ComposedPauseFile[];
   /** "No .continue-here.md beside it" / "No HANDOFF.json" when one of the pair is absent. */
   missingPartner: string | null;
@@ -175,6 +178,27 @@ export interface ComposedPauseResume {
   other: PauseText | null;
 }
 
+/** One block of a prose bar: a paragraph (its own line breaks kept), or a bulleted list. */
+export type ComposedPauseBlock = { kind: 'paragraph'; text: string } | { kind: 'list'; items: string[] };
+
+/** One closed bar of "The rest of the handoff", tagged with the file it came from. */
+export interface ComposedPauseRestBar {
+  key: string;
+  title: string;
+  /** HANDOFF.json or .continue-here.md. */
+  file: string;
+  /** The row count for a list ("40"); null for prose, which has no count. */
+  count: string | null;
+  /** `items`: rows of text with an optional detail and tag; `paths`: mono lines, each ellipsised with the full
+   * value in its title (the uncommitted files, as written); `blocks`: author prose; `html`: a section of the
+   * note rendered through the document's sanitised path. */
+  body:
+    | { kind: 'items'; items: { text: string; detail: string | null; tag: string | null }[] }
+    | { kind: 'paths'; paths: string[] }
+    | { kind: 'blocks'; blocks: ComposedPauseBlock[] }
+    | { kind: 'html'; html: string };
+}
+
 export interface ComposedPause {
   head: ComposedPauseHead;
   /** Done tasks; null for a pause with none (the older HANDOFF layout lists no tasks). */
@@ -187,6 +211,8 @@ export interface ComposedPause {
   resume: ComposedPauseResume;
   /** Tasks left; null for a pause with none. */
   ahead: ComposedPauseTasks | null;
+  /** "The rest of the handoff": closed bars, HANDOFF.json's first, then every continue-here section. */
+  rest: ComposedPauseRestBar[];
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -197,6 +223,18 @@ function textOf(value: unknown): string | null {
   if (typeof value === 'string') return value.trim() === '' ? null : value;
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   return null;
+}
+
+export const MOVED_ON_WORDS = 'Work has moved on since';
+
+/** "Work has moved on since: {what} ({source}, {date})"; the date is left out when the source states none. */
+export function movedOnLineOf(movedOn: PauseMovedOn | null): string | null {
+  const what = textOf(movedOn?.what);
+  if (movedOn === null || what === null) return null;
+  const source = textOf(movedOn.source);
+  const date = textOf(movedOn.date);
+  const where = [source, date].filter((part): part is string => part !== null).join(', ');
+  return where === '' ? `${MOVED_ON_WORDS}: ${what}` : `${MOVED_ON_WORDS}: ${what} (${where})`;
 }
 
 function headOf(input: ViewInput): ComposedPauseHead | null {
@@ -233,6 +271,7 @@ function headOf(input: ViewInput): ComposedPauseHead | null {
     date,
     age,
     movedOn: context.movedOn ?? null,
+    movedOnLine: movedOnLineOf(context.movedOn ?? null),
     files,
     missingPartner,
   };
@@ -347,6 +386,77 @@ function resumeOf(input: ViewInput): ComposedPauseResume {
   };
 }
 
+/** Blank-line separated blocks of a section's text; a block whose every line starts "- " or "* " is a list. */
+function blocksOf(text: string): ComposedPauseBlock[] {
+  const blocks: ComposedPauseBlock[] = [];
+  let lines: string[] = [];
+  const flush = (): void => {
+    if (lines.length === 0) return;
+    const bullets = lines.every((line) => line.startsWith('- ') || line.startsWith('* '));
+    blocks.push(
+      bullets
+        ? { kind: 'list', items: lines.map((line) => line.slice(2).trim()) }
+        : { kind: 'paragraph', text: lines.join('\n') },
+    );
+    lines = [];
+  };
+  for (const raw of text.split('\n')) {
+    const line = raw.trimEnd();
+    if (line.trim() === '') flush();
+    else lines.push(line.trimStart());
+  }
+  flush();
+  return blocks;
+}
+
+function sameHeading(a: string | null, b: string): boolean {
+  return a !== null && a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+/**
+ * "The rest of the handoff" (UI-SPEC section 3, below the path): HANDOFF.json's bars as the context orders them, then
+ * every continue-here section. A continue-here section that the document's own rendering holds under the same
+ * heading goes through that sanitised HTML (a later section claims a heading before an earlier tag section can, so a
+ * `## Context` heading and a `<context>` tag each get their own); any other section is shown as the author's text.
+ */
+function restOf(input: ViewInput): ComposedPauseRestBar[] {
+  const sections: PauseRestSection[] = Array.isArray(input.pauseContext?.restSections)
+    ? input.pauseContext.restSections
+    : [];
+  const groups = Array.isArray(input.groups) ? input.groups : [];
+  const claimed = new Map<number, string>();
+  const used = new Set<number>();
+  for (let at = sections.length - 1; at >= 0; at -= 1) {
+    const section = sections[at];
+    if (section.file !== CONTINUE_NAME || section.text === null) continue;
+    const found = groups.findIndex(
+      (group, index) => !used.has(index) && sameHeading(group.heading, section.title) && group.html.trim() !== '',
+    );
+    if (found === -1) continue;
+    used.add(found);
+    claimed.set(at, groups[found].html);
+  }
+  const bars: ComposedPauseRestBar[] = [];
+  sections.forEach((section, at) => {
+    const base = { key: `rest-${at}`, title: section.title, file: section.file };
+    const html = claimed.get(at);
+    if (html !== undefined) {
+      bars.push({ ...base, count: null, body: { kind: 'html', html } });
+    } else if (section.items !== null) {
+      const items = section.items.map((item) => ({ text: item.text, detail: item.detail, tag: item.tag }));
+      const count = String(items.length);
+      if (section.file === HANDOFF_NAME && section.title === 'Uncommitted files') {
+        bars.push({ ...base, count, body: { kind: 'paths', paths: items.map((item) => item.text) } });
+      } else {
+        bars.push({ ...base, count, body: { kind: 'items', items } });
+      }
+    } else if (section.text !== null) {
+      bars.push({ ...base, count: null, body: { kind: 'blocks', blocks: blocksOf(section.text) } });
+    }
+  });
+  return bars;
+}
+
 /** The pause page's model, or `null` when the input carries no pause context (the promoted-section view then
  * renders with no notice). */
 export function composePause(input: ViewInput): ComposedPause | null {
@@ -365,6 +475,7 @@ export function composePause(input: ViewInput): ComposedPause | null {
       gateSideNotes: sideNotes.slice(1),
       resume: resumeOf(input),
       ahead: tasksOf(context?.ahead, 'quiet'),
+      rest: restOf(input),
     };
   } catch {
     return null;
