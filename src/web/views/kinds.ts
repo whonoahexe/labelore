@@ -17,7 +17,8 @@
 // `spikes-conventions` all map to it through the same table). Phase 11 (11-18) adds `indexes` (the Indexes page; the
 // two wire kinds `intel` and `graph` both map to it through the same table) and `viewOwnsLargeFile`. Phase 11 (11-22) adds
 // `seed` (the seed page; its wire kind is `seed` itself, so it needs no table row). Phase 11 (11-23) adds `thread` (the
-// thread page; its wire kind is `thread` itself, so it needs no table row either).
+// thread page; its wire kind is `thread` itself, so it needs no table row either). Phase 11 (11-24) adds `report` (the report page for
+// `reports/` files, both the session report and the milestone summary; its wire kind is `report` itself, so it needs no table row).
 export const VIEW_KINDS = [
   'discussion-log',
   'verification',
@@ -55,6 +56,7 @@ export const VIEW_KINDS = [
   'indexes',
   'seed',
   'thread',
+  'report',
 ] as const;
 
 export type ViewKind = (typeof VIEW_KINDS)[number];

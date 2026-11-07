@@ -95,6 +95,8 @@ import type { ComposedSeed } from './seed-page.ts';
 import type { SeedThreadLinks } from '../../presentation/seed-thread-links.ts';
 // Type-only import - same reason as `seedPage` above (Phase 11, 11-23, sketch-058 winner A, the thread page).
 import type { ComposedThread } from './thread-page.ts';
+// Type-only import - same reason as `seedPage` above (Phase 11, 11-24, sketch-059 winner A, the report page).
+import type { ComposedReport } from './report-page.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -240,6 +242,11 @@ export interface ViewManifest {
    * thread whose lift carries nothing beyond its slug and title), and the page falls back to the promoted-section view,
    * which the manifest keeps as `promote`, with no notice (Phase 10 C1, X2). */
   threadPage?: (input: ViewInput) => ComposedThread | null;
+  /** Phase 11 (11-24, sketch-059 winner A "Time ruler"): the report page a manifest opts into in View mode - the one `report`
+   * manifest, shared by every `reports/` file, session report and milestone summary alike (D-03; one frame). Returns `null`
+   * when the input can't compose one (no `structured.report`), and the page falls back to the promoted-section view, which
+   * the manifest keeps as `promote`, with no notice (Phase 10 C1, X2). */
+  reportPage?: (input: ViewInput) => ComposedReport | null;
   /** Phase 10 (10-08): true for a kind whose document text must never reach View mode through the generic
    * fallback (promoted sections or the whole document) - `user-setup`, whose file can hold a pasted value
    * (CONTEXT D-11). The Source toggle stays the way to the text. See `documentHtmlAllowedInView`. */
