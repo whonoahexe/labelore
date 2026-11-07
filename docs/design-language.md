@@ -1266,6 +1266,18 @@ plan's "no AST tooling" constraint.
 | `moon-icon` | Shell and navigation | |
 | `route-progress` | Shell and navigation | |
 | `route-progress-bar` | Shell and navigation | |
+| `scope-chip` | Shell and navigation | (Phase 11, 11-32, sketch 056 C) The header button beside the project switcher inside a workstream: "ws: {name}" with a chevron, a smaller second level under the project switcher rather than a second switcher; ruled with `--foreground`, neutral, never accent; its accessible name is "Workstream: {name}" and it carries `aria-haspopup` and `aria-expanded`; at least 40px tall below 42rem and under a coarse pointer (globals.css, phase-11-workstreams block) |
+| `scope-chip-key` | Shell and navigation | The chip's muted "ws:" |
+| `scope-chip-name` | Shell and navigation | The chip's workstream name, end-ellipsised |
+| `scope-chip-positioner` | Shell and navigation | The `Popover.Positioner` wrapper around the chip's popup; only layers it above the header |
+| `scope-chip-popup` | Shell and navigation | The chip's non-modal popup on the `--popover` surface: a "Workstreams" head and the list of links; at most 352px wide, never wider than the viewport less 32px |
+| `scope-chip-title` | Shell and navigation | The popup's head, Label size, uppercase |
+| `scope-chip-list` | Shell and navigation | The `<ul>` of rows inside the popup's `<nav>`; the list is navigation, not a menu |
+| `scope-chip-row` | Shell and navigation | One real link: status square, name, the Active mark, then the status line ("Phase {N} · {status}" or "Not started · no roadmap"); `aria-current="page"` marks the open workstream |
+| `scope-chip-row-name` | Shell and navigation | The row's name, mono, semibold, end-ellipsised |
+| `scope-chip-active` | Shell and navigation | The outlined "Active" mark: plain foreground, not a tone and not accent, shown only when the active-workstream pointer names the row |
+| `scope-chip-sub` | Shell and navigation | The row's second line, Label size, muted |
+| `scope-chip-all` | Shell and navigation | The ruled last item of the list, "All workstreams", which returns to the workstream index |
 | `search-dialog` | Shell and navigation | |
 | `search-dialog-backdrop` | Shell and navigation | |
 | `search-dialog-empty` | Shell and navigation | |

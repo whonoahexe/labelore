@@ -284,3 +284,53 @@ export function buildWorkstreamIndex(inventory: WorkstreamInventory, root: Proje
     midMigration: inventory.midMigration === null ? null : midMigrationNotice(inventory.midMigration.rootFiles),
   };
 }
+
+/** One row of the scope chip's popover (sketch 056 C, the inside screen): a workstream the chip can switch to. */
+export interface ScopeChipRow {
+  name: string;
+  /** The project-relative address of the workstream's own dashboard. */
+  url: string;
+  /** True for the workstream that is open. */
+  current: boolean;
+  /** True only when the active-workstream pointer names it. */
+  active: boolean;
+  tone: WorkstreamTone;
+  /** "Phase {N} · {status}" or "Not started · no roadmap". */
+  sub: string;
+}
+
+export interface ScopeChipModel {
+  /** The accessible name of the trigger. */
+  label: string;
+  rows: ScopeChipRow[];
+}
+
+export const SCOPE_ALL_LABEL = 'All workstreams';
+export const SCOPE_ALL_SUB = 'The workstream index';
+export const SCOPE_NOT_STARTED = 'Not started · no roadmap';
+
+function scopeSubOf(entry: WorkstreamEntry): string {
+  if (!entry.hasRoadmap) return SCOPE_NOT_STARTED;
+  const parts: string[] = [];
+  if (entry.currentPhase) parts.push(`Phase ${entry.currentPhase.number}`);
+  if (entry.status !== null) parts.push(entry.status);
+  return parts.length === 0 ? 'No current phase' : parts.join(' · ');
+}
+
+/** The scope chip's rows from the inventory: one per workstream folder (an entry that is a file has no scope to
+ * switch to), each with the status the index shows. Total over its input; an empty inventory gives no rows. */
+export function buildScopeChipModel(inventory: WorkstreamInventory | undefined, scope: string): ScopeChipModel {
+  const rows = (inventory?.entries ?? [])
+    .filter((entry) => entry.kind === 'folder')
+    .map(
+      (entry): ScopeChipRow => ({
+        name: entry.name,
+        url: `${workstreamScopeUrl(entry.name)}/`,
+        current: entry.name === scope,
+        active: inventory?.active.state === 'present' && inventory.active.name === entry.name,
+        tone: toneOf(entry),
+        sub: scopeSubOf(entry),
+      }),
+    );
+  return { label: `Workstream: ${scope}`, rows };
+}
