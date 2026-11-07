@@ -1,0 +1,1139 @@
+{
+  "current": {
+    "version": "v1.1",
+    "phases": [
+      {
+        "kind": "phase",
+        "key": "p~vv1.1~n~v01~vmember-sign-in-sessions",
+        "url": "/v1.1/phase-1",
+        "milestoneVersion": "v1.1",
+        "number": "01",
+        "name": "Member Sign-In & Sessions",
+        "status": {
+          "label": "Complete",
+          "tone": "complete"
+        },
+        "done": 2,
+        "total": 2,
+        "before": [
+          {
+            "key": ".planning/phases/01-member-sign-in-sessions/01-CONTEXT.md",
+            "label": "Context",
+            "path": ".planning/phases/01-member-sign-in-sessions/01-CONTEXT.md",
+            "url": "/v1.1/phase-1/context",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 9831
+          },
+          {
+            "key": ".planning/phases/01-member-sign-in-sessions/01-DISCUSSION-LOG.md",
+            "label": "Discussion log",
+            "path": ".planning/phases/01-member-sign-in-sessions/01-DISCUSSION-LOG.md",
+            "url": "/v1.1/phase-1/discussion-log",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 12473
+          },
+          {
+            "key": ".planning/phases/01-member-sign-in-sessions/01-SPEC.md",
+            "label": "Spec",
+            "path": ".planning/phases/01-member-sign-in-sessions/01-SPEC.md",
+            "url": "/v1.1/phase-1/spec",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 7175
+          },
+          {
+            "key": ".planning/phases/01-member-sign-in-sessions/01-UI-SPEC.md",
+            "label": "UI spec",
+            "path": ".planning/phases/01-member-sign-in-sessions/01-UI-SPEC.md",
+            "url": "/v1.1/phase-1/ui-spec",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 9555
+          },
+          {
+            "key": ".planning/phases/01-member-sign-in-sessions/01-RESEARCH.md",
+            "label": "Research",
+            "path": ".planning/phases/01-member-sign-in-sessions/01-RESEARCH.md",
+            "url": "/v1.1/phase-1/research",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 26334
+          },
+          {
+            "key": ".planning/phases/01-member-sign-in-sessions/01-PATTERNS.md",
+            "label": "Patterns",
+            "path": ".planning/phases/01-member-sign-in-sessions/01-PATTERNS.md",
+            "url": "/v1.1/phase-1/patterns",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 6536
+          },
+          {
+            "key": ".planning/phases/01-member-sign-in-sessions/01-VALIDATION.md",
+            "label": "Validation",
+            "path": ".planning/phases/01-member-sign-in-sessions/01-VALIDATION.md",
+            "url": "/v1.1/phase-1/validation",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 7575
+          }
+        ],
+        "plans": [
+          {
+            "key": "/v1.1/phase-1/plan-01",
+            "label": "Plan 01",
+            "badge": "01-01",
+            "url": "/v1.1/phase-1/plan-01",
+            "done": true,
+            "matchUrls": [
+              "/v1.1/phase-1/plan-01",
+              "/v1.1/phase-1/plan-01/summary"
+            ],
+            "warningTone": null
+          },
+          {
+            "key": "/v1.1/phase-1/plan-06",
+            "label": "Plan 06",
+            "badge": "01-06",
+            "url": "/v1.1/phase-1/plan-06",
+            "done": true,
+            "matchUrls": [
+              "/v1.1/phase-1/plan-06",
+              "/v1.1/phase-1/plan-06/summary"
+            ],
+            "warningTone": null
+          }
+        ],
+        "after": [
+          {
+            "key": ".planning/phases/01-member-sign-in-sessions/01-REVIEW.md",
+            "label": "Review",
+            "path": ".planning/phases/01-member-sign-in-sessions/01-REVIEW.md",
+            "url": "/v1.1/phase-1/review",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 3855
+          },
+          {
+            "key": ".planning/phases/01-member-sign-in-sessions/01-REVIEW-FIX.md",
+            "label": "Review fix",
+            "path": ".planning/phases/01-member-sign-in-sessions/01-REVIEW-FIX.md",
+            "url": "/v1.1/phase-1/review-fix",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 2693
+          },
+          {
+            "key": ".planning/phases/01-member-sign-in-sessions/01-SECURITY.md",
+            "label": "Security",
+            "path": ".planning/phases/01-member-sign-in-sessions/01-SECURITY.md",
+            "url": "/v1.1/phase-1/security",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 11632
+          },
+          {
+            "key": ".planning/phases/01-member-sign-in-sessions/01-UAT.md",
+            "label": "UAT",
+            "path": ".planning/phases/01-member-sign-in-sessions/01-UAT.md",
+            "url": "/v1.1/phase-1/uat",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 8465
+          },
+          {
+            "key": ".planning/phases/01-member-sign-in-sessions/01-LEARNINGS.md",
+            "label": "Learnings",
+            "path": ".planning/phases/01-member-sign-in-sessions/01-LEARNINGS.md",
+            "url": "/v1.1/phase-1/learnings",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 17443
+          }
+        ],
+        "other": [
+          {
+            "key": ".planning/phases/01-member-sign-in-sessions/01-DOM-VERIFY.md",
+            "label": "Dom verify",
+            "path": ".planning/phases/01-member-sign-in-sessions/01-DOM-VERIFY.md",
+            "url": "/v1.1/phase-1/dom-verify",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 542
+          },
+          {
+            "key": ".planning/phases/01-member-sign-in-sessions/01-REVIEW-DISPOSITION.md",
+            "label": "Review disposition",
+            "path": ".planning/phases/01-member-sign-in-sessions/01-REVIEW-DISPOSITION.md",
+            "url": "/v1.1/phase-1/review-disposition",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 1314
+          },
+          {
+            "key": ".planning/phases/01-member-sign-in-sessions/01-REVIEWS.md",
+            "label": "Reviews",
+            "path": ".planning/phases/01-member-sign-in-sessions/01-REVIEWS.md",
+            "url": "/v1.1/phase-1/reviews",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 1441
+          }
+        ]
+      },
+      {
+        "kind": "phase",
+        "key": "p~vv1.1~n~v02~vroles-and-permissions",
+        "url": "/v1.1/phase-2",
+        "milestoneVersion": "v1.1",
+        "number": "02",
+        "name": "Roles & Permissions",
+        "status": {
+          "label": "In progress",
+          "tone": "active"
+        },
+        "done": 0,
+        "total": 1,
+        "before": [
+          {
+            "key": ".planning/phases/02-roles-and-permissions/02-CONTEXT.md",
+            "label": "Context",
+            "path": ".planning/phases/02-roles-and-permissions/02-CONTEXT.md",
+            "url": "/v1.1/phase-2/context",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 10010
+          },
+          {
+            "key": ".planning/phases/02-roles-and-permissions/02-DISCUSSION-LOG.md",
+            "label": "Discussion log",
+            "path": ".planning/phases/02-roles-and-permissions/02-DISCUSSION-LOG.md",
+            "url": "/v1.1/phase-2/discussion-log",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 10177
+          },
+          {
+            "key": ".planning/phases/02-roles-and-permissions/02-SPEC.md",
+            "label": "Spec",
+            "path": ".planning/phases/02-roles-and-permissions/02-SPEC.md",
+            "url": "/v1.1/phase-2/spec",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 6445
+          },
+          {
+            "key": ".planning/phases/02-roles-and-permissions/02-AI-SPEC.md",
+            "label": "AI spec",
+            "path": ".planning/phases/02-roles-and-permissions/02-AI-SPEC.md",
+            "url": "/v1.1/phase-2/ai-spec",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 6995
+          },
+          {
+            "key": ".planning/phases/02-roles-and-permissions/02-UI-SPEC.md",
+            "label": "UI spec",
+            "path": ".planning/phases/02-roles-and-permissions/02-UI-SPEC.md",
+            "url": "/v1.1/phase-2/ui-spec",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 7199
+          },
+          {
+            "key": ".planning/phases/02-roles-and-permissions/02-PATTERNS.md",
+            "label": "Patterns",
+            "path": ".planning/phases/02-roles-and-permissions/02-PATTERNS.md",
+            "url": "/v1.1/phase-2/patterns",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 5694
+          },
+          {
+            "key": ".planning/phases/02-roles-and-permissions/02-VALIDATION.md",
+            "label": "Validation",
+            "path": ".planning/phases/02-roles-and-permissions/02-VALIDATION.md",
+            "url": "/v1.1/phase-2/validation",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 9300
+          }
+        ],
+        "plans": [
+          {
+            "key": "/v1.1/phase-2/plan-01",
+            "label": "Plan 01",
+            "badge": "02-01",
+            "url": "/v1.1/phase-2/plan-01",
+            "done": false,
+            "matchUrls": [
+              "/v1.1/phase-2/plan-01"
+            ],
+            "warningTone": null
+          }
+        ],
+        "after": [
+          {
+            "key": ".planning/phases/02-roles-and-permissions/02-REVIEW.md",
+            "label": "Review",
+            "path": ".planning/phases/02-roles-and-permissions/02-REVIEW.md",
+            "url": "/v1.1/phase-2/review",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 5986
+          },
+          {
+            "key": ".planning/phases/02-roles-and-permissions/02-REVIEW-FIX.md",
+            "label": "Review fix",
+            "path": ".planning/phases/02-roles-and-permissions/02-REVIEW-FIX.md",
+            "url": "/v1.1/phase-2/review-fix",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 3529
+          },
+          {
+            "key": ".planning/phases/02-roles-and-permissions/02-UAT.md",
+            "label": "UAT",
+            "path": ".planning/phases/02-roles-and-permissions/02-UAT.md",
+            "url": "/v1.1/phase-2/uat",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 5477
+          },
+          {
+            "key": ".planning/phases/02-roles-and-permissions/COVERAGE.md",
+            "label": "Coverage",
+            "path": ".planning/phases/02-roles-and-permissions/COVERAGE.md",
+            "url": "/v1.1/phase-2/coverage",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 166
+          }
+        ],
+        "other": [
+          {
+            "key": ".planning/phases/02-roles-and-permissions/02-DOM-VERIFY.md",
+            "label": "Dom verify",
+            "path": ".planning/phases/02-roles-and-permissions/02-DOM-VERIFY.md",
+            "url": "/v1.1/phase-2/dom-verify",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 379
+          },
+          {
+            "key": ".planning/phases/02-roles-and-permissions/02-REVIEW-DISPOSITION.md",
+            "label": "Review disposition",
+            "path": ".planning/phases/02-roles-and-permissions/02-REVIEW-DISPOSITION.md",
+            "url": "/v1.1/phase-2/review-disposition",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 1045
+          },
+          {
+            "key": ".planning/phases/02-roles-and-permissions/02-USER-SETUP.md",
+            "label": "User setup",
+            "path": ".planning/phases/02-roles-and-permissions/02-USER-SETUP.md",
+            "url": "/v1.1/phase-2/user-setup",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 1248
+          }
+        ]
+      },
+      {
+        "kind": "phase",
+        "key": "p~vv1.1~n~v03~vaccount-admin-and-sessions",
+        "url": "/v1.1/phase-3",
+        "milestoneVersion": "v1.1",
+        "number": "03",
+        "name": "Account Admin & Sessions",
+        "status": {
+          "label": "Researched",
+          "tone": "quiet"
+        },
+        "done": 0,
+        "total": 0,
+        "before": [
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-CONTEXT.md",
+            "label": "Context",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-CONTEXT.md",
+            "url": "/v1.1/phase-3/context",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 11920
+          },
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-DISCUSSION-LOG.md",
+            "label": "Discussion log",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-DISCUSSION-LOG.md",
+            "url": "/v1.1/phase-3/discussion-log",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 10457
+          },
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-SPEC.md",
+            "label": "Spec",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-SPEC.md",
+            "url": "/v1.1/phase-3/spec",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 7844
+          },
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-UI-SPEC.md",
+            "label": "UI spec",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-UI-SPEC.md",
+            "url": "/v1.1/phase-3/ui-spec",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 8927
+          },
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-RESEARCH.md",
+            "label": "Research",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-RESEARCH.md",
+            "url": "/v1.1/phase-3/research",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 29256
+          },
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-PATTERNS.md",
+            "label": "Patterns",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-PATTERNS.md",
+            "url": "/v1.1/phase-3/patterns",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 5300
+          },
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-VALIDATION.md",
+            "label": "Validation",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-VALIDATION.md",
+            "url": "/v1.1/phase-3/validation",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 8473
+          }
+        ],
+        "plans": [],
+        "after": [
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-REVIEW.md",
+            "label": "Review",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-REVIEW.md",
+            "url": "/v1.1/phase-3/review",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 7461
+          },
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-VERIFICATION.md",
+            "label": "Verification",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-VERIFICATION.md",
+            "url": "/v1.1/phase-3/verification",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 10433
+          },
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-SECURITY.md",
+            "label": "Security",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-SECURITY.md",
+            "url": "/v1.1/phase-3/security",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 13324
+          },
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-UAT.md",
+            "label": "UAT",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-UAT.md",
+            "url": "/v1.1/phase-3/uat",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 4835
+          },
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/.continue-here.md",
+            "label": "Continue here",
+            "path": ".planning/phases/03-account-admin-and-sessions/.continue-here.md",
+            "url": "/v1.1/phase-3/continue-here",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 1104
+          }
+        ],
+        "other": [
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-DOM-VERIFY.md",
+            "label": "Dom verify",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-DOM-VERIFY.md",
+            "url": "/v1.1/phase-3/dom-verify",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 1165
+          },
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-EVAL-REVIEW.md",
+            "label": "Eval review",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-EVAL-REVIEW.md",
+            "url": "/v1.1/phase-3/eval-review",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 2340
+          },
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-REVIEW-FIX-backend.md",
+            "label": "03 review fix backend",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-REVIEW-FIX-backend.md",
+            "url": "/v1.1/phase-3/review-fix-backend",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 1589
+          },
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-REVIEW-FIX-frontend.md",
+            "label": "03 review fix frontend",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-REVIEW-FIX-frontend.md",
+            "url": "/v1.1/phase-3/review-fix-frontend",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 1712
+          },
+          {
+            "key": ".planning/phases/03-account-admin-and-sessions/03-UI-REVIEW.md",
+            "label": "UI review",
+            "path": ".planning/phases/03-account-admin-and-sessions/03-UI-REVIEW.md",
+            "url": "/v1.1/phase-3/ui-review",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 8837
+          }
+        ]
+      },
+      {
+        "kind": "phase",
+        "key": "p~vv1.1~n~v04~vbulk-loan-export",
+        "url": "/v1.1/phase-4",
+        "milestoneVersion": "v1.1",
+        "number": "04",
+        "name": "Bulk Loan Export",
+        "status": {
+          "label": "In progress",
+          "tone": "active"
+        },
+        "done": 0,
+        "total": 1,
+        "before": [
+          {
+            "key": ".planning/phases/04-bulk-loan-export/04-CONTEXT.md",
+            "label": "Context",
+            "path": ".planning/phases/04-bulk-loan-export/04-CONTEXT.md",
+            "url": "/v1.1/phase-4/context",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 9083
+          },
+          {
+            "key": ".planning/phases/04-bulk-loan-export/04-DISCUSSION-LOG.md",
+            "label": "Discussion log",
+            "path": ".planning/phases/04-bulk-loan-export/04-DISCUSSION-LOG.md",
+            "url": "/v1.1/phase-4/discussion-log",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 11819
+          },
+          {
+            "key": ".planning/phases/04-bulk-loan-export/04-AI-SPEC.md",
+            "label": "AI spec",
+            "path": ".planning/phases/04-bulk-loan-export/04-AI-SPEC.md",
+            "url": "/v1.1/phase-4/ai-spec",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 9523
+          },
+          {
+            "key": ".planning/phases/04-bulk-loan-export/04-UI-SPEC.md",
+            "label": "UI spec",
+            "path": ".planning/phases/04-bulk-loan-export/04-UI-SPEC.md",
+            "url": "/v1.1/phase-4/ui-spec",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 6741
+          },
+          {
+            "key": ".planning/phases/04-bulk-loan-export/04-PATTERNS.md",
+            "label": "Patterns",
+            "path": ".planning/phases/04-bulk-loan-export/04-PATTERNS.md",
+            "url": "/v1.1/phase-4/patterns",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 5282
+          },
+          {
+            "key": ".planning/phases/04-bulk-loan-export/04-VALIDATION.md",
+            "label": "Validation",
+            "path": ".planning/phases/04-bulk-loan-export/04-VALIDATION.md",
+            "url": "/v1.1/phase-4/validation",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 5254
+          }
+        ],
+        "plans": [
+          {
+            "key": "/v1.1/phase-4/plan-02",
+            "label": "Plan 02",
+            "badge": "04-02",
+            "url": "/v1.1/phase-4/plan-02",
+            "done": false,
+            "matchUrls": [
+              "/v1.1/phase-4/plan-02"
+            ],
+            "warningTone": null
+          }
+        ],
+        "after": [
+          {
+            "key": ".planning/phases/04-bulk-loan-export/04-REVIEW.md",
+            "label": "Review",
+            "path": ".planning/phases/04-bulk-loan-export/04-REVIEW.md",
+            "url": "/v1.1/phase-4/review",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 7504
+          },
+          {
+            "key": ".planning/phases/04-bulk-loan-export/04-VERIFICATION.md",
+            "label": "Verification",
+            "path": ".planning/phases/04-bulk-loan-export/04-VERIFICATION.md",
+            "url": "/v1.1/phase-4/verification",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 18363
+          },
+          {
+            "key": ".planning/phases/04-bulk-loan-export/COVERAGE.md",
+            "label": "Coverage",
+            "path": ".planning/phases/04-bulk-loan-export/COVERAGE.md",
+            "url": "/v1.1/phase-4/coverage",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 672
+          }
+        ],
+        "other": [
+          {
+            "key": ".planning/phases/04-bulk-loan-export/04-06-SUMMARY.md",
+            "label": "Summary 06",
+            "path": ".planning/phases/04-bulk-loan-export/04-06-SUMMARY.md",
+            "url": "/v1.1/phase-4/plan-06/summary",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 9362
+          },
+          {
+            "key": ".planning/phases/04-bulk-loan-export/04-07-SUMMARY.md",
+            "label": "Summary 07",
+            "path": ".planning/phases/04-bulk-loan-export/04-07-SUMMARY.md",
+            "url": "/v1.1/phase-4/plan-07/summary",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 8590
+          },
+          {
+            "key": ".planning/phases/04-bulk-loan-export/04-EVAL-REVIEW.md",
+            "label": "Eval review",
+            "path": ".planning/phases/04-bulk-loan-export/04-EVAL-REVIEW.md",
+            "url": "/v1.1/phase-4/eval-review",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 3786
+          },
+          {
+            "key": ".planning/phases/04-bulk-loan-export/04-REVIEWS.md",
+            "label": "Reviews",
+            "path": ".planning/phases/04-bulk-loan-export/04-REVIEWS.md",
+            "url": "/v1.1/phase-4/reviews",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 6710
+          },
+          {
+            "key": ".planning/phases/04-bulk-loan-export/04-USER-SETUP.md",
+            "label": "User setup",
+            "path": ".planning/phases/04-bulk-loan-export/04-USER-SETUP.md",
+            "url": "/v1.1/phase-4/user-setup",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 2234
+          }
+        ]
+      }
+    ]
+  },
+  "shipped": [
+    {
+      "kind": "milestone",
+      "key": "m~v1.0",
+      "url": "/v1.0/roadmap",
+      "version": "v1.0",
+      "name": "Shed Basics",
+      "shippedLabel": "20 Mar",
+      "documents": [
+        {
+          "key": ".planning/milestones/v1.0-ROADMAP.md",
+          "label": "Roadmap",
+          "path": ".planning/milestones/v1.0-ROADMAP.md",
+          "url": "/v1.0/roadmap",
+          "warningTone": null,
+          "fileClass": "text",
+          "sizeBytes": 2660
+        },
+        {
+          "key": ".planning/milestones/v1.0-REQUIREMENTS.md",
+          "label": "Requirements",
+          "path": ".planning/milestones/v1.0-REQUIREMENTS.md",
+          "url": "/v1.0/requirements",
+          "warningTone": null,
+          "fileClass": "text",
+          "sizeBytes": 1759
+        },
+        {
+          "key": ".planning/milestones/v1.0-MILESTONE-AUDIT.md",
+          "label": "Milestone audit",
+          "path": ".planning/milestones/v1.0-MILESTONE-AUDIT.md",
+          "url": "/v1.0/audit",
+          "warningTone": null,
+          "fileClass": "text",
+          "sizeBytes": 2464
+        }
+      ],
+      "phases": [
+        {
+          "kind": "phase",
+          "key": "p~vv1.0~n~v01~vmember-data-foundation",
+          "url": "/v1.0/phase-1",
+          "milestoneVersion": "v1.0",
+          "number": "01",
+          "name": "Member Data Foundation",
+          "status": {
+            "label": "Discussed",
+            "tone": "quiet"
+          },
+          "done": 0,
+          "total": 0,
+          "before": [
+            {
+              "key": ".planning/milestones/v1.0-phases/01-member-data-foundation/01-CONTEXT.md",
+              "label": "Context",
+              "path": ".planning/milestones/v1.0-phases/01-member-data-foundation/01-CONTEXT.md",
+              "url": "/v1.0/phase-1/context",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 5997
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/01-member-data-foundation/01-DISCUSSION-LOG.md",
+              "label": "Discussion log",
+              "path": ".planning/milestones/v1.0-phases/01-member-data-foundation/01-DISCUSSION-LOG.md",
+              "url": "/v1.0/phase-1/discussion-log",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 3687
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/01-member-data-foundation/01-VALIDATION.md",
+              "label": "Validation",
+              "path": ".planning/milestones/v1.0-phases/01-member-data-foundation/01-VALIDATION.md",
+              "url": "/v1.0/phase-1/validation",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 5331
+            }
+          ],
+          "plans": [],
+          "after": [
+            {
+              "key": ".planning/milestones/v1.0-phases/01-member-data-foundation/01-REVIEW.md",
+              "label": "Review",
+              "path": ".planning/milestones/v1.0-phases/01-member-data-foundation/01-REVIEW.md",
+              "url": "/v1.0/phase-1/review",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 8137
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/01-member-data-foundation/01-VERIFICATION.md",
+              "label": "Verification",
+              "path": ".planning/milestones/v1.0-phases/01-member-data-foundation/01-VERIFICATION.md",
+              "url": "/v1.0/phase-1/verification",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 12461
+            }
+          ],
+          "other": []
+        },
+        {
+          "kind": "phase",
+          "key": "p~vv1.0~n~v02~vshed-inventory-health",
+          "url": "/v1.0/phase-2",
+          "milestoneVersion": "v1.0",
+          "number": "02",
+          "name": "Shed Inventory Health",
+          "status": {
+            "label": "Researched",
+            "tone": "quiet"
+          },
+          "done": 0,
+          "total": 0,
+          "before": [
+            {
+              "key": ".planning/milestones/v1.0-phases/02-shed-inventory-health/02-CONTEXT.md",
+              "label": "Context",
+              "path": ".planning/milestones/v1.0-phases/02-shed-inventory-health/02-CONTEXT.md",
+              "url": "/v1.0/phase-2/context",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 10531
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/02-shed-inventory-health/02-DISCUSSION-LOG.md",
+              "label": "Discussion log",
+              "path": ".planning/milestones/v1.0-phases/02-shed-inventory-health/02-DISCUSSION-LOG.md",
+              "url": "/v1.0/phase-2/discussion-log",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 10679
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/02-shed-inventory-health/02-UI-SPEC.md",
+              "label": "UI spec",
+              "path": ".planning/milestones/v1.0-phases/02-shed-inventory-health/02-UI-SPEC.md",
+              "url": "/v1.0/phase-2/ui-spec",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 8388
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/02-shed-inventory-health/02-RESEARCH.md",
+              "label": "Research",
+              "path": ".planning/milestones/v1.0-phases/02-shed-inventory-health/02-RESEARCH.md",
+              "url": "/v1.0/phase-2/research",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 30788
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/02-shed-inventory-health/02-PATTERNS.md",
+              "label": "Patterns",
+              "path": ".planning/milestones/v1.0-phases/02-shed-inventory-health/02-PATTERNS.md",
+              "url": "/v1.0/phase-2/patterns",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 17488
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/02-shed-inventory-health/02-VALIDATION.md",
+              "label": "Validation",
+              "path": ".planning/milestones/v1.0-phases/02-shed-inventory-health/02-VALIDATION.md",
+              "url": "/v1.0/phase-2/validation",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 5593
+            }
+          ],
+          "plans": [],
+          "after": [],
+          "other": [
+            {
+              "key": ".planning/milestones/v1.0-phases/02-shed-inventory-health/02-12-SUMMARY.md",
+              "label": "Summary 12",
+              "path": ".planning/milestones/v1.0-phases/02-shed-inventory-health/02-12-SUMMARY.md",
+              "url": "/v1.0/phase-2/plan-12/summary",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 2169
+            }
+          ]
+        },
+        {
+          "kind": "phase",
+          "key": "p~vv1.0~n~v03~vcatalogue-browsing",
+          "url": "/v1.0/phase-3",
+          "milestoneVersion": "v1.0",
+          "number": "03",
+          "name": "Catalogue Browsing",
+          "status": {
+            "label": "Researched",
+            "tone": "quiet"
+          },
+          "done": 0,
+          "total": 0,
+          "before": [
+            {
+              "key": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-CONTEXT.md",
+              "label": "Context",
+              "path": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-CONTEXT.md",
+              "url": "/v1.0/phase-3/context",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 7283
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-DISCUSSION-LOG.md",
+              "label": "Discussion log",
+              "path": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-DISCUSSION-LOG.md",
+              "url": "/v1.0/phase-3/discussion-log",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 10127
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-UI-SPEC.md",
+              "label": "UI spec",
+              "path": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-UI-SPEC.md",
+              "url": "/v1.0/phase-3/ui-spec",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 6494
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-RESEARCH.md",
+              "label": "Research",
+              "path": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-RESEARCH.md",
+              "url": "/v1.0/phase-3/research",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 24431
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-PATTERNS.md",
+              "label": "Patterns",
+              "path": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-PATTERNS.md",
+              "url": "/v1.0/phase-3/patterns",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 4971
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-VALIDATION.md",
+              "label": "Validation",
+              "path": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-VALIDATION.md",
+              "url": "/v1.0/phase-3/validation",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 2774
+            }
+          ],
+          "plans": [],
+          "after": [
+            {
+              "key": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-REVIEW.md",
+              "label": "Review",
+              "path": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-REVIEW.md",
+              "url": "/v1.0/phase-3/review",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 11510
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-UAT.md",
+              "label": "UAT",
+              "path": ".planning/milestones/v1.0-phases/03-catalogue-browsing/03-UAT.md",
+              "url": "/v1.0/phase-3/uat",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 10215
+            }
+          ],
+          "other": []
+        },
+        {
+          "kind": "phase",
+          "key": "p~vv1.0~n~v04~vshed-to-shed-transfers",
+          "url": "/v1.0/phase-4",
+          "milestoneVersion": "v1.0",
+          "number": "04",
+          "name": "Shed-to-Shed Transfers",
+          "status": {
+            "label": "Discussed",
+            "tone": "quiet"
+          },
+          "done": 0,
+          "total": 0,
+          "before": [
+            {
+              "key": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-CONTEXT.md",
+              "label": "Context",
+              "path": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-CONTEXT.md",
+              "url": "/v1.0/phase-4/context",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 10466
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-DISCUSSION-LOG.md",
+              "label": "Discussion log",
+              "path": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-DISCUSSION-LOG.md",
+              "url": "/v1.0/phase-4/discussion-log",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 16103
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-UI-SPEC.md",
+              "label": "UI spec",
+              "path": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-UI-SPEC.md",
+              "url": "/v1.0/phase-4/ui-spec",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 12571
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-PATTERNS.md",
+              "label": "Patterns",
+              "path": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-PATTERNS.md",
+              "url": "/v1.0/phase-4/patterns",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 5346
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-VALIDATION.md",
+              "label": "Validation",
+              "path": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-VALIDATION.md",
+              "url": "/v1.0/phase-4/validation",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 2397
+            }
+          ],
+          "plans": [],
+          "after": [
+            {
+              "key": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-REVIEW.md",
+              "label": "Review",
+              "path": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-REVIEW.md",
+              "url": "/v1.0/phase-4/review",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 10232
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-REVIEW-FIX.md",
+              "label": "Review fix",
+              "path": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-REVIEW-FIX.md",
+              "url": "/v1.0/phase-4/review-fix",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 7545
+            },
+            {
+              "key": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-VERIFICATION.md",
+              "label": "Verification",
+              "path": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-VERIFICATION.md",
+              "url": "/v1.0/phase-4/verification",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 7691
+            }
+          ],
+          "other": [
+            {
+              "key": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-REVIEW-DISPOSITION.md",
+              "label": "Review disposition",
+              "path": ".planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-REVIEW-DISPOSITION.md",
+              "url": "/v1.0/phase-4/review-disposition",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 832
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "quick": {
+    "kind": "quick",
+    "key": "quick",
+    "count": 3,
+    "groups": [
+      {
+        "key": "quick:current",
+        "current": true,
+        "version": "v1.1",
+        "name": null,
+        "tasks": [
+          {
+            "key": ".planning/quick/260403-k2p-add-right-click-menu-to-catalogue-grid",
+            "label": "Add right click menu to catalogue grid",
+            "dateBadge": "Apr 3",
+            "url": "/quick/260403-k2p/context",
+            "files": [
+              {
+                "key": ".planning/quick/260403-k2p-add-right-click-menu-to-catalogue-grid/260403-k2p-CONTEXT.md",
+                "label": "Context",
+                "path": ".planning/quick/260403-k2p-add-right-click-menu-to-catalogue-grid/260403-k2p-CONTEXT.md",
+                "url": "/quick/260403-k2p/context",
+                "warningTone": null,
+                "fileClass": "text",
+                "sizeBytes": 4273
+              }
+            ]
+          },
+          {
+            "key": ".planning/quick/260402-t8m-restyle-the-top-bar-to-match-the-brand",
+            "label": "Restyle the top bar to match the brand",
+            "dateBadge": "Apr 2",
+            "url": "/quick/260402-t8m",
+            "files": [
+              {
+                "key": ".planning/quick/260402-t8m-restyle-the-top-bar-to-match-the-brand/260402-t8m-PLAN.md",
+                "label": "Plan",
+                "path": ".planning/quick/260402-t8m-restyle-the-top-bar-to-match-the-brand/260402-t8m-PLAN.md",
+                "url": "/quick/260402-t8m",
+                "warningTone": null,
+                "fileClass": "text",
+                "sizeBytes": 11300
+              },
+              {
+                "key": ".planning/quick/260402-t8m-restyle-the-top-bar-to-match-the-brand/260402-t8m-SUMMARY.md",
+                "label": "Summary",
+                "path": ".planning/quick/260402-t8m-restyle-the-top-bar-to-match-the-brand/260402-t8m-SUMMARY.md",
+                "url": "/quick/260402-t8m/summary",
+                "warningTone": null,
+                "fileClass": "text",
+                "sizeBytes": 3302
+              }
+            ]
+          },
+          {
+            "key": ".planning/quick/260327-h4w-move-the-live-status-socket-into-a-provider",
+            "label": "Move the live status socket into a provider",
+            "dateBadge": "Mar 27",
+            "url": "/quick/260327-h4w/verification",
+            "files": [
+              {
+                "key": ".planning/quick/260327-h4w-move-the-live-status-socket-into-a-provider/260327-h4w-VERIFICATION.md",
+                "label": "Verification",
+                "path": ".planning/quick/260327-h4w-move-the-live-status-socket-into-a-provider/260327-h4w-VERIFICATION.md",
+                "url": "/quick/260327-h4w/verification",
+                "warningTone": null,
+                "fileClass": "text",
+                "sizeBytes": 5257
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "defaultPlaceKey": "p~vv1.1~n~v04~vbulk-loan-export"
+}

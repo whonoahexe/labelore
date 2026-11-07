@@ -1,0 +1,417 @@
+{
+  "current": {
+    "version": "v1.1",
+    "phases": [
+      {
+        "kind": "phase",
+        "key": "p~vv1.1~n~v01~vkiln-bookings",
+        "url": "/v1.1/phase-1",
+        "milestoneVersion": "v1.1",
+        "number": "01",
+        "name": "Kiln bookings",
+        "status": {
+          "label": "Discussed",
+          "tone": "quiet"
+        },
+        "done": 0,
+        "total": 0,
+        "before": [
+          {
+            "key": ".planning/phases/01-kiln-bookings/01-CONTEXT.md",
+            "label": "Context",
+            "path": ".planning/phases/01-kiln-bookings/01-CONTEXT.md",
+            "url": "/v1.1/phase-1/context",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 974
+          }
+        ],
+        "plans": [],
+        "after": [
+          {
+            "key": ".planning/phases/01-kiln-bookings/firing-sheet.pdf",
+            "label": "firing-sheet.pdf",
+            "path": ".planning/phases/01-kiln-bookings/firing-sheet.pdf",
+            "url": "/v1.1/phase-1/firing-sheet.pdf",
+            "warningTone": null,
+            "fileClass": "binary",
+            "sizeBytes": 70
+          },
+          {
+            "key": ".planning/phases/01-kiln-bookings/kiln-floor.png",
+            "label": "kiln-floor.png",
+            "path": ".planning/phases/01-kiln-bookings/kiln-floor.png",
+            "url": "/v1.1/phase-1/kiln-floor.png",
+            "warningTone": null,
+            "fileClass": "image",
+            "sizeBytes": 70
+          }
+        ],
+        "other": []
+      },
+      {
+        "kind": "phase",
+        "key": "p~vv1.1~n~v02~vglaze-recipes",
+        "url": "/v1.1/phase-2",
+        "milestoneVersion": "v1.1",
+        "number": "02",
+        "name": "Glaze recipes",
+        "status": {
+          "label": "Complete",
+          "tone": "complete"
+        },
+        "done": 1,
+        "total": 1,
+        "before": [
+          {
+            "key": ".planning/phases/02-glaze-recipes/02-CONTEXT.md",
+            "label": "Context",
+            "path": ".planning/phases/02-glaze-recipes/02-CONTEXT.md",
+            "url": "/v1.1/phase-2/context",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 982
+          },
+          {
+            "key": ".planning/phases/02-glaze-recipes/03-RESEARCH.md",
+            "label": "Research",
+            "path": ".planning/phases/02-glaze-recipes/03-RESEARCH.md",
+            "url": "/file/phases/02-glaze-recipes/03-RESEARCH.md",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 204
+          }
+        ],
+        "plans": [
+          {
+            "key": "/v1.1/phase-2/plan-01",
+            "label": "Plan 01",
+            "badge": "02-01",
+            "url": "/v1.1/phase-2/plan-01",
+            "done": true,
+            "matchUrls": [
+              "/v1.1/phase-2/plan-01",
+              "/v1.1/phase-2/plan-01/summary"
+            ],
+            "warningTone": null
+          }
+        ],
+        "after": [
+          {
+            "key": ".planning/phases/02-glaze-recipes/.continue-here.md",
+            "label": "Continue here",
+            "path": ".planning/phases/02-glaze-recipes/.continue-here.md",
+            "url": "/v1.1/phase-2/continue-here",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 230
+          },
+          {
+            "key": ".planning/phases/02-glaze-recipes/COVERAGE.md",
+            "label": "Coverage",
+            "path": ".planning/phases/02-glaze-recipes/COVERAGE.md",
+            "url": "/v1.1/phase-2/coverage",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 390
+          },
+          {
+            "key": ".planning/phases/02-glaze-recipes/deferred-items.md",
+            "label": "Deferred items",
+            "path": ".planning/phases/02-glaze-recipes/deferred-items.md",
+            "url": "/v1.1/phase-2/deferred-items",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 211
+          },
+          {
+            "key": ".planning/phases/02-glaze-recipes/SKELETON.md",
+            "label": "Skeleton",
+            "path": ".planning/phases/02-glaze-recipes/SKELETON.md",
+            "url": "/v1.1/phase-2/skeleton",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 173
+          }
+        ],
+        "other": [
+          {
+            "key": ".planning/phases/02-glaze-recipes/plan-01.md",
+            "label": "Plan 01",
+            "path": ".planning/phases/02-glaze-recipes/plan-01.md",
+            "url": "/file/phases/02-glaze-recipes/plan-01.md",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 95
+          },
+          {
+            "key": ".planning/phases/02-glaze-recipes/scratch/mixing order.md",
+            "label": "Mixing order",
+            "path": ".planning/phases/02-glaze-recipes/scratch/mixing order.md",
+            "url": "/v1.1/phase-2/scratch/mixing%20order",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 77
+          }
+        ]
+      },
+      {
+        "kind": "phase",
+        "key": "p~vv1.1~n~v02.1~vglaze-hotfix",
+        "url": "/v1.1/phase-2.1",
+        "milestoneVersion": "v1.1",
+        "number": "02.1",
+        "name": "Glaze hotfix (INSERTED)",
+        "status": {
+          "label": "Complete",
+          "tone": "complete"
+        },
+        "done": 1,
+        "total": 1,
+        "before": [
+          {
+            "key": ".planning/phases/02.1-glaze-hotfix/02.1-CONTEXT.md",
+            "label": "Context",
+            "path": ".planning/phases/02.1-glaze-hotfix/02.1-CONTEXT.md",
+            "url": "/v1.1/phase-2.1/context",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 359
+          }
+        ],
+        "plans": [
+          {
+            "key": "/v1.1/phase-2.1/plan-01",
+            "label": "Plan 01",
+            "badge": "02.1-01",
+            "url": "/v1.1/phase-2.1/plan-01",
+            "done": true,
+            "matchUrls": [
+              "/v1.1/phase-2.1/plan-01",
+              "/v1.1/phase-2.1/plan-01/summary"
+            ],
+            "warningTone": null
+          }
+        ],
+        "after": [],
+        "other": []
+      },
+      {
+        "kind": "phase",
+        "key": "p~vv1.1~vKR~v03~vfiring-calendar",
+        "url": "/v1.1/phase-kr-3",
+        "milestoneVersion": "v1.1",
+        "number": "03",
+        "name": "Firing calendar",
+        "status": {
+          "label": "In progress",
+          "tone": "active"
+        },
+        "done": 0,
+        "total": 1,
+        "before": [
+          {
+            "key": ".planning/phases/KR-03-firing-calendar/03-CONTEXT.md",
+            "label": "Context",
+            "path": ".planning/phases/KR-03-firing-calendar/03-CONTEXT.md",
+            "url": "/v1.1/phase-kr-3/context",
+            "warningTone": null,
+            "fileClass": "text",
+            "sizeBytes": 308
+          }
+        ],
+        "plans": [
+          {
+            "key": "/v1.1/phase-kr-3/plan-01",
+            "label": "Plan 01",
+            "badge": "03-01",
+            "url": "/v1.1/phase-kr-3/plan-01",
+            "done": false,
+            "matchUrls": [
+              "/v1.1/phase-kr-3/plan-01"
+            ],
+            "warningTone": null
+          }
+        ],
+        "after": [],
+        "other": []
+      }
+    ]
+  },
+  "shipped": [
+    {
+      "kind": "milestone",
+      "key": "m~v1.0",
+      "url": "/v1.0/roadmap",
+      "version": "v1.0",
+      "name": "Kiln Basics",
+      "shippedLabel": "24 Apr",
+      "documents": [
+        {
+          "key": ".planning/milestones/v1.0-ROADMAP.md",
+          "label": "Roadmap",
+          "path": ".planning/milestones/v1.0-ROADMAP.md",
+          "url": "/v1.0/roadmap",
+          "warningTone": null,
+          "fileClass": "text",
+          "sizeBytes": 225
+        },
+        {
+          "key": ".planning/milestones/v1.0-REQUIREMENTS.md",
+          "label": "Requirements",
+          "path": ".planning/milestones/v1.0-REQUIREMENTS.md",
+          "url": "/v1.0/requirements",
+          "warningTone": null,
+          "fileClass": "text",
+          "sizeBytes": 197
+        },
+        {
+          "key": ".planning/milestones/v1.0-MILESTONE-AUDIT.md",
+          "label": "Milestone audit",
+          "path": ".planning/milestones/v1.0-MILESTONE-AUDIT.md",
+          "url": "/v1.0/audit",
+          "warningTone": null,
+          "fileClass": "text",
+          "sizeBytes": 158
+        },
+        {
+          "key": ".planning/milestones/v1.0-research/STACK.md",
+          "label": "Stack",
+          "path": ".planning/milestones/v1.0-research/STACK.md",
+          "url": "/v1.0/research/stack",
+          "warningTone": null,
+          "fileClass": "text",
+          "sizeBytes": 101
+        }
+      ],
+      "phases": [
+        {
+          "kind": "phase",
+          "key": "p~vv1.0~n~v01~vstudio-accounts",
+          "url": "/v1.0/phase-1",
+          "milestoneVersion": "v1.0",
+          "number": "01",
+          "name": "Studio accounts",
+          "status": {
+            "label": "Complete",
+            "tone": "complete"
+          },
+          "done": 1,
+          "total": 1,
+          "before": [
+            {
+              "key": ".planning/milestones/v1.0-phases/01-studio-accounts/01-CONTEXT.md",
+              "label": "Context",
+              "path": ".planning/milestones/v1.0-phases/01-studio-accounts/01-CONTEXT.md",
+              "url": "/v1.0/phase-1/context",
+              "warningTone": null,
+              "fileClass": "text",
+              "sizeBytes": 334
+            }
+          ],
+          "plans": [
+            {
+              "key": "/v1.0/phase-1/plan-01",
+              "label": "Plan 01",
+              "badge": "01-01",
+              "url": "/v1.0/phase-1/plan-01",
+              "done": true,
+              "matchUrls": [
+                "/v1.0/phase-1/plan-01",
+                "/v1.0/phase-1/plan-01/summary"
+              ],
+              "warningTone": null
+            }
+          ],
+          "after": [],
+          "other": []
+        }
+      ]
+    }
+  ],
+  "quick": {
+    "kind": "quick",
+    "key": "quick",
+    "count": 2,
+    "groups": [
+      {
+        "key": "quick:current",
+        "current": true,
+        "version": "v1.1",
+        "name": null,
+        "tasks": [
+          {
+            "key": ".planning/quick/261020-k4m-shelf-tags",
+            "label": "Shelf tags",
+            "dateBadge": "Oct 20",
+            "url": "/quick/261020-k4m",
+            "files": [
+              {
+                "key": ".planning/quick/261020-k4m-shelf-tags/261020-k4m-CONTEXT.md",
+                "label": "Context",
+                "path": ".planning/quick/261020-k4m-shelf-tags/261020-k4m-CONTEXT.md",
+                "url": "/quick/261020-k4m/context",
+                "warningTone": null,
+                "fileClass": "text",
+                "sizeBytes": 159
+              },
+              {
+                "key": ".planning/quick/261020-k4m-shelf-tags/261020-k4m-PLAN.md",
+                "label": "Plan",
+                "path": ".planning/quick/261020-k4m-shelf-tags/261020-k4m-PLAN.md",
+                "url": "/quick/261020-k4m",
+                "warningTone": null,
+                "fileClass": "text",
+                "sizeBytes": 362
+              },
+              {
+                "key": ".planning/quick/261020-k4m-shelf-tags/261020-k4m-SUMMARY.md",
+                "label": "Summary",
+                "path": ".planning/quick/261020-k4m-shelf-tags/261020-k4m-SUMMARY.md",
+                "url": "/quick/261020-k4m/summary",
+                "warningTone": null,
+                "fileClass": "text",
+                "sizeBytes": 163
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "quick:m~v1.0",
+        "current": false,
+        "version": "v1.0",
+        "name": "Kiln Basics",
+        "tasks": [
+          {
+            "key": ".planning/milestones/v1.0-quick/260310-a7c-fix-kiln-label",
+            "label": "Fix kiln label",
+            "dateBadge": "Mar 10",
+            "url": "/quick/260310-a7c",
+            "files": [
+              {
+                "key": ".planning/milestones/v1.0-quick/260310-a7c-fix-kiln-label/260310-a7c-PLAN.md",
+                "label": "260310 a7c plan",
+                "path": ".planning/milestones/v1.0-quick/260310-a7c-fix-kiln-label/260310-a7c-PLAN.md",
+                "url": "/quick/260310-a7c",
+                "warningTone": null,
+                "fileClass": "text",
+                "sizeBytes": 316
+              },
+              {
+                "key": ".planning/milestones/v1.0-quick/260310-a7c-fix-kiln-label/260310-a7c-SUMMARY.md",
+                "label": "260310 a7c summary",
+                "path": ".planning/milestones/v1.0-quick/260310-a7c-fix-kiln-label/260310-a7c-SUMMARY.md",
+                "url": "/quick/260310-a7c/summary",
+                "warningTone": null,
+                "fileClass": "text",
+                "sizeBytes": 149
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "defaultPlaceKey": "p~vv1.1~n~v01~vkiln-bookings"
+}
