@@ -1,8 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
 import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
+import { ScopedPlanningFilesystem } from '../../src/planning-fs/scoped-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import {
   buildDrawerViewModel,
@@ -18,6 +20,7 @@ import {
 } from '../../src/presentation/drawer-route.ts';
 import { buildPlanSummaryUrl, buildPlanUrl } from '../../src/presentation/routes.ts';
 import { toProjectPresentation, type ProjectPresentation } from '../../src/server/project-presentation.ts';
+import { CAPTURE_DIR, CAPTURES, flatDrawerOf } from '../helpers/drawer-capture.ts';
 import { loadShapesProject } from '../helpers/shapes-project.ts';
 
 const ROOT = '/project';
@@ -617,5 +620,103 @@ describe('buildDrawerViewModel — coverage', () => {
       ['v1.1', 13],
       ['v1.0', 5],
     ]);
+  });
+});
+
+// 11-32 (D-12; sketch 056 C): inside a workstream the drawer shows a Shared group above the workstream's own files,
+// split on each artifact's realPath; a flat project's model is exactly what it was.
+const BRINKWATER = fileURLToPath(new URL('../fixtures/brinkwater', import.meta.url)).replace(/[\\/]$/, '');
+
+async function scopedPresentation(name: string): Promise<ProjectPresentation> {
+  const fs = new ScopedPlanningFilesystem(new LocalFsPlanningFilesystem(BRINKWATER), name);
+  const snapshot = await new PlanningRepository(fs, BRINKWATER).load();
+  return toProjectPresentation(snapshot, 'brinkwater', undefined, (path) => fs.realPathOf(path));
+}
+
+async function scopedDrawer(name: string): Promise<DrawerViewModel> {
+  return buildDrawerViewModel(await scopedPresentation(name), name);
+}
+
+describe('buildDrawerViewModel inside a workstream scope', () => {
+  it('intake: Shared holds PROJECT.md, config.json, codebase/STACK.md and the todo at their project addresses', async () => {
+    const groups = (await scopedDrawer('intake')).scopeGroups;
+    expect(groups?.name).toBe('intake');
+    expect(groups?.shared.map((row) => row.label)).toEqual([
+      'PROJECT.md',
+      'config.json',
+      'codebase/STACK.md',
+      'todos/pending/2026-05-02-gauge-calibration.md',
+    ]);
+    expect(groups?.shared.map((row) => row.url)).toEqual([
+      '/project',
+      '/settings',
+      '/codebase/stack',
+      '/todos/pending/2026-05-02-gauge-calibration',
+    ]);
+    // A shared address never carries the scope.
+    for (const row of groups?.shared ?? []) expect(row.url).not.toContain('/workstreams/');
+  });
+
+  it("intake: the ws group holds ROADMAP.md, STATE.md, REQUIREMENTS.md and the phases at scoped addresses", async () => {
+    const groups = (await scopedDrawer('intake')).scopeGroups;
+    expect(groups?.own.map((row) => row.label)).toEqual([
+      'ROADMAP.md',
+      'STATE.md',
+      'REQUIREMENTS.md',
+      'phases/01-sensor-feed',
+      'phases/02-feed-alerts',
+    ]);
+    // Project-relative inside the scope: the web prefixes /workstreams/intake for these and not for Shared.
+    expect(groups?.own.slice(0, 3).map((row) => row.url)).toEqual(['/roadmap', '/state', '/requirements']);
+  });
+
+  it('ledger: its own config.json sits in the ws group, not Shared', async () => {
+    const groups = (await scopedDrawer('ledger')).scopeGroups;
+    expect(groups?.shared.map((row) => row.label)).toEqual([
+      'PROJECT.md',
+      'codebase/STACK.md',
+      'todos/pending/2026-05-02-gauge-calibration.md',
+    ]);
+    expect(groups?.own.map((row) => row.label)).toEqual([
+      'ROADMAP.md',
+      'STATE.md',
+      'REQUIREMENTS.md',
+      'phases/04-tide-tables',
+      'config.json',
+    ]);
+  });
+
+  it('leaves the archived workstream folders out of Shared: the index lists them', async () => {
+    for (const name of ['intake', 'ledger']) {
+      const labels = (await scopedDrawer(name)).scopeGroups?.shared.map((row) => row.label) ?? [];
+      expect(labels.some((label) => label.startsWith('milestones/'))).toBe(false);
+    }
+  });
+
+  it('a phase row opens the phase the drawer already lists', async () => {
+    const model = await scopedDrawer('intake');
+    const phaseUrls = new Set(model.current.phases.map((phase) => phase.url));
+    const phaseRows = model.scopeGroups?.own.filter((row) => row.label.startsWith('phases/')) ?? [];
+    expect(phaseRows).toHaveLength(2);
+    for (const row of phaseRows) expect(phaseUrls.has(row.url)).toBe(true);
+  });
+
+  it('reads the scope from the artifacts when the caller does not name it', async () => {
+    expect(buildDrawerViewModel(await scopedPresentation('intake')).scopeGroups?.name).toBe('intake');
+  });
+});
+
+describe('buildDrawerViewModel on a project without workstreams', () => {
+  for (const { name, root } of CAPTURES) {
+    it(`${name}: the model deep-equals the capture taken before the Shared and own groups existed`, async () => {
+      const captured: unknown = JSON.parse(readFileSync(`${CAPTURE_DIR}/drawer-${name}.json`, 'utf8'));
+      const model = await flatDrawerOf(root);
+      expect(JSON.parse(JSON.stringify(model))).toEqual(captured);
+      expect('scopeGroups' in model).toBe(false);
+    });
+  }
+
+  it('the root of a workstream project, read as the project itself, has no scope fields either', async () => {
+    expect('scopeGroups' in buildDrawerViewModel(await diskPresentation(BRINKWATER))).toBe(false);
   });
 });

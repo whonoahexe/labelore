@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
-import { Link, useProjectPathname, useProjectScope, useProjectSlug } from '../nav.tsx';
+import { Link, UnscopedLink, useProjectPathname, useProjectScope, useProjectSlug } from '../nav.tsx';
 import { apiFetch, projectUrl } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
 import type {
@@ -11,6 +11,7 @@ import type {
   DrawerPlanRow,
   DrawerQuickGroup,
   DrawerQuickPlace,
+  DrawerScopeGroups,
   DrawerViewModel,
 } from '../../presentation/drawer.ts';
 import {
@@ -61,15 +62,20 @@ export function FileRow({
   row,
   pathname,
   onNavigate,
+  unscoped = false,
 }: {
   row: DrawerFileRow;
   pathname: string;
   onNavigate: () => void;
+  /** A Shared row (11-32): it links to the project's own address, outside the open workstream, so no row of it is the
+   * page open inside the scope. */
+  unscoped?: boolean;
 }): React.JSX.Element {
-  const active = row.url === pathname;
+  const active = !unscoped && row.url === pathname;
   const badge = row.fileClass === 'text' ? null : fileBadgeOf(fileNameOf(row.path), row.fileClass, row.sizeBytes);
+  const RowLink = unscoped ? UnscopedLink : Link;
   return (
-    <Link
+    <RowLink
       to={row.url}
       className="places-file-row"
       data-active={active ? 'true' : undefined}
@@ -90,7 +96,37 @@ export function FileRow({
         </>
       ) : null}
       <WarningIndicator warningTone={row.warningTone} />
-    </Link>
+    </RowLink>
+  );
+}
+
+/** Inside a workstream (D-12): the files the scope shares with the project, above the workstream's own. The shared
+ * rows link to their project-level addresses, which do not change; the own rows link inside the scope. Names are
+ * React text only. */
+function ScopeGroupsList({
+  groups,
+  pathname,
+  onNavigate,
+}: {
+  groups: DrawerScopeGroups;
+  pathname: string;
+  onNavigate: () => void;
+}): React.JSX.Element {
+  return (
+    <>
+      <section className="places-group" data-scope="shared" aria-label="Shared · project">
+        <h2 className="places-group-label">Shared · project</h2>
+        {groups.shared.map((row) => (
+          <FileRow key={row.key} row={row} pathname={pathname} onNavigate={onNavigate} unscoped />
+        ))}
+      </section>
+      <section className="places-group" data-scope="own" aria-label={`ws: ${groups.name}`}>
+        <h2 className="places-group-label">ws: {groups.name}</h2>
+        {groups.own.map((row) => (
+          <FileRow key={row.key} row={row} pathname={pathname} onNavigate={onNavigate} />
+        ))}
+      </section>
+    </>
   );
 }
 
@@ -328,6 +364,9 @@ export function PlanningPlaces({
       ref={navRef}
     >
       <div className="places-list">
+        {data.scopeGroups ? (
+          <ScopeGroupsList groups={data.scopeGroups} pathname={pathname} onNavigate={onNavigate} />
+        ) : null}
         <section className="places-group">
           <h2 className="places-group-label">
             Current

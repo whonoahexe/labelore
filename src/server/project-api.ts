@@ -344,7 +344,7 @@ export function createProjectApi(
   api.get('/drawer', (c) => {
     const runtime = c.get('runtime');
     const activeDerived = runtime.derived;
-    return c.json(buildDrawerViewModel(activeDerived.presentation));
+    return c.json(buildDrawerViewModel(activeDerived.presentation, runtime.scope?.name));
   });
   api.get('/traceability', (c) => {
     const runtime = c.get('runtime');

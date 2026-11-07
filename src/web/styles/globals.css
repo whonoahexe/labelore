@@ -38391,4 +38391,192 @@ a.view-workstreams-file:hover {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+/* Phase 11 (11-32): the header scope chip, sketch 056 C's inside screen (D-11). A smaller second level beside the
+   project switcher, not a second project switcher: a mono Label-size button ruled with the foreground (neutral,
+   never accent) that opens a non-modal popover of the project's workstreams. Sizes are Label (--fs-2) and Body
+   (--fs-4); colour is tokens only, and the Active mark is plain foreground like the index's. */
+.scope-chip {
+  display: inline-flex;
+  flex: none;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1) var(--space-2-5);
+  border: 1px solid var(--foreground);
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  line-height: var(--lh-snug);
+  white-space: nowrap;
+  transition: background-color 150ms ease;
+}
+
+.scope-chip:hover,
+.scope-chip[aria-expanded='true'] {
+  background: var(--state-hover);
+}
+
+.scope-chip-key {
+  flex: none;
+  color: var(--muted-foreground);
+  font-weight: var(--fw-medium);
+}
+
+.scope-chip-name {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+
+.scope-chip > svg {
+  flex: none;
+  width: var(--space-3-5);
+  height: var(--space-3-5);
+  color: var(--muted-foreground);
+}
+
+.scope-chip-positioner {
+  z-index: 60;
+}
+
+.scope-chip-popup {
+  display: grid;
+  width: min(calc(var(--space-8) * 11), calc(100vw - var(--space-8)));
+  max-height: min(calc(var(--space-28) * 4), 70vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  background: var(--popover);
+  color: var(--foreground);
+  box-shadow: var(--shadow-popover);
+}
+
+.scope-chip-title {
+  margin: 0;
+  padding: var(--space-1-5) var(--space-2) var(--space-1);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.scope-chip-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A row is a real link: the status square, the name, the Active mark, then the status line under the name. */
+.scope-chip-row {
+  display: grid;
+  grid-template-columns: var(--space-2-5) minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-2);
+  align-items: center;
+  padding: var(--space-2);
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.scope-chip-row:hover {
+  background: var(--state-hover);
+}
+
+.scope-chip-row[aria-current='page'] {
+  background: var(--muted);
+}
+
+.scope-chip-row-name {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scope-chip-active {
+  display: inline-flex;
+  flex: none;
+  padding: 0 var(--space-1-5);
+  border: 1px solid var(--foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.scope-chip-sub {
+  grid-column: 2 / -1;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scope-chip-all {
+  margin-top: var(--space-1);
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--border-faint);
+}
+
+/* Phase 11 (11-32): inside a workstream the drawer's places list opens with two groups of file links, the files the
+   scope shares with the project and then the workstream's own (sketch 056 C). The shared group is set apart from the
+   workstream's by a dashed rule; the rows are the drawer's own file rows, in mono because they are file names. */
+.places-group[data-scope='shared'] {
+  padding-bottom: var(--space-3);
+  border-bottom: 1px dashed var(--border);
+}
+
+.places-group[data-scope] .places-label {
+  font-family: var(--font-mono);
+}
+
+/* Under the shell's 42rem breakpoint, and on a touch screen, the trigger and the rows are full 40px targets. */
+@media (max-width: 42rem), (pointer: coarse) {
+  .scope-chip {
+    min-height: var(--space-10);
+  }
+
+  .scope-chip-row {
+    min-height: var(--space-10);
+  }
+}
+
+/* There is no room for the project name and the chip side by side beside the controls on a narrow screen, and the
+   name is the one thing the narrow header must keep: the chip drops under the project switcher, a second level
+   under it. */
+@media (max-width: 42rem) {
+  .brand-lockup:has(.scope-chip) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    justify-items: start;
+    row-gap: var(--space-1-5);
+  }
+
+  .brand-lockup:has(.scope-chip) > .scope-chip {
+    grid-column: 2;
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scope-chip {
+    transition: none;
+  }
+}
 /* phase-11-workstreams:end */
