@@ -2,7 +2,7 @@
 sketch: 060
 name: forensics-page
 question: "How does a forensics report lead with its root-cause hypothesis and recommended actions, then show the anomalies by confidence and what the artifact grid found, as a picture?"
-winner: null
+winner: B
 tags: [forensics, report, phase-11]
 ---
 
@@ -101,3 +101,19 @@ meter on every anomaly, and the artifact grid as one meter a phase.
 - The hypothesis is not linked to any anomaly: the file gives no such link, so no variant draws one.
 - Fonts used: `--fs-display-3` (the h1), `--fs-7` (headings and the hypothesis sentence), `--fs-4` (body and meta),
   `--fs-2` (labels, chips, mono ids and the grid cells). Four sizes.
+
+## Winner
+**B: Evidence rail**, chosen by the user: "060 B". No synthesis.
+
+Build B as drawn in its tab (marked "★ Selected"):
+- **The picture:** the left column reads in document order: the hypothesis (a heavy left rule), the numbered actions,
+  then anomaly cards whose rule weight repeats the confidence (heavy, medium, dashed). The sticky right rail leads with
+  the artifact grid as a heat map (artifacts down, phases across, a square and the note or "Absent" in each cell, a
+  phase legend under it), then the git span as a small axis (first day, last commit, Generated) over the Git Activity
+  and Planning State lists.
+- **Order:** the grid comes last in the document and stacks last on a phone; only on a wide screen does it sit beside
+  the hypothesis.
+- **No anomalies:** one quiet dashed note, "No anomalies were detected."
+- **Sketch-only state carried to 11-24 / 11-25:** a confidence word outside HIGH, MEDIUM and LOW (`odd`, "Uncertain")
+  exists in the sketch only. The build tests cover it with a planted test copy of the report, not by changing a fixture
+  that would shift pinned counts.

@@ -2,7 +2,7 @@
 sketch: 059
 name: report-page
 question: "How does a report page put a session's headline numbers, outcomes and open blockers first, and can the milestone summary share that frame, as a picture?"
-winner: null
+winner: A
 tags: [report, session-report, milestone-summary, phase-11]
 ---
 
@@ -108,3 +108,20 @@ phase lanes (one row per phase) with the reading band below.
   beyond the count and the one the progress sentence names.
 - Fonts used: `--fs-display-3` (the h1), `--fs-7` (headings and the numerals), `--fs-4` (body and meta), `--fs-2`
   (labels, chips, mono ids). Four sizes.
+
+## Winner
+**A: Time ruler**, chosen by the user: "059 A". No synthesis.
+
+Build A as drawn in its tab (marked "★ Selected"):
+- **The picture:** three Heading numerals (Duration, Commits, Plans, shown as written), then a ruler. For a session
+  report the ruler is a 24 hour axis with a bar from the first to the last commit (the Duration stamps); "Single
+  session" is a dashed empty axis carrying that phrase. Under it a phase strip, one cell per phase of the milestone,
+  done cells tinted, touched cells ringed, the progress sentence beneath.
+- **Below the ruler:** two columns, Key outcomes against Phases touched and Decisions; then Blockers and open items over
+  the Files Changed and Estimated Resource Usage folds.
+- **Milestone summary: one frame.** The ruler becomes a calendar (start to end, a numbered mark where each phase was
+  delivered) and the numerals the five Stats; Phases delivered and Requirements coverage in two columns below. The user
+  picked A without asking for two frames, so both report kinds share this frame.
+- **Sketch-only state carried to 11-24 / 11-25:** the milestone summary with one requirement not covered (`gap`, MOVE-05)
+  exists in the sketch only, not in the Lendshed fixtures. The build tests cover it with a planted test copy of the
+  milestone summary, not by changing a fixture that would shift pinned counts.
