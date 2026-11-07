@@ -11,6 +11,7 @@ import type { ProjectPresentation } from '../../src/server/project-presentation.
 import { createApp } from '../../src/server/index.ts';
 import { ProjectRegistry, createSnapshotSource } from '../../src/server/project-registry.ts';
 import { createRegistryApp } from '../../src/server/registry-api.ts';
+import type { WorkstreamInventory } from '../../src/server/workstreams.ts';
 import { FX_ROOT } from '../helpers/fixture-project.ts';
 import { guardedRequest, testPolicy } from '../helpers/guarded-request.ts';
 import { SHAPES_ROOT } from '../helpers/shapes-project.ts';
@@ -147,6 +148,22 @@ describe('the workstream scope mount (11-29)', () => {
         // A flat project has no workstream to scope into.
         expect((await get(app, `/api/projects/${slug}/ws/intake/presentation`)).status).toBe(404);
       }
+    } finally {
+      registry.dispose();
+    }
+  });
+
+  it('answers the inventory at /workstreams: workstreams mode for Brinkwater, flat for Shapes and inside a scope', async () => {
+    const { registry, app } = await registryApp([BRINKWATER, SHAPES]);
+    try {
+      const inventory = (await get(app, '/api/projects/brinkwater/workstreams')).body as WorkstreamInventory;
+      expect(inventory.mode).toBe('workstreams');
+      expect(inventory.entries.map((entry) => entry.name)).toEqual(['intake', 'ledger', 'notices']);
+      expect(inventory.active).toEqual({ name: 'intake', state: 'present' });
+      const flat = (await get(app, '/api/projects/shapes/workstreams')).body as WorkstreamInventory;
+      expect(flat).toEqual({ mode: 'flat', entries: [], active: { name: null, state: 'absent' }, completed: [], midMigration: null });
+      const inside = (await get(app, '/api/projects/brinkwater/ws/intake/workstreams')).body as WorkstreamInventory;
+      expect(inside.mode).toBe('flat');
     } finally {
       registry.dispose();
     }
