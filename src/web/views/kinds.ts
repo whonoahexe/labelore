@@ -96,9 +96,11 @@ export function viewKindOf(kind: string): string {
 }
 
 /** The D-09 reserved view-local class-prefix namespace: every registered kind plus the literal
- * `unrecognized` fallback used by VIEW-06's unmanifested/unknown-shape marker. Consumed by the
+ * `unrecognized` fallback used by VIEW-06's unmanifested/unknown-shape marker, and `workstreams` (Phase 11, 11-31):
+ * the workstream index is a project-level page, not an artifact view, so it has no registry kind but keeps the
+ * same private-chrome namespace. Consumed by the
  * (future) CSS vocabulary-allowlist test (UI-05/D-08). */
-export const VIEW_LOCAL_PREFIXES = [...VIEW_KINDS, 'unrecognized'] as const;
+export const VIEW_LOCAL_PREFIXES = [...VIEW_KINDS, 'unrecognized', 'workstreams'] as const;
 
 /** `discussion-log` -> `Discussion log`; the literal `unknown` wire value (a filename that
  * matched no GSD naming grammar at all) humanizes to `Unrecognized` per UI-SPEC § New Component

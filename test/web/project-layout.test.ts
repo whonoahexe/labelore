@@ -14,7 +14,9 @@ import type { ProjectListResponse } from '../../src/presentation/project-list.ts
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { ProjectRegistry } from '../../src/server/project-registry.ts';
 import { createRegistryApp } from '../../src/server/registry-api.ts';
-import { fetchPresentation, fetchProjects, openProject } from '../../src/web/api.ts';
+import { fileURLToPath } from 'node:url';
+import { flatInventory } from '../../src/server/workstreams.ts';
+import { fetchPresentation, fetchProjects, fetchWorkstreams, openProject } from '../../src/web/api.ts';
 import { projectLayoutOutcome } from '../../src/web/project-path.ts';
 import type { QueryStatusName } from '../../src/web/project-path.ts';
 import { projectKey, projectsKey } from '../../src/web/query-keys.ts';
@@ -41,11 +43,14 @@ afterEach(() => {
   while (restores.length > 0) restores.pop()?.();
 });
 
-async function installApp(): Promise<void> {
+const BRINKWATER_ROOT = fileURLToPath(new URL('../fixtures/brinkwater', import.meta.url)).replace(/[\\/]$/, '');
+
+async function installApp(options: { brinkwater?: boolean } = {}): Promise<void> {
   // The registry's default settings store is the in-memory one, so the real settings file is untouched.
   const registry = new ProjectRegistry();
   await registry.register(FX_ROOT);
   await registry.register(SHAPES_ROOT);
+  if (options.brinkwater) await registry.register(BRINKWATER_ROOT);
   restores.push(installRegistryFetch(createRegistryApp(registry, { policy: testPolicy() }), TEST_PORT));
 }
 
@@ -93,6 +98,8 @@ describe('opening a project from its URL', () => {
     const client = newClient();
     client.setQueryData(projectsKey, list);
     client.setQueryData(projectKey('shapes', null, 'presentation'), await fetchPresentation('shapes'));
+    // The project's own first screen also waits for its workstream inventory (11-31); a flat project's is empty.
+    client.setQueryData(projectKey('shapes', null, 'workstreams'), flatInventory());
 
     const markup = renderAt('/shapes', client);
 
@@ -115,6 +122,8 @@ async function seeded(options: { openSlugs: string[]; list?: ProjectListResponse
   for (const slug of options.openSlugs) {
     payloads[slug] = await fetchPresentation(slug);
     client.setQueryData(projectKey(slug, null, 'presentation'), payloads[slug]);
+    // The first screen of every project waits for its inventory too (11-31), read from the same registry app.
+    client.setQueryData(projectKey(slug, null, 'workstreams'), await fetchWorkstreams(slug));
   }
   return { client, list, payloads };
 }
@@ -246,6 +255,162 @@ describe('switching never shows the previous project (PLAT-08)', () => {
   });
 });
 
+describe('the workstream first screen (11-31, D-10; RESEARCH Pitfall 10)', () => {
+  // Every routed page is lazy: a first static render starts the chunk, the second finds it loaded and draws the page.
+  async function renderIndexAt(path: string, client: QueryClient): Promise<string> {
+    renderAt(path, client);
+    await import('../../src/web/pages/workstream-index-page.tsx');
+    await new Promise((done) => setTimeout(done, 0));
+    return renderAt(path, client);
+  }
+
+  it('opens a workstream project on its workstream index at / and at /workstreams', async () => {
+    await installApp({ brinkwater: true });
+    const { client } = await seeded({ openSlugs: ['brinkwater'] });
+    for (const address of ['/brinkwater', '/brinkwater/', '/brinkwater/workstreams', '/brinkwater/workstreams/']) {
+      const markup = await renderIndexAt(address, client);
+      expect(markup, address).toContain('view-workstreams-page');
+      expect(markup, address).toContain('Project · workstream mode');
+      expect(markup, address).toContain('Shared by every workstream · .planning/');
+      for (const name of ['intake', 'ledger', 'notices']) expect(markup, `${address} ${name}`).toContain(`href="/brinkwater/workstreams/${name}/"`);
+      expect(markup, address).not.toContain('Opening');
+    }
+  });
+
+  it('shows the workstream count beside the switcher and no Roadmap or Traceability tab on the index', async () => {
+    await installApp({ brinkwater: true });
+    const { client } = await seeded({ openSlugs: ['brinkwater'] });
+    const markup = await renderIndexAt('/brinkwater', client);
+    expect(markup).toContain('3 workstreams');
+    expect(markup).toContain('href="/brinkwater"');
+    expect(markup).not.toContain('href="/brinkwater/roadmap"');
+    expect(markup).not.toContain('href="/brinkwater/traceability"');
+  });
+
+  it('shows the opening body, never a flat dashboard, until the inventory has loaded', async () => {
+    await installApp({ brinkwater: true });
+    const list = await fetchProjects();
+    const client = newClient();
+    client.setQueryData(projectsKey, list);
+    client.setQueryData(projectKey('brinkwater', null, 'presentation'), await fetchPresentation('brinkwater'));
+    const markup = renderAt('/brinkwater', client);
+    expect(markup).toContain('Opening Brinkwater…');
+    expect(markup).toContain('aria-busy="true"');
+    expect(markup).not.toContain('view-workstreams-page');
+    expect(markup).not.toContain('dashboard-page');
+  });
+
+  it('keeps a flat project exactly as it was: its dashboard, its tabs and its URLs', async () => {
+    await installApp({ brinkwater: true });
+    const { client } = await seeded({ openSlugs: ['shapes', 'lendshed'] });
+    for (const slug of ['shapes', 'lendshed']) {
+      const markup = await renderIndexAt(`/${slug}`, client);
+      expect(markup, slug).not.toContain('view-workstreams-page');
+      expect(markup, slug).not.toContain('workstream mode');
+      expect(markup, slug).toContain(`href="/${slug}/roadmap"`);
+      expect(markup, slug).toContain(`href="/${slug}/traceability"`);
+      expect(markup, slug).not.toContain('Opening');
+    }
+  });
+
+  it('keeps a flat project with archived workstream folders flat: the dashboard, no index', async () => {
+    await installApp({ brinkwater: true });
+    const { client } = await seeded({ openSlugs: ['shapes'] });
+    client.setQueryData(projectKey('shapes', null, 'workstreams'), {
+      ...flatInventory(),
+      completed: [{ name: 'old', folder: 'milestones/ws-old-2026-01-01/', phasesArchived: 2 }],
+    });
+    const markup = await renderIndexAt('/shapes', client);
+    expect(markup).not.toContain('view-workstreams-page');
+    expect(markup).toContain('href="/shapes/roadmap"');
+  });
+
+  it('shows every tab inside a workstream and no index there', async () => {
+    await installApp({ brinkwater: true });
+    const { client } = await seeded({ openSlugs: ['brinkwater'] });
+    client.setQueryData(projectKey('brinkwater', 'intake', 'presentation'), await fetchPresentation('brinkwater', 'intake'));
+    const markup = await renderIndexAt('/brinkwater/workstreams/intake/', client);
+    expect(markup).not.toContain('view-workstreams-page');
+    expect(markup).toContain('href="/brinkwater/workstreams/intake"');
+    expect(markup).toContain('href="/brinkwater/workstreams/intake/roadmap"');
+    expect(markup).toContain('href="/brinkwater/workstreams/intake/traceability"');
+  });
+});
+
+describe('the workstream index view contract (11-31, sketch 056 C)', () => {
+  const read = (path: string): string => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
+  const page = read('src/web/pages/workstream-index-page.tsx');
+  const css = read('src/web/styles/globals.css');
+  const start = '/* phase-11-workstreams:start */';
+  const end = '/* phase-11-workstreams:end */';
+  const block = css.slice(css.indexOf(start), css.indexOf(end) + end.length);
+  const rules = (source: string): { selector: string; body: string }[] =>
+    [...source.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}@]+)\{([^{}]*)\}/g)].map((match) => ({
+      selector: match[1].replace(/\s+/g, ' ').trim(),
+      body: match[2],
+    }));
+
+  it('puts every rule in one contiguous block, once', () => {
+    expect(css.split(start)).toHaveLength(2);
+    expect(css.split(end)).toHaveLength(2);
+    expect(css.indexOf(start)).toBeLessThan(css.indexOf(end));
+    expect(css.slice(css.indexOf(end) + end.length)).not.toContain('.view-workstreams-');
+    expect(css.slice(0, css.indexOf(start))).not.toContain('.view-workstreams-');
+  });
+
+  it('draws names, statuses and phase names as React text: no raw-HTML prop anywhere on the page', () => {
+    expect(page).not.toMatch(/dangerouslySetInnerHTML|innerHTML|insertAdjacentHTML/);
+  });
+
+  it('uses only documented tones and never destructive or warning', () => {
+    const tones = [...page.matchAll(/data-tone=(?:"([a-z-]+)"|\{([^}]*)\})/g)];
+    expect(tones.length).toBeGreaterThan(0);
+    // A literal tone is a documented one; the one computed tone is the model's, typed 'complete' | 'in-flight' | 'quiet'.
+    for (const tone of tones) expect(['complete', 'quiet', 'in-flight', 'missing', 'active', 'status.tone']).toContain(tone[1] ?? tone[2]);
+    expect(page).not.toMatch(/destructive|warning/);
+    expect(block).not.toMatch(/--destructive|--warning|\[data-tone='(destructive|warning)'\]/);
+  });
+
+  it('keeps the accent off the Active mark and the active branch: --primary is the done arc of a ring and nothing else', () => {
+    const accented = rules(block).filter((rule) => rule.body.includes('--primary'));
+    expect(accented.map((rule) => rule.selector)).toEqual(['.view-workstreams-ring-done']);
+    for (const rule of rules(block)) {
+      if (/active/.test(rule.selector)) expect(rule.body, rule.selector).not.toMatch(/--primary|--in-flight|--missing/);
+    }
+    const active = rules(block).find((rule) => rule.selector === ".view-workstreams-branch[data-active='true']");
+    expect(active?.body).toContain('2px solid var(--foreground)');
+  });
+
+  it('sets text in the four sizes plus the approved fifth, the head lead at --fs-fluid-1 (X6)', () => {
+    const sizes = new Set([...block.matchAll(/font-size:\s*([^;]+);/g)].map((match) => match[1].trim()));
+    for (const size of sizes) {
+      expect(['var(--fs-display-3)', 'var(--fs-fluid-1)', 'var(--fs-7)', 'var(--fs-4)', 'var(--fs-2)', 'inherit']).toContain(size);
+    }
+    const lead = rules(block).find((rule) => rule.selector === '.view-workstreams-lead');
+    expect(lead?.body).toContain('font-size: var(--fs-fluid-1);');
+    expect(block).not.toMatch(/--fw-bold/);
+  });
+
+  it('draws the plans with the shared status-meter and the ring as one labelled image', () => {
+    expect(page).toContain("import { StatusMeter } from '../components/status-meter.tsx';");
+    expect(page).toContain('<StatusMeter');
+    expect(page).toContain('role="img" aria-label={ring.label}');
+    expect(page).toContain('aria-hidden="true" focusable="false"');
+    expect(page).not.toMatch(/record-disagreement|RecordDisagreement/);
+  });
+
+  it('turns the tree into an indented list under 52rem and lets branches wrap', () => {
+    expect(block).toContain('@media (max-width: 52rem)');
+    expect(block).toContain('grid-template-columns: repeat(var(--view-workstreams-cols), minmax(0, 1fr));');
+    expect(page).toContain('const MAX_COLUMNS = 4;');
+  });
+
+  it('gives a branch name one link and no nested interactive element in a branch heading', () => {
+    expect(page).toMatch(/<h3 className="view-workstreams-name"[^>]*>\s*\{branch\.url === null \? <span>\{branch\.name\}<\/span> : <Link to=\{branch\.url\}>\{branch\.name\}<\/Link>\}\s*<\/h3>/);
+    expect(page).not.toMatch(/<button/);
+  });
+});
+
 describe('the screens that stand in for a project', () => {
   it('shows a quiet "Loading projects…" with role status while the list loads', () => {
     const markup = renderToStaticMarkup(
@@ -309,7 +474,16 @@ describe('the layout source', () => {
   it('keeps no previous data across a switch and builds its presentation key through the factory', () => {
     expect(code).not.toMatch(/placeholderData|keepPreviousData/);
     expect(code).toContain("projectKey(slug, scope, 'presentation')");
+    expect(code).toContain("projectKey(slug, scope, 'workstreams')");
     expect(code).toContain('queryKey: projectsKey');
+  });
+
+  it('holds the opening body only while the inventory is pending, asks for it only on the first screen, and lets a failed one fall through', () => {
+    expect(code).toContain('const firstScreen = workstreamIndex !== undefined && scope === null && isWorkstreamIndexAddress(pathname);');
+    expect(code).toContain('enabled: listed && firstScreen,');
+    expect(code).toContain("const inventoryPending = firstScreen && inventory.status === 'pending';");
+    expect(code).toContain("outcome === 'open' && inventoryPending");
+    expect(code).toContain("workstreams.mode === 'workstreams'");
   });
 
   it('posts the open once per mounted slug, only for a listed one', () => {

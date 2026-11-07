@@ -60,6 +60,13 @@ export function splitScope(rest: string): { scope: string | null; rest: string }
   return { scope, rest: cut < 0 ? '/' : after.slice(cut) };
 }
 
+/** True for the project-relative addresses that are a workstream project's first screen: '/' and '/workstreams'
+ * (one trailing slash allowed). Inside a workstream scope the address never is one. Whether the project is in
+ * workstream mode is the inventory's call, not the address's. */
+export function isWorkstreamIndexAddress(pathname: string): boolean {
+  return pathname === '/' || pathname === '/workstreams' || pathname === '/workstreams/';
+}
+
 /** The address of a project by slug alone: '/' plus the slug when it is a valid slug, else '/'.
  * Built for links that name another project (or none) and so are never prefixed with the current
  * slug; a crafted value ('API', '//evil', an empty string) can never leave the app (T-08-21). */

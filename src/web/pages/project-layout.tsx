@@ -9,13 +9,22 @@ import { useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader } from 'lucide-react';
 import { useParams } from 'react-router';
+import { workstreamCountText } from '../../presentation/workstream-index.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
-import { ApiError, UNREACHABLE_COPY, fetchPresentation, fetchProjects, openProject } from '../api.ts';
+import type { WorkstreamInventory } from '../../server/workstreams.ts';
+import {
+  ApiError,
+  UNREACHABLE_COPY,
+  fetchPresentation,
+  fetchProjects,
+  fetchWorkstreams,
+  openProject,
+} from '../api.ts';
 import { AppShell } from '../components/app-shell.tsx';
 import { PlainPage } from '../components/plain-header.tsx';
 import { Button } from '../components/ui/button.tsx';
 import { useProjectPathname, useProjectScope } from '../nav.tsx';
-import { decodeAddress, projectLayoutOutcome, withProjectScope } from '../project-path.ts';
+import { decodeAddress, isWorkstreamIndexAddress, projectLayoutOutcome, withProjectScope } from '../project-path.ts';
 import { projectKey, projectsKey } from '../query-keys.ts';
 import { InvalidProjectScreen } from './invalid-project-screen.tsx';
 import { NotFoundPage } from './not-found-page.tsx';
@@ -55,9 +64,13 @@ export function ProjectLayoutNotice({
 
 export function ProjectLayout({
   children,
+  workstreamIndex,
 }: {
   /** The page for an open project; called only once that project's own presentation has arrived. */
   children: (presentation: ProjectPresentation) => React.ReactNode;
+  /** The first screen of a project in workstream mode (11-31): drawn at `/` and `/workstreams` instead of
+   * `children`, once the project's inventory has arrived and says the project holds workstreams. */
+  workstreamIndex?: (presentation: ProjectPresentation, inventory: WorkstreamInventory) => React.ReactNode;
 }): React.JSX.Element {
   // The router has already decoded the segment; it is compared with the listed slugs exactly.
   const { project: slug = '' } = useParams();
@@ -75,6 +88,16 @@ export function ProjectLayout({
     queryKey: projectKey(slug, scope, 'presentation'),
     queryFn: () => fetchPresentation(slug, scope),
     enabled: listed,
+  });
+
+  // The first screen is chosen from the loaded project (D-10): only at the project's own `/` or `/workstreams`, never
+  // inside a workstream, and only once the inventory is in, so a workstream project never flashes a flat dashboard
+  // (RESEARCH Pitfall 10). Every other address asks for nothing extra.
+  const firstScreen = workstreamIndex !== undefined && scope === null && isWorkstreamIndexAddress(pathname);
+  const inventory = useQuery({
+    queryKey: projectKey(slug, scope, 'workstreams'),
+    queryFn: () => fetchWorkstreams(slug),
+    enabled: listed && firstScreen,
   });
 
   // D-08: opening stamps lastOpened, once per mounted slug. The server keeps no active project; each
@@ -96,6 +119,8 @@ export function ProjectLayout({
     presentationStatus: presentation.data ? 'success' : presentation.status,
     presentation: presentation.data,
   });
+  // An inventory that failed to load leaves the ordinary first screen; only a pending one holds the opening body.
+  const inventoryPending = firstScreen && inventory.status === 'pending';
 
   switch (outcome) {
     case 'loading-list':
@@ -117,7 +142,7 @@ export function ProjectLayout({
   // The remaining outcomes all have a listed entry; the narrowing below keeps the types honest.
   if (entry === undefined) return <UnknownProjectPage slug={slug} projects={projects ?? []} />;
 
-  if (outcome === 'opening') {
+  if (outcome === 'opening' || (outcome === 'open' && inventoryPending)) {
     return (
       <AppShell key={slug} project={entry} busy>
         <main className="page-stack">
@@ -135,6 +160,14 @@ export function ProjectLayout({
     return <InvalidProjectScreen loadStatus={loaded.loadStatus} />;
   }
   if (outcome === 'open' && loaded) {
+    const workstreams = firstScreen ? inventory.data : undefined;
+    if (workstreamIndex !== undefined && workstreams !== undefined && workstreams.mode === 'workstreams') {
+      return (
+        <AppShell key={slug} project={entry} workstreamIndex={{ countText: workstreamCountText(workstreams) }}>
+          {workstreamIndex(loaded, workstreams)}
+        </AppShell>
+      );
+    }
     return (
       <AppShell key={slug} project={entry}>
         {children(loaded)}
