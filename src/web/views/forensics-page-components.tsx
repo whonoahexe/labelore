@@ -227,6 +227,14 @@ const CELL_TONE: Record<ForensicsCellState, 'complete' | 'missing' | 'quiet'> = 
   unstated: 'quiet',
 };
 
+function CellNote({ note }: { note: string }): React.JSX.Element {
+  return (
+    <span className="view-forensics-nt">
+      <ResearchInline text={note} />
+    </span>
+  );
+}
+
 function Heat({ grid }: { grid: ComposedForensicsGrid }): React.JSX.Element {
   return (
     <>
@@ -253,10 +261,10 @@ function Heat({ grid }: { grid: ComposedForensicsGrid }): React.JSX.Element {
                   {cell.state === 'absent' ? (
                     <>
                       <span>{ABSENT_WORD}</span>
-                      {cell.note === '' ? null : <span className="view-forensics-nt">{cell.note}</span>}
+                      {cell.note === '' ? null : <CellNote note={cell.note} />}
                     </>
                   ) : cell.note !== '' ? (
-                    <span className="view-forensics-nt">{cell.note}</span>
+                    <CellNote note={cell.note} />
                   ) : cell.state === 'present' ? (
                     <span className="view-forensics-sr">{PRESENT_WORD}</span>
                   ) : (
