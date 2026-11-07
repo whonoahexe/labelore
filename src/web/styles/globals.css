@@ -35756,3 +35756,335 @@ a.view-seed-path:hover {
   }
 }
 /* phase-11-seed:end */
+
+/* phase-11-thread:start */
+/* Phase 11 (11-23): the thread page, sketch 058 winner A (Status dial). The page renders four font sizes: the h1 as
+   ArtifactHeader draws it (--fs-display-3), the section headings, the boxed first step and the status chip (--fs-7), Body
+   (--fs-4) and Label (--fs-2). Where a shared class sets a size outside that set, the page takes it inside with a
+   page-scoped rule below, so no shared class is edited. Every colour is a theme token: open and in progress are the
+   `in-flight` tone, resolved the `complete` tone, any other status word `quiet`; a reference that resolves is a `complete`
+   square. Nothing is `missing` or destructive (a path that moved is a fact, not a failure). The status is marked by position
+   on the dial and by the word as well as by colour, so tone is never the only signal. */
+.view-thread-root {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.view-thread-root > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-thread-root) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.view-thread-root code {
+  padding: 0 var(--space-0-5);
+  background: var(--code-veil);
+  font-family: var(--font-mono);
+  font-size: inherit;
+  overflow-wrap: anywhere;
+}
+
+.view-thread-meta {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  overflow-wrap: anywhere;
+}
+
+.view-thread-heading {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+.view-thread-section {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+}
+
+/* The band: the dial card beside the steps and the goal (one column under 52rem, the dial first). */
+.view-thread-band {
+  display: grid;
+  grid-template-columns: calc(var(--space-8) * 11) minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.view-thread-band[data-card='false'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.view-thread-side {
+  display: grid;
+  gap: var(--space-6);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-thread-dial-card {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  background: var(--card);
+  min-width: 0;
+}
+
+.view-thread-dial svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.view-thread-arc {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 18;
+}
+
+.view-thread-arc[data-tone='in-flight'] {
+  stroke: var(--in-flight-fill);
+}
+
+.view-thread-arc[data-tone='complete'] {
+  stroke: var(--primary);
+}
+
+.view-thread-needle {
+  stroke: var(--foreground);
+  stroke-width: 3;
+}
+
+.view-thread-hub {
+  fill: var(--foreground);
+}
+
+.view-thread-dial-words {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-1);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.view-thread-dial-words [data-on='true'] {
+  color: var(--foreground);
+  font-weight: var(--fw-semibold);
+  text-decoration: underline;
+  text-underline-offset: var(--space-1);
+}
+
+.view-thread-center {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  text-align: center;
+  min-width: 0;
+}
+
+/* The status chip is the heading size here, as the sketch draws it. */
+.view-thread-center .status-chip {
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--fs-7);
+  letter-spacing: var(--ls-tight);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.view-thread-facts {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* The numbered next steps: the author's order and words; the first one boxed. */
+.view-thread-steps {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-thread-step {
+  display: grid;
+  grid-template-columns: var(--space-6) minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-thread-no {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-thread-tx {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-thread-step[data-first='true'] {
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-3);
+  border: 2px solid var(--foreground);
+  background: var(--card);
+}
+
+.view-thread-step[data-first='true'] .view-thread-no {
+  color: var(--foreground);
+}
+
+.view-thread-step[data-first='true'] .view-thread-tx {
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+.view-thread-prose {
+  max-width: 62ch;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-thread-withheld {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1-5);
+}
+
+/* Context and References: two columns under the band (one column under 52rem). */
+.view-thread-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.view-thread-col {
+  display: grid;
+  gap: var(--space-6);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-thread-dots {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-thread-dots li {
+  display: grid;
+  grid-template-columns: var(--space-2-5) minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-thread-dots li::before {
+  content: '';
+  grid-column: 1;
+  width: var(--space-1-5);
+  height: var(--space-1-5);
+  margin: var(--space-1-5) var(--space-1);
+  background: var(--muted-foreground);
+}
+
+.view-thread-dots li > span {
+  grid-column: 2;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-thread-refs {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-thread-ref {
+  display: grid;
+  grid-template-columns: var(--space-2-5) minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-thread-sq {
+  --status-square-size: var(--space-2-5);
+
+  transform: translateY(var(--space-0-5));
+}
+
+/* Free text is a plain filled square: it names no path, so it is neither found nor missing. */
+.view-thread-ref[data-state='text'] .view-thread-sq {
+  border-color: var(--muted-foreground);
+  background: var(--muted-foreground);
+}
+
+.view-thread-ref .status-chip[data-tone='quiet'] {
+  margin-left: var(--space-2);
+  border-style: dashed;
+  background: transparent;
+}
+
+.view-thread-path {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+a.view-thread-path {
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: var(--space-0-5);
+}
+
+a.view-thread-path:hover {
+  text-decoration-color: var(--foreground);
+}
+
+.view-thread-why {
+  display: block;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 52rem) {
+  .view-thread-band {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .view-thread-cols {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+}
+/* phase-11-thread:end */
