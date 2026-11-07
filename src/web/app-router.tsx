@@ -13,6 +13,7 @@ import { LEGACY_FIRST_SEGMENTS, PROJECT_PAGES } from '../presentation/reserved.t
 import { presentationRoutePatterns } from '../presentation/routes.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
 import { fetchPresentation, fetchProjects } from './api.ts';
+import { RealPathProvider } from './components/copy-path-button.tsx';
 import { PlainPage } from './components/plain-header.tsx';
 import { RouteFallback, RouteProgress } from './components/route-progress.tsx';
 import { trackRouteChunk } from './components/route-chunk-store.ts';
@@ -208,7 +209,7 @@ function LegacyRoute(): React.JSX.Element {
   const first = list.data?.projects[0];
   const presentation = useQuery({
     queryKey: projectKey(first?.slug ?? '', null, 'presentation'),
-    queryFn: () => fetchPresentation(first?.slug ?? ''),
+    queryFn: () => fetchPresentation(first?.slug ?? '', null),
     enabled: first !== undefined,
   });
   if (list.isError || (list.data && first === undefined)) return <Navigate replace to="/" />;
@@ -237,7 +238,13 @@ function ProjectRoute(): React.JSX.Element {
   const { scope } = splitScope(splitProjectPath(pathname).rest);
   return (
     <ProjectScopeProvider value={scope}>
-      <ProjectLayout>{(presentation) => <ProjectRouteSwitch presentation={presentation} />}</ProjectLayout>
+      <ProjectLayout>
+        {(presentation) => (
+          <RealPathProvider artifacts={presentation.artifacts}>
+            <ProjectRouteSwitch presentation={presentation} />
+          </RealPathProvider>
+        )}
+      </ProjectLayout>
     </ProjectScopeProvider>
   );
 }

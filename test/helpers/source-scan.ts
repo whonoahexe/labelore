@@ -83,3 +83,64 @@ export function walkSource(
   }
   return [...new Set(results)].sort();
 }
+
+/** The top-level arguments of every call to `name(...)` in `source` (comments are blanked first), each as
+ * trimmed source text. A definition (`function name(`), a method (`x.name(`) and a longer identifier are not
+ * calls. Strings, template literals and nested brackets are skipped over, so a comma inside them never splits
+ * an argument. Used by the scope scans: a page must pass the workstream scope to projectUrl and projectKey. */
+export function callArguments(source: string, name: string): string[][] {
+  const code = blankComments(source);
+  const calls: string[][] = [];
+  const pattern = new RegExp(`(?<![.\\w$])${name}\\(`, 'g');
+  for (const match of code.matchAll(pattern)) {
+    const at = match.index ?? 0;
+    if (/\bfunction\s+$/.test(code.slice(Math.max(0, at - 20), at))) continue;
+    const args: string[] = [];
+    let current = '';
+    let depth = 0;
+    let i = at + match[0].length;
+    scan: while (i < code.length) {
+      const c = code[i];
+      if (c === "'" || c === '"') {
+        let j = i + 1;
+        while (j < code.length && code[j] !== c) j += code[j] === '\\' ? 2 : 1;
+        current += code.slice(i, j + 1);
+        i = j + 1;
+        continue;
+      }
+      if (c === '`') {
+        let j = i + 1;
+        let inner = 0;
+        while (j < code.length) {
+          if (code[j] === '\\') j += 2;
+          else if (code[j] === '$' && code[j + 1] === '{') {
+            inner++;
+            j += 2;
+          } else if (inner > 0 && code[j] === '}') {
+            inner--;
+            j++;
+          } else if (inner === 0 && code[j] === '`') break;
+          else j++;
+        }
+        current += code.slice(i, j + 1);
+        i = j + 1;
+        continue;
+      }
+      if (c === '(' || c === '[' || c === '{') depth++;
+      else if (c === ')' || c === ']' || c === '}') {
+        if (depth === 0) break scan;
+        depth--;
+      } else if (c === ',' && depth === 0) {
+        args.push(current.trim());
+        current = '';
+        i++;
+        continue;
+      }
+      current += c;
+      i++;
+    }
+    if (current.trim() !== '') args.push(current.trim());
+    calls.push(args);
+  }
+  return calls;
+}

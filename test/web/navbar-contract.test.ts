@@ -306,7 +306,7 @@ describe('Strata mark, brand lockup and tabs (D-01, D-02, NAV-01..03)', () => {
 
   it('takes NavLink from nav.tsx, so every tab and the brand carry the project slug (NAV-09)', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
-    expect(shell).toContain("import { NavLink } from '../nav.tsx';");
+    expect(shell).toContain("import { NavLink, useProjectScope } from '../nav.tsx';");
     expect(shell).not.toMatch(/\bNavLink\b[^;]*from 'react-router'/);
   });
 
