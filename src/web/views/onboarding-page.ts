@@ -184,14 +184,22 @@ function readinessOf(word: string | null): { chip: ComposedReadiness | null; non
   return { chip: { label: word, tone: null }, none: false };
 }
 
+/** The mapped documents out of seven: the leading number of the map's parenthetical when it reads and fits. The real writer
+ * sometimes puts words there ("complete codebase map"); then the summary's own readiness word `complete` still says all seven
+ * are mapped. Any other case leaves the figure out. */
+function mappedOf(detail: string | null, readiness: ComposedReadiness | null): number | null {
+  const lead = leadingNumber(detail);
+  if (lead !== null) return lead <= MAP_DOCUMENT_TOTAL ? lead : null;
+  return readiness !== null && readiness.label === 'Complete map' ? MAP_DOCUMENT_TOTAL : null;
+}
+
 function codebaseOf(lift: Record<string, unknown>): ComposedOnboardingCodebase {
   const raw = isRecord(lift.codebase) ? lift.codebase : {};
   const mapPath = textOrNull(raw.mapPath);
   const mapDetail = textOrNull(raw.mapDetail);
   const found = mapPath !== null;
-  const lead = found ? leadingNumber(mapDetail) : null;
-  const mapped = lead !== null && lead <= MAP_DOCUMENT_TOTAL ? lead : null;
   const readiness = readinessOf(textOrNull(raw.readiness));
+  const mapped = found ? mappedOf(mapDetail, readiness.chip) : null;
   return {
     found,
     readiness: readiness.chip,

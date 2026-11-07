@@ -278,6 +278,16 @@ describe('onboarding page: the sketch states with no fixture, planted inside the
     }
   });
 
+  it("the real writer's words in the map's parenthetical with readiness complete still read as seven of seven", async () => {
+    const body = edited(fxRead('onboarding/SUMMARY.md'), [
+      ['- Map readiness: none', '- Map readiness: complete'],
+      ['- Codebase map: missing', '- Codebase map: .planning/codebase/ (complete codebase map)'],
+    ]);
+    const model = composed(composeOnboarding(inputOf(planted(await lendshed(), body))));
+    expect(model.codebase).toMatchObject({ mapped: 7, caption: '7 of 7 documents mapped', mapDetail: 'complete codebase map' });
+    expect(count(markup(model), 'view-onboarding-mini" data-tone="complete"')).toBe(7);
+  });
+
   it('shows author markup as text, never as an element', async () => {
     const body = edited(fxRead('onboarding/SUMMARY.md'), [['- /gsd-manager', '- /gsd-manager <script>alert(1)</script>']]);
     const html = markup(composed(composeOnboarding(inputOf(planted(await lendshed(), body)))));
