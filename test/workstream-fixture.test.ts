@@ -57,8 +57,25 @@ describe('the Brinkwater workstream fixture, before any workstream code (D-15)',
       artifact.path.startsWith(WORKSTREAM_DIR),
     );
     const names = inWorkstream.map((artifact) => artifact.path.slice(WORKSTREAM_DIR.length));
-    for (const name of ['ROADMAP.md', 'STATE.md']) expect(names).toContain(name);
+    for (const name of ['ROADMAP.md', 'STATE.md', 'REQUIREMENTS.md']) expect(names).toContain(name);
     for (const artifact of inWorkstream) expect(artifact.location).toBe('other');
+  });
+
+  it("reaches intake's phase files as artifacts at location other, not as phases of the project", async () => {
+    const loaded = await loadProject(BRINKWATER);
+    const phaseFiles = artifactsOf(loaded).filter((artifact) => artifact.path.startsWith(`${WORKSTREAM_DIR}phases/`));
+    expect(phaseFiles.map((artifact) => artifact.path.slice(WORKSTREAM_DIR.length)).sort()).toEqual([
+      'phases/01-sensor-feed/01-01-PLAN.md',
+      'phases/01-sensor-feed/01-01-SUMMARY.md',
+      'phases/02-feed-alerts/02-01-PLAN.md',
+    ]);
+    for (const artifact of phaseFiles) expect(artifact.location).toBe('other');
+    expect(loaded.snapshot.project?.phases).toEqual([]);
+  });
+
+  it('holds the root todo beside the workstream, outside it', async () => {
+    const paths = artifactsOf(await loadProject(BRINKWATER)).map((artifact) => artifact.path);
+    expect(paths).toContain('.planning/todos/pending/2026-05-02-gauge-calibration.md');
   });
 
   it('keeps active-workstream out of the artifacts: root internal bookkeeping (UI-SPEC section 8 rule 6)', async () => {
