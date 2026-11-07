@@ -113,11 +113,26 @@ export interface DrawerMilestonePlace {
   phases: DrawerPhasePlace[];
 }
 
+/** The drawer's two groups inside a workstream scope (Phase 11, 11-32, D-12; sketch 056 C): the files the scope shares
+ * with the whole project, and the workstream's own. Present only on a workstream-scoped drawer; a flat project's
+ * model has no such field at all (not an empty one), so it is exactly what it was. */
+export interface DrawerScopeGroups {
+  /** The open workstream. */
+  name: string;
+  /** Project-level files the scope overlays (PROJECT.md, config.json, codebase/, research/, todos/, milestones/),
+   * whose `url` is the project's own address: the drawer links them outside the scope. */
+  shared: DrawerFileRow[];
+  /** The workstream's own files (ROADMAP.md, STATE.md, REQUIREMENTS.md, phases/, its own config.json), whose `url` is
+   * inside the scope. */
+  own: DrawerFileRow[];
+}
+
 export interface DrawerViewModel {
   current: { version: string | null; phases: DrawerPhasePlace[] };
   shipped: DrawerMilestonePlace[];
   quick: DrawerQuickPlace;
   defaultPlaceKey: string | null;
+  scopeGroups?: DrawerScopeGroups;
 }
 
 /** The key of the one quick-tasks place. */
@@ -333,7 +348,108 @@ function quickTasksOf(filesByTask: ReadonlyMap<string, ArtifactDto[]>): DrawerQu
     .map(({ task }) => task);
 }
 
-export function buildDrawerViewModel(presentation: ProjectPresentation): DrawerViewModel {
+const WORKSTREAMS_BASE = '.planning/workstreams/';
+/** The root names a workstream carries instead of the project's, in the order the sketch draws them. */
+const OWN_FILE_ORDER = ['ROADMAP.md', 'STATE.md', 'REQUIREMENTS.md'];
+const SHARED_FILE_ORDER = ['PROJECT.md', 'config.json'];
+const SHARED_DIR_ORDER = ['milestones', 'research', 'codebase', 'todos'];
+/** The folder GSD archives a completed workstream into: the index's Completed bar lists these, not the drawer. */
+const ARCHIVE_FOLDER = /^ws-.+-\d{4}-\d{2}-\d{2}(?:-\d{1,3})?$/;
+
+function scopeNameOf(artifacts: readonly ArtifactDto[]): string | null {
+  for (const artifact of artifacts) {
+    if (artifact.realPath?.startsWith(WORKSTREAMS_BASE)) {
+      const name = artifact.realPath.slice(WORKSTREAMS_BASE.length).split('/')[0];
+      if (name) return name;
+    }
+  }
+  return null;
+}
+
+function indexIn(order: readonly string[], value: string): number {
+  const index = order.indexOf(value);
+  return index < 0 ? order.length : index;
+}
+
+/** Splits a workstream-scoped presentation's artifacts on where each one really lives (`realPath`): under
+ * `.planning/workstreams/{name}/` is the workstream's own, everything else at the project root is shared. Only the
+ * files a person looks for are listed (the root files, the shared folders' files, one row per phase folder); quick
+ * tasks and the phases' own files already have their places below. */
+function scopeGroupsOf(
+  presentation: ProjectPresentation,
+  phaseUrls: ReadonlyMap<string, string>,
+  scopeName: string | undefined,
+): DrawerScopeGroups | undefined {
+  const artifacts = presentation.artifacts;
+  if (!artifacts.some((artifact) => artifact.realPath !== undefined)) return undefined;
+  const name = scopeName ?? scopeNameOf(artifacts);
+  if (name === undefined || name === null) return undefined;
+  const base = `${WORKSTREAMS_BASE}${name}/`;
+
+  const shared: { row: DrawerFileRow; rank: number; sub: string }[] = [];
+  const ownFiles: { row: DrawerFileRow; rank: number }[] = [];
+  const ownPhases = new Map<string, DrawerFileRow>();
+  for (const artifact of artifacts) {
+    const real = artifact.realPath;
+    if (real === undefined) continue;
+    if (real.startsWith(base)) {
+      const rest = real.slice(base.length);
+      const slash = rest.indexOf('/');
+      if (slash < 0) {
+        ownFiles.push({
+          row: { ...fileRowOf(artifact), label: rest },
+          rank: OWN_FILE_ORDER.includes(rest) ? OWN_FILE_ORDER.indexOf(rest) : rest === 'config.json' ? 100 : 200,
+        });
+      } else if (rest.startsWith('phases/')) {
+        const dir = rest.split('/')[1];
+        if (dir === undefined || dir === '' || rest.split('/').length < 3) continue;
+        if (ownPhases.has(dir)) continue;
+        const url = (artifact.phaseKey !== null ? phaseUrls.get(artifact.phaseKey) : undefined) ?? artifact.key;
+        ownPhases.set(dir, {
+          key: `${base}phases/${dir}`,
+          label: `phases/${dir}`,
+          path: `${base}phases/${dir}`,
+          url,
+          warningTone: null,
+          fileClass: 'text',
+          sizeBytes: 0,
+        });
+      }
+      continue;
+    }
+    // A shared file: a root file of .planning/, or a file of one of the shared folders.
+    if (!real.startsWith('.planning/')) continue;
+    const rest = real.slice('.planning/'.length);
+    const slash = rest.indexOf('/');
+    if (slash < 0) {
+      if (!SHARED_FILE_ORDER.includes(rest)) continue;
+      shared.push({ row: { ...fileRowOf(artifact), label: rest }, rank: indexIn(SHARED_FILE_ORDER, rest), sub: rest });
+      continue;
+    }
+    const dir = rest.slice(0, slash);
+    if (!SHARED_DIR_ORDER.includes(dir)) continue;
+    if (dir === 'milestones' && ARCHIVE_FOLDER.test(rest.slice(slash + 1).split('/')[0] ?? '')) continue;
+    shared.push({
+      row: { ...fileRowOf(artifact), label: rest },
+      rank: SHARED_FILE_ORDER.length + indexIn(SHARED_DIR_ORDER, dir),
+      sub: rest,
+    });
+  }
+
+  shared.sort((left, right) => left.rank - right.rank || left.sub.localeCompare(right.sub));
+  const own = [
+    ...ownFiles.filter((file) => file.rank < OWN_FILE_ORDER.length).sort((left, right) => left.rank - right.rank),
+    ...[...ownPhases.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([, row]) => ({ row, rank: 50 })),
+    ...ownFiles
+      .filter((file) => file.rank >= OWN_FILE_ORDER.length)
+      .sort((left, right) => left.rank - right.rank || left.row.label.localeCompare(right.row.label)),
+  ];
+  return { name, shared: shared.map((entry) => entry.row), own: own.map((entry) => entry.row) };
+}
+
+/** `scope` is the open workstream's name when the presentation is a scope's (the server knows it); otherwise it is read
+ * from the artifacts' `realPath`. A flat project's presentation carries neither, and its model has no `scopeGroups`. */
+export function buildDrawerViewModel(presentation: ProjectPresentation, scope?: string): DrawerViewModel {
   const markdown = presentation.artifacts.filter(isMarkdown);
 
   // A phase folder lists its markdown and every file that has no readable body; quick-task and milestone
@@ -460,11 +576,16 @@ export function buildDrawerViewModel(presentation: ProjectPresentation): DrawerV
     count: groups.reduce((sum, group) => sum + group.tasks.length, 0),
     groups,
   };
+  const phaseUrls = new Map(
+    [...currentPhases, ...shipped.flatMap((milestone) => milestone.phases)].map((phase) => [phase.key, phase.url] as const),
+  );
+  const scopeGroups = scopeGroupsOf(presentation, phaseUrls, scope);
   return {
     current: { version: currentVersion, phases: currentPhases },
     shipped,
     quick,
     defaultPlaceKey: defaultPlaceKeyOf(presentation, currentPhases, quick, shipped),
+    ...(scopeGroups ? { scopeGroups } : {}),
   };
 }
 
