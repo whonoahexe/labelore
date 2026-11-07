@@ -12,7 +12,7 @@
 import type { ArtifactDto, ProjectPresentation } from '../server/project-presentation.ts';
 
 const PLANNING_PREFIX = '.planning/';
-const DASHES: readonly string[] = ['—', '–', '-', ':'];
+const DASHES: readonly string[] = ['—', '–', '-', ':', ','];
 
 export interface SeedThreadLink {
   /** The bullet as the author wrote it. */

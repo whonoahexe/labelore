@@ -35643,6 +35643,13 @@ button.view-indexes-tile:hover:not(:disabled) {
   margin-left: var(--space-2);
 }
 
+/* Absence is drawn dashed, as the sketch has it: no surfacing condition and a path that was not found. */
+.view-seed-address .status-chip[data-tone='quiet'],
+.view-seed-crumb .status-chip[data-tone='quiet'] {
+  border-style: dashed;
+  background: transparent;
+}
+
 .view-seed-path {
   font-family: var(--font-mono);
   font-size: var(--fs-2);

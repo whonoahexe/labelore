@@ -44,6 +44,13 @@ describe('splitLinkText', () => {
     expect(splitLinkText('PROJECT.md')).toEqual({ path: 'PROJECT.md', description: null });
   });
 
+  it('drops the comma that joins a second path, so the words beside the first path never start with one', () => {
+    expect(splitLinkText('`a/one.tsx`, `a/two.tsx` — per-view handlers')).toEqual({
+      path: 'a/one.tsx',
+      description: '`a/two.tsx` — per-view handlers',
+    });
+  });
+
   it('reads prose as no path at all', () => {
     expect(splitLinkText('Steward desk request from the March sync, no ticket number')).toEqual({
       path: null,
