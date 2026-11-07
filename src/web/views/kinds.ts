@@ -19,6 +19,7 @@
 // `seed` (the seed page; its wire kind is `seed` itself, so it needs no table row). Phase 11 (11-23) adds `thread` (the
 // thread page; its wire kind is `thread` itself, so it needs no table row either). Phase 11 (11-24) adds `report` (the report page for
 // `reports/` files, both the session report and the milestone summary; its wire kind is `report` itself, so it needs no table row).
+// Phase 11 (11-25) adds `forensics` (the forensics page for `forensics/` reports; its wire kind is `forensics` itself, so it needs no table row).
 export const VIEW_KINDS = [
   'discussion-log',
   'verification',
@@ -57,6 +58,7 @@ export const VIEW_KINDS = [
   'seed',
   'thread',
   'report',
+  'forensics',
 ] as const;
 
 export type ViewKind = (typeof VIEW_KINDS)[number];

@@ -36883,3 +36883,509 @@ a.view-thread-path:hover {
   margin-top: var(--space-1-5);
 }
 /* phase-11-report:end */
+
+/* phase-11-forensics:start */
+/* Phase 11 (11-25): the forensics page, sketch 060 winner B (Evidence rail). The page renders four font sizes: the h1 as
+   ArtifactHeader draws it (--fs-display-3), the section headings and the hypothesis sentence (--fs-7), Body (--fs-4) and
+   Label (--fs-2). Where a shared class sets a size outside that set, the page takes it inside with a page-scoped rule below,
+   so no shared class is edited. Every colour is a theme token. Confidence has no good or bad polarity: the chip is untoned and
+   the card's rule weight repeats it. A present artifact is `complete`, an absent one `missing` (an expected item that has not
+   appeared) with the word "Absent"; nothing is destructive or warning, and every state is marked by a word or a position as well
+   as by colour, so tone is never the only signal. */
+.view-forensics-root {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.view-forensics-root > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-forensics-root) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.view-forensics-root code {
+  padding: 0 var(--space-0-5);
+  background: var(--code-veil);
+  font-family: var(--font-mono);
+  font-size: inherit;
+  overflow-wrap: anywhere;
+}
+
+.view-forensics-meta {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  overflow-wrap: anywhere;
+}
+
+.view-forensics-metas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  min-width: 0;
+}
+
+.view-forensics-micro {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-forensics-quiet {
+  color: var(--muted-foreground);
+}
+
+.view-forensics-problem {
+  display: grid;
+  gap: var(--space-1);
+  max-width: 62ch;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-forensics-heading {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+.view-forensics-section {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+}
+
+/* The page: the report's own order on the left, the evidence rail on the right (under it on a narrow screen). */
+.view-forensics-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) calc(var(--space-8) * 14);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.view-forensics-main {
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  min-width: 0;
+}
+
+/* The hypothesis: a heavy rule on its left is the picture; the writer's paragraph is the sentence. */
+.view-forensics-hyp {
+  display: grid;
+  gap: var(--space-3);
+  padding-left: var(--space-5);
+  border-left: 6px solid var(--foreground);
+}
+
+.view-forensics-sentence {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+.view-forensics-text {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The recommended actions: numbered in the writer's order, the number in mono beside the text. */
+.view-forensics-actions {
+  display: grid;
+  gap: var(--space-2-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: view-forensics-action;
+}
+
+.view-forensics-actions li {
+  display: grid;
+  grid-template-columns: var(--space-6) minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-forensics-actions li::before {
+  content: counter(view-forensics-action);
+  counter-increment: view-forensics-action;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-forensics-actions li > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 62rem) {
+  .view-forensics-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+}
+.view-forensics-root .status-chip {
+  max-width: 100%;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--fs-2);
+  white-space: nowrap;
+}
+
+.view-forensics-chip[data-conf='other'] {
+  border-style: dashed;
+}
+
+.view-forensics-sq {
+  --status-square-size: var(--space-2-5);
+
+  transform: translateY(var(--space-0-5));
+}
+
+.view-forensics-big {
+  --status-square-size: var(--space-5);
+
+  transform: none;
+}
+
+.view-forensics-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* The anomaly cards: the rule on the left repeats the confidence (heavy, medium, dashed), so no colour carries it. */
+.view-forensics-cards {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.view-forensics-card {
+  --view-forensics-rule: 1px;
+
+  border: 1px solid var(--border);
+  border-left: var(--view-forensics-rule) solid var(--foreground);
+  background: var(--card);
+  min-width: 0;
+}
+
+.view-forensics-card[data-conf='high'] {
+  --view-forensics-rule: 6px;
+}
+
+.view-forensics-card[data-conf='medium'] {
+  --view-forensics-rule: 3px;
+}
+
+.view-forensics-card[data-conf='low'] {
+  --view-forensics-rule: 1px;
+
+  border-left-style: dashed;
+}
+
+.view-forensics-card[data-conf='other'] {
+  --view-forensics-rule: 1px;
+
+  border-left-style: dotted;
+}
+
+.view-forensics-an > summary {
+  display: grid;
+  grid-template-columns: var(--space-6) minmax(0, 1fr) auto;
+  gap: var(--space-2) var(--space-3);
+  align-items: baseline;
+  padding: var(--space-3) var(--space-2);
+  cursor: pointer;
+  font-weight: var(--fw-semibold);
+  list-style: none;
+}
+
+.view-forensics-an > summary::-webkit-details-marker {
+  display: none;
+}
+
+.view-forensics-an > summary:hover {
+  background: var(--state-hover);
+}
+
+.view-forensics-no {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-forensics-an-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-6);
+  padding: 0 var(--space-2) var(--space-4) calc(var(--space-6) + var(--space-3) + var(--space-2));
+}
+
+.view-forensics-an-body > div {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-forensics-nothing {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--muted-foreground);
+  color: var(--muted-foreground);
+}
+
+/* The rail: the artifact grid as a heat map over the evidence summary, sticky beside the hypothesis on a wide screen. */
+.view-forensics-rail {
+  position: sticky;
+  top: calc(var(--space-10) + var(--space-8));
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-forensics-panel {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-forensics-scroll {
+  position: relative;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.view-forensics-heat {
+  display: grid;
+  grid-template-columns: auto repeat(var(--view-forensics-np, 4), minmax(calc(var(--space-8) * 2.5), auto));
+  border: 1px solid var(--border-faint);
+  min-width: max-content;
+}
+
+.view-forensics-row {
+  display: contents;
+}
+
+.view-forensics-heat > .view-forensics-row > * {
+  min-width: 0;
+  padding: var(--space-2);
+  border-top: 1px solid var(--border-faint);
+  border-left: 1px solid var(--border-faint);
+}
+
+.view-forensics-heat > .view-forensics-row > .view-forensics-top {
+  border-top: 0;
+}
+
+.view-forensics-hh {
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-forensics-hc {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  justify-items: start;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-forensics-nt {
+  color: var(--muted-foreground);
+}
+
+.view-forensics-legend {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  color: var(--muted-foreground);
+  list-style: none;
+}
+
+.view-forensics-legend b {
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-forensics-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.view-forensics-kv {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.view-forensics-kv > div {
+  display: grid;
+  grid-template-columns: calc(var(--space-8) * 5) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-forensics-kv > div[data-labelled='false'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.view-forensics-kv dt {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-forensics-kv dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The span axis: from the first day to the last commit, the report's own day at the far end. */
+.view-forensics-axis {
+  position: relative;
+  height: calc(var(--space-8) * 2);
+  margin-inline: var(--space-2);
+}
+
+.view-forensics-base {
+  position: absolute;
+  top: var(--space-5);
+  right: 0;
+  left: 0;
+  border-top: 2px solid var(--muted-foreground);
+}
+
+.view-forensics-sp {
+  position: absolute;
+  top: calc(var(--space-5) - var(--space-1-5));
+  height: var(--space-3);
+  background: var(--foreground);
+}
+
+.view-forensics-pt {
+  position: absolute;
+  top: calc(var(--space-5) - var(--space-2));
+  width: var(--space-4);
+  height: var(--space-4);
+  border: 2px solid var(--foreground);
+  background: var(--background);
+  transform: translateX(-50%);
+}
+
+.view-forensics-gen {
+  border-style: dashed;
+}
+
+.view-forensics-pt[data-edge='end'] {
+  transform: translateX(-100%);
+}
+
+.view-forensics-lb {
+  position: absolute;
+  top: calc(var(--space-5) + var(--space-3));
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.view-forensics-lb[data-edge='start'] {
+  transform: none;
+}
+
+.view-forensics-lb[data-edge='end'] {
+  transform: translateX(-100%);
+}
+
+.view-forensics-lt {
+  position: absolute;
+  top: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (max-width: 52rem) {
+  .view-forensics-an-body {
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: var(--space-2);
+  }
+
+  .view-forensics-an > summary {
+    grid-template-columns: var(--space-6) minmax(0, 1fr);
+  }
+
+  .view-forensics-an > summary .status-chip {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 42rem) {
+  .view-forensics-kv > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-0-5);
+  }
+}
+
+@media (max-width: 62rem) {
+  .view-forensics-rail {
+    position: static;
+  }
+}
+
+/* phase-11-forensics:end */
