@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 059 — Report page</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 059: the report page (VIEW-18, Phase 11 D-03, D-16). The session report (reports/SESSION_REPORT.md,
+   reports/{date}-session-report.md) and the milestone summary (reports/MILESTONE_SUMMARY-v{V}.md) are two files GSD
+   writes into reports/. Three pictures of their own numbers and lists: a time ruler (A), a scorecard rail with the
+   shipped status-meter (B), phase lanes (C). Each variant carries BOTH files, so the sketch settles whether they share
+   one frame. Text is MADE UP (Lendshed), in the layout GSD's session-report and milestone-summary workflows wrote.
+   Tokens come from ../themes/default.css; every colour is a token or a colour-mix of tokens. Four font sizes only:
+   --fs-display-3 (the h1), --fs-7, --fs-4, --fs-2. */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --neutral-fill: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); overflow-x: hidden; }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; padding: 0 var(--space-0-5); background: var(--veil); overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.brand-trigger { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: var(--space-1) var(--space-2); border: 1px solid transparent; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+@media (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- page atoms (the four sizes: display h1 / heading fs-7 / body fs-4 / label fs-2) ---------- */
+.page { display: grid; gap: var(--space-8); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); min-width: 0; }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); overflow-wrap: anywhere; }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.meta { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.micro-label { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h2.sh { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.sentence { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); overflow-wrap: anywhere; }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; background: transparent; }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--neutral-fill); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); }
+.prose { max-width: 62ch; }
+.mono { font-family: var(--font-mono); }
+.ellip { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* closed bars (shared with every earlier sketch) */
+.bars { display: grid; border-top: 1px solid var(--border); }
+.bar { border-bottom: 1px solid var(--border); }
+.bar > summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding-inline: var(--space-2); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); min-width: 0; }
+.bar > summary::-webkit-details-marker { display: none; }
+.bar > summary:hover { background: var(--state-hover); }
+.bar[open] > summary .chev { transform: rotate(90deg); }
+.bar > summary .n { margin-left: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.bar-body { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--icon) + var(--space-4)); min-width: 0; }
+@media (max-width: 42rem) { .bar-body { padding-left: var(--space-2); } }
+
+
+/* the reference list (shared): only a reference that resolves is a link */
+.ref-list { display: grid; gap: var(--space-2); }
+.ref-list li { display: grid; grid-template-columns: var(--sq) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.ref-list .sq { transform: translateY(var(--space-0-5)); }
+.ref-list .path { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.ref-list a.path { text-decoration: underline; text-underline-offset: var(--space-0-5); text-decoration-color: var(--border); }
+.ref-list a.path:hover { text-decoration-color: var(--foreground); }
+.ref-list .why { display: block; color: var(--muted-foreground); }
+.dots { display: grid; gap: var(--space-2); }
+.dots li { display: grid; grid-template-columns: var(--sq) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.dots li::before { content: ''; width: var(--space-1-5); height: var(--space-1-5); margin: var(--space-1-5) var(--space-1); background: var(--muted-foreground); grid-column: 1; }
+.dots li > span { grid-column: 2; min-width: 0; overflow-wrap: anywhere; }
+.page section { display: grid; gap: var(--space-3); min-width: 0; align-content: start; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+.cols > div { display: grid; gap: var(--space-6); min-width: 0; align-content: start; }
+@media (max-width: 52rem) { .cols { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); } }
+
+
+/* ---------- additions for sketch 059 ---------- */
+.sq[data-tone='missing'] { background: transparent; border: 2px solid var(--missing-fill); }
+.numeral { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); overflow-wrap: anywhere; }
+.num { display: grid; gap: var(--space-1); min-width: 0; align-content: start; }
+.num .meta { overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.olr { display: grid; gap: var(--space-2-5); counter-reset: o; }
+.olr li { display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.olr li::before { counter-increment: o; content: counter(o); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); color: var(--muted-foreground); }
+.olr li > span { min-width: 0; overflow-wrap: anywhere; }
+.flagbox { display: grid; gap: var(--space-2-5); padding: var(--space-3) var(--space-4); border: 1px solid var(--in-flight-border); border-left: 4px solid var(--in-flight-fill); background: var(--veil); min-width: 0; }
+.flagbox ul { display: grid; gap: var(--space-2-5); }
+.flagbox li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.flagbox li > span:last-child { overflow-wrap: anywhere; }
+.clearbox { display: flex; gap: var(--space-2); align-items: baseline; padding: var(--space-3) var(--space-4); border: 1px dashed var(--muted-foreground); color: var(--muted-foreground); }
+.insdel { display: grid; gap: var(--space-1-5); }
+.insdel .bar2 { display: flex; height: var(--space-3); border: 1px solid var(--border); }
+.insdel .bar2 i { display: block; height: 100%; }
+.insdel .bar2 .ins { background: var(--foreground); }
+.insdel .bar2 .del { background: var(--hatch); }
+.dirs { display: grid; gap: var(--space-2); }
+.dirs li { display: grid; gap: var(--space-0-5); min-width: 0; }
+.dirs code { font-size: var(--fs-2); font-weight: var(--fw-semibold); }
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th, .tbl td { text-align: left; padding: var(--space-1-5) var(--space-2); border-bottom: 1px solid var(--border-faint); vertical-align: top; }
+.tbl th { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.tbl .id { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); white-space: nowrap; }
+.fold-scroll { overflow-x: auto; max-height: calc(var(--space-8) * 14); border: 1px solid var(--border-faint); }
+.idx { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.idx a { display: inline-flex; gap: var(--space-1-5); align-items: center; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.idx a:hover { background: var(--state-hover); }
+.idx a b { font-weight: var(--fw-semibold); color: var(--muted-foreground); }
+.drow { display: grid; grid-template-columns: var(--sq) minmax(0, 1fr); gap: var(--space-2) var(--space-3); align-items: baseline; padding: var(--space-2-5) 0; border-top: 1px solid var(--border-faint); min-width: 0; }
+.drow:first-child { border-top: 0; }
+.drow .sq { transform: translateY(var(--space-0-5)); }
+.drow .t { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); align-items: baseline; font-weight: var(--fw-semibold); }
+.drow p { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.creq { display: grid; gap: var(--space-2-5); }
+.creq .row { display: grid; grid-template-columns: var(--sq) minmax(0, 1fr); gap: var(--space-2) var(--space-3); align-items: baseline; min-width: 0; }
+.creq .row .sq { transform: translateY(var(--space-0-5)); }
+.creq .nm { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); align-items: baseline; font-weight: var(--fw-semibold); }
+.ids { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); margin-top: var(--space-1); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); }
+.ids span { display: inline-flex; align-items: center; gap: var(--space-1); }
+.ids .sq { --sq: var(--space-2); }
+.verdict { padding-top: var(--space-2); color: var(--muted-foreground); }
+.pbars { display: grid; gap: var(--space-1-5); }
+.pbars li { display: grid; grid-template-columns: calc(var(--space-8) * 2.5) minmax(0, 1fr) var(--space-6); gap: var(--space-2); align-items: center; font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.pbars .b { height: var(--space-2-5); background: var(--primary); }
+.pbars .n { text-align: right; font-weight: var(--fw-semibold); }
+.stack { display: grid; gap: var(--space-8); min-width: 0; }
+.stack > section { display: grid; gap: var(--space-3); }
+
+/* =====================================================================
+   A: Time ruler — a ruler of the session's own clock (first to last commit on a 24 hour axis), or of the milestone's
+   calendar with a tick where each phase was delivered; the numerals above it, a phase strip under it
+   ===================================================================== */
+.a-card { border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.a-card > section { padding: var(--space-4) var(--space-5); }
+.a-card > section + section { border-top: 1px solid var(--border-faint); }
+.a-nums { display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: var(--space-5) var(--space-6); }
+.axis { position: relative; height: calc(var(--space-8) * 2); margin-inline: var(--space-3); }
+.axis .base { position: absolute; left: 0; right: 0; top: var(--space-6); border-top: 2px solid var(--muted-foreground); }
+.axis .base.ghost { border-top-style: dashed; }
+.axis .tk { position: absolute; top: calc(var(--space-6) - var(--space-1-5)); height: var(--space-1-5); border-left: 1px solid var(--muted-foreground); }
+.axis .tk.major { top: calc(var(--space-6) - var(--space-2)); height: var(--space-2); border-left-width: 2px; }
+.axis .tl { position: absolute; top: calc(var(--space-6) + var(--space-2)); transform: translateX(-50%); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); color: var(--muted-foreground); white-space: nowrap; }
+.axis .tl.up { top: 0; }
+.axis .tl.l { transform: none; }
+.axis .tl.r { transform: translateX(-100%); }
+.axis .span { position: absolute; top: calc(var(--space-6) - var(--space-3)); height: var(--space-3); background: var(--foreground); }
+.axis .sl { position: absolute; top: 0; line-height: var(--space-4); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); white-space: nowrap; }
+.axis .sl.s { transform: translateX(-100%); padding-right: var(--space-1); }
+.axis .sl.e { transform: none; padding-left: var(--space-1); }
+.axis .none { position: absolute; left: 50%; top: calc(var(--space-6) - var(--space-3)); transform: translateX(-50%); background: var(--background); }
+.axis .mk { position: absolute; top: calc(var(--space-6) - var(--space-2-5)); width: var(--space-5); height: var(--space-5); transform: translateX(-50%); display: grid; place-items: center; background: var(--primary); border: 2px solid var(--background); outline: 1px solid var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); color: var(--background); }
+.axis .mk.last { transform: translateX(-100%); }
+.axis .md { position: absolute; top: calc(var(--space-6) + var(--space-3)); transform: translateX(-50%); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); white-space: nowrap; }
+.axis .md.r { transform: translateX(-100%); }
+.a-phases { display: grid; grid-template-columns: repeat(var(--np, 4), minmax(0, 1fr)); gap: var(--space-1-5); }
+.a-phases .ph { display: grid; gap: var(--space-1-5); padding: var(--space-2) var(--space-3); border: 1px dashed var(--muted-foreground); min-width: 0; }
+.a-phases .ph[data-tone='complete'] { border: 1px solid var(--primary-border); background: var(--primary-tint); }
+.a-phases .ph.touch { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.a-phases .ph .micro-label { color: inherit; }
+.a-phases .ph .w { color: var(--muted-foreground); }
+.a-cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+.a-cols > div { display: grid; gap: var(--space-6); min-width: 0; align-content: start; }
+@media (max-width: 52rem) { .a-cols { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); } .a-nums { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* =====================================================================
+   B: Scorecard rail — the shipped status-meter in a narrow rail of headline numbers, the body streaming beside it
+   ===================================================================== */
+.b-grid { display: grid; grid-template-columns: calc(var(--space-8) * 10) minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+.b-rail { display: grid; gap: 0; border: 1px solid var(--border); background: var(--card); position: sticky; top: calc(var(--space-10) + var(--space-8)); min-width: 0; }
+.b-rail > div { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); min-width: 0; align-content: start; }
+.b-rail > div + div { border-top: 1px solid var(--border-faint); }
+.status-meter { display: grid; gap: var(--space-1); }
+.status-meter-cells { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.status-meter-sq { --sq: var(--space-3-5); }
+.status-meter[data-size='large'] .status-meter-sq { --sq: var(--space-5); }
+.status-meter-cap { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); color: var(--muted-foreground); }
+.tally { display: flex; flex-wrap: wrap; gap: var(--space-1); max-width: calc(var(--space-8) * 7); }
+.tally i { display: block; width: var(--space-2-5); height: var(--space-2-5); background: var(--foreground); }
+.tally i.five { margin-right: var(--space-2); }
+.clockmini { position: relative; height: var(--space-3); border: 1px solid var(--border); }
+.clockmini i { position: absolute; top: 0; bottom: 0; background: var(--foreground); }
+.b-stream { display: grid; gap: var(--space-8); min-width: 0; }
+.b-stream > section { display: grid; gap: var(--space-3); }
+@media (max-width: 52rem) { .b-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); } .b-rail { position: static; } }
+
+/* =====================================================================
+   C: Phase lanes — one lane per phase of the milestone: what happened in it, the blockers tagged to it, or for the
+   milestone summary the date it shipped, its requirements and its decisions
+   ===================================================================== */
+.c-strip { display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: var(--space-4) var(--space-6); padding: var(--space-3) var(--space-5); border: 1px solid var(--border); background: var(--card); }
+.c-lanes { display: grid; border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.lane-head, .lane { display: grid; grid-template-columns: calc(var(--space-8) * 6) minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-3) var(--space-6); padding: var(--space-3) var(--space-5); min-width: 0; }
+.lane-head { background: var(--muted); border-bottom: 1px solid var(--border); }
+.lane { align-items: start; border-top: 1px solid var(--border-faint); }
+.lane-head + .lane { border-top: 0; }
+.lane > div { display: grid; gap: var(--space-2); min-width: 0; align-content: start; }
+.lane.ghost { border-top-style: dashed; color: var(--muted-foreground); }
+.lane .lbl { display: flex; gap: var(--space-2); align-items: flex-start; }
+.lane .lbl .sq { margin-top: var(--space-1); }
+.lane .ph-name { font-weight: var(--fw-semibold); }
+.lane.ghost .ph-name { font-weight: var(--fw-medium); }
+.planrow { display: flex; flex-wrap: wrap; gap: var(--space-2-5); padding: var(--space-1); }
+.planrow .status-chip { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.lane-flag { display: grid; grid-template-columns: var(--sq) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; padding: var(--space-2) var(--space-3); border: 1px solid var(--in-flight-border); border-left: 4px solid var(--in-flight-fill); background: var(--veil); }
+.lane-flag .sq { transform: translateY(var(--space-0-5)); }
+.reqsq { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); }
+.reqsq span { display: inline-flex; gap: var(--space-1-5); align-items: center; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); }
+.c-below { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+.c-below > div { display: grid; gap: var(--space-6); min-width: 0; align-content: start; }
+@media (max-width: 62rem) { .lane-head { display: none; } .lane { grid-template-columns: minmax(0, 1fr); } .c-below { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); } }
+@media (max-width: 42rem) { .c-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">059 report</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Time ruler</a>
+    <a data-tab="b" href="#b">B: Scorecard rail</a>
+    <a data-tab="c" href="#c">C: Phase lanes</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="blockers">Session report, with blockers</button><button data-state="clear">Session report, no blockers</button><button data-state="milestone">Milestone summary</button><button data-state="gap">Milestone, one not covered</button></span>
+</nav>
+
+<header class="app-head" id="apphead"></header>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+// MADE-UP reports (Lendshed), written to the layout GSD's session-report and milestone-summary workflows produced on a
+// scratch copy (read for shape only; the text is the 11-09 fixture's). Session report: no frontmatter, `# GSD Session
+// Report`, bold labels Generated, Project, Milestone, then Session Summary (Duration, Phase Progress, Plans Executed,
+// Commits Made, all free text with parentheticals), Work Performed (Phases Touched, Key Outcomes, Decisions Made), Files
+// Changed, Blockers & Open Items, Estimated Resource Usage. Milestone summary: eight `##` (seven numbered plus an
+// unnumbered Stats), the Phases Delivered table with the date folded into Status, a four-column decisions table whose
+// D-NN ids repeat across phases. The "gap" state is made up for this sketch only: one requirement marked not covered.
+const TODAY = '2026-04-21';
+const SESSIONS = {
+  blockers: {
+    kind: 'session', file: 'SESSION_REPORT.md', generated: '2026-03-28 09:05 +0100', milestone: 'v1.1 — Steward Desk',
+    duration: { text: '~5 hours', stamps: 'first commit 2026-03-27 13:42, last commit 2026-03-27 18:51', from: '13:42', to: '18:51' },
+    progress: 'Phase 1 of 4 is complete, with 6 of 6 plans executed, so 1 of the 4 v1.1 phases (25%) is done and Phase 2 has not started.',
+    phases: { total: 4, done: 1, touched: [1, 2] }, planTotal: 6, planPhase: 1,
+    plans: { n: 3, ids: ['01-04', '01-05', '01-06'] }, commits: 17,
+    touched: [
+      { ph: 1, name: 'Member Sign-In & Sessions', text: 'finished the sign-in throttling, the router guard with its bare sign-in frame, and the forced new-password screen; Phase 1 closed at the end of the session.' },
+      { ph: 2, name: 'Roles & Permissions', text: 'read only: its success criteria were checked against the session identity Phase 1 now provides. No files changed.' },
+    ],
+    outcomes: ['Sign-in attempts are throttled on two self-clearing counters, one per account name and one per address.', 'A wrong account name and a wrong password now return the same answer and take the same time to return it.', 'The router guard sends a signed-out visitor to <code>/sign-in</code> and a member holding a temporary password to <code>/set-password</code>.', 'The <code>/sign-in</code> screen renders in a bare frame with no shed navigation.', 'The top bar shows the member’s name with a sign-out button.', 'The kiosk passcode check is gone from every route.', 'The full test suite passes, including the new same-answer proof.'],
+    decisions: ['Throttle counters live in the same SQLite file as the sessions, so they survive a restart without a second store.', 'The sign-in screen links nowhere: account creation stays with stewards through <code>lendctl</code>.'],
+    files: { line: '43 files changed, 1,206 insertions(+), 388 deletions(-).', n: 43, ins: 1206, del: 388, dirs: [['src/server/auth/', 'throttle counters, the same-answer comparison and the session guard'], ['src/web/router/', 'the guard and the bare-frame route group'], ['src/web/pages/', 'the sign-in and set-password screens'], ['test/server/', 'the throttle and same-answer proofs']] },
+    blockers: [{ ph: 1, t: 'The Elm Street mini PC loses power about twice a month; the export job planned for Phase 4 must resume after a cold start.' }, { ph: 1, t: 'The kiosk screens still show the old passcode hint text; a steward must approve the new wording.' }, { ph: null, t: 'Spike 004 is still PARTIAL: resuming an interrupted upload has not been tried against the real object store.' }],
+    usage: [['Commits', '17'], ['Files changed', '43'], ['Plans executed', '3'], ['Subagents spawned', '~9']],
+  },
+  clear: {
+    kind: 'session', file: '20260409-session-report.md', generated: '2026-04-09 17:30 +0100', milestone: 'v1.1 — Steward Desk',
+    duration: { text: 'Single session', stamps: '' },
+    progress: 'Phase 3 of 4 is complete, with 5 of 5 plans executed, so 3 of the 4 v1.1 phases (75%) are done and Phase 4 is next.',
+    phases: { total: 4, done: 3, touched: [3] }, planTotal: 5, planPhase: 3,
+    plans: { n: 2, ids: ['03-04', '03-05'] }, commits: 9,
+    touched: [{ ph: 3, name: 'Account Admin & Sessions', text: 'wired the signed-in sessions list and the cut-off action into the steward area, then ran the phase verification, which passed.' }],
+    outcomes: ['A steward sees which members are signed in, from where, and when each last acted.', 'Cutting off a session ends it at once; the member’s next request is refused.', 'Disabling an account ends that member’s sessions in the same step.', 'The loan log now records account and permission changes beside loans and returns.', 'Phase 3 verification passed with every success criterion met.'],
+    decisions: null, decisionsProse: 'No decisions were added to STATE.md this session.',
+    files: { line: '18 files changed, 612 insertions(+), 74 deletions(-).', n: 18, ins: 612, del: 74, dirs: [['src/server/admin/', 'the sessions list and the cut-off route'], ['src/web/pages/', 'the steward sessions screen'], ['test/server/', 'the cut-off and loan-log proofs']] },
+    blockers: [],
+    usage: [['Commits', '9'], ['Files changed', '18'], ['Plans executed', '2'], ['Subagents spawned', '~5']],
+  },
+};
+const MS = {
+  kind: 'milestone', file: 'MILESTONE_SUMMARY-v1.0.md', generated: '2026-03-21', version: 'v1.0',
+  overview: { lede: 'Lendshed is one web app for a neighbourhood tool library. It replaces a shared spreadsheet and a paper sign-out sheet, so a member can see what sits on the shelf at every shed and a steward can move a tool from one shed to another as a tracked transfer.', items: [['Core value', 'A member can see what is on the shelf at every shed and borrow it without asking a steward to look it up.'], ['Target user', 'Library members who borrow, and the volunteer stewards who keep each shed’s inventory honest.'], ['Milestone status', 'Shipped 2026-03-20; the audit closed with tech debt and no blockers.']] },
+  arch: [['Keep every record in one SQLite file with write-ahead logging.', 'The tool library runs on a single small machine that loses power now and then.', 1], ['Gate every request on a shared kiosk passcode checked on the server.', 'Members had no accounts yet, and a hand-crafted request must not bypass the screen.', 1], ['Show each shed’s stock from its own query, never one joined query.', 'A shed with broken data must not hide the healthy ones.', 2], ['Store the condition note and the repair flag as separate columns.', 'A shed with nothing to report shows a count only, and a flag must never depend on note text.', 2], ['Render the catalogue grid from one component for both the shed and category views.', 'The two views must never disagree about a tool.', 3], ['Record a transfer as two rows, one per shed, linked by a transfer id.', 'A tool in transit stays findable from the sending shed until the receiving steward confirms.', 4]],
+  phases: [[1, 'Member Data Foundation', 'Complete', '2026-01-30', 'Member records in a durable SQLite store that survives a pulled plug'], [2, 'Shed Inventory Health', 'Complete', '2026-02-14', 'Live per-shed stock and tool condition, with one broken shed never hiding the others'], [3, 'Catalogue Browsing', 'Complete', '2026-03-03', 'Browse tools by shed and category, bounded to what each shed holds'], [4, 'Shed-to-Shed Transfers', 'Complete', '2026-03-20', 'Tracked transfers with receiving-steward confirmation and a loan log']],
+  reqs: [['Member records', 'MEMB', 1, 5, 1], ['Shed inventory', 'SHED', 1, 5, 2], ['Catalogue', 'CATL', 1, 5, 3], ['Transfers', 'MOVE', 1, 5, 4]],
+  verdict: 'tech debt — the milestone meets its intent, with three small items carried forward and none blocking.',
+  decisions: [['D-01', 1, 'Member ids are short random strings, not counters', 'Ids appear in printed lists and must not reveal how many members exist'], ['D-02', 1, 'Write-ahead logging is on from the first migration', 'A pulled plug must not corrupt the member table'], ['D-03', 1, 'The kiosk passcode is checked in the request layer', 'A hand-crafted request must be refused as the screen would refuse it'], ['D-04', 1, 'Contact preference is stored per member, not per shed', 'One answer is enough for every shed a member uses'], ['D-01', 2, 'One stock query per shed', 'A broken shed must not hide the healthy ones'], ['D-02', 2, 'Condition note and repair flag are separate columns', 'The flag must not depend on note wording'], ['D-03', 2, 'A shed with nothing to report shows a count only', 'Empty detail panels read as missing data'], ['D-04', 2, 'The repair badge is the only coloured element on a tool row', 'Stewards scan for it first'], ['D-05', 2, 'A whitespace-only note saves as blank', 'Matches how the paper sheet was read'], ['D-01', 3, 'One grid component serves the shed and category views', 'The two views must agree about a tool'], ['D-02', 3, 'The catalogue is bounded to the tools a shed holds', 'Browsing never offers a tool that cannot be borrowed there'], ['D-03', 3, 'Last loan date comes from the loan log, not a stored column', 'One source of truth for the date'], ['D-04', 3, 'Category names are fixed text, not user-editable', 'Keeps the filter list short and stable'], ['D-01', 4, 'A transfer is two linked rows', 'The tool stays findable from the sending shed'], ['D-02', 4, 'The receiving steward confirms, the sender cannot', 'Confirmation proves the tool arrived'], ['D-03', 4, 'The loan log writes dates in UTC with an offset', 'Stewards use laptops in different time zones'], ['D-04', 4, 'A transfer survives a restart', 'Power cuts must not lose a tool in transit'], ['D-05', 4, 'The confirmation screen and the stock view recompute the in-transit count separately', 'No shared helper yet; recorded as tech debt']],
+  debt: { gaps: 'one requirement is only partly met in the audit, and it is steward-side behaviour covered by the Phase 1 verification run.', items: ['A condition note holding only whitespace saves as blank and shows no repair flag (deferred).', 'The repair flag and the condition note use two different empty-state wordings (advisory).', 'The in-transit count is computed twice, so a future cache could let the two numbers drift apart (deferred).'], lessons: 'pin the shared counts with one test before a second screen reads them; keep the power-loss proof in the suite from the first phase.', ideas: 'a per-tool history page, and email reminders for overdue loans.' },
+  start: [['Run the project', 'install dependencies, then start the server from the project root; the app serves on port 4300.'], ['Key directories', '<code>src/server/</code> routes, queries and the migration files; <code>src/web/</code> the pages and the shared grid component; <code>test/</code> server and page tests.'], ['Tests', 'run the full suite from the project root before every change.'], ['Where to look first', 'the transfer routes in <code>src/server/transfers/</code>, which touch every earlier phase.']],
+  stats: { from: '2026-01-12', to: '2026-03-20', days: 68, phases: '4 / 4 complete', commits: 140, files: '212 files changed, 9,840 insertions(+), 1,206 deletions(-)', fileN: 212, who: 'Marta Oyelaran, Tobias Reyes' },
+};
+
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') === 'dark' ? 'dark' : 'light';
+const STATES = ['blockers', 'clear', 'milestone', 'gap'];
+const S = { state: STATES.includes(params.get('state')) ? params.get('state') : 'blockers' };
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const ICON = { down: '<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>', copy: '<svg class="i" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></svg>', chev: '<svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>' };
+const isMs = () => S.state === 'milestone' || S.state === 'gap';
+const cur = () => (isMs() ? MS : SESSIONS[S.state]);
+const pct = (n) => `${(n * 100).toFixed(2)}%`;
+const sq = (tone, extra = '') => `<span class="sq${extra}" data-tone="${tone}" aria-hidden="true"></span>`;
+const phaseChip = (n) => `<span class="status-chip">Phase ${n}</span>`;
+const dayN = (iso) => Math.round((Date.parse(iso) - Date.parse(MS.stats.from)) / 864e5);
+const expand = (pre, a, b) => Array.from({ length: b - a + 1 }, (_, i) => `${pre}-${String(a + i).padStart(2, '0')}`);
+// requirement coverage: in the gap state the last Transfers id is not covered (made up for the sketch)
+const reqIds = (r) => expand(r[1], r[2], r[3]).map((id) => ({ id, ok: !(S.state === 'gap' && id === 'MOVE-05') }));
+const covered = (r) => reqIds(r).filter((x) => x.ok).length;
+const decCount = (ph) => MS.decisions.filter((d) => d[1] === ph).length;
+
+// ---------- page head ----------
+function header() {
+  return `<span class="app-brand"><i></i>Labelore</span>
+    <button class="brand-trigger" data-act="noop">Lendshed ${ICON.down}</button>
+    <nav class="app-nav"><a href="#" data-act="noop">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Research</a><a href="#" data-act="noop">Files</a></nav>`;
+}
+function head(r) {
+  const ms = r.kind === 'milestone';
+  return `<nav class="crumbs"><span>Lendshed</span><span>/</span><span>Reports</span><span>/</span><span aria-current="page">${esc(r.file)}</span></nav>
+    <div class="heading-block">
+      <p class="eyebrow">${ms ? 'Milestone summary' : 'Session report'}</p>
+      <h1>${ms ? `Milestone ${esc(r.version)} — Project Summary` : 'GSD Session Report'}</h1>
+      <div class="meta-row"><span class="meta">Generated ${esc(r.generated)}</span><span class="meta">${ms ? 'Lendshed · Team onboarding and milestone review' : `Lendshed · ${esc(r.milestone)}`}</span>
+        <span class="seg"><button class="btn-xs" aria-pressed="true" data-act="noop">View</button><button class="btn-xs" aria-pressed="false" data-act="noop">Source</button></span>
+        <button class="btn-xs" data-act="noop" aria-label="Copy path" title="Copy path">${ICON.copy} Copy path</button></div>
+    </div>`;
+}
+
+// ---------- shared session pieces ----------
+const numDuration = (r) => `<div class="num"><span class="micro-label">Duration</span><span class="numeral">${esc(r.duration.text)}</span>${r.duration.stamps ? `<span class="meta">${esc(r.duration.stamps)}</span>` : ''}</div>`;
+const numCommits = (r) => `<div class="num"><span class="micro-label">Commits</span><span class="numeral">${r.commits}</span></div>`;
+const numPlans = (r) => `<div class="num"><span class="micro-label">Plans</span><span class="numeral">${r.plans.n}</span><span class="chips">${r.plans.ids.map((i) => `<span class="status-chip">${esc(i)}</span>`).join('')}</span></div>`;
+const outcomesSec = (r, title = 'Key outcomes') => `<section><h2 class="sh">${title}</h2><ol class="olr">${r.outcomes.map((o) => `<li><span>${o}</span></li>`).join('')}</ol></section>`;
+const blockersSec = (r) => `<section><h2 class="sh">Blockers and open items</h2>${r.blockers.length
+  ? `<div class="flagbox"><ul>${r.blockers.map((b) => `<li>${sq('in-flight')}<span>${b.ph ? `<span class="status-chip" data-tone="in-flight">Phase ${b.ph}</span> ` : ''}${esc(b.t)}</span></li>`).join('')}</ul></div>`
+  : `<div class="clearbox">${sq('quiet')}<span>None blocking.</span></div>`}</section>`;
+const decisionsSec = (r) => `<section><h2 class="sh">Decisions</h2>${r.decisions ? `<ul class="dots">${r.decisions.map((d) => `<li><span>${d}</span></li>`).join('')}</ul>` : `<p class="source-note prose">${esc(r.decisionsProse)}</p>`}</section>`;
+const touchedSec = (r) => `<section><h2 class="sh">Phases touched</h2><ul class="dots">${r.touched.map((t) => `<li><span><strong>Phase ${t.ph} — ${esc(t.name)}</strong> — ${esc(t.text)}</span></li>`).join('')}</ul></section>`;
+const filesBar = (f) => `<div class="insdel"><div class="bar2" role="img" aria-label="${f.ins} insertions, ${f.del} deletions"><i class="ins" style="width:${pct(f.ins / (f.ins + f.del))}"></i><i class="del" style="width:${pct(f.del / (f.ins + f.del))}"></i></div><span class="meta">${esc(f.line)}</span></div>`;
+const filesFold = (r) => `<details class="bar"><summary>${ICON.chev}<span>Files changed</span><span class="n">${r.files.n} files</span></summary><div class="bar-body">${filesBar(r.files)}<ul class="dirs">${r.files.dirs.map((d) => `<li><code>${esc(d[0])}</code><span class="source-note">${esc(d[1])}</span></li>`).join('')}</ul></div></details>`;
+const usageFold = (r) => `<details class="bar"><summary>${ICON.chev}<span>Estimated resource usage</span><span class="n">${r.usage.length} metrics</span></summary><div class="bar-body"><table class="tbl"><thead><tr><th>Metric</th><th>Estimate</th></tr></thead><tbody>${r.usage.map((u) => `<tr><td>${esc(u[0])}</td><td class="mono">${esc(u[1])}</td></tr>`).join('')}</tbody></table><p class="source-note">Token and cost estimates require API-level instrumentation. These metrics reflect observable session activity only.</p></div></details>`;
+const sessionFolds = (r) => `<div class="bars">${filesFold(r)}${usageFold(r)}</div>`;
+const progressSentence = (r) => `<p class="prose"><span class="micro-label">Phase progress</span><br>${esc(r.progress)}</p>`;
+
+// ---------- shared milestone pieces ----------
+const SEC = [[1, 'Project overview'], [2, 'Architecture and technical decisions'], [3, 'Phases delivered'], [4, 'Requirements coverage'], [5, 'Key decisions'], [6, 'Tech debt and deferred'], [7, 'Getting started'], [8, 'Stats']];
+const sectionIndex = () => `<nav class="idx" aria-label="Sections in order">${SEC.map(([n, t]) => `<a href="#sec-${n}" data-act="noop"><b>${n === 8 ? '·' : n}</b>${t}</a>`).join('')}</nav>`;
+const stat = (label, value, sub) => `<div class="num"><span class="micro-label">${label}</span><span class="numeral">${value}</span>${sub ? `<span class="meta">${sub}</span>` : ''}</div>`;
+const phaseRows = () => `<section id="sec-3"><h2 class="sh">Phases delivered</h2><div>${MS.phases.map((p) => `<div class="drow">${sq('complete')}<div><div class="t"><span class="mono">${p[0]}</span><span>${esc(p[1])}</span><span class="status-chip" data-tone="complete">${esc(p[2])}</span><span class="meta">${esc(p[3])}</span></div><p>${esc(p[4])}</p></div></div>`).join('')}</div></section>`;
+const covChip = (ok) => (ok ? '<span class="status-chip" data-tone="complete">Covered</span>' : '<span class="status-chip" data-tone="quiet">Not covered</span>');
+const reqRows = () => `<section id="sec-4"><h2 class="sh">Requirements coverage</h2><div class="creq">${MS.reqs.map((r) => {
+  const ids = reqIds(r); const all = ids.every((x) => x.ok);
+  return `<div class="row">${sq(all ? 'complete' : 'quiet')}<div><div class="nm"><span>${esc(r[0])}</span>${covChip(all)}<span class="meta">Phase ${r[4]}</span></div><div class="ids">${ids.map((x) => `<span>${sq(x.ok ? 'complete' : 'quiet')}${x.id}</span>`).join('')}</div></div></div>`;
+}).join('')}</div><p class="verdict"><strong>Audit verdict:</strong> ${esc(MS.verdict)}</p></section>`;
+const decisionsFold = () => `<section id="sec-5"><h2 class="sh">Key decisions</h2><ul class="pbars" aria-label="Decisions per phase">${[1, 2, 3, 4].map((p) => `<li><span>Phase ${p}</span><i class="b" style="width:${pct(decCount(p) / 5)}"></i><span class="n">${decCount(p)}</span></li>`).join('')}</ul>
+  <details class="bar"><summary>${ICON.chev}<span>Every decision, in the file’s order</span><span class="n">${MS.decisions.length} rows</span></summary><div class="bar-body"><div class="fold-scroll"><table class="tbl"><thead><tr><th>ID</th><th>Phase</th><th>Decision</th><th>Rationale</th></tr></thead><tbody>${MS.decisions.map((d) => `<tr><td class="id">${d[0]}</td><td class="id">${d[1]}</td><td>${esc(d[2])}</td><td class="source-note">${esc(d[3])}</td></tr>`).join('')}</tbody></table></div></div></details></section>`;
+const debtSec = () => `<section id="sec-6"><h2 class="sh">Tech debt and deferred</h2>
+  <ul class="dots">${MS.debt.items.map((d) => `<li><span>${esc(d)}</span></li>`).join('')}</ul>
+  <p class="prose"><strong>Verification gaps:</strong> ${esc(MS.debt.gaps)}</p><p class="prose"><strong>Lessons:</strong> ${esc(MS.debt.lessons)}</p><p class="prose"><strong>Deferred ideas:</strong> ${esc(MS.debt.ideas)}</p></section>`;
+const overviewBar = () => `<details class="bar" id="sec-1"><summary>${ICON.chev}<span>1 · Project overview</span></summary><div class="bar-body"><p class="prose">${esc(MS.overview.lede)}</p><ul class="dots">${MS.overview.items.map((i) => `<li><span><strong>${i[0]}:</strong> ${esc(i[1])}</span></li>`).join('')}</ul></div></details>`;
+const archBar = () => `<details class="bar" id="sec-2"><summary>${ICON.chev}<span>2 · Architecture and technical decisions</span><span class="n">${MS.arch.length} decisions</span></summary><div class="bar-body"><ul class="dots">${MS.arch.map((a) => `<li><span><strong>${esc(a[0])}</strong> ${esc(a[1])} <span class="status-chip">Phase ${a[2]}</span></span></li>`).join('')}</ul></div></details>`;
+const startBar = () => `<details class="bar" id="sec-7"><summary>${ICON.chev}<span>7 · Getting started</span></summary><div class="bar-body"><ul class="dots">${MS.start.map((s) => `<li><span><strong>${s[0]}:</strong> ${s[1]}</span></li>`).join('')}</ul></div></details>`;
+const msFolds = () => `<div class="bars">${overviewBar()}${archBar()}${startBar()}</div>`;
+const statsCells = () => [stat('Timeline', `${MS.stats.days} days`, `${MS.stats.from} → ${MS.stats.to}`), stat('Phases', MS.stats.phases.split(' ')[0] + ' / ' + MS.stats.phases.split(' ')[2], 'complete'), stat('Commits', MS.stats.commits), stat('Files changed', MS.stats.fileN, MS.stats.files), stat('Contributors', '2', MS.stats.who)];
+
+const VIEWS = {}; const ACTS = {};
+
+// ---------- A: Time ruler ----------
+function clockAxis(r) {
+  const d = r.duration;
+  const major = [0, 6, 12, 18, 24].map((h) => `<i class="tk major" style="left:${pct(h / 24)}"></i><span class="tl${h === 0 ? ' l' : h === 24 ? ' r' : ''}" style="left:${pct(h / 24)}">${String(h).padStart(2, '0')}:00</span>`).join('');
+  const minor = Array.from({ length: 23 }, (_, i) => i + 1).filter((h) => h % 6).map((h) => `<i class="tk" style="left:${pct(h / 24)}"></i>`).join('');
+  if (!d.stamps) return `<div class="axis" role="img" aria-label="No first and last commit stamps in the file"><i class="base ghost"></i>${minor}${major}<span class="none status-chip" data-tone="quiet">${esc(d.text)}</span></div>`;
+  const hm = (s) => { const [h, m] = s.split(':').map(Number); return (h + m / 60) / 24; };
+  const a = hm(d.from); const b = hm(d.to);
+  return `<div class="axis" role="img" aria-label="First commit ${d.from}, last commit ${d.to}"><i class="base"></i>${minor}${major}<i class="span" style="left:${pct(a)};width:${pct(b - a)}"></i><span class="sl s" style="left:${pct(a)}">${d.from}</span><span class="sl e" style="left:${pct(b)}">${d.to}</span></div>`;
+}
+function calAxis() {
+  const total = MS.stats.days;
+  const months = [['Feb', '2026-02-01'], ['Mar', '2026-03-01']].map(([n, iso]) => `<i class="tk major" style="left:${pct(dayN(iso) / total)}"></i><span class="tl up" style="left:${pct(dayN(iso) / total)}">${n}</span>`).join('');
+  const ends = `<span class="tl l" style="left:0">${MS.stats.from}</span><span class="tl r" style="left:100%">${MS.stats.to}</span>`;
+  const marks = MS.phases.map((p, i) => { const x = dayN(p[3]) / total; const last = x >= 0.999; return `<span class="mk${last ? ' last' : ''}" style="left:${pct(x)}" title="Phase ${p[0]} ${p[3]}">${p[0]}</span><span class="md${last ? ' r' : ''}" style="left:${pct(x)}">${p[3].slice(5)}</span>`; }).join('');
+  return `<div class="axis" role="img" aria-label="Timeline ${MS.stats.from} to ${MS.stats.to}, ${MS.stats.days} days, a mark where each phase was delivered"><i class="base"></i>${months}${marks}</div>`;
+}
+function phaseStrip(r) {
+  const n = r.phases.total;
+  return `<div class="a-phases" style="--np:${n}" role="img" aria-label="${r.phases.done} of ${n} phases done">${Array.from({ length: n }, (_, i) => { const ph = i + 1; const done = ph <= r.phases.done; const t = r.phases.touched.includes(ph); return `<div class="ph${t ? ' touch' : ''}" data-tone="${done ? 'complete' : 'quiet'}"><span class="micro-label">Phase ${ph}</span><span class="w">${done ? 'done' : 'not done'}${t ? ' · touched' : ''}</span></div>`; }).join('')}</div>`;
+}
+VIEWS.a = () => {
+  const r = cur();
+  if (r.kind === 'milestone') {
+    return `<div class="page">${head(r)}${sectionIndex()}
+      <div class="a-card" id="sec-8">
+        <section><div class="a-nums" style="--cols:5">${statsCells().join('')}</div></section>
+        <section><span class="micro-label">Calendar · a mark where each phase was delivered</span>${calAxis()}</section>
+      </div>
+      <div class="a-cols"><div>${phaseRows()}${debtSec()}</div><div>${reqRows()}${decisionsFold()}</div></div>
+      ${msFolds()}</div>`;
+  }
+  return `<div class="page">${head(r)}
+    <div class="a-card">
+      <section><div class="a-nums">${numDuration(r)}${numCommits(r)}${numPlans(r)}</div></section>
+      <section><span class="micro-label">${r.duration.stamps ? 'First to last commit · a 24 hour day' : 'No commit stamps in the file'}</span>${clockAxis(r)}</section>
+      <section><span class="micro-label">Phase progress</span>${phaseStrip(r)}<p class="prose source-note">${esc(r.progress)}</p></section>
+    </div>
+    <div class="a-cols"><div>${outcomesSec(r)}${touchedSec(r)}${decisionsSec(r)}</div><div>${blockersSec(r)}${sessionFolds(r)}</div></div></div>`;
+};
+
+// ---------- B: Scorecard rail ----------
+const meter = (items, label, cap, large) => `<div class="status-meter" data-size="${large ? 'large' : 'default'}" role="img" aria-label="${esc(label)}"><span class="status-meter-cap" aria-hidden="true">${cap}</span><span class="status-meter-cells" aria-hidden="true">${items.map((t) => `<i class="sq status-meter-sq" data-tone="${t}"></i>`).join('')}</span></div>`;
+const tally = (n) => `<span class="tally" role="img" aria-label="${n} commits">${Array.from({ length: n }, (_, i) => `<i${(i + 1) % 5 === 0 && i + 1 < n ? ' class="five"' : ''}></i>`).join('')}</span>`;
+VIEWS.b = () => {
+  const r = cur();
+  if (r.kind === 'milestone') {
+    const rail = `<aside class="b-rail" id="sec-8" aria-label="Stats">
+      <div>${stat('Timeline', `${MS.stats.days} days`, `${MS.stats.from} → ${MS.stats.to}`)}</div>
+      <div>${stat('Phases', '4 / 4', 'complete')}${meter([1, 2, 3, 4].map(() => 'complete'), '4 of 4 phases complete', '4 of 4 phases', true)}</div>
+      <div>${stat('Commits', MS.stats.commits)}</div>
+      <div>${stat('Files changed', MS.stats.fileN)}<div class="insdel"><div class="bar2"><i class="ins" style="width:${pct(9840 / (9840 + 1206))}"></i><i class="del" style="width:${pct(1206 / (9840 + 1206))}"></i></div><span class="meta">9,840 insertions(+), 1,206 deletions(-)</span></div></div>
+      <div>${stat('Contributors', '2', MS.stats.who)}</div></aside>`;
+    return `<div class="page">${head(r)}${sectionIndex()}<div class="b-grid">${rail}<div class="b-stream">${phaseRows()}${reqRows()}${decisionsFold()}${debtSec()}${msFolds()}</div></div></div>`;
+  }
+  const p = r.phases;
+  const ph = Array.from({ length: p.total }, (_, i) => (i < p.done ? 'complete' : 'quiet'));
+  const pl = Array.from({ length: r.planTotal }, () => 'complete');
+  const from = r.duration.stamps ? r.duration.from : null;
+  const clock = from ? (() => { const hm = (s) => { const [h, m] = s.split(':').map(Number); return (h + m / 60) / 24; }; const a = hm(r.duration.from); const b = hm(r.duration.to); return `<div class="clockmini" role="img" aria-label="First commit ${r.duration.from}, last commit ${r.duration.to} on a 24 hour day"><i style="left:${pct(a)};width:${pct(b - a)}"></i></div>`; })() : `<div class="clockmini" style="border-style:dashed" role="img" aria-label="No commit stamps in the file"></div>`;
+  const rail = `<aside class="b-rail" aria-label="Headline numbers">
+      <div>${numDuration(r)}${clock}</div>
+      <div>${numCommits(r)}${tally(r.commits)}</div>
+      <div>${numPlans(r)}${meter(pl, `${r.planTotal} of ${r.planTotal} plans executed in Phase ${r.planPhase}`, `Phase ${r.planPhase} · ${r.planTotal} of ${r.planTotal} plans`)}</div>
+      <div><span class="micro-label">Phase progress</span>${meter(ph, `${p.done} of ${p.total} phases done`, `${p.done} of ${p.total} phases`, true)}</div></aside>`;
+  return `<div class="page">${head(r)}<div class="b-grid">${rail}<div class="b-stream">${blockersSec(r)}${outcomesSec(r)}${touchedSec(r)}${progressSentence(r) ? `<section><h2 class="sh">Phase progress</h2>${progressSentence(r).replace('<span class="micro-label">Phase progress</span><br>', '')}</section>` : ''}${decisionsSec(r)}${sessionFolds(r)}</div></div></div>`;
+};
+
+// ---------- C: Phase lanes ----------
+function sessionLanes(r) {
+  const total = r.phases.total;
+  const rows = Array.from({ length: total }, (_, i) => {
+    const ph = i + 1; const t = r.touched.find((x) => x.ph === ph); const bl = r.blockers.filter((b) => b.ph === ph);
+    const done = ph <= r.phases.done;
+    if (!t && !bl.length) return `<div class="lane ghost"><div class="lbl">${sq(done ? 'complete' : 'quiet')}<span class="ph-name">Phase ${ph}</span></div><div><span class="meta">${done ? 'Done, not touched this session' : 'Not touched this session'}</span></div><div></div></div>`;
+    const planChips = ph === r.planPhase ? `<div class="planrow">${r.plans.ids.map((id) => `<span class="status-chip" data-tone="complete">${esc(id)}</span>`).join('')}</div><span class="meta">${r.plans.n} of ${r.planTotal} plans this session</span>` : '';
+    return `<div class="lane"><div><div class="lbl">${sq(done ? 'complete' : 'quiet')}<span class="ph-name">Phase ${ph}${t ? ` — ${esc(t.name)}` : ''}</span></div><span class="status-chip" data-tone="${done ? 'complete' : 'quiet'}">${done ? 'Complete' : 'Touched'}</span></div>
+      <div>${planChips}${t ? `<p class="prose">${esc(t.text)}</p>` : ''}</div>
+      <div>${bl.map((b) => `<div class="lane-flag">${sq('in-flight')}<span>${esc(b.t)}</span></div>`).join('')}</div></div>`;
+  });
+  const whole = r.blockers.filter((b) => !b.ph);
+  if (whole.length) rows.push(`<div class="lane"><div><div class="lbl">${sq('quiet')}<span class="ph-name">Whole project</span></div></div><div><span class="meta">Not tied to a phase</span></div><div>${whole.map((b) => `<div class="lane-flag">${sq('in-flight')}<span>${esc(b.t)}</span></div>`).join('')}</div></div>`);
+  return `<div class="c-lanes"><div class="lane-head"><span class="micro-label">Phase</span><span class="micro-label">Plans and work</span><span class="micro-label">Blockers and open items</span></div>${rows.join('')}</div>`;
+}
+function msLanes() {
+  const rows = MS.phases.map((p) => {
+    const rq = MS.reqs.find((x) => x[4] === p[0]); const ids = reqIds(rq); const all = ids.every((x) => x.ok);
+    return `<div class="lane"><div><div class="lbl">${sq('complete')}<span class="ph-name">Phase ${p[0]} — ${esc(p[1])}</span></div><div class="chips"><span class="status-chip" data-tone="complete">${esc(p[2])}</span><span class="meta">${esc(p[3])}</span></div></div>
+      <div><p class="prose">${esc(p[4])}</p><span class="meta">${decCount(p[0])} decisions in the log</span></div>
+      <div><div class="chips"><span class="micro-label">${esc(rq[0])}</span>${covChip(all)}</div><div class="reqsq">${ids.map((x) => `<span>${sq(x.ok ? 'complete' : 'quiet')}${x.id}</span>`).join('')}</div></div></div>`;
+  });
+  return `<div class="c-lanes" id="sec-3"><div class="lane-head"><span class="micro-label">Phases delivered</span><span class="micro-label">What shipped</span><span class="micro-label">Requirements coverage</span></div>${rows.join('')}</div>`;
+}
+VIEWS.c = () => {
+  const r = cur();
+  if (r.kind === 'milestone') {
+    return `<div class="page">${head(r)}${sectionIndex()}
+      <div class="c-strip" id="sec-8" style="--cols:5">${statsCells().join('')}</div>
+      ${msLanes()}
+      <p class="prose" id="sec-4"><span class="micro-label">Audit verdict</span><br>${esc(MS.verdict)}</p>
+      <div class="c-below"><div>${decisionsFold()}</div><div>${debtSec()}</div></div>
+      ${msFolds()}</div>`;
+  }
+  return `<div class="page">${head(r)}
+    <div class="c-strip">${numDuration(r)}${numCommits(r)}${numPlans(r)}</div>
+    ${sessionLanes(r)}
+    ${r.blockers.length ? '' : blockersSec(r)}
+    <div class="c-below"><div>${outcomesSec(r)}</div><div>${decisionsSec(r)}${progressSentence(r) ? `<section><h2 class="sh">Phase progress</h2>${progressSentence(r).replace('<span class="micro-label">Phase progress</span><br>', '')}</section>` : ''}${sessionFolds(r)}</div></div></div>`;
+};
+
+// ---------- render orchestration ----------
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY; const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.getElementById('apphead').innerHTML = header();
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  window.scrollTo(0, y);
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') {
+    e.preventDefault();
+    const href = el.getAttribute('href');
+    if (href && href.startsWith('#sec-')) { const t = document.querySelector(href); if (t) { if (t.tagName === 'DETAILS') t.open = true; t.scrollIntoView({ block: 'start' }); } return; }
+    toast('Sketch only'); return;
+  }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+window.addEventListener('hashchange', render);
+render();
+</script>
+</body>
+</html>
