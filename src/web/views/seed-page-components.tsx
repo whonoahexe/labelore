@@ -108,7 +108,7 @@ function Seal({ model }: { model: ComposedSeed }): React.JSX.Element | null {
   if (status === null) return null;
   return (
     <span className="view-seed-seal" data-tone={status.tone}>
-      <i className="status-square" data-tone={status.tone} aria-hidden="true" />
+      <i className="status-square view-seed-sq" data-tone={status.tone} aria-hidden="true" />
       {status.word}
     </span>
   );
@@ -187,7 +187,7 @@ function Crumb({ crumb }: { crumb: ComposedSeedCrumb }): React.JSX.Element {
   const tone = crumb.state === 'resolved' ? 'complete' : 'quiet';
   return (
     <li className="view-seed-crumb" data-state={crumb.state}>
-      <i className="status-square" data-tone={tone} aria-hidden="true" />
+      <i className="status-square view-seed-sq" data-tone={tone} aria-hidden="true" />
       <span>
         {crumb.path !== null && crumb.url !== null ? (
           <Link className="view-seed-path" to={crumb.url}>

@@ -118,7 +118,7 @@ describe('seed page: SEED-260304, a seed with a trigger, a scope and an audit', 
     expect(count(html, 'Not found')).toBe(2);
     expect(html).not.toContain('href="frontend');
     // A quiet dashed square for the unresolved, a `complete` square for the link.
-    expect(count(html, 'status-square" data-tone="complete"')).toBe(1);
+    expect(count(html, 'status-square view-seed-sq" data-tone="complete"')).toBe(1);
     expect(count(html, 'class="view-seed-crumb" data-state="not-found"')).toBe(2);
   });
 

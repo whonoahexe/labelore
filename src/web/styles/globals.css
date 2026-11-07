@@ -35550,7 +35550,7 @@ button.view-indexes-tile:hover:not(:disabled) {
   overflow-wrap: anywhere;
 }
 
-.view-seed-seal .status-square {
+.view-seed-sq {
   --status-square-size: var(--space-2-5);
 }
 
@@ -35634,8 +35634,7 @@ button.view-indexes-tile:hover:not(:disabled) {
   min-width: 0;
 }
 
-.view-seed-crumb .status-square {
-  --status-square-size: var(--space-2-5);
+.view-seed-crumb .view-seed-sq {
   transform: translateY(var(--space-0-5));
 }
 
