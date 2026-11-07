@@ -34,6 +34,7 @@ import { composeSpikes } from './spikes-page.ts';
 import { composeIndexes } from './indexes-page.ts';
 import { composeSeed } from './seed-page.ts';
 import { composeThread } from './thread-page.ts';
+import { composeReport } from './report-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -517,6 +518,14 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     lead: 'A thread of work across sessions: where it stands and what the next session should do first.',
     promote: [{ type: 'section', heading: /\S/, all: true }],
     threadPage: composeThread,
+  },
+  // Phase 11 (11-24, sketch-059 winner A): one view for every reports/ file, session report and milestone summary alike
+  // (one frame). `promote` is the silent fallback when the page composes nothing (Phase 10 C1, X2).
+  report: {
+    kind: 'report',
+    lead: 'What a session or a milestone delivered: the headline numbers, the outcomes and what is still open.',
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+    reportPage: composeReport,
   },
 });
 

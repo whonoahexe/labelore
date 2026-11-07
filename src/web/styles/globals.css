@@ -36093,3 +36093,126 @@ a.view-thread-path:hover {
   }
 }
 /* phase-11-thread:end */
+
+/* phase-11-report:start */
+/* Phase 11 (11-24): the report page, sketch 059 winner A (Time ruler), one frame for the session report and the milestone
+   summary. The page renders four font sizes: the h1 as ArtifactHeader draws it (--fs-display-3), the section headings and the
+   headline numerals (--fs-7), Body (--fs-4) and Label (--fs-2). Where a shared class sets a size outside that set, the page
+   takes it inside with a page-scoped rule below, so no shared class is edited. Every colour is a theme token. Headline
+   numerals are untoned; blockers and open items are the `in-flight` tone (waiting on someone); a delivered phase and a
+   covered requirement are `complete`; a requirement not covered is `quiet` and dashed. Nothing is `missing` or destructive.
+   Every state is marked by a word or a position as well as by colour, so tone is never the only signal. */
+.view-report-root {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.view-report-root > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-report-root) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.view-report-root code {
+  padding: 0 var(--space-0-5);
+  background: var(--code-veil);
+  font-family: var(--font-mono);
+  font-size: inherit;
+  overflow-wrap: anywhere;
+}
+
+.view-report-meta {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  overflow-wrap: anywhere;
+}
+
+.view-report-metas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  min-width: 0;
+}
+
+.view-report-micro {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+/* The ruler card: bands of numerals, the ruler and the phase strip, one hairline apart. */
+.view-report-card {
+  display: grid;
+  border: 1px solid var(--border);
+  background: var(--card);
+  min-width: 0;
+}
+
+.view-report-band {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  min-width: 0;
+}
+
+.view-report-band + .view-report-band {
+  border-top: 1px solid var(--border-faint);
+}
+
+.view-report-nums {
+  display: grid;
+  grid-template-columns: repeat(var(--view-report-cols, 3), minmax(0, 1fr));
+  gap: var(--space-5) var(--space-6);
+}
+
+.view-report-num {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-report-numeral {
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+.view-report-numeral[data-long='true'] {
+  font-size: var(--fs-4);
+  letter-spacing: var(--ls-normal);
+  line-height: var(--lh-normal);
+}
+
+.view-report-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.view-report-num .status-chip {
+  font-size: var(--fs-2);
+}
+
+@media (max-width: 52rem) {
+  .view-report-nums {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* phase-11-report:end */
