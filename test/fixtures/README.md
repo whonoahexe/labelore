@@ -107,6 +107,14 @@ writes it, and is labelled by its index row above. Only the codebase map is a ru
 every file is labelled anyway. The root is in `RELATIVE_ROOTS` (`test/helpers/fixture-roots.ts`), so every all-roots
 test walks it. `test/workstream-fixture.test.ts` pins how it loads before any workstream code exists.
 
+Brinkwater holds three live workstreams and one archived one, each a hard shape: `intake` (executing, counts agree),
+`ledger` (its own `config.json`; STATE frontmatter says `completed_phases` 4 of 6 beside `completed_plans` 22 of 22 and
+status `verifying`, the disagreeing counts sketch 056 saw), `notices` (only the `STATE.md` GSD's `workstream create`
+writes: Not started, Current Phase None, no roadmap) and `milestones/ws-archive-2026-05-01/` (a completed workstream
+as `workstream complete` archives it: `STATE.md` and `phases/` only). None of these files is a rule kind, so none needs
+an index row; every markdown file carries a frontmatter or first-line label and `config.json` carries the three keys.
+Loaded today the archive's files are ordinary milestone-folder documents (RESEARCH C12).
+
 ## For later phases
 
 A new document type with no real example on this machine adds three things: its kind to `MADE_UP_EXAMPLE_KINDS` in
