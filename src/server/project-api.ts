@@ -19,6 +19,8 @@ import { buildSpikesContext } from '../presentation/spikes-context.ts';
 import type { SpikesContext } from '../presentation/spikes-context.ts';
 import { buildIndexesContext, graphArtifactsOf } from '../presentation/indexes-context.ts';
 import type { IndexesContext } from '../presentation/indexes-context.ts';
+import { buildOnboardingContext } from '../presentation/onboarding-context.ts';
+import type { OnboardingContext } from '../presentation/onboarding-context.ts';
 import { buildSeedThreadLinks } from '../presentation/seed-thread-links.ts';
 import type { SeedThreadLinks } from '../presentation/seed-thread-links.ts';
 import { buildProjectContext } from '../presentation/project-context.ts';
@@ -245,6 +247,17 @@ export function createProjectApi(
         return null;
       }
     })();
+    // Phase 11 (11-26): the onboarding summary's command, project files and codebase facts, plus - for a map-only project - the
+    // first screen's own command and whether the two differ, from this request's own bundle - built only for the onboarding
+    // summary (null elsewhere). Both commands are carried as text; nothing here runs either (T-11-39).
+    const onboardingContext = ((): OnboardingContext | null => {
+      try {
+        if (lookup.artifact.kind !== 'onboarding') return null;
+        return buildOnboardingContext(activeDerived.presentation, lookup.artifact.path);
+      } catch {
+        return null;
+      }
+    })();
     const document = await (
       await renderer
     ).render(lookup.artifact, { referenceRegistry: activeDerived.referenceRegistry });
@@ -279,6 +292,7 @@ export function createProjectApi(
       spikesContext,
       indexesContext,
       seedThreadLinks,
+      onboardingContext,
       manualChecks,
       reviewContext,
     };

@@ -90,6 +90,8 @@ import type { ComposedReport } from '../views/report-page.ts';
 import { ReportView, reportHeaderProps } from '../views/report-page-components.tsx';
 import type { ComposedForensics } from '../views/forensics-page.ts';
 import { ForensicsView, forensicsHeaderProps } from '../views/forensics-page-components.tsx';
+import type { ComposedOnboarding } from '../views/onboarding-page.ts';
+import { OnboardingView, onboardingHeaderProps } from '../views/onboarding-page-components.tsx';
 import type { ComposedSpec } from '../views/spec-page.ts';
 import { SpecView, specHeaderProps } from '../views/spec-page-components.tsx';
 import type { ComposedAiSpec } from '../views/ai-spec-page.ts';
@@ -131,6 +133,7 @@ import type { PauseContextPayload } from '../views/manifest.ts';
 import type { SpikesContext } from '../../presentation/spikes-context.ts';
 import type { IndexesContext } from '../../presentation/indexes-context.ts';
 import type { SeedThreadLinks } from '../../presentation/seed-thread-links.ts';
+import type { OnboardingContext } from '../../presentation/onboarding-context.ts';
 import type { ComposedReviewThreads } from '../views/review-threads.ts';
 import { ReviewThreadsView } from '../views/review-threads-components.tsx';
 import type { ComposedUiSpec } from '../views/ui-spec.ts';
@@ -275,6 +278,8 @@ export interface ArtifactDocumentResponse {
   /** Phase 11 (11-22): a seed's Breadcrumbs (a thread's References) resolved to payload addresses, plus the day the
    * project was read (null for every other document). */
   seedThreadLinks?: SeedThreadLinks | null;
+  /** Phase 11 (11-26): the onboarding summary's command, files, codebase facts and first-screen command (null for every other document). */
+  onboardingContext?: OnboardingContext | null;
 }
 
 const WARNING_DISCLOSURE_LABELS: Record<Exclude<ArtifactWarningTone, null>, string> = {
@@ -802,6 +807,7 @@ export function ArtifactPage({
       spikesContext: query.data.spikesContext ?? null,
       indexesContext: query.data.indexesContext ?? null,
       seedThreadLinks: query.data.seedThreadLinks ?? null,
+      onboardingContext: query.data.onboardingContext ?? null,
     };
   }, [query.data, groups, planSegments, planProgress, planContext, phaseRequirementIds, phaseName, shown, siblingArtifacts]);
   // VIEW-06: a registered manifest, or fallback.ts's synthesized structural-read manifest — one
@@ -1037,6 +1043,13 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.forensicsPage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // Phase 11 (11-26, sketch 061 A): the onboarding page, when the resolved manifest opts into one - `null` for every other kind
+  // and for an onboarding summary the page cannot shape (no `structured.onboarding`), where the promoted-section view renders
+  // with no notice. The composer is pure and the page runs nothing: the only action is copying a command's text.
+  const onboardingPage = useMemo<ComposedOnboarding | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.onboardingPage?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // Phase 10 (10-16, sketch 047 B): the Spec page, when the resolved manifest opts into one - `null` for every other
   // kind and for a SPEC the page cannot shape (no `structured.spec`, or no score, requirement, dimension, goal or
   // scope), where the promoted-section view renders with no notice. The composer is pure, so two spec pages open at
@@ -1146,6 +1159,7 @@ export function ArtifactPage({
     threadPage !== null ||
     reportPage !== null ||
     forensicsPage !== null ||
+    onboardingPage !== null ||
     specPage !== null ||
     aiSpecPage !== null ||
     userSetupPage !== null ||
@@ -1483,6 +1497,9 @@ export function ArtifactPage({
   // The forensics page's header override (eyebrow "Forensics", the report's title as the h1, the generated stamp as meta, the
   // Problem sentence as a quiet note) rides the same spread; the page carries what the metadata disclosure would repeat.
   const forensicsCover = forensicsPage && mode === 'view' ? forensicsPage : null;
+  // The onboarding page's header override (eyebrow "Onboarding", the file's title as the h1, the file name as meta) rides the same
+  // spread; the page carries what the metadata disclosure would repeat.
+  const onboardingCover = onboardingPage && mode === 'view' ? onboardingPage : null;
   // The Spec page's header override ("Phase N · Spec", the phase name as the h1, created date and requirement count
   // as meta) rides the same spread; the page's strip carries what the metadata disclosure would repeat.
   const specPageCover = specPage && mode === 'view' ? specPage : null;
@@ -1520,6 +1537,7 @@ export function ArtifactPage({
     (threadCover ? threadHeaderProps(threadCover, artifact.title, artifact.path) : null) ??
     (reportCover ? reportHeaderProps(reportCover, artifact.title, artifact.path) : null) ??
     (forensicsCover ? forensicsHeaderProps(forensicsCover, artifact.title, artifact.path) : null) ??
+    (onboardingCover ? onboardingHeaderProps(onboardingCover, artifact.title, artifact.path) : null) ??
     (specPageCover ? specHeaderProps(specPageCover, artifact.title) : null) ??
     (aiSpecPageCover ? aiSpecHeaderProps(aiSpecPageCover, artifact.title) : null) ??
     (userSetupPageCover ? userSetupHeaderProps(userSetupPageCover, artifact.title) : null) ??
@@ -1621,6 +1639,7 @@ export function ArtifactPage({
         threadCover ||
         reportCover ||
         forensicsCover ||
+        onboardingCover ||
         specPageCover ||
         aiSpecPageCover ||
         userSetupPageCover ||
@@ -1748,6 +1767,8 @@ export function ArtifactPage({
         <ReportView key={artifact.path} model={reportCover} renderHtml={renderHtml} />
       ) : forensicsCover ? (
         <ForensicsView key={artifact.path} model={forensicsCover} />
+      ) : onboardingCover ? (
+        <OnboardingView key={artifact.path} model={onboardingCover} />
       ) : specPageCover ? (
         <SpecView key={artifact.path} model={specPageCover} renderHtml={renderHtml} onShowSource={showSource} />
       ) : aiSpecPageCover ? (
