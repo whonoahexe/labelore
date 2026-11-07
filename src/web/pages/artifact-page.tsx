@@ -86,6 +86,8 @@ import type { ComposedSeed } from '../views/seed-page.ts';
 import { SeedView, seedHeaderProps } from '../views/seed-page-components.tsx';
 import type { ComposedThread } from '../views/thread-page.ts';
 import { ThreadView, threadHeaderProps } from '../views/thread-page-components.tsx';
+import type { ComposedReport } from '../views/report-page.ts';
+import { ReportView, reportHeaderProps } from '../views/report-page-components.tsx';
 import type { ComposedSpec } from '../views/spec-page.ts';
 import { SpecView, specHeaderProps } from '../views/spec-page-components.tsx';
 import type { ComposedAiSpec } from '../views/ai-spec-page.ts';
@@ -1019,6 +1021,13 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.threadPage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // Phase 11 (11-24, sketch 059 A): the report page, when the resolved manifest opts into one - `null` for every other kind
+  // and for a report the page cannot shape (no `structured.report`), where the promoted-section view renders with no
+  // notice. The composer is pure, so two report pages open at once each compose from their own response.
+  const reportPage = useMemo<ComposedReport | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.reportPage?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // Phase 10 (10-16, sketch 047 B): the Spec page, when the resolved manifest opts into one - `null` for every other
   // kind and for a SPEC the page cannot shape (no `structured.spec`, or no score, requirement, dimension, goal or
   // scope), where the promoted-section view renders with no notice. The composer is pure, so two spec pages open at
@@ -1126,6 +1135,7 @@ export function ArtifactPage({
     indexesPage !== null ||
     seedPage !== null ||
     threadPage !== null ||
+    reportPage !== null ||
     specPage !== null ||
     aiSpecPage !== null ||
     userSetupPage !== null ||
@@ -1457,6 +1467,9 @@ export function ArtifactPage({
   // The thread page's header override (eyebrow "Thread", the title as the h1, the slug as meta) rides the same spread; the
   // dial card carries what the metadata disclosure would repeat.
   const threadCover = threadPage && mode === 'view' ? threadPage : null;
+  // The report page's header override (eyebrow "Session report" or "Milestone summary", the file's title as the h1, the
+  // generated stamp as meta) rides the same spread; the page carries what the metadata disclosure would repeat.
+  const reportCover = reportPage && mode === 'view' ? reportPage : null;
   // The Spec page's header override ("Phase N · Spec", the phase name as the h1, created date and requirement count
   // as meta) rides the same spread; the page's strip carries what the metadata disclosure would repeat.
   const specPageCover = specPage && mode === 'view' ? specPage : null;
@@ -1492,6 +1505,7 @@ export function ArtifactPage({
     (indexesCover ? indexesHeaderProps(indexesCover) : null) ??
     (seedCover ? seedHeaderProps(seedCover, artifact.title) : null) ??
     (threadCover ? threadHeaderProps(threadCover, artifact.title, artifact.path) : null) ??
+    (reportCover ? reportHeaderProps(reportCover, artifact.title, artifact.path) : null) ??
     (specPageCover ? specHeaderProps(specPageCover, artifact.title) : null) ??
     (aiSpecPageCover ? aiSpecHeaderProps(aiSpecPageCover, artifact.title) : null) ??
     (userSetupPageCover ? userSetupHeaderProps(userSetupPageCover, artifact.title) : null) ??
@@ -1591,6 +1605,7 @@ export function ArtifactPage({
         indexesCover ||
         seedCover ||
         threadCover ||
+        reportCover ||
         specPageCover ||
         aiSpecPageCover ||
         userSetupPageCover ||
@@ -1714,6 +1729,8 @@ export function ArtifactPage({
         <SeedView key={artifact.path} model={seedCover} />
       ) : threadCover ? (
         <ThreadView key={artifact.path} model={threadCover} />
+      ) : reportCover ? (
+        <ReportView key={artifact.path} model={reportCover} renderHtml={renderHtml} />
       ) : specPageCover ? (
         <SpecView key={artifact.path} model={specPageCover} renderHtml={renderHtml} onShowSource={showSource} />
       ) : aiSpecPageCover ? (

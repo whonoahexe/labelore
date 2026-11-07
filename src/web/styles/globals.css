@@ -36093,3 +36093,793 @@ a.view-thread-path:hover {
   }
 }
 /* phase-11-thread:end */
+
+/* phase-11-report:start */
+/* Phase 11 (11-24): the report page, sketch 059 winner A (Time ruler), one frame for the session report and the milestone
+   summary. The page renders four font sizes: the h1 as ArtifactHeader draws it (--fs-display-3), the section headings and the
+   headline numerals (--fs-7), Body (--fs-4) and Label (--fs-2). Where a shared class sets a size outside that set, the page
+   takes it inside with a page-scoped rule below, so no shared class is edited. Every colour is a theme token. Headline
+   numerals are untoned; blockers and open items are the `in-flight` tone (waiting on someone); a delivered phase and a
+   covered requirement are `complete`; a requirement not covered is `quiet` and dashed. Nothing is `missing` or destructive.
+   Every state is marked by a word or a position as well as by colour, so tone is never the only signal. */
+.view-report-root {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.view-report-root > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-report-root) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.view-report-root code {
+  padding: 0 var(--space-0-5);
+  background: var(--code-veil);
+  font-family: var(--font-mono);
+  font-size: inherit;
+  overflow-wrap: anywhere;
+}
+
+.view-report-meta {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  overflow-wrap: anywhere;
+}
+
+.view-report-metas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  min-width: 0;
+}
+
+.view-report-micro {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+/* The ruler card: bands of numerals, the ruler and the phase strip, one hairline apart. */
+.view-report-card {
+  display: grid;
+  border: 1px solid var(--border);
+  background: var(--card);
+  min-width: 0;
+}
+
+.view-report-band {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  min-width: 0;
+}
+
+.view-report-band + .view-report-band {
+  border-top: 1px solid var(--border-faint);
+}
+
+.view-report-nums {
+  display: grid;
+  grid-template-columns: repeat(var(--view-report-cols, 3), minmax(0, 1fr));
+  gap: var(--space-5) var(--space-6);
+}
+
+.view-report-num {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-report-numeral {
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+.view-report-numeral[data-long='true'] {
+  font-size: var(--fs-4);
+  letter-spacing: var(--ls-normal);
+  line-height: var(--lh-normal);
+}
+
+.view-report-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.view-report-num .status-chip {
+  font-size: var(--fs-2);
+}
+
+@media (max-width: 52rem) {
+  .view-report-nums {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.view-report-root .status-chip {
+  font-size: var(--fs-2);
+}
+
+.view-report-sq {
+  --status-square-size: var(--space-2-5);
+
+  transform: translateY(var(--space-0-5));
+}
+
+.view-report-quiet {
+  color: var(--muted-foreground);
+}
+
+.view-report-prose {
+  max-width: 62ch;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-report-mono {
+  font-family: var(--font-mono);
+}
+
+.view-report-heading {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+.view-report-section {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+}
+
+/* The ruler: an axis the size of a day (or of the milestone), ticks and labels placed by fraction of its length. */
+.view-report-axis {
+  position: relative;
+  height: calc(var(--space-8) * 2);
+  margin-inline: var(--space-3);
+}
+
+.view-report-base {
+  position: absolute;
+  top: var(--space-6);
+  right: 0;
+  left: 0;
+  border-top: 2px solid var(--muted-foreground);
+}
+
+.view-report-base[data-ghost='true'] {
+  border-top-style: dashed;
+}
+
+.view-report-tick {
+  position: absolute;
+  top: calc(var(--space-6) - var(--space-1-5));
+  height: var(--space-1-5);
+  border-left: 1px solid var(--muted-foreground);
+}
+
+.view-report-tick[data-major='true'] {
+  top: calc(var(--space-6) - var(--space-2));
+  height: var(--space-2);
+  border-left-width: 2px;
+}
+
+.view-report-tl {
+  position: absolute;
+  top: calc(var(--space-6) + var(--space-2));
+  transform: translateX(-50%);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  white-space: nowrap;
+}
+
+.view-report-tl[data-up='true'] {
+  top: 0;
+}
+
+.view-report-tl[data-edge='start'] {
+  transform: none;
+}
+
+.view-report-tl[data-edge='end'] {
+  transform: translateX(-100%);
+}
+
+.view-report-span {
+  position: absolute;
+  top: calc(var(--space-6) - var(--space-3));
+  height: var(--space-3);
+  background: var(--foreground);
+}
+
+.view-report-sl {
+  position: absolute;
+  top: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  line-height: var(--space-4);
+  white-space: nowrap;
+}
+
+.view-report-sl[data-end='start'] {
+  padding-right: var(--space-1);
+  transform: translateX(-100%);
+}
+
+.view-report-sl[data-end='end'] {
+  padding-left: var(--space-1);
+}
+
+/* A stamp near either end of the day flips to the inside of the axis, so it never leaves the card. */
+.view-report-sl[data-end='start'][data-flip='true'] {
+  padding-right: 0;
+  padding-left: var(--space-1);
+  transform: none;
+}
+
+.view-report-sl[data-end='end'][data-flip='true'] {
+  padding-right: var(--space-1);
+  padding-left: 0;
+  transform: translateX(-100%);
+}
+
+.view-report-none {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--background);
+}
+
+.view-report-mark {
+  position: absolute;
+  top: calc(var(--space-6) - var(--space-2-5));
+  display: grid;
+  place-items: center;
+  width: var(--space-5);
+  height: var(--space-5);
+  transform: translateX(-50%);
+  border: 2px solid var(--background);
+  background: var(--primary);
+  outline: 1px solid var(--primary);
+  color: var(--background);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+}
+
+.view-report-mark[data-edge='end'] {
+  transform: translateX(-100%);
+}
+
+.view-report-mark[data-edge='start'] {
+  transform: none;
+}
+
+.view-report-md {
+  position: absolute;
+  top: calc(var(--space-6) + var(--space-3));
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  white-space: nowrap;
+}
+
+@media (max-width: 42rem) {
+  .view-report-md {
+    display: none;
+  }
+}
+
+/* The phase strip: one cell per phase, the done ones tinted and the touched ones ringed. */
+.view-report-phases {
+  display: grid;
+  grid-template-columns: repeat(var(--view-report-np, 4), minmax(0, 1fr));
+  gap: var(--space-1-5);
+}
+
+.view-report-ph {
+  display: grid;
+  gap: var(--space-1-5);
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--muted-foreground);
+  min-width: 0;
+}
+
+.view-report-ph[data-tone='complete'] {
+  border: 1px solid var(--primary-border);
+  background: var(--primary-tint);
+}
+
+.view-report-ph[data-touched='true'] {
+  outline: 2px solid var(--foreground);
+  outline-offset: 1px;
+}
+
+.view-report-ph .view-report-micro {
+  color: inherit;
+}
+
+.view-report-ph-word {
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 42rem) {
+  .view-report-phases {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* The two columns under the card (one column under 52rem). */
+.view-report-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.view-report-cols[data-single='true'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.view-report-col {
+  display: grid;
+  gap: var(--space-6);
+  align-content: start;
+  min-width: 0;
+}
+
+@media (max-width: 52rem) {
+  .view-report-cols {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+}
+
+.view-report-outcomes {
+  display: grid;
+  gap: var(--space-2-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: view-report-outcome;
+}
+
+.view-report-outcomes li {
+  display: grid;
+  grid-template-columns: var(--space-6) minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-report-outcomes li::before {
+  content: counter(view-report-outcome);
+  counter-increment: view-report-outcome;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-report-outcomes li > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-report-dots {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-report-dots li {
+  display: grid;
+  grid-template-columns: var(--space-2-5) minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-report-dots li::before {
+  content: '';
+  grid-column: 1;
+  width: var(--space-1-5);
+  height: var(--space-1-5);
+  margin: var(--space-1-5) var(--space-1);
+  background: var(--muted-foreground);
+}
+
+.view-report-dots li > span {
+  grid-column: 2;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Blockers and open items: the in-flight box (waiting on someone). */
+.view-report-flag {
+  display: grid;
+  gap: var(--space-2-5);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--in-flight-border);
+  border-left: 4px solid var(--in-flight-fill);
+  background: var(--code-veil);
+  min-width: 0;
+}
+
+.view-report-flag ul {
+  display: grid;
+  gap: var(--space-2-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-report-flag li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-report-flag li > span:last-child {
+  overflow-wrap: anywhere;
+}
+
+/* Closed bars: the folds and the sections the page does not compose. */
+.view-report-bars {
+  display: grid;
+  border-top: 1px solid var(--border);
+}
+
+.view-report-bar {
+  border-bottom: 1px solid var(--border);
+}
+
+.view-report-bar > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-10);
+  min-width: 0;
+  padding-inline: var(--space-2);
+  font-weight: var(--fw-semibold);
+  list-style: none;
+  cursor: pointer;
+}
+
+.view-report-bar > summary::-webkit-details-marker {
+  display: none;
+}
+
+.view-report-bar > summary:hover {
+  background: var(--state-hover);
+}
+
+.view-report-chev {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+.view-report-bar[open] > summary .view-report-chev {
+  transform: rotate(90deg);
+}
+
+.view-report-count {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.view-report-bar-body {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--space-4) + var(--space-4));
+}
+
+@media (max-width: 42rem) {
+  .view-report-bar-body {
+    padding-left: var(--space-2);
+  }
+}
+
+.view-report-insdel-bar {
+  display: flex;
+  height: var(--space-3);
+  border: 1px solid var(--border);
+}
+
+.view-report-insdel-bar i {
+  display: block;
+  height: 100%;
+}
+
+.view-report-insdel-bar i[data-kind='ins'] {
+  background: var(--foreground);
+}
+
+.view-report-insdel-bar i[data-kind='del'] {
+  background: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+}
+
+.view-report-dirs {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-report-dirs li {
+  display: grid;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.view-report-dirs code {
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+}
+
+.view-report-tbl {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.view-report-tbl th,
+.view-report-tbl td {
+  padding: var(--space-1-5) var(--space-2);
+  border-bottom: 1px solid var(--border-faint);
+  text-align: left;
+  vertical-align: top;
+}
+
+.view-report-tbl th {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-report-id {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+
+.view-report-scroll {
+  max-height: calc(var(--space-8) * 14);
+  overflow: auto;
+  border: 1px solid var(--border-faint);
+}
+
+/* The milestone's section index: one chip per section, in the file's order. */
+.view-report-idx {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.view-report-idx button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  background: none;
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-align: left;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.view-report-idx button:hover {
+  background: var(--state-hover);
+}
+
+.view-report-idx b {
+  color: var(--muted-foreground);
+  font-weight: var(--fw-semibold);
+}
+
+.view-report-rows {
+  display: grid;
+}
+
+.view-report-drow,
+.view-report-req {
+  display: grid;
+  grid-template-columns: var(--space-2-5) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-3);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-report-drow {
+  padding: var(--space-2-5) 0;
+  border-top: 1px solid var(--border-faint);
+}
+
+.view-report-drow:first-child {
+  border-top: 0;
+}
+
+.view-report-drow-title,
+.view-report-req-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  font-weight: var(--fw-semibold);
+}
+
+.view-report-drow p {
+  margin: 0;
+  font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
+}
+
+.view-report-reqs {
+  display: grid;
+  gap: var(--space-2-5);
+}
+
+.view-report-ids {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  margin-top: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-report-ids > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.view-report-ids .view-report-sq {
+  --status-square-size: var(--space-2);
+
+  transform: none;
+}
+
+.view-report-verdict {
+  margin: 0;
+  padding-top: var(--space-2);
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.view-report-pbars {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-report-pbars li {
+  display: grid;
+  grid-template-columns: calc(var(--space-8) * 2.5) minmax(0, 1fr) var(--space-6);
+  gap: var(--space-2);
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-report-pbars i {
+  display: block;
+  height: var(--space-2-5);
+  background: var(--primary);
+}
+
+.view-report-pn {
+  font-weight: var(--fw-semibold);
+  text-align: right;
+}
+
+/* A section the page does not compose, through the document's own sanitised HTML. */
+.view-report-plain .artifact-document {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-report-plain .artifact-document > :first-child {
+  margin-top: 0;
+}
+
+.view-report-plain .artifact-document :is(h3, h4, h5, h6) {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+.view-report-plain .artifact-document :is(h3, h4, h5, h6) .heading-copy {
+  font-size: var(--fs-2);
+}
+
+.view-report-plain .artifact-document table,
+.view-report-plain .artifact-document pre:not([data-figure-island] *) {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-report-plain .artifact-document :not(pre) > code {
+  font-size: var(--fs-4);
+}
+
+.view-report-plain .artifact-document [data-figure-island] * {
+  font-size: var(--fs-2);
+}
+
+.view-report-plain .artifact-document > * + * {
+  margin-top: var(--space-3);
+}
+
+.view-report-plain .artifact-document ul {
+  padding-left: var(--space-5);
+  list-style: square;
+}
+
+.view-report-plain .artifact-document ol {
+  padding-left: var(--space-5);
+  list-style: decimal;
+}
+
+.view-report-plain .artifact-document li + li {
+  margin-top: var(--space-1-5);
+}
+/* phase-11-report:end */
