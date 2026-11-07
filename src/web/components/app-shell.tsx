@@ -14,6 +14,7 @@ import { projectKey } from '../query-keys.ts';
 import { LabeloreMark } from './labelore-mark.tsx';
 import { ProjectSwitcher } from './project-switcher.tsx';
 import { RouteFallback, RouteProgress } from './route-progress.tsx';
+import { ScopeChip } from './scope-chip.tsx';
 import { SearchDialog } from './search-field.tsx';
 import { SidebarDrawer } from './sidebar-drawer.tsx';
 import { SnapshotStatus } from './snapshot-status.tsx';
@@ -94,6 +95,9 @@ export function AppShell({
               </span>
             </NavLink>
             <ProjectSwitcher current={project} meta={projectMeta} />
+            {/* Inside a workstream (D-11) the scope chip sits beside the project switcher, a second level under it; on
+                the index and in a flat project there is no scope, so there is no chip. */}
+            {scope !== null ? <ScopeChip scope={scope} /> : null}
           </div>
 
           <nav className="shell-nav" aria-label="Primary navigation">
