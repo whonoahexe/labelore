@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 060 — Forensics page</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 060: the forensics page (VIEW-18, Phase 11 D-03, D-16). /gsd-forensics writes forensics/report-{YYYYMMDD}-
+   {HHMMSS}.md. The page leads with the Root Cause Hypothesis and the Recommended Actions (numbered, verbatim), then the
+   Anomalies (type, a confidence chip, Evidence, Interpretation; HIGH first), then the Evidence Summary (Git Activity,
+   Planning State) and the Artifact Completeness grid. Three pictures: a confidence ruler (A), an evidence rail with the
+   grid as a heat map (B), a fork from the hypothesis to its actions with confidence meters (C). Text is MADE UP (Lendshed),
+   in the layout GSD's forensics workflow wrote. Tokens come from ../themes/default.css; every colour is a token or a
+   colour-mix of tokens. Four font sizes only: --fs-display-3 (the h1), --fs-7, --fs-4, --fs-2. */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --neutral-fill: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); overflow-x: hidden; }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; padding: 0 var(--space-0-5); background: var(--veil); overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.brand-trigger { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: var(--space-1) var(--space-2); border: 1px solid transparent; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+@media (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- page atoms (the four sizes: display h1 / heading fs-7 / body fs-4 / label fs-2) ---------- */
+.page { display: grid; gap: var(--space-8); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); min-width: 0; }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); overflow-wrap: anywhere; }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.meta { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.micro-label { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h2.sh { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.sentence { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); overflow-wrap: anywhere; }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; background: transparent; }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--neutral-fill); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); }
+.prose { max-width: 62ch; }
+.mono { font-family: var(--font-mono); }
+.ellip { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* closed bars (shared with every earlier sketch) */
+.bars { display: grid; border-top: 1px solid var(--border); }
+.bar { border-bottom: 1px solid var(--border); }
+.bar > summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding-inline: var(--space-2); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); min-width: 0; }
+.bar > summary::-webkit-details-marker { display: none; }
+.bar > summary:hover { background: var(--state-hover); }
+.bar[open] > summary .chev { transform: rotate(90deg); }
+.bar > summary .n { margin-left: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.bar-body { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--icon) + var(--space-4)); min-width: 0; }
+@media (max-width: 42rem) { .bar-body { padding-left: var(--space-2); } }
+
+
+/* the reference list (shared): only a reference that resolves is a link */
+.ref-list { display: grid; gap: var(--space-2); }
+.ref-list li { display: grid; grid-template-columns: var(--sq) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.ref-list .sq { transform: translateY(var(--space-0-5)); }
+.ref-list .path { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.ref-list a.path { text-decoration: underline; text-underline-offset: var(--space-0-5); text-decoration-color: var(--border); }
+.ref-list a.path:hover { text-decoration-color: var(--foreground); }
+.ref-list .why { display: block; color: var(--muted-foreground); }
+.dots { display: grid; gap: var(--space-2); }
+.dots li { display: grid; grid-template-columns: var(--sq) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.dots li::before { content: ''; width: var(--space-1-5); height: var(--space-1-5); margin: var(--space-1-5) var(--space-1); background: var(--muted-foreground); grid-column: 1; }
+.dots li > span { grid-column: 2; min-width: 0; overflow-wrap: anywhere; }
+.page section { display: grid; gap: var(--space-3); min-width: 0; align-content: start; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+.cols > div { display: grid; gap: var(--space-6); min-width: 0; align-content: start; }
+@media (max-width: 52rem) { .cols { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); } }
+
+
+/* ---------- additions for sketch 060 ---------- */
+.sq[data-tone='missing'] { background: transparent; border: 2px solid var(--missing-fill); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.olr { display: grid; gap: var(--space-2-5); counter-reset: o; }
+.olr li { display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.olr li::before { counter-increment: o; content: counter(o); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); color: var(--muted-foreground); }
+.olr li > span { min-width: 0; overflow-wrap: anywhere; }
+.hyp-lead { color: var(--muted-foreground); }
+.problem { display: grid; gap: var(--space-1); }
+.kv { display: grid; gap: var(--space-2); }
+.kv > div { display: grid; grid-template-columns: calc(var(--space-8) * 5) minmax(0, 1fr); gap: var(--space-3); align-items: baseline; min-width: 0; }
+.kv dt { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.kv dd { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 42rem) { .kv > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-0-5); } }
+.mkn { display: inline-grid; place-items: center; width: var(--space-6); height: var(--space-6); flex: none; border: 2px solid var(--foreground); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); }
+.an { border-top: 1px solid var(--border-faint); }
+.an > summary { display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr) auto; gap: var(--space-2) var(--space-3); align-items: baseline; padding: var(--space-3) var(--space-2); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); }
+.an > summary::-webkit-details-marker { display: none; }
+.an > summary:hover { background: var(--state-hover); }
+.an > summary .no { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.an-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2) var(--space-6); padding: 0 var(--space-2) var(--space-4) calc(var(--space-6) + var(--space-3) + var(--space-2)); }
+.an-body > div { display: grid; gap: var(--space-1); min-width: 0; align-content: start; }
+.an-body p { overflow-wrap: anywhere; }
+@media (max-width: 52rem) { .an-body { grid-template-columns: minmax(0, 1fr); padding-left: var(--space-2); } .an > summary { grid-template-columns: var(--space-6) minmax(0, 1fr); } .an > summary .status-chip { grid-column: 2; } }
+.nothing { display: flex; gap: var(--space-2); align-items: baseline; padding: var(--space-3) var(--space-4); border: 1px dashed var(--muted-foreground); color: var(--muted-foreground); }
+.scroll { overflow-x: auto; max-width: 100%; }
+.gtbl { width: 100%; border-collapse: collapse; min-width: calc(var(--space-8) * 20); }
+.gtbl th, .gtbl td { text-align: left; padding: var(--space-2) var(--space-2-5); border-bottom: 1px solid var(--border-faint); vertical-align: top; }
+.gtbl th { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; }
+.gcell { display: inline-flex; gap: var(--space-1-5); align-items: baseline; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); }
+.gcell .sq { transform: translateY(var(--space-0-5)); }
+.gcell[data-ok='no'] { color: var(--foreground); }
+.gcell .nt { color: var(--muted-foreground); }
+
+/* =====================================================================
+   A: Confidence ruler — one ruler Low to High with a numbered mark for every anomaly where its confidence puts it
+   ===================================================================== */
+.a-hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+.a-hero > section { display: grid; gap: var(--space-3); min-width: 0; align-content: start; }
+.a-hyp { padding: var(--space-5); border: 2px solid var(--foreground); background: var(--card); display: grid; gap: var(--space-3); }
+.a-hyp .sentence { font-size: var(--fs-7); }
+.ruler { display: grid; grid-template-columns: repeat(var(--zones, 3), minmax(0, 1fr)); border: 1px solid var(--border); background: var(--card); }
+.zone { display: grid; gap: var(--space-2); align-content: space-between; min-height: calc(var(--space-8) * 3); padding: var(--space-3) var(--space-4); border-left: 1px solid var(--border-faint); min-width: 0; }
+.zone:first-child { border-left: 0; }
+.zone[data-n='0'] { background: var(--hatch); }
+.zone .zh { display: flex; justify-content: space-between; gap: var(--space-2); align-items: baseline; }
+.zone .zc { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.zone .marks { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.zone .marks button .mkn { width: var(--space-8); height: var(--space-8); border-width: 3px; }
+.zone .marks button:hover .mkn { background: var(--state-hover); }
+.ruler-axis { display: flex; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-1-5); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.a-ev { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: var(--space-8); align-items: start; }
+.a-ev > div { display: grid; gap: var(--space-6); min-width: 0; align-content: start; }
+.a-ev section { display: grid; gap: var(--space-3); }
+@media (max-width: 62rem) { .a-hero, .a-ev { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); } }
+@media (max-width: 42rem) { .zone .cw { display: none; } .zone { padding: var(--space-2); min-height: calc(var(--space-8) * 2.5); } .zone .marks button .mkn { width: var(--space-6); height: var(--space-6); border-width: 2px; } }
+
+/* =====================================================================
+   B: Evidence rail — hypothesis, actions and anomalies on the left; on the right, the artifact grid as a heat map of
+   phases and artifacts, with the git span and the planning state under it
+   ===================================================================== */
+.b-grid { display: grid; grid-template-columns: minmax(0, 1fr) calc(var(--space-8) * 14); gap: var(--space-8); align-items: start; }
+.b-main { display: grid; gap: var(--space-8); min-width: 0; }
+.b-main > section { display: grid; gap: var(--space-3); }
+.b-hyp { display: grid; gap: var(--space-3); padding-left: var(--space-5); border-left: 6px solid var(--foreground); }
+.b-hyp .sentence { font-size: var(--fs-7); }
+.b-cards { display: grid; gap: var(--space-3); }
+.b-card { border: 1px solid var(--border); background: var(--card); border-left: var(--rule, 1px) solid var(--foreground); }
+.b-card[data-conf='high'] { --rule: 6px; }
+.b-card[data-conf='medium'] { --rule: 3px; }
+.b-card[data-conf='low'] { --rule: 1px; border-left-style: dashed; }
+.b-card[data-conf='other'] { --rule: 1px; border-left-style: dotted; }
+.b-card .an { border-top: 0; }
+.b-rail { position: sticky; top: calc(var(--space-10) + var(--space-8)); display: grid; gap: var(--space-4); min-width: 0; align-content: start; }
+.b-rail > section { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.heat { display: grid; grid-template-columns: auto repeat(var(--np, 4), minmax(0, 1fr)); border: 1px solid var(--border-faint); }
+.heat > * { padding: var(--space-2); border-top: 1px solid var(--border-faint); border-left: 1px solid var(--border-faint); min-width: 0; }
+.heat > .top { border-top: 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.heat .hh { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); color: var(--muted-foreground); text-transform: uppercase; }
+.heat .hc { display: grid; gap: var(--space-1); align-content: start; justify-items: start; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); }
+.heat .hc .sq { --sq: var(--space-5); }
+.heat .hc .nt { color: var(--muted-foreground); overflow-wrap: anywhere; }
+.legend2 { display: grid; gap: var(--space-1); color: var(--muted-foreground); }
+.legend2 b { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); color: var(--foreground); }
+.gaxis { position: relative; height: calc(var(--space-8) * 2); margin-inline: var(--space-2); }
+.gaxis .base { position: absolute; left: 0; right: 0; top: var(--space-5); border-top: 2px solid var(--muted-foreground); }
+.gaxis .sp { position: absolute; top: calc(var(--space-5) - var(--space-1-5)); height: var(--space-3); background: var(--foreground); }
+.gaxis .pt { position: absolute; top: calc(var(--space-5) - var(--space-2)); width: var(--space-4); height: var(--space-4); transform: translateX(-50%); border: 2px solid var(--foreground); background: var(--background); }
+.gaxis .pt.gen { border-style: dashed; }
+.gaxis .pt.r { transform: translateX(-100%); }
+.gaxis .lb { position: absolute; top: calc(var(--space-5) + var(--space-3)); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); white-space: nowrap; transform: translateX(-50%); }
+.gaxis .lb.l { transform: none; }
+.gaxis .lb.r { transform: translateX(-100%); }
+.gaxis .lt { position: absolute; top: 0; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; color: var(--muted-foreground); }
+@media (max-width: 62rem) { .b-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); } .b-rail { position: static; } }
+
+/* =====================================================================
+   C: Fork — the hypothesis forks into its numbered actions; each anomaly carries a three-square confidence meter in a
+   case table; the artifact grid as one meter a phase
+   ===================================================================== */
+.fork { display: grid; grid-template-columns: minmax(0, 1fr) var(--space-8) minmax(0, 1.1fr); grid-template-areas: 'h1 . h2' 'hyp . acts'; gap: var(--space-3) 0; align-items: stretch; }
+.fork-hyp { display: grid; gap: var(--space-3); align-content: center; padding: var(--space-5); border: 2px solid var(--foreground); background: var(--card); position: relative; min-width: 0; }
+.fork-hyp .sentence { font-size: var(--fs-7); }
+.fork-hyp::after { content: ''; position: absolute; left: 100%; top: 50%; width: calc(var(--space-8) / 2); border-top: 2px solid var(--foreground); }
+.fork-acts { position: relative; display: grid; gap: var(--space-3); counter-reset: a; align-content: center; min-width: 0; }
+.fork-acts::before { content: ''; position: absolute; left: calc(var(--space-8) * -0.5); top: var(--space-5); bottom: var(--space-5); border-left: 2px solid var(--foreground); }
+.fork-acts li { position: relative; display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; padding: var(--space-3); border: 1px solid var(--border); background: var(--card); min-width: 0; counter-increment: a; }
+.fork-acts li::before { content: counter(a); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); }
+.fork-acts li::after { content: ''; position: absolute; right: 100%; top: 50%; width: calc(var(--space-8) / 2); border-top: 2px solid var(--foreground); }
+.fork-acts li > span { min-width: 0; overflow-wrap: anywhere; }
+.fork-tally { display: flex; flex-wrap: wrap; gap: var(--space-1-5) var(--space-3); align-items: center; }
+@media (max-width: 52rem) { .fork { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'h1' 'hyp' 'h2' 'acts'; gap: var(--space-3); } .fork-hyp::after, .fork-acts::before, .fork-acts li::after { display: none; } }
+.case { border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.case-row { display: grid; grid-template-columns: calc(var(--space-8) * 8) minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-3) var(--space-6); padding: var(--space-4) var(--space-5); border-top: 1px solid var(--border-faint); min-width: 0; }
+.case-row:first-child { border-top: 0; }
+.case-row > div { display: grid; gap: var(--space-1-5); min-width: 0; align-content: start; }
+.case-row p { overflow-wrap: anywhere; }
+.cmeter { display: inline-flex; gap: var(--space-1); }
+.cmeter i { display: block; width: var(--space-4); height: var(--space-4); border: 1px solid var(--foreground); }
+.cmeter i.on { background: var(--foreground); }
+.cmeter.off i { border: 1px dashed var(--muted-foreground); }
+@media (max-width: 62rem) { .case-row { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); } }
+.c-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+.c-split > div { display: grid; gap: var(--space-6); min-width: 0; align-content: start; }
+.c-split section { display: grid; gap: var(--space-3); }
+@media (max-width: 52rem) { .c-split { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); } }
+.mrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2) var(--space-4); align-items: center; padding: var(--space-2-5) 0; border-top: 1px solid var(--border-faint); }
+.mrow:first-child { border-top: 0; }
+.mrow .meta { grid-column: 1 / -1; }
+.mrow .status-meter-cells { display: flex; gap: var(--space-1); }
+.mrow .status-meter-sq { --sq: var(--space-4); }
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">060 forensics</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Confidence ruler</a>
+    <a data-tab="b" href="#b">B: Evidence rail</a>
+    <a data-tab="c" href="#c">C: Fork</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="anomalies">Anomalies at each confidence</button><button data-state="none">No anomalies</button><button data-state="odd">A confidence outside the three</button></span>
+</nav>
+
+<header class="app-head" id="apphead"></header>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+// MADE-UP forensics reports (Lendshed, the 11-09 fixture), written to the layout GSD's forensics workflow produced on a
+// scratch copy (read for shape only): `# Forensic Report`, bold Generated (UTC) and Problem, Evidence Summary (Git
+// Activity, Planning State, Artifact Completeness as a six-column grid whose cells carry count or ratio parentheticals),
+// Anomalies Detected (one `### {type} — Confidence: {X}` each, written in no order, with Evidence and Interpretation),
+// Root Cause Hypothesis (the writer's lead-in sentence, then a paragraph), Recommended Actions (numbered, inline code).
+// The "odd" state is made up for this sketch only: the LOW anomaly's confidence word replaced by one outside the three,
+// which a real file can hold; the page shows the word as written in a plain chip and sorts it last.
+const c = (ok, note) => ({ ok, note: note || '' });
+const REPORTS = {
+  anomalies: {
+    file: 'report-20260402-101500.md', generated: '2026-04-02T09:15:21Z',
+    problem: 'Phase 2 was marked finished at the end of the last session, but the permissions grid page still lets a member open a shed they hold no permission on.',
+    git: [['Last commit', '2026-04-01 — “feat(02-04): grid saves per-shed lend and adjust grants”'], ['Commits (last 30)', '30'], ['Time span', '2026-03-28 → 2026-04-01'], ['Uncommitted changes', 'yes — <code>src/server/routes/sheds.ts</code>, <code>src/web/pages/ShedList.tsx</code>'], ['Active worktrees', '1']],
+    axis: { from: '2026-03-28', last: '2026-04-01', gen: '2026-04-02', dirty: true, wt: 1, commits: 30 },
+    plan: [['Current milestone', 'v1.1'], ['Current phase', '02 — Roles & Permissions — complete'], ['Last session', 'Completed 02-05-PLAN.md'], ['Blockers', 'none flagged in STATE.md']],
+    grid: [['01', 'Member Sign-In & Sessions', [c(1, '(6)'), c(1), c(1), c(1, '(6/6)'), c(1, 'passed 4/4')]], ['02', 'Roles & Permissions', [c(1, '(5)'), c(1), c(0), c(1, '(4/5)'), c(0)]], ['03', 'Account Admin & Sessions', [c(0), c(1), c(0), c(0), c(0)]], ['04', 'Bulk Loan Export', [c(0), c(0), c(0), c(0), c(0)]]],
+    anomalies: [
+      { type: 'Phase marked complete without verification', conf: 'MEDIUM', ev: '<code>ROADMAP.md</code> ticks Phase 2 and <code>STATE.md</code> records <code>Completed 02-05-PLAN.md</code>, yet the phase folder holds no verification file, and the artifact grid shows summaries for 4 of 5 plans.', int: 'The completion tick was written by hand or by a session that skipped the verify step. The phase is probably closer to finished than the grid says, but nothing on disk proves it.' },
+      { type: 'Shed list route skips the permission check', conf: 'HIGH', ev: 'The two uncommitted files are the shed list route and its page. The route reads the member id from the session but never calls the <code>lend</code> check that <code>02-03-PLAN.md</code> required, and the last committed version of the route has the same gap.', int: 'This is the defect described in the problem statement. Plan 02-03 was executed, but its summary is the one missing from the grid, so the plan most likely stopped before the route change was committed.' },
+      { type: 'Research absent for a planned phase', conf: 'LOW', ev: 'Phase 2 and Phase 3 have a context file and no research file, while Phase 1 has both.', int: 'Research may have been skipped on purpose for a phase whose approach was settled in discussion. Worth noting only if the permission model needs a second look.' },
+    ],
+    lead: 'Based on the evidence above, the most likely explanation is:',
+    hyp: 'Plan 02-03 stopped before its route change was committed, and the next session closed the phase from the roadmap instead of from a verification run, so the missing check was never seen.',
+    actions: ['Finish plan 02-03: review the two uncommitted files, add the <code>lend</code> check to the shed list route, and commit.', 'Run <code>/gsd-verify-work 2</code> so the phase has a verification record before Phase 3 builds on it.', 'If the route still lets a member through, run <code>/gsd-debug</code> with the shed list route as the starting point.'],
+  },
+  none: {
+    file: 'report-20260406-090000.md', generated: '2026-04-06T08:00:12Z',
+    problem: 'The weekly check: confirm Phase 3 is on track and nothing was left half-done after the last session.',
+    git: [['Last commit', '2026-04-05 — “docs(03-03): complete session list plan”'], ['Commits (last 30)', '30'], ['Time span', '2026-04-01 → 2026-04-05'], ['Uncommitted changes', 'no'], ['Active worktrees', '1']],
+    axis: { from: '2026-04-01', last: '2026-04-05', gen: '2026-04-06', dirty: false, wt: 1, commits: 30 },
+    plan: [['Current milestone', 'v1.1'], ['Current phase', '03 — Account Admin & Sessions — in progress'], ['Last session', 'Completed 03-03-PLAN.md'], ['Blockers', 'none flagged in STATE.md']],
+    grid: [['01', 'Member Sign-In & Sessions', [c(1, '(6)'), c(1), c(1), c(1, '(6/6)'), c(1, 'passed 4/4')]], ['02', 'Roles & Permissions', [c(1, '(5)'), c(1), c(1), c(1, '(5/5)'), c(1, 'passed 3/3')]], ['03', 'Account Admin & Sessions', [c(1, '(5)'), c(1), c(1), c(1, '(3/5)'), c(0)]]],
+    anomalies: [],
+    lead: 'Based on the evidence above, the most likely explanation is:',
+    hyp: 'No issue was found. The work is proceeding normally; the missing summaries and verification for Phase 3 belong to plans that have not run yet.',
+    actions: ['No action needed. Continue with <code>/gsd-execute-phase 3</code>.'],
+  },
+};
+REPORTS.odd = JSON.parse(JSON.stringify(REPORTS.anomalies));
+REPORTS.odd.anomalies[2].conf = 'UNCERTAIN';
+
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') === 'dark' ? 'dark' : 'light';
+const S = { state: Object.keys(REPORTS).includes(params.get('state')) ? params.get('state') : 'anomalies' };
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const ICON = { down: '<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>', copy: '<svg class="i" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></svg>', chev: '<svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6 6-6"/></svg>' };
+const cur = () => REPORTS[S.state];
+const sq = (tone, extra = '') => `<span class="sq${extra}" data-tone="${tone}" aria-hidden="true"></span>`;
+const pct = (n) => `${(n * 100).toFixed(2)}%`;
+const RANK = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+const CONF = { high: 'High confidence', medium: 'Medium confidence', low: 'Low confidence' };
+const shortZone = (w) => w.replace(' confidence', '<span class="cw"> confidence</span>');
+const rank = (a) => RANK[String(a.conf).toUpperCase()] || 0;
+const kind = (a) => ({ 3: 'high', 2: 'medium', 1: 'low', 0: 'other' }[rank(a)]);
+const confWord = (a) => (rank(a) ? CONF[kind(a)] : `${a.conf[0]}${a.conf.slice(1).toLowerCase()}`);
+const confChip = (a) => `<span class="status-chip"${rank(a) ? '' : ' style="border-style:dashed"'}>${esc(confWord(a))}</span>`;
+// sorted HIGH first; ties keep the file's order; a word outside the three goes last
+const sorted = (r) => r.anomalies.map((a, i) => ({ ...a, i })).sort((x, y) => rank(y) - rank(x) || x.i - y.i);
+
+function header() {
+  return `<span class="app-brand"><i></i>Labelore</span>
+    <button class="brand-trigger" data-act="noop">Lendshed ${ICON.down}</button>
+    <nav class="app-nav"><a href="#" data-act="noop">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Research</a><a href="#" data-act="noop">Files</a></nav>`;
+}
+function head(r) {
+  return `<nav class="crumbs"><span>Lendshed</span><span>/</span><span>Forensics</span><span>/</span><span aria-current="page">${esc(r.file)}</span></nav>
+    <div class="heading-block">
+      <p class="eyebrow">Forensics</p>
+      <h1>Forensic Report</h1>
+      <div class="meta-row"><span class="meta">Generated ${esc(r.generated)}</span>
+        <span class="seg"><button class="btn-xs" aria-pressed="true" data-act="noop">View</button><button class="btn-xs" aria-pressed="false" data-act="noop">Source</button></span>
+        <button class="btn-xs" data-act="noop" aria-label="Copy path" title="Copy path">${ICON.copy} Copy path</button></div>
+      <p class="problem prose"><span class="micro-label">Problem</span><span class="source-note">${esc(r.problem)}</span></p>
+    </div>`;
+}
+
+// ---------- shared pieces ----------
+const actionsOl = (r) => `<ol class="olr">${r.actions.map((a) => `<li><span>${a}</span></li>`).join('')}</ol>`;
+const hypBody = (r) => `<span class="hyp-lead">${esc(r.lead)}</span><p class="sentence">${esc(r.hyp)}</p>`;
+const NONE = '<div class="nothing"><span class="sq" data-tone="quiet" aria-hidden="true"></span><span>No anomalies were detected.</span></div>';
+const anRow = (a, n, open) => `<details class="an" id="an-${n}"${open ? ' open' : ''}><summary><span class="no">${n}</span><span>${esc(a.type)}</span>${confChip(a)}</summary>
+  <div class="an-body"><div><span class="micro-label">Evidence</span><p>${a.ev}</p></div><div><span class="micro-label">Interpretation</span><p>${a.int}</p></div></div></details>`;
+const kvList = (rows) => `<dl class="kv">${rows.map((x) => `<div><dt>${esc(x[0])}</dt><dd>${x[1]}</dd></div>`).join('')}</dl>`;
+const ARTS = ['Plan', 'Context', 'Research', 'Summary', 'Verification'];
+const cellSq = (x) => sq(x.ok ? 'complete' : 'missing');
+const absentCount = (r) => r.grid.reduce((n, g) => n + g[2].filter((x) => !x.ok).length, 0);
+const gridTotal = (r) => r.grid.length * ARTS.length;
+
+const VIEWS = {}; const ACTS = {};
+ACTS.open = (el) => { const t = document.getElementById(`an-${el.dataset.n}`); if (t) { t.open = true; t.scrollIntoView({ block: 'center' }); } };
+
+// ---------- A: Confidence ruler ----------
+function ruler(r) {
+  const list = sorted(r);
+  const hasOther = list.some((a) => rank(a) === 0);
+  const zones = [...(hasOther ? [['other', 'Other']] : []), ['low', CONF.low], ['medium', CONF.medium], ['high', CONF.high]];
+  return `<div class="ruler" style="--zones:${zones.length}" role="group" aria-label="Anomalies by confidence">${zones.map(([k, label]) => {
+    const here = list.map((a, i) => ({ a, n: i + 1 })).filter((x) => kind(x.a) === k);
+    return `<div class="zone" data-n="${here.length}"><div class="zh"><span class="micro-label">${shortZone(label)}</span><span class="zc">${here.length}</span></div>
+      <div class="marks">${here.map((x) => `<button data-act="open" data-n="${x.n}" aria-label="${esc(x.a.type)}" title="${esc(x.a.type)}"><span class="mkn">${x.n}</span></button>`).join('')}</div></div>`;
+  }).join('')}</div><div class="ruler-axis"><span>Least sure</span><span>Most sure</span></div>`;
+}
+function gridTable(r) {
+  return `<div class="scroll"><table class="gtbl"><thead><tr><th>Phase</th>${ARTS.map((a) => `<th>${a}</th>`).join('')}</tr></thead><tbody>${r.grid.map((g) => `<tr><td><span class="mono">${g[0]}</span> ${esc(g[1])}</td>${g[2].map((x) => `<td><span class="gcell" data-ok="${x.ok ? 'yes' : 'no'}">${cellSq(x)}${x.ok ? (x.note ? `<span class="nt">${esc(x.note)}</span>` : '<span class="sr-only">Present</span>') : '<span>Absent</span>'}</span></td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+VIEWS.a = () => {
+  const r = cur(); const list = sorted(r);
+  return `<div class="page">${head(r)}
+    <div class="a-hero">
+      <section><h2 class="sh">Root cause hypothesis</h2><div class="a-hyp">${hypBody(r)}</div></section>
+      <section><h2 class="sh">Recommended actions</h2>${actionsOl(r)}</section>
+    </div>
+    <section><h2 class="sh">Anomalies</h2>${list.length ? ruler(r) : `<div class="ruler" style="--zones:3">${[CONF.low, CONF.medium, CONF.high].map((l) => `<div class="zone" data-n="0"><div class="zh"><span class="micro-label">${shortZone(l)}</span><span class="zc">0</span></div><div></div></div>`).join('')}</div>${NONE}`}
+      ${list.length ? `<div>${list.map((a, i) => anRow(a, i + 1, i === 0)).join('')}</div>` : ''}</section>
+    <div class="a-ev"><div><section><h2 class="sh">Evidence summary</h2><span class="micro-label">Git activity</span>${kvList(r.git)}<span class="micro-label">Planning state</span>${kvList(r.plan)}</section></div>
+      <div><section><h2 class="sh">Artifact completeness</h2>${gridTable(r)}<p class="meta">${absentCount(r)} of ${gridTotal(r)} artifacts absent</p></section></div></div></div>`;
+};
+
+// ---------- B: Evidence rail ----------
+function heat(r) {
+  const n = r.grid.length;
+  const cells = [`<span class="hh top"></span>`, ...r.grid.map((g) => `<span class="hh top" title="${esc(g[1])}">${g[0]}</span>`)];
+  ARTS.forEach((a, ai) => { cells.push(`<span class="hh">${a}</span>`); r.grid.forEach((g) => { const x = g[2][ai]; cells.push(`<span class="hc" data-ok="${x.ok ? 'yes' : 'no'}">${cellSq(x)}${x.ok ? (x.note ? `<span class="nt">${esc(x.note)}</span>` : '<span class="sr-only">Present</span>') : '<span>Absent</span>'}</span>`); }); });
+  return `<div class="scroll"><div class="heat" style="--np:${n}">${cells.join('')}</div></div>
+    <ul class="legend2">${r.grid.map((g) => `<li><b>${g[0]}</b> ${esc(g[1])}</li>`).join('')}</ul>`;
+}
+function gitAxis(r) {
+  const a = r.axis; const t0 = Date.parse(a.from); const t1 = Date.parse(a.gen); const x = (d) => (Date.parse(d) - t0) / (t1 - t0);
+  return `<div class="gaxis" role="img" aria-label="Time span ${a.from} to the last commit ${a.last}, report generated ${a.gen}"><i class="base"></i>
+    <i class="sp" style="left:0;width:${pct(x(a.last))}"></i>
+    <span class="pt" style="left:${pct(x(a.last))}" title="Last commit ${a.last}"></span><span class="pt gen r" style="left:100%" title="Generated ${a.gen}"></span>
+    <span class="lt" style="left:0">Time span</span>
+    <span class="lb l" style="left:0">${a.from.slice(5)}</span><span class="lb" style="left:${pct(x(a.last))}">${a.last.slice(5)}</span><span class="lb r" style="left:100%">${a.gen.slice(5)}</span></div>
+    <div class="chips"><span class="status-chip">Last commit</span><span class="status-chip" style="border-style:dashed">Generated</span></div>`;
+}
+VIEWS.b = () => {
+  const r = cur(); const list = sorted(r);
+  const main = `<div class="b-main">
+      <section><h2 class="sh">Root cause hypothesis</h2><div class="b-hyp">${hypBody(r)}</div></section>
+      <section><h2 class="sh">Recommended actions</h2>${actionsOl(r)}</section>
+      <section><h2 class="sh">Anomalies</h2>${list.length ? `<div class="b-cards">${list.map((a, i) => `<div class="b-card" data-conf="${kind(a)}">${anRow(a, i + 1, i === 0)}</div>`).join('')}</div><p class="meta">Rule weight carries the confidence too: heavy for High, medium for Medium, dashed for Low.</p>` : NONE}</section>
+    </div>`;
+  const rail = `<aside class="b-rail" aria-label="Evidence">
+      <section><h2 class="sh">Artifact completeness</h2>${heat(r)}<p class="meta">${absentCount(r)} of ${gridTotal(r)} artifacts absent</p></section>
+      <section><h2 class="sh">Evidence summary</h2><span class="micro-label">Git activity</span>${gitAxis(r)}${kvList(r.git)}<span class="micro-label">Planning state</span>${kvList(r.plan)}</section></aside>`;
+  return `<div class="page">${head(r)}<div class="b-grid">${main}${rail}</div></div>`;
+};
+
+// ---------- C: Fork ----------
+const cmeter = (a) => { const k = rank(a); return `<span class="cmeter${k ? '' : ' off'}" role="img" aria-label="${esc(confWord(a))}">${[1, 2, 3].map((n) => `<i class="${n <= k ? 'on' : ''}"></i>`).join('')}</span>`; };
+const meterRow = (g) => { const miss = g[2].map((x, i) => (x.ok ? null : ARTS[i])).filter(Boolean); return `<div class="mrow"><span><span class="mono">${g[0]}</span> ${esc(g[1])}</span>
+  <span class="status-meter-cells" role="img" aria-label="${5 - miss.length} of 5 artifacts present">${g[2].map((x) => cellSq(x)).join('')}</span>
+  <span class="meta">${miss.length ? `Absent: ${miss.join(', ')}` : 'None absent'}${g[2].some((x) => x.note) ? ' · ' + g[2].map((x, i) => (x.note ? `${ARTS[i]} ${esc(x.note)}` : '')).filter(Boolean).join(', ') : ''}</span></div>`; };
+VIEWS.c = () => {
+  const r = cur(); const list = sorted(r);
+  const tally = ['high', 'medium', 'low', 'other'].map((k) => [k, list.filter((a) => kind(a) === k).length]).filter((x) => x[1]);
+  const tallyHtml = list.length ? `<div class="fork-tally"><span class="micro-label">Anomalies</span>${tally.map(([k, n]) => `<span class="status-chip">${n} ${k === 'other' ? 'other' : k}</span>`).join('')}</div>` : `<div class="fork-tally"><span class="micro-label">Anomalies</span><span class="status-chip" style="border-style:dashed">None</span></div>`;
+  return `<div class="page">${head(r)}
+    <section class="fork-sec"><div class="fork">
+        <h2 class="sh" style="grid-area:h1">Root cause hypothesis</h2>
+        <div class="fork-hyp" style="grid-area:hyp">${hypBody(r)}${tallyHtml}</div>
+        <h2 class="sh" style="grid-area:h2">Recommended actions</h2>
+        <ol class="fork-acts" style="grid-area:acts" aria-label="Recommended actions">${r.actions.map((a) => `<li><span>${a}</span></li>`).join('')}</ol></div></section>
+    <section><h2 class="sh">Anomalies</h2>${list.length ? `<div class="case">${list.map((a, i) => `<div class="case-row"><div><span class="chips">${cmeter(a)}${confChip(a)}</span><span class="micro-label">Anomaly ${i + 1}</span></div><div><strong>${esc(a.type)}</strong><p><span class="micro-label">Evidence</span><br>${a.ev}</p></div><div><p><span class="micro-label">Interpretation</span><br>${a.int}</p></div></div>`).join('')}</div>` : NONE}</section>
+    <div class="c-split">
+      <div><section><h2 class="sh">Evidence summary</h2><span class="micro-label">Git activity</span>${kvList(r.git)}<span class="micro-label">Planning state</span>${kvList(r.plan)}</section></div>
+      <div><section><h2 class="sh">Artifact completeness</h2><div>${r.grid.map(meterRow).join('')}</div><p class="meta">${absentCount(r)} of ${gridTotal(r)} artifacts absent</p></section></div>
+    </div></div>`;
+};
+
+// ---------- render orchestration ----------
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY; const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.getElementById('apphead').innerHTML = header();
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  window.scrollTo(0, y);
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+window.addEventListener('hashchange', render);
+render();
+</script>
+</body>
+</html>
