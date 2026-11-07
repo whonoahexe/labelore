@@ -337,6 +337,80 @@ describe('the workstream first screen (11-31, D-10; RESEARCH Pitfall 10)', () =>
   });
 });
 
+describe('the workstream index view contract (11-31, sketch 056 C)', () => {
+  const read = (path: string): string => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
+  const page = read('src/web/pages/workstream-index-page.tsx');
+  const css = read('src/web/styles/globals.css');
+  const start = '/* phase-11-workstreams:start */';
+  const end = '/* phase-11-workstreams:end */';
+  const block = css.slice(css.indexOf(start), css.indexOf(end) + end.length);
+  const rules = (source: string): { selector: string; body: string }[] =>
+    [...source.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}@]+)\{([^{}]*)\}/g)].map((match) => ({
+      selector: match[1].replace(/\s+/g, ' ').trim(),
+      body: match[2],
+    }));
+
+  it('puts every rule in one contiguous block, once', () => {
+    expect(css.split(start)).toHaveLength(2);
+    expect(css.split(end)).toHaveLength(2);
+    expect(css.indexOf(start)).toBeLessThan(css.indexOf(end));
+    expect(css.slice(css.indexOf(end) + end.length)).not.toContain('.view-workstreams-');
+    expect(css.slice(0, css.indexOf(start))).not.toContain('.view-workstreams-');
+  });
+
+  it('draws names, statuses and phase names as React text: no raw-HTML prop anywhere on the page', () => {
+    expect(page).not.toMatch(/dangerouslySetInnerHTML|innerHTML|insertAdjacentHTML/);
+  });
+
+  it('uses only documented tones and never destructive or warning', () => {
+    const tones = [...page.matchAll(/data-tone=(?:"([a-z-]+)"|\{([^}]*)\})/g)];
+    expect(tones.length).toBeGreaterThan(0);
+    // A literal tone is a documented one; the one computed tone is the model's, typed 'complete' | 'in-flight' | 'quiet'.
+    for (const tone of tones) expect(['complete', 'quiet', 'in-flight', 'missing', 'active', 'status.tone']).toContain(tone[1] ?? tone[2]);
+    expect(page).not.toMatch(/destructive|warning/);
+    expect(block).not.toMatch(/--destructive|--warning|\[data-tone='(destructive|warning)'\]/);
+  });
+
+  it('keeps the accent off the Active mark and the active branch: --primary is the done arc of a ring and nothing else', () => {
+    const accented = rules(block).filter((rule) => rule.body.includes('--primary'));
+    expect(accented.map((rule) => rule.selector)).toEqual(['.view-workstreams-ring-done']);
+    for (const rule of rules(block)) {
+      if (/active/.test(rule.selector)) expect(rule.body, rule.selector).not.toMatch(/--primary|--in-flight|--missing/);
+    }
+    const active = rules(block).find((rule) => rule.selector === ".view-workstreams-branch[data-active='true']");
+    expect(active?.body).toContain('2px solid var(--foreground)');
+  });
+
+  it('sets text in the four sizes plus the approved fifth, the head lead at --fs-fluid-1 (X6)', () => {
+    const sizes = new Set([...block.matchAll(/font-size:\s*([^;]+);/g)].map((match) => match[1].trim()));
+    for (const size of sizes) {
+      expect(['var(--fs-display-3)', 'var(--fs-fluid-1)', 'var(--fs-7)', 'var(--fs-4)', 'var(--fs-2)', 'inherit']).toContain(size);
+    }
+    const lead = rules(block).find((rule) => rule.selector === '.view-workstreams-lead');
+    expect(lead?.body).toContain('font-size: var(--fs-fluid-1);');
+    expect(block).not.toMatch(/--fw-bold/);
+  });
+
+  it('draws the plans with the shared status-meter and the ring as one labelled image', () => {
+    expect(page).toContain("import { StatusMeter } from '../components/status-meter.tsx';");
+    expect(page).toContain('<StatusMeter');
+    expect(page).toContain('role="img" aria-label={ring.label}');
+    expect(page).toContain('aria-hidden="true" focusable="false"');
+    expect(page).not.toMatch(/record-disagreement|RecordDisagreement/);
+  });
+
+  it('turns the tree into an indented list under 52rem and lets branches wrap', () => {
+    expect(block).toContain('@media (max-width: 52rem)');
+    expect(block).toContain('grid-template-columns: repeat(var(--view-workstreams-cols), minmax(0, 1fr));');
+    expect(page).toContain('const MAX_COLUMNS = 4;');
+  });
+
+  it('gives a branch name one link and no nested interactive element in a branch heading', () => {
+    expect(page).toMatch(/<h3 className="view-workstreams-name"[^>]*>\s*\{branch\.url === null \? <span>\{branch\.name\}<\/span> : <Link to=\{branch\.url\}>\{branch\.name\}<\/Link>\}\s*<\/h3>/);
+    expect(page).not.toMatch(/<button/);
+  });
+});
+
 describe('the screens that stand in for a project', () => {
   it('shows a quiet "Loading projects…" with role status while the list loads', () => {
     const markup = renderToStaticMarkup(

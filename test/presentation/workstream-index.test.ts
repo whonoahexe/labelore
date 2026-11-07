@@ -232,6 +232,22 @@ describe('a branch that is not a workstream folder', () => {
   });
 });
 
+describe('the status tone', () => {
+  const presentation = { artifacts: [], projectName: null, rootPath: '/x' } as unknown as ProjectPresentation;
+  const toneOf = (overrides: Partial<WorkstreamEntry>): string | undefined => {
+    const inventory: WorkstreamInventory = { ...flatInventory(), mode: 'workstreams', entries: [entry({ name: 'a', ...overrides })] };
+    return buildWorkstreamIndex(inventory, presentation).branches[0].status?.tone;
+  };
+
+  it('draws an unfinished status in-flight with the word as written, a finished one complete, no roadmap quiet', () => {
+    expect(toneOf({ status: 'executing' })).toBe('in-flight');
+    expect(toneOf({ status: 'Verifying' })).toBe('in-flight');
+    expect(toneOf({ status: 'complete' })).toBe('complete');
+    expect(toneOf({ status: 'Not started', hasRoadmap: false })).toBe('quiet');
+    expect(toneOf({ status: null })).toBeUndefined();
+  });
+});
+
 describe('the shared root files', () => {
   it('shows milestones/ only when it holds something other than workstream archives', () => {
     const artifact = (path: string) => ({ path, key: path, kind: 'unknown' }) as unknown as ProjectPresentation['artifacts'][number];
