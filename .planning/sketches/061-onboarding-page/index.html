@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 061 — Onboarding page</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 061: the onboarding summary page (VIEW-18, Phase 11 D-03, D-16). /gsd-onboard writes onboarding/SUMMARY.md. The
+   page leads with the Recommended next step (the summary's command in the shared copy-command row, never run), then
+   Your project files (the four planning files, present or Not found), Codebase (brownfield, the map readiness chip,
+   the map path, fast map) and Documents (the ADR/PRD/SPEC/RFC candidate count). On a map-only project whose first screen
+   (the Phase 10 "Mapped, not started" head) suggests a different command, a quiet second block "The first screen
+   suggests" shows that command with its own Copy command button. Three pictures: objects on a desk (A), a ledger of
+   meters that reuses the shipped status-meter and chips (B), a stepped stack of floors where each command attaches to
+   the layer it comes from (C). Text is MADE UP (Lendshed, Tidemark: the 11-09 fixtures) in the layout /gsd-onboard
+   wrote (11-02). Tokens come from ../themes/default.css; every colour is a token or a colour-mix of tokens. Four font
+   sizes only: --fs-display-3 (the h1), --fs-7, --fs-4, --fs-2. */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --neutral-fill: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); overflow-x: hidden; }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; padding: 0 var(--space-0-5); background: var(--veil); overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.brand-trigger { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: var(--space-1) var(--space-2); border: 1px solid transparent; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+@media (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- page atoms (the four sizes: display h1 / heading fs-7 / body fs-4 / label fs-2) ---------- */
+.page { display: grid; gap: var(--space-8); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); min-width: 0; }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); overflow-wrap: anywhere; }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.meta { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.micro-label { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h2.sh { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.sentence { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); overflow-wrap: anywhere; }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; background: transparent; }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--neutral-fill); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); }
+.prose { max-width: 62ch; }
+.mono { font-family: var(--font-mono); }
+.ellip { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* closed bars (shared with every earlier sketch) */
+.bars { display: grid; border-top: 1px solid var(--border); }
+.bar { border-bottom: 1px solid var(--border); }
+.bar > summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding-inline: var(--space-2); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); min-width: 0; }
+.bar > summary::-webkit-details-marker { display: none; }
+.bar > summary:hover { background: var(--state-hover); }
+.bar[open] > summary .chev { transform: rotate(90deg); }
+.bar > summary .n { margin-left: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.bar-body { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--icon) + var(--space-4)); min-width: 0; }
+@media (max-width: 42rem) { .bar-body { padding-left: var(--space-2); } }
+
+
+/* the reference list (shared): only a reference that resolves is a link */
+.ref-list { display: grid; gap: var(--space-2); }
+.ref-list li { display: grid; grid-template-columns: var(--sq) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.ref-list .sq { transform: translateY(var(--space-0-5)); }
+.ref-list .path { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.ref-list a.path { text-decoration: underline; text-underline-offset: var(--space-0-5); text-decoration-color: var(--border); }
+.ref-list a.path:hover { text-decoration-color: var(--foreground); }
+.ref-list .why { display: block; color: var(--muted-foreground); }
+.dots { display: grid; gap: var(--space-2); }
+.dots li { display: grid; grid-template-columns: var(--sq) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.dots li::before { content: ''; width: var(--space-1-5); height: var(--space-1-5); margin: var(--space-1-5) var(--space-1); background: var(--muted-foreground); grid-column: 1; }
+.dots li > span { grid-column: 2; min-width: 0; overflow-wrap: anywhere; }
+.page section { display: grid; gap: var(--space-3); min-width: 0; align-content: start; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+.cols > div { display: grid; gap: var(--space-6); min-width: 0; align-content: start; }
+@media (max-width: 52rem) { .cols { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); } }
+
+
+/* ---------- additions for sketch 061 ---------- */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.kv { display: grid; gap: var(--space-2); }
+.kv > div { display: grid; grid-template-columns: calc(var(--space-8) * 5) minmax(0, 1fr); gap: var(--space-3); align-items: baseline; min-width: 0; }
+.kv dt { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.kv dd { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 42rem) { .kv > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-0-5); } }
+.mono-path { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); overflow-wrap: anywhere; }
+
+/* the shared copy-command row: the command as selectable mono text outside its button, then "Copy command" */
+.cmd-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); min-width: 0; }
+.cmd { flex: 1 1 auto; min-width: 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--border); background: var(--muted); font-family: var(--font-mono); font-size: var(--fs-4); font-weight: var(--fw-semibold); overflow-wrap: anywhere; user-select: all; }
+.cmd-row .btn-xs[data-copied='true'] { background: var(--muted); }
+.next { display: grid; gap: var(--space-2-5); min-width: 0; align-content: start; }
+/* the quiet second block: the Phase 10 head's own command, apart from the summary's */
+.first { display: grid; gap: var(--space-2-5); padding: var(--space-3) var(--space-4); border: 1px dashed var(--muted-foreground); min-width: 0; align-content: start; }
+.first .reason { color: var(--muted-foreground); }
+.first .cmd { background: transparent; }
+
+/* file sheet, mapped document, candidate sheet: the figure atoms shared by A and C */
+.sheet { position: relative; display: grid; align-content: space-between; gap: var(--space-4); min-height: calc(var(--space-8) * 3.5); padding: var(--space-2-5); border: 1px solid var(--foreground); background: var(--background); min-width: 0; }
+.sheet .top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.sheet .ln { display: grid; gap: var(--space-1-5); }
+.sheet .ln i { display: block; height: var(--space-1); background: var(--border); }
+.sheet .ln i:nth-child(2) { width: 70%; }
+.sheet .ln i:nth-child(3) { width: 45%; }
+.sheet .nm { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: 0; overflow-wrap: anywhere; }
+.sheet[data-ok='yes'] { background: var(--primary-tint); border-color: var(--primary-border); }
+.sheet[data-ok='no'] { border: 1px dashed var(--muted-foreground); background: transparent; color: var(--muted-foreground); }
+.sheet .nf { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.minis { display: flex; gap: var(--space-1); }
+.mini { flex: 1 1 0; min-width: 0; height: calc(var(--space-8) * 1.5); border: 1px solid var(--foreground); background: var(--card); }
+.mini[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); }
+.mini[data-tone='in-flight'] { border-color: var(--in-flight-border); background: color-mix(in oklch, var(--in-flight-fill) 12%, transparent); }
+.mini[data-tone='quiet'] { border: 1px dashed var(--muted-foreground); background: transparent; }
+.fignote { color: var(--muted-foreground); }
+.dashbox { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px dashed var(--muted-foreground); color: var(--muted-foreground); min-width: 0; }
+
+/* =====================================================================
+   A: Desk — the project as three objects standing on one table: a folder with four slots, the codebase map as a row of
+   mapped documents in a smaller folder, a pile of candidate documents. Details open as closed bars under the table.
+   ===================================================================== */
+.a-next { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-6) var(--space-8); align-items: start; }
+.a-next > section { display: grid; gap: var(--space-3); align-content: start; min-width: 0; }
+.a-next:not(:has(.first)) { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 62rem) { .a-next { grid-template-columns: minmax(0, 1fr); } }
+.desk { display: grid; grid-template-columns: minmax(0, 2.5fr) minmax(0, 1.2fr) minmax(0, 0.8fr); gap: var(--space-6) var(--space-6); align-items: end; padding: var(--space-6) var(--space-6) 0; border: 1px solid var(--border); border-bottom: 8px solid var(--foreground); background: var(--card); }
+.obj { display: grid; gap: var(--space-3); align-content: end; min-width: 0; text-align: left; padding-bottom: 0; }
+.obj .cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1-5) var(--space-3); }
+.obj .cap .n { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.obj:hover .cap h2 { text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.folder { position: relative; margin-top: var(--space-6); padding: var(--space-4); border: 2px solid var(--foreground); border-bottom: 0; background: var(--card); display: grid; gap: var(--space-3); }
+.folder .tab { position: absolute; left: -2px; bottom: 100%; padding: var(--space-1) var(--space-3); border: 2px solid var(--foreground); border-bottom: 0; background: var(--card); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); }
+.folder[data-found='no'] { border: 2px dashed var(--muted-foreground); border-bottom: 0; color: var(--muted-foreground); }
+.folder[data-found='no'] .tab { border: 2px dashed var(--muted-foreground); border-bottom: 0; }
+.slots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2-5); }
+.folder.small { padding: var(--space-3); }
+.folder .state-line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.pile { position: relative; height: calc(var(--space-8) * 5); }
+.pile .p { position: absolute; left: calc(var(--k) * var(--space-2)); bottom: 0; width: calc(100% - 5 * var(--space-2)); height: calc(var(--space-8) * 3 + var(--k) * var(--space-1-5)); border: 1px solid var(--foreground); background: var(--background); }
+.pile .p.top { display: grid; align-content: space-between; padding: var(--space-2-5); background: var(--card); z-index: 2; }
+.pile .p .big { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.pile[data-n='0'] .p { border: 1px dashed var(--muted-foreground); background: transparent; color: var(--muted-foreground); }
+.a-bars { margin-top: var(--space-2); }
+@media (max-width: 62rem) { .desk { grid-template-columns: minmax(0, 1fr); padding: var(--space-4) var(--space-4) 0; } .pile { height: calc(var(--space-8) * 4.5); } }
+@media (max-width: 42rem) { .slots { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* =====================================================================
+   B: Ledger of meters (reuse) — the shipped status-meter, status chips and copy-command row, one ledger row each:
+   the command first, then the three measures, each a large meter with its chips and facts beside it
+   ===================================================================== */
+.ledger { border-top: 8px solid var(--foreground); }
+.lrow { display: grid; grid-template-columns: calc(var(--space-8) * 6) minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--space-3) var(--space-8); align-items: center; padding: var(--space-5) 0; border-bottom: 1px solid var(--border); min-width: 0; }
+.lrow > * { min-width: 0; }
+.lrow .lab { display: grid; gap: var(--space-1); align-content: start; }
+.lrow .lab .n { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.lrow.cmdrow { grid-template-columns: calc(var(--space-8) * 6) minmax(0, 1fr); align-items: start; }
+.lrow .figure { display: grid; gap: var(--space-2); align-content: center; }
+.lrow .facts { display: grid; gap: var(--space-2); align-content: center; }
+.meter { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.meter .sq { --sq: var(--space-8); }
+.meter.docs .sq { --sq: var(--space-6); }
+.meter-cap { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.bigfig { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); }
+.bigfig b { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+@media (max-width: 62rem) { .lrow, .lrow.cmdrow { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); } }
+
+/* =====================================================================
+   C: Floors — a stepped stack, narrow at the top and wide at the ground: the command is the roof, then project files,
+   documents, the codebase map and the repo. A command attaches to the floor it comes from.
+   ===================================================================== */
+.zig { display: grid; justify-items: center; padding-bottom: var(--space-2); }
+.slab { width: var(--w, 100%); margin-top: -1px; padding: var(--space-4) var(--space-5); border: 1px solid var(--foreground); background: var(--card); display: grid; grid-template-columns: calc(var(--space-8) * 5) minmax(0, 1fr); gap: var(--space-3) var(--space-6); align-items: start; min-width: 0; }
+.slab > * { min-width: 0; }
+.slab:first-child { margin-top: 0; }
+.slab.roof { border-top: 8px solid var(--foreground); grid-template-columns: minmax(0, 1fr); }
+.slab.ground { background: var(--muted); border-bottom: 8px solid var(--foreground); }
+.slab[data-found='no'] { border-style: dashed; border-color: var(--muted-foreground); }
+.slab .lab { display: grid; gap: var(--space-1); align-content: start; }
+.slab .lab .n { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.slab .body { display: grid; gap: var(--space-3); align-content: start; }
+.windows { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2-5); }
+.windows .sheet { min-height: calc(var(--space-8) * 2.5); }
+.cands { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-items: end; }
+.cand { width: var(--space-8); height: calc(var(--space-8) * 1.25); border: 1px solid var(--foreground); background: var(--background); }
+.cands .cnt { margin-left: var(--space-2); }
+@media (max-width: 62rem) { .slab { --w: 100% !important; } }
+@media (max-width: 52rem) { .slab { grid-template-columns: minmax(0, 1fr); } .windows { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">061 onboarding</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Desk</a>
+    <a data-tab="b" href="#b">B: Meter ledger (reuse)</a>
+    <a data-tab="c" href="#c">C: Floors</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="present">All four present</button><button data-state="partial">Part-way, fast map</button><button data-state="maponly">Map only, commands differ</button><button data-state="same">Map only, same command</button><button data-state="missing">All four missing</button></span>
+</nav>
+
+<header class="app-head" id="apphead"></header>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+
+<script>
+// MADE-UP onboarding summaries, written to the layout /gsd-onboard produced on a scratch copy (11-02, read for shape only):
+// `# Onboarding Summary`, four `##` sections of plain `- label: value` bullets (Project State: four files, present or
+// missing; Codebase Context: brownfield, map readiness as a bare word, the map as a path with a parenthetical, fast map;
+// Docs Context: one integer; Recommended Next Step: one slash command). `present` is Lendshed's and `maponly` is
+// Tidemark's (the 11-09 fixtures). `partial`, `same` and `missing` are made up for this sketch only: a part-way project
+// with a fast map, a map-only project whose two commands are the same text, and a bare repo with nothing yet. The
+// `first` field is what the Phase 10 head computes (nextStep) and exists only for a map-only project; the page's
+// `differs` flag is true only when both commands exist and are not the same text.
+const FILES = ['PROJECT.md', 'REQUIREMENTS.md', 'ROADMAP.md', 'STATE.md'];
+const NEW_PROJECT = { command: '/gsd-new-project', reason: 'The map is complete. Next, set the project up.' };
+const DATA = {
+  present: { project: 'Lendshed', files: [1, 1, 1, 1], brownfield: true, readiness: 'none', mapPath: null, mapDetail: null, fast: false, docs: 2, command: '/gsd-manager', first: null },
+  partial: { project: 'Lendshed', files: [1, 1, 0, 0], brownfield: true, readiness: 'fast', mapPath: '.planning/codebase/', mapDetail: '4 documents', fast: true, docs: 1, command: '/gsd-new-project', first: null },
+  maponly: { project: 'Tidemark', files: [0, 0, 0, 0], brownfield: true, readiness: 'complete', mapPath: '.planning/codebase/', mapDetail: '7 documents', fast: false, docs: 3, command: '/gsd-ingest-docs', first: NEW_PROJECT },
+  same: { project: 'Tidemark', files: [0, 0, 0, 0], brownfield: true, readiness: 'complete', mapPath: '.planning/codebase/', mapDetail: '7 documents', fast: false, docs: 0, command: '/gsd-new-project', first: NEW_PROJECT },
+  missing: { project: 'Tidemark', files: [0, 0, 0, 0], brownfield: true, readiness: 'none', mapPath: null, mapDetail: null, fast: false, docs: 0, command: '/gsd-map-codebase', first: null },
+};
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') === 'dark' ? 'dark' : 'light';
+const S = { state: Object.keys(DATA).includes(params.get('state')) ? params.get('state') : 'present' };
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const ICON = {
+  down: '<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
+  copy: '<svg class="i" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></svg>',
+  check: '<svg class="i" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>',
+  chev: '<svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>',
+};
+const cur = () => DATA[S.state];
+const sq = (tone, extra = '') => `<span class="sq${extra}" data-tone="${tone}" aria-hidden="true"></span>`;
+const chip = (tone, label) => `<span class="status-chip" data-tone="${tone}">${label}</span>`;
+const READY = { complete: ['complete', 'Complete map'], fast: ['in-flight', 'Fast map'], partial: ['in-flight', 'Partial map'] };
+const readyChip = (s) => {
+  const w = s.readiness; if (!w || w === 'none') return '';
+  const k = READY[String(w).toLowerCase()];
+  return k ? chip(k[0], k[1]) : `<span class="status-chip" style="border-style:dashed">${esc(w)}</span>`;
+};
+const readyTone = (s) => (READY[String(s.readiness).toLowerCase()] || ['neutral'])[0];
+const lead = (t) => { const m = /^\d+/.exec(t || ''); return m ? Number(m[0]) : null; };
+const mapN = (s) => (s.mapPath ? lead(s.mapDetail) : null);
+const nPresent = (s) => s.files.filter(Boolean).length;
+const differs = (s) => !!(s.first && s.command && s.first.command !== s.command);
+const yesNo = (b) => (b === true ? 'Yes' : b === false ? 'No' : 'Not stated');
+const DOCS = 'ADR, PRD, SPEC or RFC candidates';
+const docsLine = (s) => (s.docs ? `${s.docs} ${DOCS}` : 'No candidates');
+
+function header(s) {
+  return `<span class="app-brand"><i></i>Labelore</span>
+    <button class="brand-trigger" data-act="noop">${esc(s.project)} ${ICON.down}</button>
+    <nav class="app-nav"><a href="#" data-act="noop">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Research</a><a href="#" data-act="noop">Files</a></nav>`;
+}
+function head(s) {
+  return `<nav class="crumbs"><span>${esc(s.project)}</span><span>/</span><span>Onboarding</span><span>/</span><span aria-current="page">SUMMARY.md</span></nav>
+    <div class="heading-block">
+      <p class="eyebrow">Onboarding</p>
+      <h1>Onboarding Summary</h1>
+      <div class="meta-row">
+        <span class="seg"><button class="btn-xs" aria-pressed="true" data-act="noop">View</button><button class="btn-xs" aria-pressed="false" data-act="noop">Source</button></span>
+        <button class="btn-xs" data-act="noop" aria-label="Copy path" title="Copy path">${ICON.copy} Copy path</button></div>
+    </div>`;
+}
+
+// ---------- shared pieces ----------
+const cmdRow = (cmd) => `<div class="cmd-row"><code class="cmd">${esc(cmd)}</code><button class="btn-xs copy" type="button" data-act="copy" data-cmd="${esc(cmd)}" data-copied="false" aria-label="Copy command: ${esc(cmd)}">${ICON.copy}<span>Copy command</span></button></div>`;
+const NEVER = '<p class="source-note">Labelore does not run commands. Paste it in your terminal.</p>';
+// the summary's command; the never-runs sentence appears here once. In the differing case a quiet line says whose command it is.
+const nextBlock = (s) => `<div class="next">${differs(s) ? '<p class="meta">From the onboarding summary</p>' : ''}${s.command ? cmdRow(s.command) : '<div class="dashbox"><span>No command in the summary.</span></div>'}${NEVER}</div>`;
+// the quiet second block: only when the first screen's command differs from the summary's; neither merged nor hidden
+const firstBlock = (s) => (differs(s) ? `<div class="first"><span class="micro-label">The first screen suggests</span><p class="reason">${esc(s.first.reason)}</p>${cmdRow(s.first.command)}</div>` : '');
+const pill = (name, ok) => ok
+  ? `<span class="status-chip" data-tone="complete">${sq('complete')}${esc(name)}</span>`
+  : `<span class="status-chip" data-tone="quiet">${sq('quiet')}${esc(name)} · Not found</span>`;
+const pills = (s) => `<div class="chips">${FILES.map((f, i) => pill(f, s.files[i])).join('')}</div>`;
+const meter = (n, total, tone, label, cls = '') => `<span class="meter ${cls}" role="img" aria-label="${esc(label)}">${Array.from({ length: total }, (_, i) => sq(i < n ? tone : 'quiet')).join('')}</span>`;
+const mapFacts = (s) => `<dl class="kv">
+    <div><dt>Brownfield repo</dt><dd>${yesNo(s.brownfield)}</dd></div>
+    <div><dt>Map readiness</dt><dd>${readyChip(s) || (s.readiness === 'none' ? 'None' : 'Not stated')}</dd></div>
+    <div><dt>Codebase map</dt><dd>${s.mapPath ? `<span class="mono-path">${esc(s.mapPath)}</span>${s.mapDetail ? ` <span class="source-note">(${esc(s.mapDetail)})</span>` : ''}` : chip('quiet', 'Not found')}</dd></div>
+    <div><dt>Fast map available</dt><dd>${yesNo(s.fast)}</dd></div></dl>`;
+const miniRow = (s) => {
+  const n = mapN(s); const t = readyTone(s) === 'in-flight' ? 'in-flight' : 'complete';
+  return `<div class="minis" role="img" aria-label="${n === null ? 'Documents mapped: not stated' : `${n} of 7 documents mapped`}">${Array.from({ length: 7 }, (_, i) => `<span class="mini" data-tone="${n !== null && i < n ? t : 'quiet'}"></span>`).join('')}</div>`;
+};
+const sheet = (name, ok) => (ok
+  ? `<div class="sheet" data-ok="yes"><div class="top">${sq('complete')}</div><div class="ln"><i></i><i></i><i></i></div><span class="nm">${esc(name)}</span></div>`
+  : `<div class="sheet" data-ok="no"><div class="top">${sq('quiet')}</div><span class="nf">Not found</span><span class="nm">${esc(name)}</span></div>`);
+
+const VIEWS = {}; const ACTS = {};
+ACTS.open = (el) => { const t = document.getElementById(el.dataset.bar); if (t) { t.open = true; t.scrollIntoView({ block: 'center' }); } };
+
+// ---------- A: Desk ----------
+function barOf(id, label, count, body) { return `<details class="bar" id="${id}"><summary>${ICON.chev}<span>${label}</span><span class="n">${count}</span></summary><div class="bar-body">${body}</div></details>`; }
+VIEWS.a = () => {
+  const s = cur(); const found = !!s.mapPath; const n = mapN(s);
+  const layers = Math.min(Math.max(s.docs, 1), 5);
+  const files = `<div class="obj" data-act="open" data-bar="bar-files"><div class="cap"><h2 class="sh">Your project files</h2><span class="n">${nPresent(s)} of 4</span></div>
+      <div class="folder"><span class="tab">.planning/</span><div class="slots">${FILES.map((f, i) => sheet(f, s.files[i])).join('')}</div></div></div>`;
+  const code = `<div class="obj" data-act="open" data-bar="bar-code"><div class="cap"><h2 class="sh">Codebase</h2>${found ? readyChip(s) : chip('quiet', 'Not found')}</div>
+      <div class="folder small" data-found="${found ? 'yes' : 'no'}"><span class="tab">codebase/</span>${miniRow(s)}<span class="n meter-cap">${n === null ? (found ? 'Documents mapped: not stated' : 'No map') : `${n} of 7 documents mapped`}</span></div></div>`;
+  const pile = `<div class="obj" data-act="open" data-bar="bar-docs"><div class="cap"><h2 class="sh">Documents</h2><span class="n">${s.docs} ${s.docs === 1 ? 'candidate' : 'candidates'}</span></div>
+      <div class="pile" data-n="${s.docs}" role="img" aria-label="${esc(docsLine(s))}">${Array.from({ length: layers }, (_, k) => `<span class="p${k === layers - 1 ? ' top' : ''}" style="--k:${k}">${k === layers - 1 ? `<span class="big">${s.docs}</span><span class="ln" style="display:grid;gap:var(--space-1-5)"><i style="display:block;height:var(--space-1);background:var(--border)"></i><i style="display:block;height:var(--space-1);width:60%;background:var(--border)"></i></span>` : ''}</span>`).join('')}</div></div>`;
+  const first = firstBlock(s);
+  return `<div class="page">${head(s)}
+    <div class="a-next"><section><h2 class="sh">Recommended next step</h2>${nextBlock(s)}</section>${first ? `<section>${first}</section>` : ''}</div>
+    <div class="desk" role="group" aria-label="The project at a glance">${files}${code}${pile}</div>
+    <div class="bars a-bars">
+      ${barOf('bar-files', 'Your project files', `${nPresent(s)} of 4 present`, pills(s))}
+      ${barOf('bar-code', 'Codebase', s.mapPath ? esc(s.mapPath) : 'Not found', mapFacts(s))}
+      ${barOf('bar-docs', 'Documents', s.docs ? `${s.docs}` : 'None', `<p>${esc(docsLine(s))}</p>`)}
+    </div></div>`;
+};
+
+// ---------- B: Meter ledger (reuse: status-meter, status-chip, copy-command row) ----------
+VIEWS.b = () => {
+  const s = cur(); const found = !!s.mapPath; const n = mapN(s);
+  const cap = (txt) => `<span class="meter-cap">${txt}</span>`;
+  const docSq = Math.min(s.docs, 12);
+  return `<div class="page">${head(s)}
+    <div class="ledger">
+      <div class="lrow cmdrow"><div class="lab"><h2 class="sh">Recommended next step</h2></div>
+        <div style="display:grid;gap:var(--space-4);min-width:0">${nextBlock(s)}${firstBlock(s)}</div></div>
+      <div class="lrow"><div class="lab"><h2 class="sh">Your project files</h2><span class="n">${nPresent(s)} of 4 present</span></div>
+        <div class="figure">${meter(nPresent(s), 4, 'complete', `${nPresent(s)} of 4 project files present`)}${cap(`${nPresent(s)} of 4 present`)}</div>
+        <div class="facts">${pills(s)}</div></div>
+      <div class="lrow"><div class="lab"><h2 class="sh">Codebase</h2><span class="n">${found ? 'Mapped' : 'Not mapped'}</span></div>
+        <div class="figure">${meter(n === null ? 0 : n, 7, readyTone(s) === 'in-flight' ? 'in-flight' : 'complete', n === null ? 'Documents mapped: not stated' : `${n} of 7 documents mapped`)}<span class="chips">${found ? readyChip(s) : chip('quiet', 'Not found')}${n === null ? '' : `<span class="meter-cap">${n} of 7 documents mapped</span>`}</span></div>
+        <div class="facts">${mapFacts(s)}</div></div>
+      <div class="lrow"><div class="lab"><h2 class="sh">Documents</h2><span class="n">${s.docs} ${s.docs === 1 ? 'candidate' : 'candidates'}</span></div>
+        <div class="figure"><span class="bigfig"><b>${s.docs}</b><span class="source-note">${s.docs ? DOCS : 'No candidates'}</span></span>${s.docs ? `<span class="meter docs" role="img" aria-label="${esc(docsLine(s))}">${Array.from({ length: docSq }, () => sq('neutral')).join('')}</span>` : ''}</div>
+        <div class="facts"></div></div>
+    </div></div>`;
+};
+
+// ---------- C: Floors ----------
+VIEWS.c = () => {
+  const s = cur(); const found = !!s.mapPath; const n = mapN(s);
+  const cands = Math.min(s.docs, 12);
+  return `<div class="page">${head(s)}
+    <div class="zig">
+      <section class="slab roof" style="--w:64%" aria-label="Recommended next step"><div class="lab"><h2 class="sh">Recommended next step</h2></div>${nextBlock(s)}</section>
+      <section class="slab" style="--w:76%"><div class="lab"><h2 class="sh">Your project files</h2><span class="n">${nPresent(s)} of 4 present</span></div>
+        <div class="body"><div class="windows">${FILES.map((f, i) => sheet(f, s.files[i])).join('')}</div></div></section>
+      <section class="slab" style="--w:88%" data-found="${s.docs ? 'yes' : 'no'}"><div class="lab"><h2 class="sh">Documents</h2><span class="n">${s.docs} ${s.docs === 1 ? 'candidate' : 'candidates'}</span></div>
+        <div class="body"><div class="cands" role="img" aria-label="${esc(docsLine(s))}">${Array.from({ length: cands }, () => '<span class="cand"></span>').join('')}<span class="cnt source-note">${s.docs ? DOCS : 'No candidates'}</span></div></div></section>
+      <section class="slab ground" style="--w:100%" data-found="${found ? 'yes' : 'no'}"><div class="lab"><h2 class="sh">Codebase</h2>${found ? readyChip(s) : chip('quiet', 'Not found')}</div>
+        <div class="body">${miniRow(s)}<span class="meter-cap">${n === null ? (found ? 'Documents mapped: not stated' : 'No map') : `${n} of 7 documents mapped`}</span>${mapFacts(s)}${firstBlock(s)}</div></section>
+    </div></div>`;
+};
+
+// ---------- render orchestration ----------
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY; const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.getElementById('apphead').innerHTML = header(cur());
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  window.scrollTo(0, y);
+}
+// "Copy command" turns into "Copied" inside the button for 1.5 s; no toast, nothing runs (the clipboard write is silent on failure)
+ACTS.copy = (el) => {
+  try { if (navigator.clipboard) navigator.clipboard.writeText(el.dataset.cmd).catch(() => {}); } catch (err) { /* silent */ }
+  el.dataset.copied = 'true'; el.innerHTML = `${ICON.check}<span>Copied</span>`;
+  clearTimeout(el._t); el._t = setTimeout(() => { el.dataset.copied = 'false'; el.innerHTML = `${ICON.copy}<span>Copy command</span>`; }, 1500);
+};
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); return; }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+window.addEventListener('hashchange', render);
+render();
+</script>
+</body>
+</html>
