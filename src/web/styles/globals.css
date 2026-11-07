@@ -35334,3 +35334,419 @@ button.view-indexes-tile:hover:not(:disabled) {
   }
 }
 /* phase-11-indexes:end */
+
+/* phase-11-seed:start */
+/* Phase 11 (11-22): the seed page, sketch 057 winner C (Seed packet). The page renders four font sizes: the h1 as
+   ArtifactHeader draws it (--fs-display-3), the "Surface when" sentence, the stamp's scope letter and the section
+   headings (--fs-7), Body (--fs-4) and Label (--fs-2). Where a shared class sets a size outside that set, the page takes
+   it inside with a page-scoped rule below, so no shared class is edited. Every colour is a theme token: dormant and a
+   missing trigger are the `quiet` tone, active and triggered the `in-flight` tone, a breadcrumb that resolves the
+   `complete` square; nothing is `missing` or destructive (a path that moved is a fact, not a failure). The page is one
+   narrow column, at most 48rem, centred. */
+.view-seed-root {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  width: min(100%, 48rem);
+  margin-inline: auto;
+  min-width: 0;
+}
+
+.view-seed-root > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-seed-root) .status-chip,
+.artifact-page:has(.view-seed-root) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.view-seed-root code {
+  padding: 0 var(--space-0-5);
+  background: var(--code-veil);
+  font-family: var(--font-mono);
+  font-size: inherit;
+  overflow-wrap: anywhere;
+}
+
+.view-seed-meta {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  overflow-wrap: anywhere;
+}
+
+.view-seed-key {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-seed-nowrap {
+  white-space: nowrap;
+}
+
+/* The envelope: a heavy frame on the card, the flap drawn as two hairlines from the top corners. */
+.view-seed-packet {
+  position: relative;
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  border: 2px solid var(--foreground);
+  background: var(--card);
+  min-width: 0;
+}
+
+.view-seed-flap {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4rem;
+  pointer-events: none;
+}
+
+.view-seed-flap svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.view-seed-flap line {
+  stroke: var(--border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.view-seed-top {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.view-seed-from {
+  display: grid;
+  gap: var(--space-1);
+  max-width: 22rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-seed-marks {
+  display: flex;
+  align-items: flex-start;
+  margin-left: auto;
+}
+
+.view-seed-postmark {
+  display: grid;
+  gap: var(--space-0-5);
+  justify-items: center;
+  max-width: 8rem;
+  margin-top: var(--space-3);
+  margin-right: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--muted-foreground);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-align: center;
+  transform: rotate(-5deg);
+}
+
+.view-seed-stamp {
+  display: grid;
+  gap: var(--space-0-5);
+  justify-items: center;
+  align-content: center;
+  width: 6rem;
+  aspect-ratio: 4 / 5;
+  padding: var(--space-2);
+  border: 3px dashed var(--foreground);
+  outline: 1px solid var(--background);
+  outline-offset: -5px;
+  background: var(--muted);
+}
+
+.view-seed-stamp[data-state='unknown'] {
+  border-color: var(--muted-foreground);
+  background: transparent;
+}
+
+.view-seed-stamp-letter {
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-none);
+}
+
+.view-seed-stamp-word {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-align: center;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+/* The address: the "Surface when" sentence behind a heavy left rule; no trigger swaps the rule for a dashed one. */
+.view-seed-address {
+  position: relative;
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  padding: var(--space-6) 0 var(--space-6) var(--space-4);
+  border-left: 2px solid var(--foreground);
+}
+
+.view-seed-address[data-empty='true'] {
+  border-left-style: dashed;
+  border-left-color: var(--muted-foreground);
+}
+
+.view-seed-sentence {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+.view-seed-foot {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--border);
+}
+
+.view-seed-seal {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.view-seed-seal .status-square {
+  --status-square-size: var(--space-2-5);
+}
+
+.view-seed-seal[data-tone='in-flight'] {
+  border-color: var(--in-flight-fill);
+  color: var(--in-flight-fill);
+}
+
+.view-seed-seal[data-tone='quiet'] {
+  border-style: dashed;
+  color: var(--muted-foreground);
+}
+
+/* The postscript and the folded sheets under the envelope. */
+.view-seed-audit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--border);
+}
+
+.view-seed-audit-key {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-seed-sheet {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.view-seed-heading {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+.view-seed-prose {
+  max-width: 62ch;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-seed-list {
+  display: grid;
+  gap: var(--space-1-5);
+  max-width: 62ch;
+  margin: 0;
+  padding: 0 0 0 var(--space-4);
+  list-style: disc;
+  overflow-wrap: anywhere;
+}
+
+.view-seed-withheld {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1-5);
+}
+
+.view-seed-crumbs {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-seed-crumb {
+  display: grid;
+  grid-template-columns: var(--space-2-5) minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-seed-crumb .status-square {
+  --status-square-size: var(--space-2-5);
+  transform: translateY(var(--space-0-5));
+}
+
+.view-seed-crumb .status-chip {
+  margin-left: var(--space-2);
+}
+
+.view-seed-path {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+a.view-seed-path {
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: var(--space-0-5);
+}
+
+a.view-seed-path:hover {
+  text-decoration-color: var(--foreground);
+}
+
+.view-seed-why {
+  display: block;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+/* The closed bars: Scope estimate, When to surface, Notes. */
+.view-seed-bars {
+  display: grid;
+  border-top: 1px solid var(--border);
+}
+
+.view-seed-bar {
+  border-bottom: 1px solid var(--border);
+}
+
+.view-seed-bar-sum {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-10);
+  padding-inline: var(--space-2);
+  font-weight: var(--fw-semibold);
+  list-style: none;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.view-seed-bar-sum::-webkit-details-marker {
+  display: none;
+}
+
+.view-seed-bar-sum:hover {
+  background: var(--state-hover);
+}
+
+.view-seed-bar-chev {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+.view-seed-bar[open] .view-seed-bar-chev {
+  transform: rotate(90deg);
+}
+
+.view-seed-bar-count {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.view-seed-bar-body {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-2) var(--space-2) var(--space-6) var(--space-8);
+}
+
+.view-seed-size {
+  font-weight: var(--fw-semibold);
+}
+
+@media (max-width: 42rem) {
+  .view-seed-packet {
+    padding: var(--space-4);
+  }
+
+  .view-seed-top {
+    flex-direction: column;
+  }
+
+  .view-seed-marks {
+    margin-left: 0;
+  }
+
+  .view-seed-stamp {
+    width: 5rem;
+  }
+
+  .view-seed-bar-body {
+    padding-left: var(--space-2);
+  }
+}
+/* phase-11-seed:end */

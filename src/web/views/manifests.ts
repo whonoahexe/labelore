@@ -32,6 +32,7 @@ import { composeCodebase } from './codebase-page.ts';
 import { composePause } from './pause-page.ts';
 import { composeSpikes } from './spikes-page.ts';
 import { composeIndexes } from './indexes-page.ts';
+import { composeSeed } from './seed-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -499,6 +500,14 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     lead: 'What the codebase indexes say, one tile per file, as short summaries; the raw data stays on disk.',
     promote: [{ type: 'section', heading: /\S/, all: true }],
     indexesPage: composeIndexes,
+  },
+  // Phase 11 (11-22, sketch-057 winner C): one view for every seeds/SEED-*.md. `promote` is the silent fallback when the
+  // page composes nothing (Phase 10 C1, X2).
+  seed: {
+    kind: 'seed',
+    lead: 'An idea waiting to surface: what it is, when it should come up, and where it was planted.',
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+    seedPage: composeSeed,
   },
 });
 

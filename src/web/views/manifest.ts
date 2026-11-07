@@ -89,6 +89,10 @@ import type { SpikesContext } from '../../presentation/spikes-context.ts';
 import type { ComposedIndexes } from './indexes-page.ts';
 // Type-only import - the indexes context is built server-side (Phase 11, 11-18).
 import type { IndexesContext } from '../../presentation/indexes-context.ts';
+// Type-only import - same reason as `pausePage` above (Phase 11, 11-22, sketch-057 winner C, the seed page).
+import type { ComposedSeed } from './seed-page.ts';
+// Type-only import - the seed and thread links context is built server-side (Phase 11, 11-22).
+import type { SeedThreadLinks } from '../../presentation/seed-thread-links.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -224,6 +228,11 @@ export interface ViewManifest {
    * `indexesContext`), and the page falls back to the promoted-section view, which the manifest keeps as `promote`,
    * with no notice (Phase 10 C1, X2). */
   indexesPage?: (input: ViewInput) => ComposedIndexes | null;
+  /** Phase 11 (11-22, sketch-057 winner C): the seed page a manifest opts into in View mode - the one `seed` manifest,
+   * shared by every `seeds/SEED-*.md` (D-02). Returns `null` when the input can't compose one (no `structured.seed`, or
+   * a seed whose lift carries nothing beyond its id and idea), and the page falls back to the promoted-section view,
+   * which the manifest keeps as `promote`, with no notice (Phase 10 C1, X2). */
+  seedPage?: (input: ViewInput) => ComposedSeed | null;
   /** Phase 10 (10-08): true for a kind whose document text must never reach View mode through the generic
    * fallback (promoted sections or the whole document) - `user-setup`, whose file can hold a pasted value
    * (CONTEXT D-11). The Source toggle stays the way to the text. See `documentHtmlAllowedInView`. */
@@ -354,6 +363,10 @@ export interface ViewInput {
   /** Phase 11 (11-18): the Indexes page's tiles (bounded summaries only), built server-side and passed through from
    * the document response - `null`/absent when the artifact is not an intel or graph file. */
   indexesContext?: IndexesContext | null;
+  /** Phase 11 (11-22): a seed's Breadcrumbs (and a thread's References, read by 11-23) resolved to payload artifact
+   * addresses, plus the day the project was read, built server-side and passed through from the document response -
+   * `null`/absent when the artifact is not a seed or a thread. */
+  seedThreadLinks?: SeedThreadLinks | null;
 }
 
 export type ComposedBlock = { id: string; label: string } & (

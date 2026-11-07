@@ -1,7 +1,7 @@
-// VIEW-05's registry-completeness test: every kind in `VIEW_KINDS` (34 total: UI-SPEC's own 16
+// VIEW-05's registry-completeness test: every kind in `VIEW_KINDS` (35 total: UI-SPEC's own 16
 // plus `review-fix`, `findings`, `debug`, `todo` and `note`, RESEARCH.md § Open Question 1's recommended corpus-grep
 // gap and discovery's directory-position kind, the Phase 9 kinds, and Phase 10's `codebase` plus the six specification
-// and check kinds, and Phase 11's `pause`, `spikes` and `indexes`) must have a registered `VIEW_MANIFESTS` entry with a non-empty `lead` and at least one
+// and check kinds, and Phase 11's `pause`, `spikes`, `indexes` and `seed`) must have a registered `VIEW_MANIFESTS` entry with a non-empty `lead` and at least one
 // `promote` entry — and no manifest may exist for a kind that isn't a `VIEW_KINDS` member. Both
 // directions are asserted via a single sorted-keys `toEqual`, so a new kind added to either list
 // without a matching update on the other fails this suite immediately.
@@ -20,8 +20,8 @@ const KNOWN_COMPONENTS: readonly BlockComponentKey[] = [
 ];
 
 describe('view registry completeness (VIEW-05)', () => {
-  it('VIEW_KINDS has exactly 34 members', () => {
-    expect(VIEW_KINDS.length).toBe(34);
+  it('VIEW_KINDS has exactly 35 members', () => {
+    expect(VIEW_KINDS.length).toBe(35);
   });
 
   it('VIEW_MANIFESTS keys and VIEW_KINDS are the same set, both directions', () => {
