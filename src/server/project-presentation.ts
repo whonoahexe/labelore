@@ -169,6 +169,9 @@ export interface ArtifactDto {
   fileClass: FileClass;
   /** Artifact.sizeBytes, passed through (Phase 7): the byte length the filesystem port reported. */
   sizeBytes: number;
+  /** Where the file really is, relative to the project root. Present only in a workstream-scoped presentation,
+   * where `path` is the scope's virtual `.planning/...` path; a flat project's artifacts carry no such key. */
+  realPath?: string;
 }
 
 export interface ProjectPresentation {
@@ -553,7 +556,7 @@ function projectRequirement(requirement: Requirement): RequirementDto {
   };
 }
 
-function artifactDtos(project: Project, routeTable: RouteTable): ArtifactDto[] {
+function artifactDtos(project: Project, routeTable: RouteTable, pathMapper?: PathMapper): ArtifactDto[] {
   const context = new Map<string, { identity: PhaseIdentity; phaseKey: string }>();
   for (const phase of project.phases) {
     for (const artifact of Object.values(phase.artifacts)) {
@@ -580,10 +583,14 @@ function artifactDtos(project: Project, routeTable: RouteTable): ArtifactDto[] {
         bodyLength: artifact.bodyLength,
         fileClass: artifact.fileClass,
         sizeBytes: artifact.sizeBytes,
+        ...(pathMapper ? { realPath: pathMapper(artifact.path) } : {}),
       };
     })
     .sort((left, right) => left.path.localeCompare(right.path));
 }
+
+/** Maps a scope's virtual artifact path to the real path on disk (scoped presentations only). */
+export type PathMapper = (virtualPath: string) => string;
 
 function emptyPresentation(snapshot: ProjectSnapshot, slug: string): ProjectPresentation {
   return {
@@ -615,6 +622,7 @@ export function toProjectPresentation(
   snapshot: ProjectSnapshot,
   slug: string = slugOf(snapshot.rootPath),
   routeTable: RouteTable = buildRouteTable(snapshot.project),
+  pathMapper?: PathMapper,
 ): ProjectPresentation {
   const project = snapshot.project;
   if (!project) return emptyPresentation(snapshot, slug);
@@ -758,7 +766,7 @@ export function toProjectPresentation(
     state,
     milestones,
     requirements: project.requirements.map(projectRequirement),
-    artifacts: artifactDtos(project, routeTable),
+    artifacts: artifactDtos(project, routeTable, pathMapper),
     blockers: blockersOf(state),
     decisions: decisionsOf(state),
     checkpoints: allCheckpoints,
