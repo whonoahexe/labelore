@@ -99,6 +99,9 @@ import type { ComposedThread } from './thread-page.ts';
 import type { ComposedReport } from './report-page.ts';
 // Type-only import - same reason as `seedPage` above (Phase 11, 11-25, sketch-060 winner B, the forensics page).
 import type { ComposedForensics } from './forensics-page.ts';
+// Type-only imports - same reason as `seedPage` above (Phase 11, 11-26, sketch-061 winner A, the onboarding page).
+import type { ComposedOnboarding } from './onboarding-page.ts';
+import type { OnboardingContext } from '../../presentation/onboarding-context.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -254,6 +257,11 @@ export interface ViewManifest {
    * (no `structured.forensics`), and the page falls back to the promoted-section view, which the manifest keeps as `promote`,
    * with no notice (Phase 10 C1, X2). */
   forensicsPage?: (input: ViewInput) => ComposedForensics | null;
+  /** Phase 11 (11-26, sketch-061 winner A "Desk"): the onboarding page a manifest opts into in View mode - the one `onboarding`
+   * manifest, for the one `onboarding/SUMMARY.md` file (D-03). Returns `null` when the input can't compose one (no
+   * `structured.onboarding`), and the page falls back to the promoted-section view, which the manifest keeps as `promote`, with no
+   * notice (Phase 10 C1, X2). */
+  onboardingPage?: (input: ViewInput) => ComposedOnboarding | null;
   /** Phase 10 (10-08): true for a kind whose document text must never reach View mode through the generic
    * fallback (promoted sections or the whole document) - `user-setup`, whose file can hold a pasted value
    * (CONTEXT D-11). The Source toggle stays the way to the text. See `documentHtmlAllowedInView`. */
@@ -388,6 +396,10 @@ export interface ViewInput {
    * addresses, plus the day the project was read, built server-side and passed through from the document response -
    * `null`/absent when the artifact is not a seed or a thread. */
   seedThreadLinks?: SeedThreadLinks | null;
+  /** Phase 11 (11-26): the onboarding summary's command, project files, codebase facts and, for a map-only project, the first
+   * screen's own command and whether the two differ, built server-side and passed through from the document response -
+   * `null`/absent when the artifact is not the onboarding summary. */
+  onboardingContext?: OnboardingContext | null;
 }
 
 export type ComposedBlock = { id: string; label: string } & (
