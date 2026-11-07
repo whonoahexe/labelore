@@ -38393,8 +38393,8 @@ a.view-workstreams-file:hover {
 }
 /* Phase 11 (11-32): the header scope chip, sketch 056 C's inside screen (D-11). A smaller second level beside the
    project switcher, not a second project switcher: a mono Label-size button ruled with the foreground (neutral,
-   never accent) that opens a non-modal popover of the project's workstreams. Sizes are Label (--fs-2) and Meta
-   (--fs-3); colour is tokens only, and the Active mark is plain foreground like the index's. */
+   never accent) that opens a non-modal popover of the project's workstreams. Sizes are Label (--fs-2) and Body
+   (--fs-4); colour is tokens only, and the Active mark is plain foreground like the index's. */
 .scope-chip {
   display: inline-flex;
   flex: none;
@@ -38498,7 +38498,7 @@ a.view-workstreams-file:hover {
 .scope-chip-row-name {
   overflow: hidden;
   font-family: var(--font-mono);
-  font-size: var(--fs-3);
+  font-size: var(--fs-4);
   font-weight: var(--fw-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -38531,6 +38531,18 @@ a.view-workstreams-file:hover {
   margin-top: var(--space-1);
   padding-top: var(--space-1);
   border-top: 1px solid var(--border-faint);
+}
+
+/* Phase 11 (11-32): inside a workstream the drawer's places list opens with two groups of file links, the files the
+   scope shares with the project and then the workstream's own (sketch 056 C). The shared group is set apart from the
+   workstream's by a dashed rule; the rows are the drawer's own file rows, in mono because they are file names. */
+.places-group[data-scope='shared'] {
+  padding-bottom: var(--space-3);
+  border-bottom: 1px dashed var(--border);
+}
+
+.places-group[data-scope] .places-label {
+  font-family: var(--font-mono);
 }
 
 /* Under the shell's 42rem breakpoint, and on a touch screen, the trigger and the rows are full 40px targets. */
