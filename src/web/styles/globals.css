@@ -36883,3 +36883,168 @@ a.view-thread-path:hover {
   margin-top: var(--space-1-5);
 }
 /* phase-11-report:end */
+
+/* phase-11-forensics:start */
+/* Phase 11 (11-25): the forensics page, sketch 060 winner B (Evidence rail). The page renders four font sizes: the h1 as
+   ArtifactHeader draws it (--fs-display-3), the section headings and the hypothesis sentence (--fs-7), Body (--fs-4) and
+   Label (--fs-2). Where a shared class sets a size outside that set, the page takes it inside with a page-scoped rule below,
+   so no shared class is edited. Every colour is a theme token. Confidence has no good or bad polarity: the chip is untoned and
+   the card's rule weight repeats it. A present artifact is `complete`, an absent one `missing` (an expected item that has not
+   appeared) with the word "Absent"; nothing is destructive or warning, and every state is marked by a word or a position as well
+   as by colour, so tone is never the only signal. */
+.view-forensics-root {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.view-forensics-root > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-forensics-root) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.view-forensics-root code {
+  padding: 0 var(--space-0-5);
+  background: var(--code-veil);
+  font-family: var(--font-mono);
+  font-size: inherit;
+  overflow-wrap: anywhere;
+}
+
+.view-forensics-meta {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  overflow-wrap: anywhere;
+}
+
+.view-forensics-metas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  min-width: 0;
+}
+
+.view-forensics-micro {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-forensics-quiet {
+  color: var(--muted-foreground);
+}
+
+.view-forensics-problem {
+  display: grid;
+  gap: var(--space-1);
+  max-width: 62ch;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-forensics-heading {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+.view-forensics-section {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+}
+
+/* The page: the report's own order on the left, the evidence rail on the right (under it on a narrow screen). */
+.view-forensics-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) calc(var(--space-8) * 14);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.view-forensics-main {
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  min-width: 0;
+}
+
+/* The hypothesis: a heavy rule on its left is the picture; the writer's paragraph is the sentence. */
+.view-forensics-hyp {
+  display: grid;
+  gap: var(--space-3);
+  padding-left: var(--space-5);
+  border-left: 6px solid var(--foreground);
+}
+
+.view-forensics-sentence {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+.view-forensics-text {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The recommended actions: numbered in the writer's order, the number in mono beside the text. */
+.view-forensics-actions {
+  display: grid;
+  gap: var(--space-2-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: view-forensics-action;
+}
+
+.view-forensics-actions li {
+  display: grid;
+  grid-template-columns: var(--space-6) minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-forensics-actions li::before {
+  content: counter(view-forensics-action);
+  counter-increment: view-forensics-action;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-forensics-actions li > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 62rem) {
+  .view-forensics-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+}
+/* phase-11-forensics:end */
