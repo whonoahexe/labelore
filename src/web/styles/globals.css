@@ -37389,3 +37389,516 @@ a.view-thread-path:hover {
 }
 
 /* phase-11-forensics:end */
+
+/* phase-11-onboarding:start */
+/* Phase 11 (11-26): the onboarding page, sketch 061 winner A (Desk). The page renders four font sizes: the h1 as ArtifactHeader
+   draws it (--fs-display-3), the section headings and the big candidate count (--fs-7), Body (--fs-4) and Label (--fs-2). Where
+   a shared class sets a size outside that set, the page takes it inside with a page-scoped rule below, so no shared class is
+   edited. Every colour is a theme token. A project file that is not there is `quiet` and dashed (an absence, never an error);
+   nothing is destructive, warning or missing, and every state is marked by a word or a position as well as by colour. */
+.view-onboarding-root {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.view-onboarding-root > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-onboarding-root) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.view-onboarding-meta {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  overflow-wrap: anywhere;
+}
+
+.view-onboarding-quiet {
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+.view-onboarding-heading {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+.view-onboarding-section {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+}
+
+/* The summary's command: the shared copy-command row, the sentence that nothing is run under it. */
+.view-onboarding-next {
+  display: grid;
+  gap: var(--space-2-5);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-onboarding-next .copy-command-text {
+  font-size: var(--fs-4);
+}
+
+.view-onboarding-dashbox {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--muted-foreground);
+  color: var(--muted-foreground);
+  min-width: 0;
+}
+
+.view-onboarding-micro {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+/* The command and, in the differing case, the first screen's own command beside it (under it on a narrow screen). */
+.view-onboarding-lead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6) var(--space-8);
+  align-items: start;
+}
+
+.view-onboarding-lead > * {
+  min-width: 0;
+}
+
+@media (min-width: 62rem) {
+  .view-onboarding-lead[data-split='yes'] {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+}
+
+/* The quiet second block: dashed, the first screen's reason, its own copy row and no second note. */
+.view-onboarding-first {
+  display: grid;
+  gap: var(--space-2-5);
+  align-content: start;
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--muted-foreground);
+  min-width: 0;
+}
+
+.view-onboarding-first .copy-command-text {
+  background: transparent;
+}
+
+.view-onboarding-root .status-chip {
+  max-width: 100%;
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-onboarding-chip[data-form='other'] {
+  border-style: dashed;
+  background: transparent;
+}
+
+.view-onboarding-chip[data-tone='quiet'] {
+  border-style: dashed;
+  background: transparent;
+}
+
+.view-onboarding-sq {
+  --status-square-size: var(--space-2-5);
+}
+
+.view-onboarding-count {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* The desk: three objects standing on one table (an 8px rule), bottom-aligned. */
+.view-onboarding-desk {
+  display: grid;
+  grid-template-columns: minmax(0, 2.5fr) minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: var(--space-6);
+  align-items: end;
+  padding: var(--space-6) var(--space-6) 0;
+  border: 1px solid var(--border);
+  border-bottom: 8px solid var(--foreground);
+  background: var(--card);
+}
+
+.view-onboarding-desk[data-files='no'] {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+}
+
+.view-onboarding-obj {
+  display: grid;
+  gap: var(--space-3);
+  align-content: end;
+  min-width: 0;
+}
+
+.view-onboarding-cap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1-5) var(--space-3);
+}
+
+.view-onboarding-obj:hover .view-onboarding-heading {
+  text-decoration: underline;
+  text-underline-offset: var(--space-0-5);
+}
+
+/* An object is a real button: pressing it opens its bar. */
+.view-onboarding-fig {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.view-onboarding-fig:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.view-onboarding-folder {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding: var(--space-4);
+  border: 2px solid var(--foreground);
+  border-bottom: 0;
+  background: var(--card);
+}
+
+.view-onboarding-folder[data-small='true'] {
+  padding: var(--space-3);
+}
+
+.view-onboarding-folder[data-found='no'] {
+  border: 2px dashed var(--muted-foreground);
+  border-bottom: 0;
+  color: var(--muted-foreground);
+}
+
+.view-onboarding-tab {
+  position: absolute;
+  left: calc(var(--space-0-5) * -1);
+  bottom: 100%;
+  padding: var(--space-1) var(--space-3);
+  border: 2px solid var(--foreground);
+  border-bottom: 0;
+  background: var(--card);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-onboarding-folder[data-found='no'] .view-onboarding-tab {
+  border: 2px dashed var(--muted-foreground);
+  border-bottom: 0;
+  color: var(--muted-foreground);
+}
+
+.view-onboarding-slots {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2-5);
+}
+
+/* A sheet is a planning file: present is a tinted sheet with three text lines, not found is a dashed empty one. */
+.view-onboarding-sheet {
+  display: grid;
+  align-content: space-between;
+  gap: var(--space-4);
+  min-width: 0;
+  min-height: calc(var(--space-8) * 3.5);
+  padding: var(--space-2-5);
+  border: 1px solid var(--foreground);
+  background: var(--background);
+}
+
+.view-onboarding-sheet[data-ok='yes'] {
+  border-color: var(--primary-border);
+  background: var(--primary-tint);
+}
+
+.view-onboarding-sheet[data-ok='no'] {
+  border: 1px dashed var(--muted-foreground);
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.view-onboarding-sheet-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.view-onboarding-lines {
+  display: grid;
+  gap: var(--space-1-5);
+}
+
+.view-onboarding-lines i {
+  display: block;
+  height: var(--space-1);
+  background: var(--border);
+}
+
+.view-onboarding-lines i:nth-child(2) {
+  width: 70%;
+}
+
+.view-onboarding-lines i:nth-child(3) {
+  width: 45%;
+}
+
+.view-onboarding-name {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-onboarding-nf {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* The map: seven mini documents, as many tinted as the summary says are mapped. */
+.view-onboarding-minis {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.view-onboarding-mini {
+  flex: 1 1 0;
+  min-width: 0;
+  height: calc(var(--space-8) * 1.5);
+  border: 1px solid var(--foreground);
+  background: var(--card);
+}
+
+.view-onboarding-mini[data-tone='complete'] {
+  border-color: var(--primary-border);
+  background: var(--primary-tint);
+}
+
+.view-onboarding-mini[data-tone='in-flight'] {
+  border-color: var(--in-flight-border);
+  background: var(--code-veil);
+}
+
+.view-onboarding-mini[data-tone='quiet'] {
+  border: 1px dashed var(--muted-foreground);
+  background: transparent;
+}
+
+.view-onboarding-cap-note {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* The candidates: a pile of up to five offset sheets with the count on the top one; a dashed empty sheet for none. */
+.view-onboarding-pile {
+  position: relative;
+  display: block;
+  height: calc(var(--space-8) * 5);
+}
+
+.view-onboarding-paper {
+  position: absolute;
+  left: calc(var(--k) * var(--space-2));
+  bottom: 0;
+  width: calc(100% - 5 * var(--space-2));
+  height: calc(var(--space-8) * 3 + var(--k) * var(--space-1-5));
+  border: 1px solid var(--foreground);
+  background: var(--background);
+}
+
+.view-onboarding-paper-top {
+  z-index: 2;
+  display: grid;
+  align-content: space-between;
+  padding: var(--space-2-5);
+  background: var(--card);
+}
+
+.view-onboarding-big {
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+.view-onboarding-pile[data-n='0'] .view-onboarding-paper {
+  border: 1px dashed var(--muted-foreground);
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+/* The closed bars under the desk hold the same facts as words. */
+.view-onboarding-bars {
+  display: grid;
+  margin-top: calc(var(--space-2) * -1);
+  border-top: 1px solid var(--border);
+}
+
+.view-onboarding-bar {
+  border-bottom: 1px solid var(--border);
+}
+
+.view-onboarding-bar > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: var(--space-10);
+  padding-inline: var(--space-2);
+  font-weight: var(--fw-semibold);
+  list-style: none;
+  cursor: pointer;
+}
+
+.view-onboarding-bar > summary::-webkit-details-marker {
+  display: none;
+}
+
+.view-onboarding-bar > summary:hover {
+  background: var(--state-hover);
+}
+
+.view-onboarding-bar > summary .view-onboarding-count {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.view-onboarding-chev {
+  width: var(--space-4);
+  height: var(--space-4);
+  flex: none;
+}
+
+.view-onboarding-bar[open] > summary .view-onboarding-chev {
+  transform: rotate(90deg);
+}
+
+.view-onboarding-bar-body {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--space-4) + var(--space-4));
+}
+
+.view-onboarding-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.view-onboarding-kv {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.view-onboarding-kv > div {
+  display: grid;
+  grid-template-columns: calc(var(--space-8) * 5) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-onboarding-kv dt {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-onboarding-kv dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-onboarding-path {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 62rem) {
+  .view-onboarding-desk,
+  .view-onboarding-desk[data-files='no'] {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--space-4) var(--space-4) 0;
+  }
+
+  .view-onboarding-pile {
+    height: calc(var(--space-8) * 4.5);
+  }
+}
+
+@media (max-width: 42rem) {
+  .view-onboarding-slots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .view-onboarding-bar-body {
+    padding-left: var(--space-2);
+  }
+
+  .view-onboarding-kv > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-0-5);
+  }
+}
+/* phase-11-onboarding:end */

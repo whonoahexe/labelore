@@ -36,6 +36,7 @@ import { composeSeed } from './seed-page.ts';
 import { composeThread } from './thread-page.ts';
 import { composeReport } from './report-page.ts';
 import { composeForensics } from './forensics-page.ts';
+import { composeOnboarding } from './onboarding-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -535,6 +536,14 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     lead: 'What a forensics run concluded went wrong, what to do about it, and the evidence it read.',
     promote: [{ type: 'section', heading: /\S/, all: true }],
     forensicsPage: composeForensics,
+  },
+  // Phase 11 (11-26, sketch-061 winner A): the one onboarding/SUMMARY.md file. `promote` is the silent fallback when the page
+  // composes nothing (Phase 10 C1, X2).
+  onboarding: {
+    kind: 'onboarding',
+    lead: 'How GSD read this project when onboarding it, and the command it suggests next.',
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+    onboardingPage: composeOnboarding,
   },
 });
 
