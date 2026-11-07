@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
+import { toProjectPresentation } from '../../src/server/project-presentation.ts';
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { createApp } from '../../src/server/index.ts';
 import { ProjectRegistry, createSnapshotSource } from '../../src/server/project-registry.ts';
@@ -148,6 +149,40 @@ describe('the workstream scope mount (11-29)', () => {
         // A flat project has no workstream to scope into.
         expect((await get(app, `/api/projects/${slug}/ws/intake/presentation`)).status).toBe(404);
       }
+    } finally {
+      registry.dispose();
+    }
+  });
+
+  it("serves a flat project's presentation exactly as the builder alone produces it (no mapper, no realPath key)", async () => {
+    const { registry, app } = await registryApp([LENDSHED, SHAPES]);
+    try {
+      for (const [slug, root] of [
+        ['lendshed', LENDSHED],
+        ['shapes', SHAPES],
+      ] as const) {
+        const repository = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
+        const expected = JSON.parse(JSON.stringify(toProjectPresentation(await repository.load(), slug))) as ProjectPresentation;
+        const served = (await get(app, `/api/projects/${slug}/presentation`)).body as ProjectPresentation;
+        expect({ ...served, readAt: '' }).toEqual({ ...expected, readAt: '' });
+        for (const artifact of served.artifacts) expect(Object.keys(artifact)).not.toContain('realPath');
+      }
+    } finally {
+      registry.dispose();
+    }
+  });
+
+  it("serves a flat project's documents without a realPath key", async () => {
+    const { registry, app } = await registryApp([SHAPES]);
+    try {
+      const presentation = (await get(app, '/api/projects/shapes/presentation')).body as ProjectPresentation;
+      const target = presentation.artifacts.find((artifact) => artifact.kind === 'project') ?? presentation.artifacts[0];
+      const document = await get(app, `/api/projects/shapes/documents?route=${encodeURIComponent(target.key)}`);
+      expect(document.status).toBe(200);
+      const { artifact } = document.body as { artifact: Record<string, unknown> };
+      expect(Object.keys(artifact).sort()).toEqual(
+        ['addedAt', 'bodyLength', 'frontmatter', 'id', 'kind', 'mtimeMs', 'path', 'structured', 'title', 'warnings'],
+      );
     } finally {
       registry.dispose();
     }
