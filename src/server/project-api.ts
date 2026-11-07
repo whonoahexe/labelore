@@ -19,6 +19,8 @@ import { buildSpikesContext } from '../presentation/spikes-context.ts';
 import type { SpikesContext } from '../presentation/spikes-context.ts';
 import { buildIndexesContext, graphArtifactsOf } from '../presentation/indexes-context.ts';
 import type { IndexesContext } from '../presentation/indexes-context.ts';
+import { buildSeedThreadLinks } from '../presentation/seed-thread-links.ts';
+import type { SeedThreadLinks } from '../presentation/seed-thread-links.ts';
 import { buildProjectContext } from '../presentation/project-context.ts';
 import type { ProjectContext } from '../presentation/project-context.ts';
 import { buildReviewContext } from '../presentation/review-context.ts';
@@ -231,6 +233,18 @@ export function createProjectApi(
         return null;
       }
     })();
+    // Phase 11 (11-22): a seed's Breadcrumbs and a thread's References resolved to payload artifact addresses (and
+    // the day the project was read), from this request's own bundle - built only for a seed or a thread (null
+    // elsewhere). A reference that names no payload artifact carries a null address and stays text on the page.
+    const seedThreadLinks = ((): SeedThreadLinks | null => {
+      try {
+        const kind = lookup.artifact.kind;
+        if (kind !== 'seed' && kind !== 'thread') return null;
+        return buildSeedThreadLinks(activeDerived.presentation, lookup.artifact.path);
+      } catch {
+        return null;
+      }
+    })();
     const document = await (
       await renderer
     ).render(lookup.artifact, { referenceRegistry: activeDerived.referenceRegistry });
@@ -264,6 +278,7 @@ export function createProjectApi(
       pauseContext,
       spikesContext,
       indexesContext,
+      seedThreadLinks,
       manualChecks,
       reviewContext,
     };
