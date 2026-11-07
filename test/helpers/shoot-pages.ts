@@ -245,12 +245,18 @@ async function shootSketch(
   const folderName = basename(dirname(path));
   const page = await newPage(browser, width, height, theme);
   try {
-    const response = await page.goto(pathToFileURL(path).href, { waitUntil: 'load' });
+    // The sketches in this repository read `?theme=dark` themselves (the browser's colour scheme does not reach them).
+    const response = await page.goto(`${pathToFileURL(path).href}?theme=${theme}`, { waitUntil: 'load' });
     if (response !== null && response.status() >= 400) failures.push(`${folderName}: could not load ${path}`);
     const available = await variantsOf(page);
     const variants = available.length === 0 ? [''] : pickVariants(available, hash, readWinner(dirname(path)));
     for (const variant of variants) {
-      if (variant !== '') await page.locator(`[data-variant="${variant}"]`).first().click();
+      if (variant !== '') {
+        // A sketch whose tabs are `a[data-tab]` links keeps `data-variant` on its (hidden) sections; click the tab then.
+        const tab = page.locator(`[data-tab="${variant}"]`).first();
+        if ((await tab.count()) > 0) await tab.click();
+        else await page.locator(`[data-variant="${variant}"]`).first().click();
+      }
       await page.waitForTimeout(200);
       const suffix = variant === '' ? 'sketch' : `sketch-${variant}`;
       await page.screenshot({
