@@ -398,6 +398,17 @@ describe('thread page: the header', () => {
     expect(props.crumbs!.map((crumb) => crumb.label)).toEqual(['Dashboard', 'Roadmap', 'loan-limit-policy']);
     expect(threadHeaderProps({ ...model, head: { ...model.head, title: null } }, 'Fallback').title).toBe('Fallback');
   });
+
+  it("falls back to the file name's stem as the meta when the file has no slug, so the header keeps its meta row", async () => {
+    const model = threadOf(await lendshed(), OLDER);
+    expect(model.head.slug).toBeNull();
+    const props = threadHeaderProps(model, 'Fallback', OLDER);
+    expect(props.meta).not.toBeNull();
+    expect(renderToStaticMarkup(props.meta as React.JSX.Element)).toContain('offline-mode');
+    expect(props.crumbs!.map((crumb) => crumb.label)).toEqual(['Dashboard', 'Roadmap', 'offline-mode']);
+    // No path and no slug: no meta, and the crumb names the title.
+    expect(threadHeaderProps(model, 'Fallback').meta).toBeNull();
+  });
 });
 
 describe('edge probe VIEW-16: two thread files carrying one slug', () => {
