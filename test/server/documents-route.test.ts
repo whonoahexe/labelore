@@ -569,3 +569,58 @@ describe('/api/documents carries the bounded indexes context for an intel or gra
     }
   });
 });
+
+// Phase 11 (11-26): the onboarding page's command, project files, codebase facts and the first screen's own command ride the
+// /documents response for the onboarding summary only. Both commands are text; nothing in the response runs either.
+describe('/api/documents carries the onboarding context for the onboarding summary', () => {
+  const TIDEMARK_ROOT = fileURLToPath(new URL('../fixtures/tidemark', import.meta.url)).replace(/[\\/]$/, '');
+  const PATH = '.planning/onboarding/SUMMARY.md';
+
+  interface OnboardingBody {
+    found: true;
+    onboardingContext: {
+      summaryCommand: string | null;
+      files: { name: string; present: boolean | null }[];
+      codebase: { readiness: string | null; mapPath: string | null };
+      docsCount: number | null;
+      firstScreen: { command: string; reason: string } | null;
+      differs: boolean;
+    } | null;
+  }
+
+  async function bodyOf(root: string, path: string): Promise<OnboardingBody> {
+    const app = await appOver(root);
+    const presentation = await presentationOf(app);
+    const artifact = presentation.artifacts.find((candidate) => candidate.path === path);
+    expect(artifact, path).toBeDefined();
+    const response = await documentRequest(app, artifact?.key ?? '');
+    expect(response.status).toBe(200);
+    return (await response.json()) as OnboardingBody;
+  }
+
+  it("gives Tidemark's summary both commands and differs true", async () => {
+    const { onboardingContext: context } = await bodyOf(TIDEMARK_ROOT, PATH);
+    expect(context).not.toBeNull();
+    expect(context?.summaryCommand).toBe('/gsd-ingest-docs');
+    expect(context?.firstScreen?.command).toBe('/gsd-new-project');
+    expect(context?.firstScreen?.reason.length).toBeGreaterThan(0);
+    expect(context?.differs).toBe(true);
+    expect(context?.files.map((file) => file.present)).toEqual([false, false, false, false]);
+    expect(context?.codebase.readiness).toBe('complete');
+    expect(context?.docsCount).toBe(3);
+  });
+
+  it("gives Lendshed's summary its command and no first screen", async () => {
+    const { onboardingContext: context } = await bodyOf(FX_ROOT, PATH);
+    expect(context).not.toBeNull();
+    expect(context?.summaryCommand).toBe('/gsd-manager');
+    expect(context?.firstScreen).toBeNull();
+    expect(context?.differs).toBe(false);
+    expect(context?.files.map((file) => file.present)).toEqual([true, true, true, true]);
+  });
+
+  it('is null for a document that is not the onboarding summary', async () => {
+    const body = await bodyOf(FX_ROOT, '.planning/PROJECT.md');
+    expect(body.onboardingContext).toBeNull();
+  });
+});

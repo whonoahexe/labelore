@@ -37389,3 +37389,78 @@ a.view-thread-path:hover {
 }
 
 /* phase-11-forensics:end */
+
+/* phase-11-onboarding:start */
+/* Phase 11 (11-26): the onboarding page, sketch 061 winner A (Desk). The page renders four font sizes: the h1 as ArtifactHeader
+   draws it (--fs-display-3), the section headings and the big candidate count (--fs-7), Body (--fs-4) and Label (--fs-2). Where
+   a shared class sets a size outside that set, the page takes it inside with a page-scoped rule below, so no shared class is
+   edited. Every colour is a theme token. A project file that is not there is `quiet` and dashed (an absence, never an error);
+   nothing is destructive, warning or missing, and every state is marked by a word or a position as well as by colour. */
+.view-onboarding-root {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  display: grid;
+  gap: var(--space-8);
+  align-content: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.view-onboarding-root > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-onboarding-root) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.view-onboarding-meta {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  overflow-wrap: anywhere;
+}
+
+.view-onboarding-quiet {
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+.view-onboarding-heading {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+.view-onboarding-section {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+}
+
+/* The summary's command: the shared copy-command row, the sentence that nothing is run under it. */
+.view-onboarding-next {
+  display: grid;
+  gap: var(--space-2-5);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-onboarding-next .copy-command-text {
+  font-size: var(--fs-4);
+}
+
+.view-onboarding-dashbox {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--muted-foreground);
+  color: var(--muted-foreground);
+  min-width: 0;
+}
+/* phase-11-onboarding:end */
