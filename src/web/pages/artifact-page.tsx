@@ -1491,7 +1491,7 @@ export function ArtifactPage({
     (spikesCover ? spikesHeaderProps(spikesCover) : null) ??
     (indexesCover ? indexesHeaderProps(indexesCover) : null) ??
     (seedCover ? seedHeaderProps(seedCover, artifact.title) : null) ??
-    (threadCover ? threadHeaderProps(threadCover, artifact.title) : null) ??
+    (threadCover ? threadHeaderProps(threadCover, artifact.title, artifact.path) : null) ??
     (specPageCover ? specHeaderProps(specPageCover, artifact.title) : null) ??
     (aiSpecPageCover ? aiSpecHeaderProps(aiSpecPageCover, artifact.title) : null) ??
     (userSetupPageCover ? userSetupHeaderProps(userSetupPageCover, artifact.title) : null) ??

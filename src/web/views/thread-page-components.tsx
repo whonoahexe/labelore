@@ -40,10 +40,19 @@ export type ThreadHeaderProps = Partial<{
   crumbs: { label: string; to?: string }[];
 }>;
 
+/** The file name without its folder and its `.md` ending: the slug a thread's file name carries when its frontmatter has
+ * none (the older shape). The header only lays its meta row out when it has a meta item, so the page always gives one. */
+function fileStemOf(path: string | undefined): string | null {
+  if (path === undefined) return null;
+  const name = path.split('/').pop() ?? '';
+  const stem = name.endsWith('.md') ? name.slice(0, -3) : name;
+  return stem === '' ? null : stem;
+}
+
 /** The ArtifactHeader override View mode spreads over its props: "Thread", the title as the h1 and the slug as meta. The
  * header keeps its own Copy path button for the one file; the sketch draws no lead line, so the manifest's stays off. */
-export function threadHeaderProps(model: ComposedThread, artifactTitle: string): ThreadHeaderProps {
-  const slug = model.head.slug;
+export function threadHeaderProps(model: ComposedThread, artifactTitle: string, artifactPath?: string): ThreadHeaderProps {
+  const slug = model.head.slug ?? fileStemOf(artifactPath);
   return {
     eyebrow: model.head.eyebrow,
     title: model.head.title ?? artifactTitle,
