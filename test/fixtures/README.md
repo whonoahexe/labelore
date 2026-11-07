@@ -90,8 +90,22 @@ whose own ledger is `fixtures/README.md`) and this repository's own `.planning` 
 | test/fixtures/lendshed/.planning/reports/MILESTONE_SUMMARY-v1.0.md | report | gsd-core/workflows/milestone-summary.md | 1.19.0 | milestone summary in the real shape (11-02): no frontmatter, first-line comment marker, `# Milestone v1.0 — Project Summary`, seven numbered `##` sections and an unnumbered `## Stats`, a 4-row Phases Delivered table with the date folded into the Status cell, an 18-row Key Decisions Log whose `D-NN` ids repeat across phases (the longest table in the file), check-mark requirement ranges, a bold audit verdict, four bold-label tech debt subparagraphs and five Stats bullets with mixed value forms |
 | test/fixtures/lendshed/.planning/onboarding/SUMMARY.md | onboarding | gsd-core/workflows/onboard.md | 1.19.0 | onboarding summary in the real shape (11-02, matches the template exactly): no frontmatter, first-line comment marker, plain `- label: value` bullets, all four project files `present`, map readiness `none` with `Codebase map: missing`, Docs Context 2, and `/gsd-manager` (leading slash, no code formatting) as the one Recommended Next Step bullet |
 | test/fixtures/tidemark/.planning/onboarding/SUMMARY.md | onboarding | gsd-core/workflows/onboard.md | 1.19.0 | onboarding summary for a map-only project, hand-built beyond the writer (it writes the file only once the four project files exist): all four project files `missing`, map readiness `complete` with `.planning/codebase/ (7 documents)`, Docs Context 3, first and only Recommended Next Step bullet `/gsd-ingest-docs`, where the first screen computes `/gsd-new-project` for the same project (no `.planning` document candidates); Tidemark stays map-only |
+| test/fixtures/brinkwater/.planning/codebase/STACK.md | codebase-stack | gsd-core/templates/codebase/stack.md | 1.19.0 | workstream project root: a codebase map beside a live workstream, so a map plus workstream files is not map-only (RESEARCH C8); stamped frontmatter (2026-10-21), no ROADMAP.md or STATE.md at the root |
+| test/fixtures/brinkwater/.planning/active-workstream | workstream-pointer | gsd-core/bin/lib/workstream.cjs | 1.19.0 | the active pointer as GSD writes it: only the workstream name (`intake`) and a newline, so the file cannot carry its own label and this row is the label; root-level GSD bookkeeping, never an artifact |
 
 The spike scripts and outputs are never marked and never read; they are listed by name only (class `listed`): `test/fixtures/lendshed/.planning/spikes/001-badge-reader-latency/probe.sh`, `test/fixtures/lendshed/.planning/spikes/001-badge-reader-latency/out/latency.csv`, `test/fixtures/lendshed/.planning/spikes/002-offline-ledger-queue/queue_check.js`, `test/fixtures/lendshed/.planning/spikes/003b-local-disk-staging/make_bundle.sh` and `test/fixtures/lendshed/.planning/spikes/003b-local-disk-staging/out/bundle.log`.
+
+## Workstream project
+
+`test/fixtures/brinkwater` is a separate made-up project in GSD's workstream layout (`gsd-core/bin/lib/workstream.cjs`,
+as sketch 056 observed it): PROJECT.md, config.json, `codebase/` and `todos/` at the root, no root ROADMAP.md, STATE.md or
+`phases/`, and each line of work under `workstreams/<name>/` with its own ROADMAP.md, STATE.md, REQUIREMENTS.md and
+`phases/`. `.planning/active-workstream` names the active one. Brinkwater is an invented harbour tide-gauge service.
+Every markdown file carries a made-up label (frontmatter keys, or a first-line comment where the file has no
+frontmatter); `config.json` carries the three keys at the top level; `active-workstream` holds only the name, as GSD
+writes it, and is labelled by its index row above. Only the codebase map is a rule kind, so only it needs a marker, but
+every file is labelled anyway. The root is in `RELATIVE_ROOTS` (`test/helpers/fixture-roots.ts`), so every all-roots
+test walks it. `test/workstream-fixture.test.ts` pins how it loads before any workstream code exists.
 
 ## For later phases
 
