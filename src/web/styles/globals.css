@@ -37183,13 +37183,14 @@ a.view-thread-path:hover {
 }
 
 .view-forensics-scroll {
+  position: relative;
   max-width: 100%;
   overflow-x: auto;
 }
 
 .view-forensics-heat {
   display: grid;
-  grid-template-columns: auto repeat(var(--view-forensics-np, 4), minmax(calc(var(--space-8) * 2.5), 1fr));
+  grid-template-columns: auto repeat(var(--view-forensics-np, 4), minmax(calc(var(--space-8) * 2.5), auto));
   border: 1px solid var(--border-faint);
   min-width: max-content;
 }
