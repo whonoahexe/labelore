@@ -37991,7 +37991,14 @@ a.view-thread-path:hover {
 
 .view-workstreams-migration {
   max-width: 72ch;
+  margin-top: 0;
+  padding: var(--space-4);
+}
+
+.view-workstreams-migration p {
+  margin: 0;
   font-size: var(--fs-4);
+  line-height: var(--lh-normal);
 }
 
 .view-workstreams-section {
