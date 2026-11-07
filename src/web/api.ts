@@ -5,6 +5,7 @@
 // and bulk-add calls 08-13's.
 import type { ProjectListResponse } from '../presentation/project-list.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
+import type { WorkstreamInventory } from '../server/workstreams.ts';
 
 export const REFUSED_COPY =
   'Labelore refused this request because it did not come from its own page. Reload the page and try again.';
@@ -98,6 +99,12 @@ export function fetchProjects(): Promise<ProjectListResponse> {
  * scope it is that workstream's presentation, read from its own mount. */
 export async function fetchPresentation(slug: string, scope: string | null = null): Promise<ProjectPresentation> {
   return await apiFetch<ProjectPresentation>(projectUrl(slug, '/presentation', scope));
+}
+
+/** The project's workstream inventory (11-29): which workstreams it holds, how each one stands, the active pointer and
+ * the completed ones. Always the project's own API: inside a workstream scope the same route answers flat. */
+export function fetchWorkstreams(slug: string): Promise<WorkstreamInventory> {
+  return apiFetch<WorkstreamInventory>(projectUrl(slug, '/workstreams'));
 }
 
 export interface OpenProjectResponse {

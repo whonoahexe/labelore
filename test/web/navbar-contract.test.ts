@@ -323,7 +323,7 @@ describe('Strata mark, brand lockup and tabs (D-01, D-02, NAV-01..03)', () => {
   // two gated extras as before, so a normal project still sees the original three. Research sits between
   // Roadmap and Traceability. No Codebase tab exists (RESEARCH C6): the map is reached from the drawer
   // and from search.
-  it('renders Dashboard unconditionally, Roadmap and Traceability behind a mapOnly gate, a Research tab gated on projectHasResearch between them and a Sketches tab gated on projectHasSketches (D-02, D-07)', async () => {
+  it('renders Dashboard unconditionally, Roadmap and Traceability behind the map-only and workstream-index gate, a Research tab gated on projectHasResearch between them and a Sketches tab gated on projectHasSketches (D-02, D-07)', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
     const navLinkMatches = shell.match(/<NavLink className=\{navigationClass\}/g) ?? [];
     expect(navLinkMatches).toHaveLength(5);
@@ -345,10 +345,10 @@ describe('Strata mark, brand lockup and tabs (D-01, D-02, NAV-01..03)', () => {
     expect(traceability).toBeGreaterThan(researchGate);
     expect(sketchesGate).toBeGreaterThan(traceability);
     // The Dashboard tab sits outside every gate: none opens between the nav and its link.
-    expect(shell.slice(navOpen, dashboard)).not.toMatch(/\{\s*(mapOnly|showResearch|showSketches)\s*\?/);
-    // Roadmap and Traceability each sit inside their own mapOnly gate.
-    const roadmapGate = shell.lastIndexOf('{mapOnly ?', roadmap);
-    const traceabilityGate = shell.lastIndexOf('{mapOnly ?', traceability);
+    expect(shell.slice(navOpen, dashboard)).not.toMatch(/\{\s*(hideRoadmapTabs|showResearch|showSketches)\s*\?/);
+    // Roadmap and Traceability each sit inside their own gate, the map-only one widened by the workstream index.
+    const roadmapGate = shell.lastIndexOf('{hideRoadmapTabs ?', roadmap);
+    const traceabilityGate = shell.lastIndexOf('{hideRoadmapTabs ?', traceability);
     expect(roadmapGate).toBeGreaterThan(dashboard);
     expect(traceabilityGate).toBeGreaterThan(researchGate);
     expect(shell).toContain('Dashboard');
@@ -357,6 +357,20 @@ describe('Strata mark, brand lockup and tabs (D-01, D-02, NAV-01..03)', () => {
     expect(shell).toContain('Traceability');
     expect(shell).not.toMatch(/>\s*Lore\s*</);
     expect(shell).not.toMatch(/>\s*Codebase\s*</);
+  });
+
+  // 11-31 (VIEW-20, UI-SPEC section 5): on the workstream index the header hides Roadmap and Traceability (the map-only
+  // precedent) and shows the workstream count beside the project switcher; nowhere else does the shell change.
+  it('hides Roadmap and Traceability and shows the workstream count only while the shell is told it is on the index', async () => {
+    const shell = await source('src/web/components/app-shell.tsx');
+    expect(shell).toContain('workstreamIndex?: { countText: string }');
+    expect(shell).toContain('const onIndex = workstreamIndex !== undefined;');
+    expect(shell).toContain('const hideRoadmapTabs = mapOnly || onIndex;');
+    expect(shell).toContain('onIndex ? workstreamIndex.countText : formatProjectMeta(');
+    // The only things the index prop changes are those two; the Research and Sketches gates do not read it.
+    expect(shell.match(/onIndex/g) ?? []).toHaveLength(3);
+    expect(shell).not.toMatch(/showResearch\s*=[^;]*onIndex/);
+    expect(shell).not.toMatch(/showSketches\s*=[^;]*onIndex/);
   });
 
   it('the active tab rule declares no background and references var(--primary)', async () => {
