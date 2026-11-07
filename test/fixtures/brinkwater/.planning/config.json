@@ -1,0 +1,14 @@
+{
+  "made_up_example": true,
+  "derived_from": "gsd-core/bin/lib/workstream.cjs",
+  "gsd_core_version": "1.19.0",
+  "mode": "interactive",
+  "granularity": "standard",
+  "model_profile": "adaptive",
+  "commit_docs": true,
+  "workflow": {
+    "research": true,
+    "plan_check": true,
+    "verifier": true
+  }
+}

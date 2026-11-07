@@ -12,6 +12,7 @@ const RELATIVE_ROOTS = [
   'test/fixtures/shapes',
   'test/fixtures/lendshed',
   'test/fixtures/tidemark',
+  'test/fixtures/brinkwater',
   'fixtures/dense',
   'fixtures/sparse-empty',
   'fixtures/sparse-started',
