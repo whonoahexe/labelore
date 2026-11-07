@@ -3,14 +3,15 @@ import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-q
 import { formatReadAt, formatRelativeReadAt } from '../../presentation/shell-header.ts';
 import { refreshProject } from '../api.ts';
 import { useProjectSlug } from '../nav.tsx';
-import { projectKey, projectsKey } from '../query-keys.ts';
+import { projectWideKey, projectsKey } from '../query-keys.ts';
 import { Button } from './ui/button.tsx';
 import { useToastManager } from './ui/toast.tsx';
 
-/** What a successful refresh of one project marks invalid: that project's own queries, then the
+/** What a successful refresh of one project marks invalid: that project's own queries (every workstream
+ * scope of it), then the
  * project list (its row carries the read time). Never another project's entries (D-08, PLAT-08). */
 export async function refreshInvalidations(queryClient: QueryClient, slug: string): Promise<void> {
-  await queryClient.invalidateQueries({ queryKey: projectKey(slug) });
+  await queryClient.invalidateQueries({ queryKey: projectWideKey(slug) });
   await queryClient.invalidateQueries({ queryKey: projectsKey });
 }
 

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Combobox } from '@base-ui/react/combobox';
 import { Dialog } from '@base-ui/react/dialog';
 import { Search } from 'lucide-react';
-import { Link, useProjectNavigate, useProjectSlug } from '../nav.tsx';
+import { Link, useProjectNavigate, useProjectScope, useProjectSlug } from '../nav.tsx';
 import { apiFetch, projectUrl } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
 import { isEditableTarget, isSearchShortcut, shortcutHintFor } from '../../presentation/shell-header.ts';
@@ -16,8 +16,8 @@ const DEBOUNCE_MS = 160;
 // D-01: the dropdown is a compact preview, not the full results list — /search carries the rest.
 const DROPDOWN_LIMIT = 8;
 
-function fetchSearch(slug: string, query: string, signal: AbortSignal): Promise<SearchApiResponse> {
-  return apiFetch<SearchApiResponse>(projectUrl(slug, `/search?q=${encodeURIComponent(query)}`), { signal });
+function fetchSearch(slug: string, scope: string | null, query: string, signal: AbortSignal): Promise<SearchApiResponse> {
+  return apiFetch<SearchApiResponse>(projectUrl(slug, `/search?q=${encodeURIComponent(query)}`, scope), { signal });
 }
 
 /** NAV-04 (quick-260911-243): the header search surface — an icon trigger with a ⌘K/Ctrl K hint
@@ -26,6 +26,7 @@ function fetchSearch(slug: string, query: string, signal: AbortSignal): Promise<
 export function SearchDialog(): React.JSX.Element {
   const navigate = useProjectNavigate();
   const slug = useProjectSlug() ?? '';
+  const scope = useProjectScope();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
@@ -43,8 +44,8 @@ export function SearchDialog(): React.JSX.Element {
   // and the debounced query — never a hand-rolled request counter. An in-flight response for an
   // earlier query is aborted (or its result discarded) the instant a newer query supersedes it.
   const search = useQuery({
-    queryKey: projectKey(slug, 'search', 'dropdown', trimmed),
-    queryFn: ({ signal }) => fetchSearch(slug, trimmed, signal),
+    queryKey: projectKey(slug, scope, 'search', 'dropdown', trimmed),
+    queryFn: ({ signal }) => fetchSearch(slug, scope, trimmed, signal),
     enabled: trimmed.length > 0,
     // D-04: while the index is building, poll until it resolves so a query typed mid-build
     // resolves itself automatically — never a dropped query.

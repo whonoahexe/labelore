@@ -217,7 +217,7 @@ describe('FileDetailsPage', () => {
 describe('DocumentRoute', () => {
   function route(url: string): string {
     const client = new QueryClient();
-    client.setQueryData(projectKey('shapes', 'presentation'), shapes);
+    client.setQueryData(projectKey('shapes', null, 'presentation'), shapes);
     return renderToStaticMarkup(
       createElement(
         QueryClientProvider,

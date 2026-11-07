@@ -14,9 +14,11 @@ import { ApiError, UNREACHABLE_COPY, fetchPresentation, fetchProjects, openProje
 import { AppShell } from '../components/app-shell.tsx';
 import { PlainPage } from '../components/plain-header.tsx';
 import { Button } from '../components/ui/button.tsx';
-import { projectLayoutOutcome } from '../project-path.ts';
+import { useProjectPathname, useProjectScope } from '../nav.tsx';
+import { decodeAddress, projectLayoutOutcome, withProjectScope } from '../project-path.ts';
 import { projectKey, projectsKey } from '../query-keys.ts';
 import { InvalidProjectScreen } from './invalid-project-screen.tsx';
+import { NotFoundPage } from './not-found-page.tsx';
 import { UnknownProjectPage } from './unknown-project-page.tsx';
 
 /** The shell-less screens of a layout that cannot yet name its project. Plain values, so each renders
@@ -59,6 +61,8 @@ export function ProjectLayout({
 }): React.JSX.Element {
   // The router has already decoded the segment; it is compared with the listed slugs exactly.
   const { project: slug = '' } = useParams();
+  const scope = useProjectScope();
+  const pathname = useProjectPathname();
   const queryClient = useQueryClient();
 
   const list = useQuery({ queryKey: projectsKey, queryFn: fetchProjects, staleTime: 0 });
@@ -68,8 +72,8 @@ export function ProjectLayout({
 
   // Only a listed slug is ever asked for: an unknown one requests nothing (T-08-34).
   const presentation = useQuery({
-    queryKey: projectKey(slug, 'presentation'),
-    queryFn: () => fetchPresentation(slug),
+    queryKey: projectKey(slug, scope, 'presentation'),
+    queryFn: () => fetchPresentation(slug, scope),
     enabled: listed,
   });
 
@@ -135,6 +139,20 @@ export function ProjectLayout({
       <AppShell key={slug} project={entry}>
         {children(loaded)}
       </AppShell>
+    );
+  }
+  // A workstream address whose name the server does not know (a typo, a flat project, an archived folder):
+  // the one not-found page, under the plain header like any address that resolves nowhere.
+  if (
+    outcome === 'presentation-error' &&
+    scope !== null &&
+    presentation.error instanceof ApiError &&
+    presentation.error.status === 404
+  ) {
+    return (
+      <PlainPage>
+        <NotFoundPage address={decodeAddress(withProjectScope(slug, scope, pathname))} openSlug={slug} />
+      </PlainPage>
     );
   }
   // presentation-error: the shell's own notice explains it.

@@ -69,15 +69,15 @@ describe('the plan pair cache', () => {
     if (!planUrl) return;
 
     const client = new QueryClient();
-    const one = await loadPair('lendshed', planUrl, client);
-    const two = await loadPair('lendshed-2', planUrl, client);
+    const one = await loadPair('lendshed', null, planUrl, client);
+    const two = await loadPair('lendshed-2', null, planUrl, client);
 
     expect(one.plan.artifact.title).not.toBe(two.plan.artifact.title);
     expect(two.plan.artifact.title).toBe('A different plan in the second project');
     expect(one.plan.document.html).not.toBe(two.plan.document.html);
 
-    const seededOne = client.getQueryData(projectKey('lendshed', 'document', planUrl));
-    const seededTwo = client.getQueryData(projectKey('lendshed-2', 'document', planUrl));
+    const seededOne = client.getQueryData(projectKey('lendshed', null, 'document', planUrl));
+    const seededTwo = client.getQueryData(projectKey('lendshed-2', null, 'document', planUrl));
     expect(seededOne).toEqual(one.plan);
     expect(seededTwo).toEqual(two.plan);
     expect(seededOne).not.toEqual(seededTwo);

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { useSearchParams } from 'react-router';
-import { Link, useProjectSlug } from '../nav.tsx';
+import { Link, useProjectScope, useProjectSlug } from '../nav.tsx';
 import { apiFetch, projectUrl } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
@@ -10,8 +10,8 @@ import type { SketchRow, SketchesViewModel } from '../../presentation/sketches.t
 import { EmptyState } from '../components/empty-state.tsx';
 import { buttonVariants } from '../components/ui/button.tsx';
 
-function fetchSketches(slug: string): Promise<SketchesViewModel> {
-  return apiFetch<SketchesViewModel>(projectUrl(slug, '/sketches'));
+function fetchSketches(slug: string, scope: string | null): Promise<SketchesViewModel> {
+  return apiFetch<SketchesViewModel>(projectUrl(slug, '/sketches', scope));
 }
 
 const DEFAULT_LEDE = 'Every design sketch in .planning/sketches/.';
@@ -41,7 +41,15 @@ function SketchVerdict({ sketch }: { sketch: SketchRow }): React.JSX.Element {
   );
 }
 
-function SketchListRow({ sketch, slug }: { sketch: SketchRow; slug: string }): React.JSX.Element {
+function SketchListRow({
+  sketch,
+  slug,
+  scope,
+}: {
+  sketch: SketchRow;
+  slug: string;
+  scope: string | null;
+}): React.JSX.Element {
   const viewClass = buttonVariants({ variant: 'secondary', size: 'sm' });
   const openClass = buttonVariants({ variant: 'ghost', size: 'sm' });
   return (
@@ -69,7 +77,7 @@ function SketchListRow({ sketch, slug }: { sketch: SketchRow; slug: string }): R
         ) : null}
         {/* The sketch itself is a server file, not a client route: a plain anchor, never a router Link. */}
         {sketch.viewUrl ? (
-          <a className={openClass} href={projectUrl(slug, sketch.viewUrl)} target="_blank" rel="noopener noreferrer">
+          <a className={openClass} href={projectUrl(slug, sketch.viewUrl, scope)} target="_blank" rel="noopener noreferrer">
             Open full size
           </a>
         ) : null}
@@ -82,10 +90,12 @@ function SketchViewer({
   sketch,
   viewUrl,
   slug,
+  scope,
 }: {
   sketch: SketchRow;
   viewUrl: string;
   slug: string;
+  scope: string | null;
 }): React.JSX.Element {
   const openClass = buttonVariants({ variant: 'secondary', size: 'sm' });
   return (
@@ -104,7 +114,7 @@ function SketchViewer({
         <div className="sketch-viewer-bar">
           <SketchVerdict sketch={sketch} />
           <div className="sketch-viewer-actions">
-            <a className={openClass} href={projectUrl(slug, viewUrl)} target="_blank" rel="noopener noreferrer">
+            <a className={openClass} href={projectUrl(slug, viewUrl, scope)} target="_blank" rel="noopener noreferrer">
               Open full size
               <ExternalLink data-icon="inline-end" aria-hidden="true" />
             </a>
@@ -116,7 +126,7 @@ function SketchViewer({
           every sketch file response gives the same guarantee to the full-size tab. */}
       <iframe
         className="sketch-viewer-frame"
-        src={projectUrl(slug, viewUrl)}
+        src={projectUrl(slug, viewUrl, scope)}
         title={`Sketch ${sketch.number}: ${sketch.name}`}
         referrerPolicy="no-referrer"
         sandbox="allow-scripts"
@@ -129,7 +139,8 @@ function SketchViewer({
  * is a React text node - MANIFEST and README text is never turned into markup. */
 export function SketchesPage(): React.JSX.Element {
   const slug = useProjectSlug() ?? '';
-  const sketches = useQuery({ queryKey: projectKey(slug, 'sketches'), queryFn: () => fetchSketches(slug) });
+  const scope = useProjectScope();
+  const sketches = useQuery({ queryKey: projectKey(slug, scope, 'sketches'), queryFn: () => fetchSketches(slug, scope) });
   const [searchParams] = useSearchParams();
   const view = searchParams.get('view');
 
@@ -178,7 +189,7 @@ export function SketchesPage(): React.JSX.Element {
   if (viewing?.viewUrl) {
     return (
       <main className="page-stack sketches-page">
-        <SketchViewer sketch={viewing} viewUrl={viewing.viewUrl} slug={slug} />
+        <SketchViewer sketch={viewing} viewUrl={viewing.viewUrl} slug={slug} scope={scope} />
       </main>
     );
   }
@@ -198,7 +209,7 @@ export function SketchesPage(): React.JSX.Element {
       </header>
       <ol className="sketch-list">
         {model.sketches.map((sketch, index) => (
-          <SketchListRow key={sketch.folder ?? `row-${index}`} sketch={sketch} slug={slug} />
+          <SketchListRow key={sketch.folder ?? `row-${index}`} sketch={sketch} slug={slug} scope={scope} />
         ))}
       </ol>
     </main>
