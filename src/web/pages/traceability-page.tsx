@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, History } from 'lucide-react';
-import { Link, useProjectLocation, useProjectSlug } from '../nav.tsx';
+import { Link, useProjectLocation, useProjectScope, useProjectSlug } from '../nav.tsx';
 import { apiFetch, projectUrl } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
 import { EmptyState } from '../components/empty-state.tsx';
@@ -43,8 +43,8 @@ export {
 };
 export type { TraceabilityFilterState, TraceabilityStatusFilter } from './traceability-filter.ts';
 
-function fetchTraceability(slug: string): Promise<TraceabilityViewModel> {
-  return apiFetch<TraceabilityViewModel>(projectUrl(slug, '/traceability'));
+function fetchTraceability(slug: string, scope: string | null): Promise<TraceabilityViewModel> {
+  return apiFetch<TraceabilityViewModel>(projectUrl(slug, '/traceability', scope));
 }
 
 /** The phase name/link half of a covering-phase entry, one quiet line per phase in the row body
@@ -365,9 +365,10 @@ function stateButtonCounts(view: TraceabilityViewModel): Record<RequirementState
 
 export function TraceabilityPage({ archiveVersion }: { archiveVersion?: string } = {}): React.JSX.Element {
   const slug = useProjectSlug() ?? '';
+  const scope = useProjectScope();
   const traceability = useQuery({
-    queryKey: projectKey(slug, 'traceability'),
-    queryFn: () => fetchTraceability(slug),
+    queryKey: projectKey(slug, scope, 'traceability'),
+    queryFn: () => fetchTraceability(slug, scope),
   });
   const { search } = useProjectLocation();
   // The user's own choice, held with the address it was made under. Until a control changes it the

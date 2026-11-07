@@ -27,10 +27,14 @@ export class ApiError extends Error {
   }
 }
 
-/** The URL of a project's API: `/api/projects/<slug><path>`. `path` starts with '/'. */
-export function projectUrl(slug: string, path: string): string {
+/** The URL of a project's API: `/api/projects/<slug><path>`. `path` starts with '/'. Inside a workstream
+ * scope the same API is mounted a second time per workstream: `/api/projects/<slug>/ws/<name><path>`; the
+ * name is one encoded segment. A page passes the scope it read with useProjectScope; no scope is the
+ * project's own API, unchanged. */
+export function projectUrl(slug: string, path: string, scope?: string | null): string {
   if (!path.startsWith('/')) throw new Error(`A project API path starts with '/': ${path}`);
-  return `/api/projects/${encodeURIComponent(slug)}${path}`;
+  const base = `/api/projects/${encodeURIComponent(slug)}`;
+  return scope === undefined || scope === null ? `${base}${path}` : `${base}/ws/${encodeURIComponent(scope)}${path}`;
 }
 
 export interface ApiInit {
@@ -90,9 +94,10 @@ export function fetchProjects(): Promise<ProjectListResponse> {
   return apiFetch<ProjectListResponse>('/api/projects');
 }
 
-/** One project's presentation payload, read from that project's own API (never a shared route). */
-export async function fetchPresentation(slug: string): Promise<ProjectPresentation> {
-  return await apiFetch<ProjectPresentation>(projectUrl(slug, '/presentation'));
+/** One project's presentation payload, read from that project's own API (never a shared route). With a
+ * scope it is that workstream's presentation, read from its own mount. */
+export async function fetchPresentation(slug: string, scope: string | null = null): Promise<ProjectPresentation> {
+  return await apiFetch<ProjectPresentation>(projectUrl(slug, '/presentation', scope));
 }
 
 export interface OpenProjectResponse {

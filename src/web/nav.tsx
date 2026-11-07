@@ -8,9 +8,15 @@
 // and useAppNavigate are the one way to reach '/' or another project: they never take the current
 // slug, and a target that is not '/' or '/' plus a valid slug collapses to '/'.
 //
+// A workstream scope (Phase 11, D-11) is the second URL position: /{project}/workstreams/{name}/... The
+// router's ProjectRoute peels it off the pathname once (splitScope) and provides it here; inside a scope
+// Link, NavLink, useProjectNavigate and useProjectHref build /{slug}/workstreams/{name}{to}, so call sites need
+// no change. UnscopedLink and useUnscopedProjectHref are the explicit way out of a scope (the drawer's Shared
+// group, the chip's All workstreams). With no scope every address is exactly what it was before.
+//
 // Everything below the router speaks project-relative paths ('/roadmap', '/milestones/...'): the
 // wrappers add the slug on the way out, and the location hooks take it off on the way in.
-import { forwardRef, useCallback } from 'react';
+import { createContext, forwardRef, useCallback, useContext } from 'react';
 import {
   Link as RouterLink,
   NavLink as RouterNavLink,
@@ -22,7 +28,7 @@ import {
   type NavigateOptions,
   type To,
 } from 'react-router';
-import { projectRootPath, splitProjectPath, withProjectSlug } from './project-path.ts';
+import { projectRootPath, splitProjectPath, splitScope, withProjectScope, withProjectSlug } from './project-path.ts';
 
 /** The open project's slug: the `:project` route parameter, else null (a component rendered outside
  * the project route, such as in a bare MemoryRouter, stays unprefixed). Deliberately no react-query
@@ -32,21 +38,43 @@ export function useProjectSlug(): string | null {
   return params.project ?? null;
 }
 
+const ProjectScopeContext = createContext<string | null>(null);
+
+/** Provides the open workstream scope to the project's pages. Only the router's project route renders it,
+ * and the value is read off the address there, so the scope always names the address. */
+export const ProjectScopeProvider = ProjectScopeContext.Provider;
+
+/** The open workstream's name, else null (a flat project, or a component outside a project route). */
+export function useProjectScope(): string | null {
+  return useContext(ProjectScopeContext);
+}
+
 /** Search-only and hash-only targets stay on the current page, so they pass through unprefixed. */
 function isRelativeTail(value: string): boolean {
   return value.startsWith('?') || value.startsWith('#');
 }
 
-function prefixTo(slug: string | null, to: To): To {
+function prefixTo(slug: string | null, scope: string | null, to: To): To {
   if (slug === null) return to;
-  if (typeof to === 'string') return isRelativeTail(to) ? to : withProjectSlug(slug, to);
+  if (typeof to === 'string') return isRelativeTail(to) ? to : withProjectScope(slug, scope, to);
   if (to.pathname === undefined || to.pathname === '') return to;
-  return { ...to, pathname: withProjectSlug(slug, to.pathname) };
+  return { ...to, pathname: withProjectScope(slug, scope, to.pathname) };
 }
 
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link({ to, ...props }, ref) {
   const slug = useProjectSlug();
-  return <RouterLink ref={ref} to={prefixTo(slug, to)} {...props} />;
+  const scope = useProjectScope();
+  return <RouterLink ref={ref} to={prefixTo(slug, scope, to)} {...props} />;
+});
+
+/** A link inside the open project that leaves the workstream scope: the project's own (shared) address
+ * even while a workstream is open. Without a scope it is Link. */
+export const UnscopedLink = forwardRef<HTMLAnchorElement, LinkProps>(function UnscopedLink(
+  { to, ...props },
+  ref,
+) {
+  const slug = useProjectSlug();
+  return <RouterLink ref={ref} to={prefixTo(slug, null, to)} {...props} />;
 });
 
 export const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(function NavLink(
@@ -54,7 +82,8 @@ export const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(function NavL
   ref,
 ) {
   const slug = useProjectSlug();
-  return <RouterNavLink ref={ref} to={prefixTo(slug, to)} {...props} />;
+  const scope = useProjectScope();
+  return <RouterNavLink ref={ref} to={prefixTo(slug, scope, to)} {...props} />;
 });
 
 /** A target that names the landing page or one project, checked again here: '/' passes, '/' plus a
@@ -108,27 +137,36 @@ export function useAppNavigate(): (to: string, options?: NavigateOptions) => voi
 export function useProjectNavigate(): (to: To | number, options?: NavigateOptions) => void {
   const navigate = useNavigate();
   const slug = useProjectSlug();
+  const scope = useProjectScope();
   return useCallback(
     (to, options) => {
       if (typeof to === 'number') void navigate(to);
-      else void navigate(prefixTo(slug, to), options);
+      else void navigate(prefixTo(slug, scope, to), options);
     },
-    [navigate, slug],
+    [navigate, slug, scope],
   );
 }
 
 /** The href for a raw anchor that needs a project page URL (a project-relative target). */
 export function useProjectHref(to: string): string {
+  return withProjectScope(useProjectSlug(), useProjectScope(), to);
+}
+
+/** The href for a raw anchor to the project's own address, outside any open workstream scope. */
+export function useUnscopedProjectHref(to: string): string {
   return withProjectSlug(useProjectSlug(), to);
 }
 
-/** The location with the slug taken off the pathname, so pages and query keys see the same
- * project-relative path they saw before the slug existed. Outside a project route it is the
+/** The location with the slug (and a workstream scope) taken off the pathname, so pages and query keys see the
+ * same project-relative path they saw before the slug existed. Outside a project route it is the
  * location unchanged. */
 export function useProjectLocation(): { pathname: string; search: string; hash: string; state: unknown } {
   const { pathname, search, hash, state } = useLocation();
   const slug = useProjectSlug();
-  return { pathname: slug === null ? pathname : splitProjectPath(pathname).rest, search, hash, state };
+  const scope = useProjectScope();
+  if (slug === null) return { pathname, search, hash, state };
+  const { rest } = splitProjectPath(pathname);
+  return { pathname: scope === null ? rest : splitScope(rest).rest, search, hash, state };
 }
 
 export function useProjectPathname(): string {

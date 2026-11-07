@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { filePageKindOf } from '../../presentation/file-facts.ts';
 import { fetchPresentation } from '../api.ts';
-import { useProjectSlug } from '../nav.tsx';
+import { useProjectScope, useProjectSlug } from '../nav.tsx';
 import { projectKey } from '../query-keys.ts';
 import { viewOwnsLargeFile } from '../views/kinds.ts';
 import { ArtifactPage } from './artifact-page.tsx';
@@ -16,9 +16,10 @@ import { ImagePage } from './image-page.tsx';
  * not the card; listed, binary and image files keep their own pages. */
 export function DocumentRoute({ url }: { url: string }): React.JSX.Element {
   const slug = useProjectSlug() ?? '';
+  const scope = useProjectScope();
   const presentationQuery = useQuery({
-    queryKey: projectKey(slug, 'presentation'),
-    queryFn: () => fetchPresentation(slug),
+    queryKey: projectKey(slug, scope, 'presentation'),
+    queryFn: () => fetchPresentation(slug, scope),
   });
   const presentation = presentationQuery.data;
   const artifact = presentation?.artifacts.find((candidate) => candidate.key === url);

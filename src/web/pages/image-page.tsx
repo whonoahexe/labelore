@@ -11,7 +11,7 @@ import {
   imageFactsLine,
 } from '../../presentation/file-facts.ts';
 import { projectUrl } from '../api.ts';
-import { useProjectSlug } from '../nav.tsx';
+import { useProjectScope, useProjectSlug } from '../nav.tsx';
 import { ArtifactHeader } from '../components/artifact-header.tsx';
 import type { ArtifactCrumb } from '../components/artifact-header.tsx';
 import { FigureFrame } from '../components/figure-frame.tsx';
@@ -43,6 +43,7 @@ export function ImageView({
   onError: React.ReactEventHandler<HTMLImageElement>;
 }): React.JSX.Element {
   const slug = useProjectSlug() ?? '';
+  const scope = useProjectScope();
   const name = fileNameOf(artifact.path);
   const facts = imageFactsLine(fileTypeLabel(name, artifact.fileClass), artifact.sizeBytes, dimensionsOf(status));
   return (
@@ -64,7 +65,7 @@ export function ImageView({
           {(fit) => (
             <img
               alt={name}
-              src={projectUrl(slug, imageBytesUrl(artifact.key))}
+              src={projectUrl(slug, imageBytesUrl(artifact.key), scope)}
               data-fit={fit ? 'true' : undefined}
               onLoad={onLoad}
               onError={onError}

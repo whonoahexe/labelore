@@ -74,7 +74,7 @@ describe('the registry-backed client calls', () => {
     const presentation = await fetchPresentation('shapes');
     expect(presentation.projectSlug).toBe('shapes');
 
-    const dashboard = await fetchDashboard('lendshed');
+    const dashboard = await fetchDashboard('lendshed', null);
     expect(dashboard.loadStatus.status).toBe('ok');
 
     await openProject('shapes');
@@ -92,7 +92,7 @@ describe('opening a project from its URL', () => {
     if (!entry) throw new Error('the shapes fixture is not in the list');
     const client = newClient();
     client.setQueryData(projectsKey, list);
-    client.setQueryData(projectKey('shapes', 'presentation'), await fetchPresentation('shapes'));
+    client.setQueryData(projectKey('shapes', null, 'presentation'), await fetchPresentation('shapes'));
 
     const markup = renderAt('/shapes', client);
 
@@ -114,7 +114,7 @@ async function seeded(options: { openSlugs: string[]; list?: ProjectListResponse
   const payloads: Record<string, ProjectPresentation> = {};
   for (const slug of options.openSlugs) {
     payloads[slug] = await fetchPresentation(slug);
-    client.setQueryData(projectKey(slug, 'presentation'), payloads[slug]);
+    client.setQueryData(projectKey(slug, null, 'presentation'), payloads[slug]);
   }
   return { client, list, payloads };
 }
@@ -163,8 +163,8 @@ describe('switching never shows the previous project (PLAT-08)', () => {
     const lendshed = list.projects.find((entry) => entry.slug === 'lendshed');
     const shapes = list.projects.find((entry) => entry.slug === 'shapes');
     if (!lendshed || !shapes) throw new Error('the fixture projects are not in the list');
-    const dashboard = await fetchDashboard('lendshed');
-    client.setQueryData(projectKey('lendshed', 'dashboard'), dashboard);
+    const dashboard = await fetchDashboard('lendshed', null);
+    client.setQueryData(projectKey('lendshed', null, 'dashboard'), dashboard);
 
     const markup = renderAt('/shapes', client);
 
@@ -197,7 +197,7 @@ describe('switching never shows the previous project (PLAT-08)', () => {
     }
     expect(markup).not.toContain('Opening');
     expect(fetchSpy).not.toHaveBeenCalled();
-    const asked = client.getQueryState(projectKey('nope', 'presentation'));
+    const asked = client.getQueryState(projectKey('nope', null, 'presentation'));
     expect(asked?.data).toBeUndefined();
     expect(asked?.fetchStatus ?? 'idle').toBe('idle');
   });
@@ -213,7 +213,7 @@ describe('switching never shows the previous project (PLAT-08)', () => {
   it('shows the invalid-target screen with the server message and the path checked when the load failed', async () => {
     await installApp();
     const { client, payloads } = await seeded({ openSlugs: ['shapes'] });
-    client.setQueryData(projectKey('shapes', 'presentation'), {
+    client.setQueryData(projectKey('shapes', null, 'presentation'), {
       ...payloads.shapes,
       loadStatus: {
         status: 'path-not-found',
@@ -308,7 +308,7 @@ describe('the layout source', () => {
 
   it('keeps no previous data across a switch and builds its presentation key through the factory', () => {
     expect(code).not.toMatch(/placeholderData|keepPreviousData/);
-    expect(code).toContain("projectKey(slug, 'presentation')");
+    expect(code).toContain("projectKey(slug, scope, 'presentation')");
     expect(code).toContain('queryKey: projectsKey');
   });
 

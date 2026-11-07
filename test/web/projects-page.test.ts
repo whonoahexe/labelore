@@ -24,7 +24,7 @@ import { formatOpenedAgo, openedTitle } from '../../src/web/opened-ago.ts';
 import { ProjectsListSection, ProjectsPage } from '../../src/web/pages/projects-page.tsx';
 import { UnknownProjectPage } from '../../src/web/pages/unknown-project-page.tsx';
 import { projectRootPath } from '../../src/web/project-path.ts';
-import { projectKey, projectsKey } from '../../src/web/query-keys.ts';
+import { projectKey, projectWideKey, projectsKey } from '../../src/web/query-keys.ts';
 import { FX_ROOT, loadFixtureProject } from '../helpers/fixture-project.ts';
 import { TEST_PORT, testPolicy } from '../helpers/guarded-request.ts';
 import { installRegistryFetch } from '../helpers/registry-fetch.ts';
@@ -150,8 +150,8 @@ describe('apiFetch', () => {
 describe('query keys and links', () => {
   it('builds the list key and a slug-first project key', () => {
     expect(projectsKey).toEqual(['projects']);
-    expect(projectKey('lendshed', 'presentation')).toEqual(['project', 'lendshed', 'presentation']);
-    expect(projectKey('lendshed')).toEqual(['project', 'lendshed']);
+    expect(projectKey('lendshed', null, 'presentation')).toEqual(['project', 'lendshed', 'presentation']);
+    expect(projectWideKey('lendshed')).toEqual(['project', 'lendshed']);
   });
 
   it('projectRootPath names a valid slug and collapses everything else to /', () => {
@@ -288,7 +288,7 @@ describe('the landing rows', () => {
     expect(state?.phaseName).toBeTruthy();
     const client = new QueryClient();
     client.setQueryData(projectsKey, { projects: [entry('lendshed', { name: 'Lendshed' })], notices: [] });
-    client.setQueryData(projectKey('lendshed', 'presentation'), presentation);
+    client.setQueryData(projectKey('lendshed', null, 'presentation'), presentation);
     const html = renderToStaticMarkup(
       createElement(
         QueryClientProvider,

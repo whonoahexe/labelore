@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, CircleDot } from 'lucide-react';
 import { apiFetch, projectUrl } from '../api.ts';
-import { Link, useProjectSlug } from '../nav.tsx';
+import { Link, useProjectScope, useProjectSlug } from '../nav.tsx';
 import { projectKey } from '../query-keys.ts';
 import type { DashboardViewModel } from '../../presentation/dashboard.ts';
 import type { DashboardHead } from '../../presentation/dashboard-head.ts';
@@ -17,8 +17,8 @@ type DashboardResponse = DashboardViewModel & {
   loadStatus: ProjectPresentation['loadStatus'];
 };
 
-export function fetchDashboard(slug: string): Promise<DashboardResponse> {
-  return apiFetch<DashboardResponse>(projectUrl(slug, '/dashboard'));
+export function fetchDashboard(slug: string, scope: string | null): Promise<DashboardResponse> {
+  return apiFetch<DashboardResponse>(projectUrl(slug, '/dashboard', scope));
 }
 
 function fileNameOf(path: string): string {
@@ -213,9 +213,10 @@ function DashboardLoading(): React.JSX.Element {
 export function DashboardPage(): React.JSX.Element {
   // A page under the project route always has a slug; '' only satisfies the type.
   const slug = useProjectSlug() ?? '';
+  const scope = useProjectScope();
   const dashboard = useQuery({
-    queryKey: projectKey(slug, 'dashboard'),
-    queryFn: () => fetchDashboard(slug),
+    queryKey: projectKey(slug, scope, 'dashboard'),
+    queryFn: () => fetchDashboard(slug, scope),
   });
 
   if (dashboard.isPending) return <DashboardLoading />;
