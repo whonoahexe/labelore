@@ -74,8 +74,8 @@ export interface ComposedSeedCrumb {
   text: string | null;
   /** The in-app address of the payload artifact the path names. */
   url: string | null;
-  /** `resolved` is a link; `missing` is a path that names no payload artifact; `text` is prose or an unchecked path. */
-  state: 'resolved' | 'missing' | 'text';
+  /** `resolved` is a link; `not-found` is a path that names no payload artifact; `text` is prose or an unchecked path. */
+  state: 'resolved' | 'not-found' | 'text';
 }
 
 export interface ComposedSeedBar {
@@ -300,7 +300,7 @@ function crumbsOf(input: ViewInput, seed: SeedLift): ComposedSeedCrumb[] {
       if (link.path === null || link.path === undefined) {
         return { key, path: null, text: link.text, url: null, state: 'text' };
       }
-      return { key, path: link.path, text: link.description ?? null, url, state: url === null ? 'missing' : 'resolved' };
+      return { key, path: link.path, text: link.description ?? null, url, state: url === null ? 'not-found' : 'resolved' };
     }
     const { path, description } = splitLinkText(bullet);
     return path === null

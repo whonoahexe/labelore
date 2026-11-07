@@ -195,7 +195,7 @@ function Crumb({ crumb }: { crumb: ComposedSeedCrumb }): React.JSX.Element {
           </Link>
         ) : null}
         {crumb.path !== null && crumb.url === null ? <span className="view-seed-path">{crumb.path}</span> : null}
-        {crumb.state === 'missing' ? (
+        {crumb.state === 'not-found' ? (
           <span className="status-chip" data-tone="quiet">
             {NOT_FOUND_LABEL}
           </span>
