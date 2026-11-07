@@ -210,10 +210,10 @@ function Ruler({ ruler }: { ruler: ComposedRuler }): React.JSX.Element {
       <i className="view-report-base" />
       {ticks}
       <i className="view-report-span" style={{ left: percent(ruler.fromAt), width: percent(ruler.toAt - ruler.fromAt) }} />
-      <span className="view-report-sl" data-end="start" style={{ left: percent(ruler.fromAt) }}>
+      <span className="view-report-sl" data-end="start" data-flip={ruler.fromAt < 0.1 ? 'true' : 'false'} style={{ left: percent(ruler.fromAt) }}>
         {ruler.from}
       </span>
-      <span className="view-report-sl" data-end="end" style={{ left: percent(ruler.toAt) }}>
+      <span className="view-report-sl" data-end="end" data-flip={ruler.toAt > 0.9 ? 'true' : 'false'} style={{ left: percent(ruler.toAt) }}>
         {ruler.to}
       </span>
     </div>

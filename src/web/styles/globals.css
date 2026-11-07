@@ -36337,6 +36337,19 @@ a.view-thread-path:hover {
   padding-left: var(--space-1);
 }
 
+/* A stamp near either end of the day flips to the inside of the axis, so it never leaves the card. */
+.view-report-sl[data-end='start'][data-flip='true'] {
+  padding-right: 0;
+  padding-left: var(--space-1);
+  transform: none;
+}
+
+.view-report-sl[data-end='end'][data-flip='true'] {
+  padding-right: var(--space-1);
+  padding-left: 0;
+  transform: translateX(-100%);
+}
+
 .view-report-none {
   position: absolute;
   top: 0;
@@ -36850,5 +36863,23 @@ a.view-thread-path:hover {
 
 .view-report-plain .artifact-document [data-figure-island] * {
   font-size: var(--fs-2);
+}
+
+.view-report-plain .artifact-document > * + * {
+  margin-top: var(--space-3);
+}
+
+.view-report-plain .artifact-document ul {
+  padding-left: var(--space-5);
+  list-style: square;
+}
+
+.view-report-plain .artifact-document ol {
+  padding-left: var(--space-5);
+  list-style: decimal;
+}
+
+.view-report-plain .artifact-document li + li {
+  margin-top: var(--space-1-5);
 }
 /* phase-11-report:end */
