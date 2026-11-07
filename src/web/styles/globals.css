@@ -37047,4 +37047,344 @@ a.view-thread-path:hover {
     gap: var(--space-6);
   }
 }
+.view-forensics-root .status-chip {
+  max-width: 100%;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--fs-2);
+  white-space: nowrap;
+}
+
+.view-forensics-chip[data-conf='other'] {
+  border-style: dashed;
+}
+
+.view-forensics-sq {
+  --status-square-size: var(--space-2-5);
+
+  transform: translateY(var(--space-0-5));
+}
+
+.view-forensics-big {
+  --status-square-size: var(--space-5);
+
+  transform: none;
+}
+
+.view-forensics-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* The anomaly cards: the rule on the left repeats the confidence (heavy, medium, dashed), so no colour carries it. */
+.view-forensics-cards {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.view-forensics-card {
+  --view-forensics-rule: 1px;
+
+  border: 1px solid var(--border);
+  border-left: var(--view-forensics-rule) solid var(--foreground);
+  background: var(--card);
+  min-width: 0;
+}
+
+.view-forensics-card[data-conf='high'] {
+  --view-forensics-rule: 6px;
+}
+
+.view-forensics-card[data-conf='medium'] {
+  --view-forensics-rule: 3px;
+}
+
+.view-forensics-card[data-conf='low'] {
+  --view-forensics-rule: 1px;
+
+  border-left-style: dashed;
+}
+
+.view-forensics-card[data-conf='other'] {
+  --view-forensics-rule: 1px;
+
+  border-left-style: dotted;
+}
+
+.view-forensics-an > summary {
+  display: grid;
+  grid-template-columns: var(--space-6) minmax(0, 1fr) auto;
+  gap: var(--space-2) var(--space-3);
+  align-items: baseline;
+  padding: var(--space-3) var(--space-2);
+  cursor: pointer;
+  font-weight: var(--fw-semibold);
+  list-style: none;
+}
+
+.view-forensics-an > summary::-webkit-details-marker {
+  display: none;
+}
+
+.view-forensics-an > summary:hover {
+  background: var(--state-hover);
+}
+
+.view-forensics-no {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-forensics-an-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-6);
+  padding: 0 var(--space-2) var(--space-4) calc(var(--space-6) + var(--space-3) + var(--space-2));
+}
+
+.view-forensics-an-body > div {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-forensics-nothing {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--muted-foreground);
+  color: var(--muted-foreground);
+}
+
+/* The rail: the artifact grid as a heat map over the evidence summary, sticky beside the hypothesis on a wide screen. */
+.view-forensics-rail {
+  position: sticky;
+  top: calc(var(--space-10) + var(--space-8));
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-forensics-panel {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-forensics-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.view-forensics-heat {
+  display: grid;
+  grid-template-columns: auto repeat(var(--view-forensics-np, 4), minmax(calc(var(--space-8) * 2.5), 1fr));
+  border: 1px solid var(--border-faint);
+  min-width: max-content;
+}
+
+.view-forensics-row {
+  display: contents;
+}
+
+.view-forensics-heat > .view-forensics-row > * {
+  min-width: 0;
+  padding: var(--space-2);
+  border-top: 1px solid var(--border-faint);
+  border-left: 1px solid var(--border-faint);
+}
+
+.view-forensics-heat > .view-forensics-row > .view-forensics-top {
+  border-top: 0;
+}
+
+.view-forensics-hh {
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-forensics-hc {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  justify-items: start;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-forensics-nt {
+  color: var(--muted-foreground);
+}
+
+.view-forensics-legend {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  color: var(--muted-foreground);
+  list-style: none;
+}
+
+.view-forensics-legend b {
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-forensics-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.view-forensics-kv {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.view-forensics-kv > div {
+  display: grid;
+  grid-template-columns: calc(var(--space-8) * 5) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-forensics-kv > div[data-labelled='false'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.view-forensics-kv dt {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-forensics-kv dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The span axis: from the first day to the last commit, the report's own day at the far end. */
+.view-forensics-axis {
+  position: relative;
+  height: calc(var(--space-8) * 2);
+  margin-inline: var(--space-2);
+}
+
+.view-forensics-base {
+  position: absolute;
+  top: var(--space-5);
+  right: 0;
+  left: 0;
+  border-top: 2px solid var(--muted-foreground);
+}
+
+.view-forensics-sp {
+  position: absolute;
+  top: calc(var(--space-5) - var(--space-1-5));
+  height: var(--space-3);
+  background: var(--foreground);
+}
+
+.view-forensics-pt {
+  position: absolute;
+  top: calc(var(--space-5) - var(--space-2));
+  width: var(--space-4);
+  height: var(--space-4);
+  border: 2px solid var(--foreground);
+  background: var(--background);
+  transform: translateX(-50%);
+}
+
+.view-forensics-gen {
+  border-style: dashed;
+}
+
+.view-forensics-pt[data-edge='end'] {
+  transform: translateX(-100%);
+}
+
+.view-forensics-lb {
+  position: absolute;
+  top: calc(var(--space-5) + var(--space-3));
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.view-forensics-lb[data-edge='start'] {
+  transform: none;
+}
+
+.view-forensics-lb[data-edge='end'] {
+  transform: translateX(-100%);
+}
+
+.view-forensics-lt {
+  position: absolute;
+  top: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (max-width: 52rem) {
+  .view-forensics-an-body {
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: var(--space-2);
+  }
+
+  .view-forensics-an > summary {
+    grid-template-columns: var(--space-6) minmax(0, 1fr);
+  }
+
+  .view-forensics-an > summary .status-chip {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 42rem) {
+  .view-forensics-kv > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-0-5);
+  }
+}
+
+@media (max-width: 62rem) {
+  .view-forensics-rail {
+    position: static;
+  }
+}
+
 /* phase-11-forensics:end */
