@@ -280,6 +280,8 @@ export function createProjectApi(
         // quick-261006-iz6: the PLAN page's Planned date (git add-date, cached; null on any failure).
         mtimeMs: lookup.artifact.mtimeMs,
         addedAt: await runtime.fileDates.addedAt(lookup.artifact.path),
+        // Workstream scopes only: the file's real path, beside the scope's virtual `path` (absent on a flat project).
+        ...(runtime.scope ? { realPath: runtime.scope.realPathOf(lookup.artifact.path) } : {}),
       },
       phaseIdentity: lookup.phaseIdentity,
       document,
@@ -315,6 +317,11 @@ export function createProjectApi(
       ...buildDashboardViewModel({ ...presentation, ledger: { ...presentation.ledger, pace: timed } }),
       loadStatus: presentation.loadStatus,
     });
+  });
+  // The workstream inventory (11-29): flat for a project with no workstream folder and for a scoped runtime.
+  api.get('/workstreams', async (c) => {
+    const runtime = c.get('runtime');
+    return c.json(await runtime.workstreamInventory());
   });
   api.get('/roadmap', (c) => {
     const runtime = c.get('runtime');

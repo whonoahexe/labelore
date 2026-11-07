@@ -731,7 +731,7 @@ export class ProjectRegistry {
       if (slug === justLoaded.slug) continue;
       const candidate = this.entries.get(slug);
       if (!candidate?.runtime || candidate.state !== 'ready' || candidate.loading) continue;
-      if (candidate.runtime.inFlightRequests > 0) continue;
+      if (candidate.runtime.isBusy()) continue;
       candidate.runtime.dispose();
       candidate.runtime = null;
       candidate.failure = null;

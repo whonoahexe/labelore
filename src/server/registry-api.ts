@@ -114,6 +114,13 @@ export function createRegistryApp(registry: ProjectRegistry, options: RegistryAp
   // The raw prefix handed to mountPrefix is this request's URL up to the slug segment
   // (`/api/projects/<raw slug segment>`), never the decoded parameter, so a link built from it names
   // exactly the segment the client sent.
+  // The same API a second time per workstream (11-29): the runtime is the parent's scoped one for a listed
+  // workstream name and null (404) for any other. Registered before the project mount so its prefix wins.
+  const workstreamApi = createProjectApi(
+    async (c) => (await registry.runtime(c.req.param('slug') ?? ''))?.workstreamRuntime(c.req.param('name') ?? '') ?? null,
+    (c) => c.req.path.split('/').slice(0, 6).join('/'),
+  );
+  app.route('/api/projects/:slug/ws/:name', workstreamApi);
   const projectApi = createProjectApi(
     (c) => registry.runtime(c.req.param('slug') ?? ''),
     (c) => c.req.path.split('/').slice(0, 4).join('/'),
