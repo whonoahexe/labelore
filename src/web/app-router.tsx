@@ -66,6 +66,11 @@ const PlanPairPage = lazy(
     import('./pages/plan-pair-page.tsx').then((m) => ({ default: m.PlanPairPage })),
   ),
 );
+const WorkstreamIndexPage = lazy(
+  trackRouteChunk(() =>
+    import('./pages/workstream-index-page.tsx').then((m) => ({ default: m.WorkstreamIndexPage })),
+  ),
+);
 const ProjectsPage = lazy(
   trackRouteChunk(() =>
     import('./pages/projects-page.tsx').then((m) => ({ default: m.ProjectsPage })),
@@ -238,7 +243,11 @@ function ProjectRoute(): React.JSX.Element {
   const { scope } = splitScope(splitProjectPath(pathname).rest);
   return (
     <ProjectScopeProvider value={scope}>
-      <ProjectLayout>
+      <ProjectLayout
+        workstreamIndex={(presentation, inventory) => (
+          <WorkstreamIndexPage presentation={presentation} inventory={inventory} />
+        )}
+      >
         {(presentation) => (
           <RealPathProvider artifacts={presentation.artifacts}>
             <ProjectRouteSwitch presentation={presentation} />
