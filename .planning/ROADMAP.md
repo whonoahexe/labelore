@@ -464,7 +464,7 @@ the rest.
    template or workstream layout, and fall back to a readable generic page when a real file differs.
    *(VIEW-14, VIEW-15, VIEW-16, VIEW-17, VIEW-18, VIEW-19, VIEW-20)*
 
-**Plans**: 23/32 plans executed
+**Plans**: 24/32 plans executed
 
 Plans:
 **Wave 1**
@@ -499,7 +499,7 @@ Plans:
 **Wave 8** *(blocked on Wave 7 completion)*
 - [x] 11-15-PLAN.md — Spikes page board from sketch 053 A: wiring, lanes and tiles, below the board, bare /spikes
 - [x] 11-20-PLAN.md — Seed, thread, report, forensics and onboarding lifts; the onboarding context beside the map-only head
-- [ ] 11-21-PLAN.md — Sketch 061 (onboarding); the user picks the winner
+- [x] 11-21-PLAN.md — Sketch 061 (onboarding); the user picks the winner
 
 **Wave 9** *(blocked on Wave 8 completion)*
 - [x] 11-16-PLAN.md — Spikes page sheet at each spike's address, files listed by name only, browser spec, beside 053 A
@@ -613,7 +613,7 @@ file, ID or project.
 | 8. Several Projects and a Switcher | v2.1 | 18/18 | Complete    | 2026-11-02 |
 | 9. Review, Audit and Root Document Pages | v2.1 | 16/16 | In Progress | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 24/24 | Complete    | 2026-11-06 |
-| 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 23/32 | In Progress | - |
+| 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 24/32 | In Progress | - |
 | 12. Project Settings, Source Mode and Reading Polish | v2.1 | 0/TBD | Not started | - |
 | 13. Search and Quick-Jump Palette | v2.1 | 0/TBD | Not started | - |
 
