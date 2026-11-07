@@ -9,7 +9,7 @@ import { projectMapState } from '../../presentation/project-map-state.ts';
 import { projectHasResearch } from '../../presentation/project-research-files.ts';
 import { projectHasSketches } from '../../presentation/sketches.ts';
 import { fetchPresentation } from '../api.ts';
-import { NavLink } from '../nav.tsx';
+import { NavLink, useProjectScope } from '../nav.tsx';
 import { projectKey } from '../query-keys.ts';
 import { LabeloreMark } from './labelore-mark.tsx';
 import { ProjectSwitcher } from './project-switcher.tsx';
@@ -39,9 +39,10 @@ export function AppShell({
   busy?: boolean;
   children?: React.ReactNode;
 }): React.JSX.Element {
+  const scope = useProjectScope();
   const presentation = useQuery({
-    queryKey: projectKey(project.slug, 'presentation'),
-    queryFn: () => fetchPresentation(project.slug),
+    queryKey: projectKey(project.slug, scope, 'presentation'),
+    queryFn: () => fetchPresentation(project.slug, scope),
   });
 
   const projectMeta = formatProjectMeta(presentation.data?.state ?? null);

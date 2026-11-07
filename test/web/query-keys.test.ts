@@ -8,11 +8,16 @@
 //      another project's address while the next one loads.
 // Each rule has a planted positive control: the same scanner runs over a temporary tree, must report a
 // violating file and must not report a clean one.
+import { readFileSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { blankComments, walkSource } from '../helpers/source-scan.ts';
+import { QueryClient } from '@tanstack/react-query';
+import { copyPathText, realPathMap } from '../../src/web/components/copy-path-button.tsx';
+import { splitScope } from '../../src/web/project-path.ts';
+import { projectKey, projectWideKey } from '../../src/web/query-keys.ts';
+import { blankComments, callArguments, walkSource } from '../helpers/source-scan.ts';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..');
 const WEB_DIR = 'src/web';
@@ -165,5 +170,97 @@ describe('planted positive controls', () => {
     });
     expect(await violations(root, keyRule)).toEqual(['src/web/pages/query-keys.ts:1']);
     expect(await violations(root, apiRule)).toEqual(['src/web/components/api.ts:1']);
+  });
+});
+
+// Phase 11, T-11-48: inside a workstream the scope is part of every key, so one workstream's data never renders
+// under another's address, and a flat project's keys are exactly what they were.
+describe('workstream scopes in query keys', () => {
+  it('gives a flat project the key it always had', () => {
+    expect(projectKey('brinkwater', null, 'presentation')).toEqual(['project', 'brinkwater', 'presentation']);
+    expect(projectKey('brinkwater', null)).toEqual(['project', 'brinkwater']);
+  });
+
+  it('gives two scopes of one project, and the flat project, three different keys', () => {
+    const flat = projectKey('brinkwater', null, 'presentation');
+    const intake = projectKey('brinkwater', 'intake', 'presentation');
+    const ledger = projectKey('brinkwater', 'ledger', 'presentation');
+    expect(intake).toEqual(['project', 'brinkwater', 'ws', 'intake', 'presentation']);
+    expect(new Set([flat, intake, ledger].map((key) => JSON.stringify(key))).size).toBe(3);
+  });
+
+  it('never lets a scope name collide with a flat key shape', () => {
+    // A workstream called 'presentation' is still under 'ws', so it cannot read the flat presentation.
+    expect(projectKey('p', 'presentation', 'x')).not.toEqual(projectKey('p', null, 'presentation', 'x'));
+  });
+
+  it('refreshes and forgets every scope of one project and nothing of another', async () => {
+    const client = new QueryClient();
+    client.setQueryData(projectKey('brinkwater', null, 'presentation'), 1);
+    client.setQueryData(projectKey('brinkwater', 'intake', 'presentation'), 2);
+    client.setQueryData(projectKey('brinkwater', 'ledger', 'roadmap'), 3);
+    client.setQueryData(projectKey('shapes', null, 'presentation'), 4);
+    await client.invalidateQueries({ queryKey: projectWideKey('brinkwater') });
+    const stale = (key: readonly unknown[]): boolean => client.getQueryState(key)?.isInvalidated === true;
+    expect(stale(projectKey('brinkwater', null, 'presentation'))).toBe(true);
+    expect(stale(projectKey('brinkwater', 'intake', 'presentation'))).toBe(true);
+    expect(stale(projectKey('brinkwater', 'ledger', 'roadmap'))).toBe(true);
+    expect(stale(projectKey('shapes', null, 'presentation'))).toBe(false);
+  });
+
+  it('peels the scope the keys are built from', () => {
+    expect(splitScope('/workstreams/intake/roadmap').scope).toBe('intake');
+    expect(splitScope('/roadmap').scope).toBeNull();
+  });
+
+  it('passes the scope to every projectKey call in src/web', () => {
+    const offenders: string[] = [];
+    for (const file of webFiles(REPO_ROOT)) {
+      if (file === KEY_FACTORY) continue;
+      const source = readFileSync(join(REPO_ROOT, file), 'utf8');
+      callArguments(source, 'projectKey').forEach((args, index) => {
+        const arg = args[1];
+        // The one flat-on-purpose key: the router's un-prefixed legacy branch resolves against flat pages.
+        if (arg === 'scope' || (arg === 'null' && file === 'src/web/app-router.tsx')) return;
+        offenders.push(`${file}:projectKey#${index}`);
+      });
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('reports a key built without the scope', () => {
+    const planted = [
+      "const a = projectKey(slug, 'presentation');",
+      "const b = projectKey(slug, scope, 'presentation');",
+      'const c = projectWideKey(slug);',
+    ].join('\n');
+    expect(callArguments(planted, 'projectKey')).toEqual([
+      ['slug', "'presentation'"],
+      ['slug', 'scope', "'presentation'"],
+    ]);
+  });
+});
+
+describe('copy-path names the real file', () => {
+  const artifacts = [
+    { path: '.planning/ROADMAP.md', realPath: '.planning/workstreams/intake/ROADMAP.md' },
+    { path: '.planning/PROJECT.md', realPath: '.planning/PROJECT.md' },
+    { path: '.planning/STATE.md' },
+  ];
+
+  it('copies realPath when the artifact has one, and path when it has not', () => {
+    const map = realPathMap(artifacts);
+    expect(copyPathText('.planning/ROADMAP.md', map)).toBe('.planning/workstreams/intake/ROADMAP.md');
+    expect(copyPathText('.planning/STATE.md', map)).toBe('.planning/STATE.md');
+    expect(copyPathText('.planning/elsewhere.md', map)).toBe('.planning/elsewhere.md');
+  });
+
+  it('prefers a realPath handed to the button over the map', () => {
+    expect(copyPathText('.planning/ROADMAP.md', realPathMap(artifacts), '.planning/x.md')).toBe('.planning/x.md');
+  });
+
+  it('is the identity for a flat project, whose artifacts carry no realPath', () => {
+    expect(realPathMap([{ path: '.planning/ROADMAP.md' }]).size).toBe(0);
+    expect(copyPathText('.planning/ROADMAP.md', realPathMap([]))).toBe('.planning/ROADMAP.md');
   });
 });

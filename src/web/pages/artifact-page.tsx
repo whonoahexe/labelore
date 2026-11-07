@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useProjectLocation, useProjectSlug } from '../nav.tsx';
+import { Link, useProjectLocation, useProjectScope, useProjectSlug } from '../nav.tsx';
 import type { PhaseIdentity } from '../../domain/model.ts';
 import type { ParseWarning } from '../../planning-repo/types.ts';
 import { ArtifactHeader } from '../components/artifact-header.tsx';
@@ -656,10 +656,10 @@ function UnrecognizedNotice({ kind }: { kind: string }): React.JSX.Element {
 
 /** One project's document for `route`, read from that project's own API. A 404 keeps its own warning
  * text as the error message, which the page shows as its not-found state. */
-export async function fetchDocument(slug: string, route: string): Promise<ArtifactDocumentResponse> {
+export async function fetchDocument(slug: string, scope: string | null, route: string): Promise<ArtifactDocumentResponse> {
   try {
     return await apiFetch<ArtifactDocumentResponse>(
-      projectUrl(slug, `/documents?route=${encodeURIComponent(route)}`),
+      projectUrl(slug, `/documents?route=${encodeURIComponent(route)}`, scope),
     );
   } catch (error) {
     if (error instanceof ApiError && error.kind === 'http') {
@@ -720,17 +720,18 @@ export function ArtifactPage({
   const { pathname: locationPath, search } = useProjectLocation();
   const route = routeOverride ?? locationPath;
   const slug = useProjectSlug() ?? '';
+  const scope = useProjectScope();
   const query = useQuery({
-    queryKey: projectKey(slug, 'document', route),
-    queryFn: () => fetchDocument(slug, route),
+    queryKey: projectKey(slug, scope, 'document', route),
+    queryFn: () => fetchDocument(slug, scope, route),
     staleTime: Number.POSITIVE_INFINITY,
   });
   // sketch-004 B3 (quick-260922-3us): the same cached presentation query app-shell.tsx already
   // populates, keyed by this project's slug — matched by `path` below, generically, so this never adds
   // a further per-kind branch (view-page-contract.test.ts caps that pattern's occurrence count).
   const presentationQuery = useQuery({
-    queryKey: projectKey(slug, 'presentation'),
-    queryFn: () => fetchPresentation(slug),
+    queryKey: projectKey(slug, scope, 'presentation'),
+    queryFn: () => fetchPresentation(slug, scope),
   });
   const panels = useMemo(
     () => (query.data ? buildFrontmatterPanels(query.data.artifact.frontmatter) : []),

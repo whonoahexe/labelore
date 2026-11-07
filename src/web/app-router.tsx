@@ -13,14 +13,15 @@ import { LEGACY_FIRST_SEGMENTS, PROJECT_PAGES } from '../presentation/reserved.t
 import { presentationRoutePatterns } from '../presentation/routes.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
 import { fetchPresentation, fetchProjects } from './api.ts';
+import { RealPathProvider } from './components/copy-path-button.tsx';
 import { PlainPage } from './components/plain-header.tsx';
 import { RouteFallback, RouteProgress } from './components/route-progress.tsx';
 import { trackRouteChunk } from './components/route-chunk-store.ts';
-import { Link } from './nav.tsx';
+import { Link, ProjectScopeProvider, useProjectScope } from './nav.tsx';
 import { InvalidProjectScreen } from './pages/invalid-project-screen.tsx';
 import { NotFoundPage } from './pages/not-found-page.tsx';
 import { ProjectLayout } from './pages/project-layout.tsx';
-import { decodeAddress, splitProjectPath, withProjectSlug } from './project-path.ts';
+import { decodeAddress, splitProjectPath, splitScope, withProjectScope } from './project-path.ts';
 import { projectKey, projectsKey } from './query-keys.ts';
 import { resolveProjectRoute, resolveUnprefixedRoute } from './route-dispatch.ts';
 
@@ -81,10 +82,11 @@ const PAGES = {
   research: ResearchPage,
 } as const;
 
-/** A redirect's address under the project slug. The old link's #heading rides along unless the target
- * carries a heading of its own; a target's own query (an un-prefixed `/search?q=kiln`) is kept. */
-function redirectLocation(slug: string, target: string, hash: string): string {
-  const prefixed = withProjectSlug(slug, target);
+/** A redirect's address under the project slug (and the open workstream scope, so a redirect inside a
+ * workstream stays in it). The old link's #heading rides along unless the target carries a heading of
+ * its own; a target's own query (an un-prefixed `/search?q=kiln`) is kept. */
+function redirectLocation(slug: string, scope: string | null, target: string, hash: string): string {
+  const prefixed = withProjectScope(slug, scope, target);
   return prefixed.includes('#') ? prefixed : `${prefixed}${hash}`;
 }
 
@@ -121,7 +123,9 @@ function ProjectRouteSwitch({
   presentation: ProjectPresentation;
 }): React.JSX.Element {
   const location = useLocation();
-  const { rest } = splitProjectPath(location.pathname);
+  const scope = useProjectScope();
+  // The scope was peeled by ProjectRoute; the remainder resolves exactly as a flat project's address does.
+  const { rest } = splitScope(splitProjectPath(location.pathname).rest);
   const outcome = resolveProjectRoute(rest, location.search, presentation);
   switch (outcome.kind) {
     case 'page': {
@@ -143,7 +147,7 @@ function ProjectRouteSwitch({
       return <DocumentRoute url={outcome.url} />;
     case 'redirect':
       return (
-        <Navigate replace to={redirectLocation(presentation.projectSlug, outcome.to, location.hash)} />
+        <Navigate replace to={redirectLocation(presentation.projectSlug, scope, outcome.to, location.hash)} />
       );
     case 'not-found':
       break;
@@ -187,7 +191,7 @@ function UnprefixedLegacy({ presentation }: { presentation: ProjectPresentation 
   const location = useLocation();
   const outcome = resolveUnprefixedRoute(location.pathname, location.search, presentation);
   return outcome.kind === 'redirect' ? (
-    <Navigate replace to={redirectLocation(presentation.projectSlug, outcome.to, location.hash)} />
+    <Navigate replace to={redirectLocation(presentation.projectSlug, null, outcome.to, location.hash)} />
   ) : (
     <PlainPage>
       <NotFoundPage address={decodeAddress(location.pathname)} openSlug={presentation.projectSlug} />
@@ -204,8 +208,8 @@ function LegacyRoute(): React.JSX.Element {
   const list = useQuery({ queryKey: projectsKey, queryFn: fetchProjects, staleTime: 0 });
   const first = list.data?.projects[0];
   const presentation = useQuery({
-    queryKey: projectKey(first?.slug ?? '', 'presentation'),
-    queryFn: () => fetchPresentation(first?.slug ?? ''),
+    queryKey: projectKey(first?.slug ?? '', null, 'presentation'),
+    queryFn: () => fetchPresentation(first?.slug ?? '', null),
     enabled: first !== undefined,
   });
   if (list.isError || (list.data && first === undefined)) return <Navigate replace to="/" />;
@@ -226,10 +230,22 @@ function LegacyRoute(): React.JSX.Element {
 /** `/:project/*`: an old un-prefixed address, or a project by its slug (D-06, D-07). */
 function ProjectRoute(): React.JSX.Element {
   const { project = '' } = useParams();
+  const { pathname } = useLocation();
   // Every such word is a reserved slug, so no listed project can carry it.
   if (isUnprefixedLegacyWord(project)) return <LegacyRoute />;
+  // A workstream address, /{project}/workstreams/{name}/..., is the normal grammar under a scope: the scope is
+  // peeled here, once, off the raw pathname and handed down; the rest resolves unchanged (D-11).
+  const { scope } = splitScope(splitProjectPath(pathname).rest);
   return (
-    <ProjectLayout>{(presentation) => <ProjectRouteSwitch presentation={presentation} />}</ProjectLayout>
+    <ProjectScopeProvider value={scope}>
+      <ProjectLayout>
+        {(presentation) => (
+          <RealPathProvider artifacts={presentation.artifacts}>
+            <ProjectRouteSwitch presentation={presentation} />
+          </RealPathProvider>
+        )}
+      </ProjectLayout>
+    </ProjectScopeProvider>
   );
 }
 
