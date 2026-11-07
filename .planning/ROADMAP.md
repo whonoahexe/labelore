@@ -464,7 +464,7 @@ the rest.
    template or workstream layout, and fall back to a readable generic page when a real file differs.
    *(VIEW-14, VIEW-15, VIEW-16, VIEW-17, VIEW-18, VIEW-19, VIEW-20)*
 
-**Plans**: 30/32 plans executed
+**Plans**: 31/32 plans executed
 
 Plans:
 **Wave 1**
@@ -538,7 +538,7 @@ Plans:
 - [x] 11-30-PLAN.md — Workstream scope in the web app: scoped URLs, requests, query keys and copy-path
 
 **Wave 21**
-- [ ] 11-31-PLAN.md — The workstream index from sketch 056 C as the first screen, with the header gated
+- [x] 11-31-PLAN.md — The workstream index from sketch 056 C as the first screen, with the header gated
 
 **Wave 22**
 - [ ] 11-32-PLAN.md — Scope chip, the drawer's Shared group, and browser checks that flat projects are unchanged
@@ -613,7 +613,7 @@ file, ID or project.
 | 8. Several Projects and a Switcher | v2.1 | 18/18 | Complete    | 2026-11-02 |
 | 9. Review, Audit and Root Document Pages | v2.1 | 16/16 | In Progress | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 24/24 | Complete    | 2026-11-06 |
-| 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 30/32 | In Progress | - |
+| 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 31/32 | In Progress | - |
 | 12. Project Settings, Source Mode and Reading Polish | v2.1 | 0/TBD | Not started | - |
 | 13. Search and Quick-Jump Palette | v2.1 | 0/TBD | Not started | - |
 
