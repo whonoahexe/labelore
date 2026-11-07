@@ -19,7 +19,7 @@ import { ApiError, UNREACHABLE_COPY, forgetProject } from '../api.ts';
 import { AppLink, useAppNavigate } from '../nav.tsx';
 import { formatOpenedAgo, openedTitle } from '../opened-ago.ts';
 import { projectRootPath } from '../project-path.ts';
-import { projectKey, projectsKey } from '../query-keys.ts';
+import { projectWideKey, projectsKey } from '../query-keys.ts';
 import { Button } from './ui/button.tsx';
 
 /** What the polite live region says once the server has forgotten a project. */
@@ -74,7 +74,7 @@ export function ProjectRowConfirm({
       // Forgetting the project that is open leaves its pages first, so nothing asks it for data again.
       if (current) navigate('/');
       await queryClient.invalidateQueries({ queryKey: projectsKey });
-      queryClient.removeQueries({ queryKey: projectKey(entry.slug) });
+      queryClient.removeQueries({ queryKey: projectWideKey(entry.slug) });
     },
   });
   const { isPending, isError } = mutation;

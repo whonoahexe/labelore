@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
 import { FileText } from 'lucide-react';
-import { Link, useProjectSlug } from '../nav.tsx';
+import { Link, useProjectScope, useProjectSlug } from '../nav.tsx';
 import { buttonVariants } from '../components/ui/button.tsx';
 import { apiFetch, projectUrl } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
@@ -14,8 +14,8 @@ import type {
 } from '../../presentation/search.ts';
 import type { SearchApiResponse } from '../../server/search-index.ts';
 
-function fetchSearchResults(slug: string, query: string, signal: AbortSignal): Promise<SearchApiResponse> {
-  return apiFetch<SearchApiResponse>(projectUrl(slug, `/search?q=${encodeURIComponent(query)}`), { signal });
+function fetchSearchResults(slug: string, scope: string | null, query: string, signal: AbortSignal): Promise<SearchApiResponse> {
+  return apiFetch<SearchApiResponse>(projectUrl(slug, `/search?q=${encodeURIComponent(query)}`, scope), { signal });
 }
 
 // D-08: progressive reveal per group, mirroring the dashboard attention panel's existing
@@ -155,10 +155,11 @@ export function SearchPage(): React.JSX.Element {
   const [searchParams] = useSearchParams();
   const query = (searchParams.get('q') ?? '').trim();
   const slug = useProjectSlug() ?? '';
+  const scope = useProjectScope();
 
   const search = useQuery({
-    queryKey: projectKey(slug, 'search', 'page', query),
-    queryFn: ({ signal }) => fetchSearchResults(slug, query, signal),
+    queryKey: projectKey(slug, scope, 'search', 'page', query),
+    queryFn: ({ signal }) => fetchSearchResults(slug, scope, query, signal),
     enabled: query.length > 0,
     refetchInterval: (latest) => (latest.state.data?.status === 'building' ? 500 : false),
   });

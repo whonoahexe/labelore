@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { Link, useProjectSlug } from '../nav.tsx';
+import { Link, useProjectScope, useProjectSlug } from '../nav.tsx';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import { fetchPresentation } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
@@ -29,27 +29,28 @@ interface PlanPairResponse {
 
 export async function loadPair(
   slug: string,
+  scope: string | null,
   planUrl: string,
   queryClient: QueryClient,
 ): Promise<PlanPairResponse> {
-  const presentation = await fetchPresentation(slug);
+  const presentation = await fetchPresentation(slug, scope);
   const plan = presentation.milestones
     .flatMap((milestone) => milestone.phases)
     .flatMap((phase) => phase.plans)
     .find((candidate) => candidate.key === planUrl);
   if (!plan) throw new Error('This plan is not present in the current snapshot.');
-  const planDocument = (await fetchDocument(slug, planUrl)) as DocumentResponse;
+  const planDocument = (await fetchDocument(slug, scope, planUrl)) as DocumentResponse;
   // The same document payload ArtifactPage queries for, under the same project-scoped key, so the
   // tab it mounts opens without a second request.
-  queryClient.setQueryData(projectKey(slug, 'document', planUrl), planDocument);
+  queryClient.setQueryData(projectKey(slug, scope, 'document', planUrl), planDocument);
   const meta = { id: plan.id, description: plan.description };
   if (!plan.summary) return { plan: planDocument, summary: null, meta };
   const summaryRoute =
     presentation.artifacts.find((artifact) => artifact.path === plan.summary?.path)?.key ??
     plan.summary.key;
   if (!summaryRoute) return { plan: planDocument, summary: null, meta };
-  const summaryDocument = (await fetchDocument(slug, summaryRoute)) as DocumentResponse;
-  queryClient.setQueryData(projectKey(slug, 'document', summaryRoute), summaryDocument);
+  const summaryDocument = (await fetchDocument(slug, scope, summaryRoute)) as DocumentResponse;
+  queryClient.setQueryData(projectKey(slug, scope, 'document', summaryRoute), summaryDocument);
   return { plan: planDocument, summary: summaryDocument, meta, summaryRoute };
 }
 
@@ -64,9 +65,10 @@ export function PlanPairPage({
 }): React.JSX.Element {
   const queryClient = useQueryClient();
   const slug = useProjectSlug() ?? '';
+  const scope = useProjectScope();
   const query = useQuery({
-    queryKey: projectKey(slug, 'plan-pair', planUrl),
-    queryFn: () => loadPair(slug, planUrl, queryClient),
+    queryKey: projectKey(slug, scope, 'plan-pair', planUrl),
+    queryFn: () => loadPair(slug, scope, planUrl, queryClient),
     staleTime: Number.POSITIVE_INFINITY,
   });
 

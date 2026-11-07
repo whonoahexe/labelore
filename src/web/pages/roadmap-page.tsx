@@ -9,7 +9,7 @@ import {
   History,
   Link2,
 } from 'lucide-react';
-import { Link, useProjectLocation, useProjectPathname, useProjectSlug } from '../nav.tsx';
+import { Link, useProjectLocation, useProjectPathname, useProjectScope, useProjectSlug } from '../nav.tsx';
 import { apiFetch, projectUrl } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
 import { EmptyState } from '../components/empty-state.tsx';
@@ -38,8 +38,8 @@ import { stripEmoji } from './strip-emoji.ts';
 
 const REQUIREMENT_PAGE_SIZE = 4;
 
-function fetchRoadmap(slug: string): Promise<RoadmapViewModel> {
-  return apiFetch<RoadmapViewModel>(projectUrl(slug, '/roadmap'));
+function fetchRoadmap(slug: string, scope: string | null): Promise<RoadmapViewModel> {
+  return apiFetch<RoadmapViewModel>(projectUrl(slug, '/roadmap', scope));
 }
 
 /** Scrolls the element to the top of the view once, after its layout has stopped moving. Runs once per
@@ -448,7 +448,8 @@ export function RoadmapPage({ archiveVersion }: { archiveVersion?: string } = {}
     [pathname, archiveVersion],
   );
   const slug = useProjectSlug() ?? '';
-  const roadmap = useQuery({ queryKey: projectKey(slug, 'roadmap'), queryFn: () => fetchRoadmap(slug) });
+  const scope = useProjectScope();
+  const roadmap = useQuery({ queryKey: projectKey(slug, scope, 'roadmap'), queryFn: () => fetchRoadmap(slug, scope) });
   const [retrospective, setRetrospective] = useState<RetrospectiveTarget | null>(null);
   // 09 D-01: /milestones and /retrospective land on /roadmap#history. The hash is read once, on mount (and
   // never rewritten), and the History section scrolls into view once the roadmap has rendered.

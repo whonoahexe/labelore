@@ -73,7 +73,7 @@ describe('refresh contract — D-01 through D-05 in the shell and control', () =
 
   it('invalidates only this project and the list, then scrolls to top on success (D-03, D-05, D-08)', async () => {
     const status = await source('src/web/components/snapshot-status.tsx');
-    expect(status).toContain('invalidateQueries({ queryKey: projectKey(slug) })');
+    expect(status).toContain('invalidateQueries({ queryKey: projectWideKey(slug) })');
     expect(status).toContain('invalidateQueries({ queryKey: projectsKey })');
     expect(status).not.toContain('invalidateQueries()');
     expect(status).toMatch(/window\.scrollTo\(\{\s*top:\s*0\s*\}\)/);
@@ -87,8 +87,8 @@ describe('refresh contract — D-01 through D-05 in the shell and control', () =
 
   it('refreshing shapes marks shapes and the list invalid and leaves lendshed valid (T-08-35)', async () => {
     const client = new QueryClient();
-    const lendshed = projectKey('lendshed', 'dashboard');
-    const shapes = projectKey('shapes', 'dashboard');
+    const lendshed = projectKey('lendshed', null, 'dashboard');
+    const shapes = projectKey('shapes', null, 'dashboard');
     client.setQueryData(lendshed, { project: 'lendshed' });
     client.setQueryData(shapes, { project: 'shapes' });
     client.setQueryData(projectsKey, { projects: [] });

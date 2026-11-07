@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
-import { Link, useProjectPathname, useProjectSlug } from '../nav.tsx';
+import { Link, useProjectPathname, useProjectScope, useProjectSlug } from '../nav.tsx';
 import { apiFetch, projectUrl } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
 import type {
@@ -22,15 +22,16 @@ import {
 import { fileBadgeOf, fileNameOf } from '../../presentation/file-facts.ts';
 import { stripEmoji } from '../pages/strip-emoji.ts';
 
-function fetchDrawer(slug: string): Promise<DrawerViewModel> {
-  return apiFetch<DrawerViewModel>(projectUrl(slug, '/drawer'));
+function fetchDrawer(slug: string, scope: string | null): Promise<DrawerViewModel> {
+  return apiFetch<DrawerViewModel>(projectUrl(slug, '/drawer', scope));
 }
 
 /** The drawer's data: the places and their files, projected server-side from the real reader, for the
  * project the URL names. */
 export function useDrawerQuery() {
   const slug = useProjectSlug() ?? '';
-  return useQuery({ queryKey: projectKey(slug, 'drawer'), queryFn: () => fetchDrawer(slug) });
+  const scope = useProjectScope();
+  return useQuery({ queryKey: projectKey(slug, scope, 'drawer'), queryFn: () => fetchDrawer(slug, scope) });
 }
 
 /** The drawer half of the shared Warning/Unreadable vocabulary — same tones and labels as the

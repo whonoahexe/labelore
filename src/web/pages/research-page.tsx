@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useQuery } from '@tanstack/react-query';
 import { ChartLine, ChevronRight, Layers, ListChecks, Network, TriangleAlert } from 'lucide-react';
 import { useSearchParams } from 'react-router';
-import { useProjectSlug } from '../nav.tsx';
+import { useProjectScope, useProjectSlug } from '../nav.tsx';
 import { apiFetch, projectUrl } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
 import type { ResearchFileKey } from '../../presentation/project-research-files.ts';
@@ -15,8 +15,8 @@ import { FeaturesPanelBody } from './research-features-panel.tsx';
 import { StackPanelBody, StackReasons } from './research-stack-panel.tsx';
 import { SummaryPanelBody } from './research-summary-panel.tsx';
 
-function fetchResearch(slug: string): Promise<ResearchViewModel> {
-  return apiFetch<ResearchViewModel>(projectUrl(slug, '/research'));
+function fetchResearch(slug: string, scope: string | null): Promise<ResearchViewModel> {
+  return apiFetch<ResearchViewModel>(projectUrl(slug, '/research', scope));
 }
 
 /** The icon on a spine's vertical title. These sit on spine titles only, never as list markers. */
@@ -125,7 +125,8 @@ function Leaf({
  * none of the source files. */
 export function ResearchPage(): React.JSX.Element {
   const slug = useProjectSlug() ?? '';
-  const research = useQuery({ queryKey: projectKey(slug, 'research'), queryFn: () => fetchResearch(slug) });
+  const scope = useProjectScope();
+  const research = useQuery({ queryKey: projectKey(slug, scope, 'research'), queryFn: () => fetchResearch(slug, scope) });
   const [searchParams, setSearchParams] = useSearchParams();
   const offset = useShellOffset();
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
