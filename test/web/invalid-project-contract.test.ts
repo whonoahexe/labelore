@@ -22,7 +22,7 @@ describe('invalid-project screen contract', () => {
     // No second fetcher declared for the same endpoint: it lives only in api.ts.
     expect(router).not.toMatch(/function fetchPresentation/);
     expect(await source('src/web/components/app-shell.tsx')).not.toMatch(/function fetchPresentation/);
-    expect(await source('src/web/api.ts')).toMatch(/export async function fetchPresentation\(slug: string\)/);
+    expect(await source('src/web/api.ts')).toMatch(/export async function fetchPresentation\(slug: string, scope: string \| null = null\)/);
   });
 
   it('renders exactly one generic heading for every failure kind, never a per-status heading (D-15)', async () => {

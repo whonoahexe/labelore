@@ -13,8 +13,13 @@ import { readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
-import { blankComments, walkSource } from '../helpers/source-scan.ts';
+import { blankComments, callArguments, walkSource } from '../helpers/source-scan.ts';
+import { ProjectScopeProvider, Link as ProjectLink, UnscopedLink, useProjectHref, useUnscopedProjectHref } from '../../src/web/nav.tsx';
+import { splitProjectPath, splitScope, withProjectScope } from '../../src/web/project-path.ts';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -179,6 +184,162 @@ describe('nav contract over src/web', () => {
       const text = readFileSync(planted, 'utf8');
       expect(rawLocationQueryKeys(text)).toHaveLength(1);
       expect(hrefSites(text)).toEqual(['other', 'hash', 'new-tab']);
+    });
+  });
+});
+
+// Phase 11, D-11: the workstream scope is the second URL position. It is peeled once (splitScope), carried by the
+// prefixing module, and every request and cache key names it.
+describe('the workstream scope in the nav', () => {
+  it('splitScope peels /workstreams/{name} and leaves anything else alone', () => {
+    expect(splitScope('/workstreams/intake/')).toEqual({ scope: 'intake', rest: '/' });
+    expect(splitScope('/workstreams/intake')).toEqual({ scope: 'intake', rest: '/' });
+    expect(splitScope('/workstreams/intake/roadmap')).toEqual({ scope: 'intake', rest: '/roadmap' });
+    expect(splitScope('/workstreams/roadmap/phase-1')).toEqual({ scope: 'roadmap', rest: '/phase-1' });
+    expect(splitScope('/workstreams')).toEqual({ scope: null, rest: '/workstreams' });
+    expect(splitScope('/workstreams/')).toEqual({ scope: null, rest: '/workstreams/' });
+    expect(splitScope('/roadmap')).toEqual({ scope: null, rest: '/roadmap' });
+    expect(splitScope('/')).toEqual({ scope: null, rest: '/' });
+    expect(splitScope('/workstreamsx/intake')).toEqual({ scope: null, rest: '/workstreamsx/intake' });
+  });
+
+  it('decodes the name once and keeps a malformed one raw', () => {
+    expect(splitScope('/workstreams/a%20b/x')).toEqual({ scope: 'a b', rest: '/x' });
+    expect(splitScope('/workstreams/a%2Fb/x')).toEqual({ scope: 'a/b', rest: '/x' });
+    expect(splitScope('/workstreams/100%/x')).toEqual({ scope: '100%', rest: '/x' });
+  });
+
+  it('peels the scope off the part of the pathname after the slug', () => {
+    const { rest } = splitProjectPath('/brinkwater/workstreams/intake/roadmap');
+    expect(splitScope(rest)).toEqual({ scope: 'intake', rest: '/roadmap' });
+  });
+
+  it('withProjectScope builds /{slug}/workstreams/{name}{to} and is withProjectSlug without a scope', () => {
+    expect(withProjectScope('p', 'intake', '/roadmap')).toBe('/p/workstreams/intake/roadmap');
+    expect(withProjectScope('p', 'intake', '/')).toBe('/p/workstreams/intake');
+    expect(withProjectScope('p', 'intake', '/search?q=a#b')).toBe('/p/workstreams/intake/search?q=a#b');
+    expect(withProjectScope('p', null, '/roadmap')).toBe('/p/roadmap');
+    expect(withProjectScope(null, 'intake', '/roadmap')).toBe('/roadmap');
+  });
+
+  it('keeps the name one encoded segment and the single-slash rule inside a scope (T-11-46)', () => {
+    expect(withProjectScope('p', 'a/b?c#d', '/x')).toBe('/p/workstreams/a%2Fb%3Fc%23d/x');
+    for (const crafted of ['//evil.example', '/\\evil.example', 'https://evil.example', 'roadmap', '']) {
+      expect(withProjectScope('p', 'intake', crafted)).toBe('/p/workstreams/intake');
+    }
+  });
+
+  function hrefsAt(scope: string | null): string[] {
+    const inside = createElement(
+      'div',
+      null,
+      createElement(ProjectLink, { to: '/roadmap' }),
+      createElement(ProjectLink, { to: '/' }),
+      createElement(UnscopedLink, { to: '/roadmap' }),
+      createElement(function Hrefs() {
+        return createElement(
+          'span',
+          { 'data-scoped': useProjectHref('/state'), 'data-unscoped': useUnscopedProjectHref('/state') },
+        );
+      }),
+    );
+    const html = renderToStaticMarkup(
+      createElement(
+        MemoryRouter,
+        { initialEntries: ['/p/anything'] },
+        createElement(
+          Routes,
+          null,
+          createElement(Route, {
+            path: '/:project/*',
+            element: createElement(ProjectScopeProvider, { value: scope }, inside),
+          }),
+        ),
+      ),
+    );
+    return [...html.matchAll(/(?:href|data-scoped|data-unscoped)="([^"]*)"/g)].map((match) => match[1]);
+  }
+
+  it('prefixes the scope in every hook inside a scope, and the unscoped variant skips it', () => {
+    expect(hrefsAt('intake')).toEqual([
+      '/p/workstreams/intake/roadmap',
+      '/p/workstreams/intake',
+      '/p/roadmap',
+      '/p/workstreams/intake/state',
+      '/p/state',
+    ]);
+  });
+
+  it('leaves a flat project exactly as it was', () => {
+    expect(hrefsAt(null)).toEqual(['/p/roadmap', '/p', '/p/roadmap', '/p/state', '/p/state']);
+  });
+
+  it('keeps useProjectScope and the scope prefixing in nav.tsx', () => {
+    const nav = read('src/web/nav.tsx');
+    for (const name of ['useProjectScope', 'ProjectScopeProvider', 'UnscopedLink', 'useUnscopedProjectHref']) {
+      expect(nav).toMatch(new RegExp(`export (?:const|function) ${name}\\b`));
+    }
+    expect(nav).toContain('withProjectScope');
+  });
+
+  describe('every request names its scope', () => {
+    /** Files that may call projectUrl or fetchPresentation without the scope: the API module itself, whose own
+     * open and refresh calls are project-wide on purpose, and the key factory. */
+    const API_MODULE = 'src/web/api.ts';
+    /** The one router branch that resolves an un-prefixed legacy address against the opened project's flat pages. */
+    const FLAT_ON_PURPOSE = ['src/web/app-router.tsx'];
+
+    /** `file:index` of every call to `name` whose argument at `position` is not the page's `scope`. */
+    function unscoped(source: string, file: string, name: string, position: number): string[] {
+      return callArguments(source, name)
+        .map((args, index) => ({ args, index }))
+        .filter(({ args }) => {
+          const arg = args[position];
+          if (arg === 'scope') return false;
+          return !(arg === 'null' && FLAT_ON_PURPOSE.includes(file));
+        })
+        .map(({ index }) => `${file}:${name}#${index}`);
+    }
+
+    it('passes the scope from useProjectScope to every projectUrl and fetchPresentation call', () => {
+      const offenders = files
+        .filter((file) => file !== API_MODULE && file !== 'src/web/query-keys.ts')
+        .flatMap((file) => [
+          ...unscoped(read(file), file, 'projectUrl', 2),
+          ...unscoped(read(file), file, 'fetchPresentation', 1),
+        ]);
+      expect(offenders).toEqual([]);
+    });
+
+    it('lets the API module send the presentation to the scope it was given', () => {
+      expect(callArguments(read(API_MODULE), 'projectUrl').map((args) => args.join(' | '))).toContain(
+        "slug | '/presentation' | scope",
+      );
+    });
+
+    it('reports a call that omits the scope, and passes one that carries it', async () => {
+      const root = await mkdtemp(join(tmpdir(), 'labelore-nav-scope-'));
+      try {
+        const planted = join(root, 'planted.tsx');
+        await writeFile(
+          planted,
+          [
+            `const a = projectUrl(slug, '/roadmap');`,
+            "const b = projectUrl(slug, `/search?q=${a(b, c)}`, scope);",
+            `const c = fetchPresentation(slug);`,
+            `const d = fetchPresentation(slug, scope);`,
+            `// projectUrl(slug, '/x') in a comment is not a call`,
+            `function projectUrl(slug, path, scope) {}`,
+            `const e = head.projectUrl(slug);`,
+          ].join('\n'),
+          'utf8',
+        );
+        const text = readFileSync(planted, 'utf8');
+        expect(unscoped(text, 'planted.tsx', 'projectUrl', 2)).toEqual(['planted.tsx:projectUrl#0']);
+        expect(unscoped(text, 'planted.tsx', 'fetchPresentation', 1)).toEqual(['planted.tsx:fetchPresentation#0']);
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
     });
   });
 });
