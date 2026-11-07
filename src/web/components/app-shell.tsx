@@ -33,10 +33,15 @@ function navigationClass({ isActive }: { isActive: boolean }): string {
 export function AppShell({
   project,
   busy = false,
+  workstreamIndex,
   children,
 }: {
   project: ProjectListEntry;
   busy?: boolean;
+  /** Set only while the workstream index is the page (11-31): the header shows the workstream count beside the
+   * project switcher, and Roadmap and Traceability are hidden, because the index has no roadmap or requirements of
+   * its own to lead to (the map-only precedent: no tab leads nowhere). */
+  workstreamIndex?: { countText: string };
   children?: React.ReactNode;
 }): React.JSX.Element {
   const scope = useProjectScope();
@@ -45,7 +50,8 @@ export function AppShell({
     queryFn: () => fetchPresentation(project.slug, scope),
   });
 
-  const projectMeta = formatProjectMeta(presentation.data?.state ?? null);
+  const onIndex = workstreamIndex !== undefined;
+  const projectMeta = onIndex ? workstreamIndex.countText : formatProjectMeta(presentation.data?.state ?? null);
   // The Research tab appears only for a project with at least one of the five research files.
   const showResearch = projectHasResearch(presentation.data?.artifacts ?? []);
   // The Sketches tab appears only for a project that has sketches (todo 001).
@@ -53,6 +59,9 @@ export function AppShell({
   // A project that holds only a codebase map has no roadmap and no requirements to lead to (D-07). While
   // the presentation is still loading this is false, so a normal project's tabs never flicker.
   const mapOnly = projectMapState(presentation.data?.artifacts ?? []).mapOnly;
+  // The workstream index has no roadmap or requirements of its own either (11-31): the same rule, so no tab leads
+  // nowhere. Inside a workstream every tab shows, because there the roadmap and the traceability are the workstream's.
+  const hideRoadmapTabs = mapOnly || onIndex;
 
   return (
     <ToastProvider>
@@ -92,7 +101,7 @@ export function AppShell({
               <LayoutDashboard aria-hidden="true" />
               Dashboard
             </NavLink>
-            {mapOnly ? null : (
+            {hideRoadmapTabs ? null : (
               <NavLink className={navigationClass} to={presentationRoutePatterns.roadmap}>
                 <Map aria-hidden="true" />
                 Roadmap
@@ -104,7 +113,7 @@ export function AppShell({
                 Research
               </NavLink>
             ) : null}
-            {mapOnly ? null : (
+            {hideRoadmapTabs ? null : (
               <NavLink className={navigationClass} to={presentationRoutePatterns.traceability}>
                 <ListChecks aria-hidden="true" />
                 Traceability
