@@ -63,6 +63,13 @@ export function createApp(
   const runtime = new ProjectRuntime(source, slugOf(source.getSnapshot().rootPath), commitLog);
 
   app.route(
+    '/api/ws/:name',
+    createProjectApi(
+      async (c) => runtime.workstreamRuntime(c.req.param('name') ?? ''),
+      (c) => c.req.path.split('/').slice(0, 4).join('/'),
+    ),
+  );
+  app.route(
     '/api',
     createProjectApi(
       async () => runtime,
