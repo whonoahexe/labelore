@@ -33,6 +33,7 @@ import { composePause } from './pause-page.ts';
 import { composeSpikes } from './spikes-page.ts';
 import { composeIndexes } from './indexes-page.ts';
 import { composeSeed } from './seed-page.ts';
+import { composeThread } from './thread-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -508,6 +509,14 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     lead: 'An idea waiting to surface: what it is, when it should come up, and where it was planted.',
     promote: [{ type: 'section', heading: /\S/, all: true }],
     seedPage: composeSeed,
+  },
+  // Phase 11 (11-23, sketch-058 winner A): one view for every threads/*.md. `promote` is the silent fallback when the page
+  // composes nothing (Phase 10 C1, X2).
+  thread: {
+    kind: 'thread',
+    lead: 'A thread of work across sessions: where it stands and what the next session should do first.',
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+    threadPage: composeThread,
   },
 });
 
