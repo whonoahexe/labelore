@@ -2,7 +2,7 @@
 sketch: 058
 name: thread-page
 question: "How does a thread page put its status and next steps first, then its goal, context and references, as a picture?"
-winner: null
+winner: "A"
 tags: [thread, exploration, phase-11]
 ---
 
@@ -119,4 +119,14 @@ Not UI-SPEC copy, drawn only to read the picture: "View" and "Source" (the shipp
 All text is made up. The repository is public.
 
 ## Winner
-Pending, chosen at the 11-14 checkpoint.
+**A: Status dial**, chosen by the user: "A seems good for 58". No synthesis.
+
+Build A as drawn in its tab (marked "★ Selected"):
+- **The picture:** a half-dial of the three statuses (Open, In progress, Resolved), the needle on this thread's own;
+  the status chip under it with Created, Updated and the age of the last update.
+- **Beside the dial:** "Next steps" (first one boxed) over "Goal"; Context and References in two columns below.
+- **Unrecognised status:** every arc grey and the needle at rest.
+- **Open points carried to 11-23:** the h1 is the title and can be long (header caps or wraps); the older shape
+  (`## Status:` section, no frontmatter) reads its status word from the body; a free-text reference is never a link.
+- **Sketch-only example:** the fourth thread steward-rota-view (current shape, empty next steps) is not in the Lendshed
+  fixture. If the winning frame needs that state, 11-23 adds a matching thread to the fixtures.

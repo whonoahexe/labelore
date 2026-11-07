@@ -2,7 +2,7 @@
 sketch: 057
 name: seed-page
 question: "How does a seed page lead with the idea beside when it should surface, its scope, and where and when it was planted, as a picture?"
-winner: null
+winner: "C"
 tags: [seed, exploration, phase-11]
 ---
 
@@ -138,4 +138,16 @@ matters", "Scope estimate", "When to surface", "Notes".
 All text is made up. The repository is public.
 
 ## Winner
-Pending, chosen at the 11-14 checkpoint.
+**C: Seed packet**, chosen by the user: "C seems interesting for 57". No synthesis.
+
+Build C as drawn in its tab (marked "★ Selected"):
+- **The picture:** an envelope. A square postmark ("Planted" and the date), a dashed stamp carrying the scope letter,
+  the "Surface when" sentence as the address, the status as a seal; `audit_acknowledged` as a dashed postscript line
+  under it.
+- **Below the envelope:** Why, Breadcrumbs and the closed bars follow as folded sheets in one narrow column, at most
+  48rem wide, centred at 1280, full column at 390.
+- **Open points carried to 11-22:** the h1 is the long idea (cap or wrap in the `ArtifactHeader`); the 11-22 build
+  needs the unresolved-breadcrumb and no-trigger states from the fixtures; "No breadcrumbs" was drawn only in B, so C
+  stays silent on an empty list unless 11-22 decides the absence is the point.
+- **Sketch-only example:** the fourth seed SEED-260402-w9d (triggered, large scope, breadcrumbs that do not resolve) is
+  not in the Lendshed fixture. If the winning frame needs that state, 11-22 adds a matching seed to the fixtures.
