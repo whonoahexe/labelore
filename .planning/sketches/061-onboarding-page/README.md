@@ -2,7 +2,7 @@
 sketch: 061
 name: onboarding-page
 question: "How does an onboarding summary page lead with the recommended command, ready to copy and never run, then show the project's files, codebase and documents, beside a first screen that may suggest another command, as a picture?"
-winner: null
+winner: A
 tags: [onboarding, report, phase-11]
 ---
 
@@ -128,3 +128,20 @@ text), `--fs-2` (labels, chips, file names, captions). No other size is used (ch
   note above it, not under it.
 - The 11-02 / 11-09 note stands: a map-only project with four missing files is not what the writer produces, so the
   `maponly` state is a fixture case; the page handles it either way.
+
+## Winner
+**A: Desk**, chosen by the user: "61A". No synthesis.
+
+Build A as drawn in its tab (marked "★ Selected"):
+- **The picture:** the project as three objects on one table: a folder with four sheet slots (the four planning files,
+  present sheets tinted, missing ones dashed), a smaller folder of seven mini documents (the codebase map and its
+  readiness), a pile of candidate documents. The recommended command leads, in the shared copy-command row.
+- **Beside the Phase 10 map-only first screen:** when the summary's command differs from the first screen's, the second
+  block sits to the right of the command, with its own "Copy command" button, so the "summary says / first screen says"
+  pair is the first thing read. The desk never repeats the Phase 10 head's stack and concern counts.
+- **The two open choices were not objected to, so they stay as drawn in A:** the quiet "From the onboarding summary" line
+  stays in the differing case, and the never-runs sentence appears once, under the summary's command.
+- **Sketch-only states carried to 11-26:** `partial` (part-way, fast map), `same` (map-only, both commands the same) and
+  `missing` (all four missing, no map) exist in the sketch only, not in the Lendshed/Tidemark fixtures from 11-09. The
+  build tests cover them with planted test copies (a temp copy of a fixture with the lines changed, made inside the
+  test), not by editing the fixtures, which would shift pinned counts elsewhere.
