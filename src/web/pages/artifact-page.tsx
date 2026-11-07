@@ -88,6 +88,8 @@ import type { ComposedThread } from '../views/thread-page.ts';
 import { ThreadView, threadHeaderProps } from '../views/thread-page-components.tsx';
 import type { ComposedReport } from '../views/report-page.ts';
 import { ReportView, reportHeaderProps } from '../views/report-page-components.tsx';
+import type { ComposedForensics } from '../views/forensics-page.ts';
+import { ForensicsView, forensicsHeaderProps } from '../views/forensics-page-components.tsx';
 import type { ComposedSpec } from '../views/spec-page.ts';
 import { SpecView, specHeaderProps } from '../views/spec-page-components.tsx';
 import type { ComposedAiSpec } from '../views/ai-spec-page.ts';
@@ -1028,6 +1030,13 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.reportPage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // Phase 11 (11-25, sketch 060 B): the forensics page, when the resolved manifest opts into one - `null` for every other kind
+  // and for a forensics report the page cannot shape (no `structured.forensics`), where the promoted-section view renders with
+  // no notice. The composer is pure, so two forensics pages open at once each compose from their own response.
+  const forensicsPage = useMemo<ComposedForensics | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.forensicsPage?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // Phase 10 (10-16, sketch 047 B): the Spec page, when the resolved manifest opts into one - `null` for every other
   // kind and for a SPEC the page cannot shape (no `structured.spec`, or no score, requirement, dimension, goal or
   // scope), where the promoted-section view renders with no notice. The composer is pure, so two spec pages open at
@@ -1136,6 +1145,7 @@ export function ArtifactPage({
     seedPage !== null ||
     threadPage !== null ||
     reportPage !== null ||
+    forensicsPage !== null ||
     specPage !== null ||
     aiSpecPage !== null ||
     userSetupPage !== null ||
@@ -1470,6 +1480,9 @@ export function ArtifactPage({
   // The report page's header override (eyebrow "Session report" or "Milestone summary", the file's title as the h1, the
   // generated stamp as meta) rides the same spread; the page carries what the metadata disclosure would repeat.
   const reportCover = reportPage && mode === 'view' ? reportPage : null;
+  // The forensics page's header override (eyebrow "Forensics", the report's title as the h1, the generated stamp as meta, the
+  // Problem sentence as a quiet note) rides the same spread; the page carries what the metadata disclosure would repeat.
+  const forensicsCover = forensicsPage && mode === 'view' ? forensicsPage : null;
   // The Spec page's header override ("Phase N · Spec", the phase name as the h1, created date and requirement count
   // as meta) rides the same spread; the page's strip carries what the metadata disclosure would repeat.
   const specPageCover = specPage && mode === 'view' ? specPage : null;
@@ -1506,6 +1519,7 @@ export function ArtifactPage({
     (seedCover ? seedHeaderProps(seedCover, artifact.title) : null) ??
     (threadCover ? threadHeaderProps(threadCover, artifact.title, artifact.path) : null) ??
     (reportCover ? reportHeaderProps(reportCover, artifact.title, artifact.path) : null) ??
+    (forensicsCover ? forensicsHeaderProps(forensicsCover, artifact.title, artifact.path) : null) ??
     (specPageCover ? specHeaderProps(specPageCover, artifact.title) : null) ??
     (aiSpecPageCover ? aiSpecHeaderProps(aiSpecPageCover, artifact.title) : null) ??
     (userSetupPageCover ? userSetupHeaderProps(userSetupPageCover, artifact.title) : null) ??
@@ -1606,6 +1620,7 @@ export function ArtifactPage({
         seedCover ||
         threadCover ||
         reportCover ||
+        forensicsCover ||
         specPageCover ||
         aiSpecPageCover ||
         userSetupPageCover ||
@@ -1731,6 +1746,8 @@ export function ArtifactPage({
         <ThreadView key={artifact.path} model={threadCover} />
       ) : reportCover ? (
         <ReportView key={artifact.path} model={reportCover} renderHtml={renderHtml} />
+      ) : forensicsCover ? (
+        <ForensicsView key={artifact.path} model={forensicsCover} />
       ) : specPageCover ? (
         <SpecView key={artifact.path} model={specPageCover} renderHtml={renderHtml} onShowSource={showSource} />
       ) : aiSpecPageCover ? (

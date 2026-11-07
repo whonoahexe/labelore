@@ -35,6 +35,7 @@ import { composeIndexes } from './indexes-page.ts';
 import { composeSeed } from './seed-page.ts';
 import { composeThread } from './thread-page.ts';
 import { composeReport } from './report-page.ts';
+import { composeForensics } from './forensics-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -526,6 +527,14 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     lead: 'What a session or a milestone delivered: the headline numbers, the outcomes and what is still open.',
     promote: [{ type: 'section', heading: /\S/, all: true }],
     reportPage: composeReport,
+  },
+  // Phase 11 (11-25, sketch-060 winner B): one view for every forensics/report-*.md file. `promote` is the silent fallback
+  // when the page composes nothing (Phase 10 C1, X2).
+  forensics: {
+    kind: 'forensics',
+    lead: 'What a forensics run concluded went wrong, what to do about it, and the evidence it read.',
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+    forensicsPage: composeForensics,
   },
 });
 
