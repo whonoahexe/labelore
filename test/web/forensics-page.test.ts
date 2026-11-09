@@ -310,6 +310,89 @@ describe('forensics page: planted copies of the fixture text', () => {
     expect(planted.grid!.absent).toBe(0);
   });
 
+  describe('the grid places each cell by its own phase and artifact (L3-WR-07)', () => {
+    type PlantedCell = { phase: string | null; artifact: string | null; present: boolean | null; cell: string };
+    const cellOf = (phase: string, artifact: string | null, present: boolean | null = true, cell = '✅'): PlantedCell => ({
+      phase,
+      artifact,
+      present,
+      cell,
+    });
+    function gridFrom(grid: PlantedCell[]) {
+      const model = composed(
+        composeForensics({ kind: 'forensics', frontmatter: {}, structured: { forensics: { hypothesis: 'h', grid } }, groups: [], planSegments: [] }),
+      );
+      return model.grid!;
+    }
+    const states = (row: { cells: { state: string }[] }) => row.cells.map((cell) => cell.state);
+
+    it('leaves the missing cell of a shorter phase empty under the right row and counts only the cells held', () => {
+      const grid = gridFrom([
+        cellOf('01 One', 'PLAN'),
+        cellOf('01 One', 'CONTEXT', false, '❌'),
+        cellOf('02 Two', 'PLAN'),
+      ]);
+      expect(grid.phases.map((phase) => phase.number)).toEqual(['01', '02']);
+      expect(grid.rows.map((row) => row.artifact)).toEqual(['PLAN', 'CONTEXT']);
+      expect(states(grid.rows[0]!)).toEqual(['present', 'present']);
+      expect(states(grid.rows[1]!)).toEqual(['absent', 'unstated']);
+      expect(grid.rows[1]!.cells[1]).toMatchObject({ state: 'unstated', note: '' });
+      expect(grid.total).toBe(3);
+      expect(grid.absent).toBe(1);
+      expect(grid.summary).toBe('1 of 3 artifacts absent');
+    });
+
+    it('counts 4, never 6, when a third artifact joins the first phase only', () => {
+      const grid = gridFrom([
+        cellOf('01 One', 'PLAN'),
+        cellOf('01 One', 'CONTEXT'),
+        cellOf('01 One', 'RESEARCH'),
+        cellOf('02 Two', 'PLAN'),
+      ]);
+      expect(grid.rows.map((row) => row.artifact)).toEqual(['PLAN', 'CONTEXT', 'RESEARCH']);
+      expect(grid.total).toBe(4);
+      expect(grid.summary).toBe('0 of 4 artifacts absent');
+    });
+
+    it('keeps a repeated artifact name inside a phase in that phase, in a second row, and starts no phantom phase', () => {
+      const grid = gridFrom([
+        cellOf('01 One', 'PLAN'),
+        cellOf('01 One', 'PLAN', false, '❌'),
+        cellOf('01 One', 'CONTEXT'),
+      ]);
+      expect(grid.phases).toHaveLength(1);
+      expect(grid.rows.map((row) => row.artifact)).toEqual(['PLAN', 'PLAN', 'CONTEXT']);
+      expect(grid.rows.map((row) => states(row))).toEqual([['present'], ['absent'], ['present']]);
+      expect(grid.total).toBe(3);
+    });
+
+    it('gives a null artifact and an empty one a row each, and does not let two null names set the width to 1', () => {
+      const grid = gridFrom([
+        cellOf('01 One', null),
+        cellOf('01 One', null),
+        cellOf('01 One', ''),
+        cellOf('01 One', 'PLAN'),
+      ]);
+      expect(grid.phases).toHaveLength(1);
+      expect(grid.rows.map((row) => row.artifact)).toEqual(['', '', '', 'PLAN']);
+      expect(grid.total).toBe(4);
+    });
+
+    it('shows a lift cut mid-phase with the cells it has and counts only those', () => {
+      const grid = gridFrom([
+        cellOf('01 One', 'PLAN'),
+        cellOf('01 One', 'CONTEXT'),
+        cellOf('01 One', 'RESEARCH'),
+        cellOf('02 Two', 'PLAN'),
+        cellOf('02 Two', 'CONTEXT', false, '❌'),
+      ]);
+      expect(grid.phases).toHaveLength(2);
+      expect(states(grid.rows[2]!)).toEqual(['present', 'unstated']);
+      expect(grid.total).toBe(5);
+      expect(grid.absent).toBe(1);
+    });
+  });
+
   it('falls through, per file, for a forensics file with none of the known headings', () => {
     const text = ['# Notes', '', 'Some words that are not a forensic report.', '', '## Something else', 'More words.'].join('\n');
     expect(extractForensics(text)).toBeNull();
