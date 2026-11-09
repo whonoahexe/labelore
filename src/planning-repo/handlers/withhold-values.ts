@@ -347,6 +347,37 @@ function maskedValueEnd(text: string, start: number, to: number, inSpan: boolean
   return end;
 }
 
+/** How `maskValues` reads a colon. The default reads an env-var map (User setup): `NAME: a few words` masks the clause.
+ * `prose` (11, WR-01) is for free-form author prose (seeds, threads), where `NOTE: revisit later` and `UAT: passes` are
+ * ordinary sentences: after a colon only one token that looks like a credential is masked. `NAME=value`, a code span and
+ * a table row of a name and a credential-like value are masked in both modes. */
+export interface MaskOptions {
+  prose?: boolean;
+}
+
+/** True for a value token that reads as a credential and not as a word: no blanks, and either a letter and a digit
+ * together (`abc123`, `Hunter2`) or a letter beside one of `_ / : @ + =` (`sk_live_x`, `postgres://u:p@h/db`). A word
+ * (`revisit`, `GitHub`), a hyphenated word (`follow-up`) and a number (`429`) are not. Surrounding quotes and backticks
+ * are ignored. */
+function looksLikeCredential(value: string): boolean {
+  let from = 0;
+  let to = value.length;
+  const edge = (c: number): boolean => c === 34 || c === 39 || c === 96 || c === 42;
+  while (from < to && edge(value.charCodeAt(from))) from += 1;
+  while (to > from && edge(value.charCodeAt(to - 1))) to -= 1;
+  let letter = false;
+  let digit = false;
+  let symbol = false;
+  for (let k = from; k < to; k += 1) {
+    const c = value.charCodeAt(k);
+    if (isBreak(c)) return false;
+    if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122)) letter = true;
+    else if (c >= 48 && c <= 57) digit = true;
+    else if (c === 95 || c === 47 || c === 58 || c === 64 || c === 43 || c === 61) symbol = true;
+  }
+  return letter && (digit || symbol);
+}
+
 interface MaskState {
   out: string[];
   /** The start of the text not yet written to `out`. */
@@ -361,7 +392,7 @@ interface MaskState {
  * and `NAME://` are not. After a colon and a space the value runs to the end of the clause, so a value of several words
  * (`NAME: pass phrase here`) is masked whole; elsewhere it is one token.
  */
-function maskAssignment(state: MaskState, text: string, nameEnd: number, to: number, inSpan: boolean): number {
+function maskAssignment(state: MaskState, text: string, nameEnd: number, to: number, inSpan: boolean, prose: boolean): number {
   let at = nameEnd;
   while (at < to && isCloser(text.charCodeAt(at))) at += 1;
   const afterName = at;
@@ -371,6 +402,7 @@ function maskAssignment(state: MaskState, text: string, nameEnd: number, to: num
   if (at >= to) return -1;
   let start: number;
   let multiWord = false;
+  let colon = false;
   if (sign === 61) {
     const after = at + 1;
     if (after >= to) return -1;
@@ -390,23 +422,26 @@ function maskAssignment(state: MaskState, text: string, nameEnd: number, to: num
     if (next === 58 || next === 47) return -1;
     start = after;
     while (start < to && (isBlank(text.charCodeAt(start)) || text.charCodeAt(start) === 42)) start += 1;
-    // `NAME: a few words` is a clause; `NAME:value` with no space after the colon is one token.
-    multiWord = start > after;
+    // `NAME: a few words` is a clause; `NAME:value` with no space after the colon is one token. In prose it is always one
+    // token, masked only when it reads as a credential (WR-01).
+    multiWord = !prose && start > after;
+    colon = true;
   } else {
     return -1;
   }
   if (start >= to) return -1;
   const placeholder = placeholderEnd(text, start, to);
   if (placeholder >= 0) return placeholder;
-  const end = maskedValueEnd(text, start, to, inSpan, multiWord);
+  const end = maskedValueEnd(text, start, to, inSpan && !(prose && colon), multiWord);
   if (end <= start) return -1;
+  if (prose && colon && !looksLikeCredential(text.slice(start, end))) return -1;
   if (start > state.start) state.out.push(text.slice(state.start, start));
   state.out.push(VALUE_NOT_SHOWN_MARK);
   state.start = end;
   return end;
 }
 
-function maskRange(text: string, from: number, to: number, inSpan: boolean, out: string[]): void {
+function maskRange(text: string, from: number, to: number, inSpan: boolean, out: string[], prose: boolean): void {
   const state: MaskState = { out, start: from };
   let i = from;
   while (i < to) {
@@ -419,14 +454,14 @@ function maskRange(text: string, from: number, to: number, inSpan: boolean, out:
       }
       if (i > state.start) out.push(text.slice(state.start, i));
       out.push('`');
-      maskRange(text, i + 1, close, true, out);
+      maskRange(text, i + 1, close, true, out, prose);
       out.push('`');
       state.start = close + 1;
       const inner = tokenAt(text, i + 1);
       i = close + 1;
       // A name in backticks with the value outside them: `NAME`=value.
       if (inner !== null && inner.end === close) {
-        const next = maskAssignment(state, text, i, to, false);
+        const next = maskAssignment(state, text, i, to, false, prose);
         if (next >= 0) i = next;
       }
       continue;
@@ -436,7 +471,7 @@ function maskRange(text: string, from: number, to: number, inSpan: boolean, out:
     if (isUpper(code) && boundary) {
       const token = tokenAt(text, i);
       if (token !== null) {
-        const next = maskAssignment(state, text, token.end, to, inSpan);
+        const next = maskAssignment(state, text, token.end, to, inSpan, prose);
         i = next >= 0 ? next : token.end;
         continue;
       }
@@ -463,7 +498,7 @@ function isNameCell(cell: string): boolean {
  * not a cell) becomes the marker; a cell already masked or reading as a placeholder is kept. Text with no pipe is
  * returned as written.
  */
-function maskTableRow(text: string): string {
+function maskTableRow(text: string, prose: boolean): string {
   if (!text.includes('|')) return text;
   const cells = text.split('|');
   let named = -1;
@@ -478,6 +513,7 @@ function maskTableRow(text: string): string {
     const trimmed = cells[j].trim();
     if (trimmed === '' || trimmed === VALUE_NOT_SHOWN_MARK) continue;
     if (placeholderEnd(trimmed, 0, trimmed.length) === trimmed.length) continue;
+    if (prose && !looksLikeCredential(trimmed)) continue;
     cells[j] = ` ${VALUE_NOT_SHOWN_MARK} `;
   }
   return cells.join('|');
@@ -490,15 +526,24 @@ function maskTableRow(text: string): string {
  * (`| NAME | value |`), anywhere in the string, any number of times. A name is upper-snake (A to Z, 0 to 9, underscore,
  * starting with a letter, two to eighty characters). A bracketed or angle-bracketed placeholder that reads as a description
  * (`PORT=[your port]`, `PORT=<port>`; not `<hunter2>`), an empty remainder and text with no assignment are returned as
- * written. The remainder is never returned. One pass, linear, no regular expression.
+ * written. The remainder is never returned. One pass, linear, no regular expression. With `{ prose: true }` a colon (and a
+ * table cell) masks only one credential-like token (see MaskOptions).
  */
-export function maskValues(text: string): string {
+export function maskValues(text: string, options: MaskOptions = {}): string {
   if (text === '') return text;
+  const prose = options.prose === true;
   const out: string[] = [];
-  const row = maskTableRow(text);
-  maskRange(row, 0, row.length, false, out);
+  const row = maskTableRow(text, prose);
+  maskRange(row, 0, row.length, false, out, prose);
   return out.join('');
 }
+
+/** `maskValues` in prose mode: the mask for free-form author prose (seed and thread strings, WR-01). */
+export function maskProse(text: string): string {
+  return maskValues(text, PROSE);
+}
+
+const PROSE: MaskOptions = { prose: true };
 
 // ---------------------------------------------------------------------------------------------------------------
 // maskData and splitMasked (11-37, L3-WR-01): the shared lift mask and the shared splitter of masked text.
@@ -510,16 +555,16 @@ const FRONTMATTER_DEPTH = 8;
 /** A lifted or frontmatter value with every string in it (keys included) passed through `maskValues`: a pasted value can
  * sit in a title, a list item or a nested field as easily as in the body. A value nested deeper than FRONTMATTER_DEPTH is
  * dropped. Dates, numbers and booleans are returned as they are. */
-export function maskData(value: unknown, depth: number): unknown {
-  if (typeof value === 'string') return maskValues(value);
+export function maskData(value: unknown, depth: number, options: MaskOptions = {}): unknown {
+  if (typeof value === 'string') return maskValues(value, options);
   if (Array.isArray(value)) {
-    return depth >= FRONTMATTER_DEPTH ? [] : value.map((item) => maskData(item, depth + 1));
+    return depth >= FRONTMATTER_DEPTH ? [] : value.map((item) => maskData(item, depth + 1, options));
   }
   if (value instanceof Date) return value;
   if (typeof value === 'object' && value !== null) {
     if (depth >= FRONTMATTER_DEPTH) return {};
     const out: Record<string, unknown> = {};
-    for (const [key, item] of Object.entries(value)) out[maskValues(key)] = maskData(item, depth + 1);
+    for (const [key, item] of Object.entries(value)) out[maskValues(key, options)] = maskData(item, depth + 1, options);
     return out;
   }
   return value;

@@ -2,17 +2,20 @@
 // `threads/<slug>.md`. Each claims one kind from folders.ts, keeps the generic title, frontmatter, body and
 // warning, and adds `structured.seed` or `structured.thread` read by seed-thread-lift.ts. The lift is guarded by
 // its own try/catch: a throw only omits the key, and the page then falls back to the plain document. The title, the
-// frontmatter and the lift pass through the shared mask (`maskValues` / `maskData`) so a value written beside a variable
+// frontmatter and the lift pass through the shared mask in prose mode (`maskProse` / `maskData`, WR-01) so a value written beside a variable
 // name never reaches the payload (11-37, L3-WR-01, T-11-70); the body stays as written, as Source mode shows the file.
 import type { ArtifactHandler, ArtifactRef, HandlerParseResult, RawArtifact } from '../types.ts';
 import { tryParseFrontmatter } from '../frontmatter.ts';
 import { deriveTitle } from './title.ts';
 import { extractSeed, extractThread } from './seed-thread-lift.ts';
-import { maskData, maskValues } from './withhold-values.ts';
+import { maskData, maskProse } from './withhold-values.ts';
 
 export type { SeedLift, ThreadLift } from './seed-thread-lift.ts';
 
 type Key = 'seed' | 'thread';
+
+/** Seeds and threads are free-form prose: the mask's prose mode keeps `NOTE: revisit later` as written (WR-01). */
+const PROSE = { prose: true } as const;
 
 /** The generic parse plus `structured.<key>` from `lift`; `{}` when the lift throws. */
 function parseWith(
@@ -22,18 +25,18 @@ function parseWith(
   lift: (fm: ReturnType<typeof tryParseFrontmatter>) => unknown,
 ): HandlerParseResult {
   const fm = tryParseFrontmatter(raw.content);
-  const title = maskValues(deriveTitle(fm.data, fm.body, ref.path));
+  const title = maskProse(deriveTitle(fm.data, fm.body, ref.path));
   let lifted: unknown;
   try {
     // 11-37 (L3-WR-01, T-11-70): the lift, title and frontmatter pass through the shared mask, as User setup does, so a
     // value written beside a variable name never reaches the payload. The body stays as written (Source mode).
-    lifted = maskData(lift(fm), 0);
+    lifted = maskData(lift(fm), 0, PROSE);
   } catch {
     lifted = undefined;
   }
   return {
     title,
-    frontmatter: maskData(fm.data, 0) as Record<string, unknown>,
+    frontmatter: maskData(fm.data, 0, PROSE) as Record<string, unknown>,
     body: fm.body,
     warning: fm.warning,
     structured: lifted === undefined || lifted === null ? {} : { [key]: lifted },

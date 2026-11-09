@@ -491,3 +491,65 @@ describe('L3-WR-01: the seed and thread handlers mask a value beside a name', ()
     }
   });
 });
+
+// 11 (WR-01): the seed and thread handlers read their strings as prose, so "WORD: words" survives in the title, the lift
+// and the frontmatter, while a credential after a colon is still masked.
+describe('WR-01: seed and thread prose is not masked as an env-var map', () => {
+  const PROSE = ['NOTE: revisit when the API ships', 'Use **TOKEN: xyz** ok'];
+
+  it('keeps prose in a seed title, trigger, why and notes', () => {
+    const text = [
+      '---',
+      'id: SEED-260601-w3p',
+      'status: dormant',
+      'planted: 2026-06-01',
+      `trigger_when: "${PROSE[0]}"`,
+      '---',
+      '',
+      `# SEED-260601-w3p: ${PROSE[1]}`,
+      '',
+      '## Why This Matters',
+      '',
+      PROSE[0],
+      '',
+      '## Notes',
+      '',
+      PROSE[1],
+      '',
+    ].join('\n');
+    const path = `${SEEDS}SEED-260601-w3p-prose.md`;
+    const result = SeedHandler.parse(rawOf(path, text), refOf(path, 'seed'));
+    const payload = JSON.stringify({ title: result.title, frontmatter: result.frontmatter, structured: result.structured });
+    expect(payload).not.toContain('Value not shown');
+    expect(result.title).toContain(PROSE[1]);
+    for (const line of PROSE) expect(payload).toContain(JSON.stringify(line).slice(1, -1));
+  });
+
+  it('keeps prose in a thread title, goal and next steps, and still masks TOKEN: abc123', () => {
+    const text = [
+      '---',
+      'slug: prose',
+      `title: "${PROSE[0]}"`,
+      'status: open',
+      'created: 2026-06-01',
+      '---',
+      '',
+      '## Goal',
+      '',
+      PROSE[1],
+      '',
+      '## Next Steps',
+      '',
+      `- ${PROSE[0]}`,
+      '- Set TOKEN: abc123 in the vault',
+      '',
+    ].join('\n');
+    const path = `${THREADS}prose.md`;
+    const result = ThreadHandler.parse(rawOf(path, text), refOf(path, 'thread'));
+    const payload = JSON.stringify({ title: result.title, frontmatter: result.frontmatter, structured: result.structured });
+    expect(result.title).toBe(PROSE[0]);
+    for (const line of PROSE) expect(payload).toContain(JSON.stringify(line).slice(1, -1));
+    expect(payload).not.toContain('abc123');
+    expect(payload).toContain('Value not shown');
+  });
+});

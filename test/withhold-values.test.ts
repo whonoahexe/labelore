@@ -3,6 +3,7 @@
 // run command before it reaches a copy row (T-10-26).
 import { describe, expect, it } from 'vitest';
 import {
+  maskProse,
   VALUE_NOT_SHOWN_MARK,
   maskData,
   maskValues,
@@ -340,5 +341,54 @@ describe('maskData (11-37): every string of a lifted value, keys included', () =
     let deep: unknown = 'TOKEN=abc123';
     for (let level = 0; level < 12; level += 1) deep = { next: deep };
     expect(JSON.stringify(maskData(deep, 0))).not.toContain('abc123');
+  });
+});
+
+// 11 (WR-01, G-11-2 re-review): seeds and threads are prose. The prose mode keeps "WORD: words" as written and masks only a
+// credential-like token after a colon; the `=` forms are masked as in the default mode.
+describe('maskProse (WR-01)', () => {
+  const KEPT = [
+    'NOTE: revisit when the API ships',
+    'TODO: fix **bold** later',
+    'Seed title — IMPORTANT: revisit after v2 ships, then archive. Also see docs',
+    '- UAT: passes',
+    'Retry: max 3 times (see HTTP: 429)',
+    'Use **TOKEN: xyz** ok',
+    'WARNING: follow-up on GitHub',
+    '| NOTE | revisit later |',
+  ];
+  for (const text of KEPT) {
+    it(`keeps prose as written: ${text}`, () => {
+      expect(maskProse(text)).toBe(text);
+    });
+  }
+
+  const MASKED: [string, string][] = [
+    ['Set TOKEN: abc123 in the vault', 'Set TOKEN: [Value not shown] in the vault'],
+    ['API_KEY:sk_live_x', 'API_KEY:[Value not shown]'],
+    ['DB_URL: postgres://u:p@h/db', 'DB_URL: [Value not shown]'],
+    ['Use **TOKEN: abc123** ok', 'Use **TOKEN: [Value not shown]** ok'],
+    ['TOKEN=abc123 leaks', 'TOKEN=[Value not shown] leaks'],
+    ['API_KEY = hunter', 'API_KEY = [Value not shown]'],
+    ['`TOKEN: abc123`', '`TOKEN: [Value not shown]`'],
+    ['| STRIPE_KEY | sk_live_abc |', '| STRIPE_KEY | [Value not shown] |'],
+  ];
+  for (const [text, expected] of MASKED) {
+    it(`masks a credential: ${text}`, () => {
+      expect(maskProse(text)).toBe(expected);
+    });
+  }
+
+  it('leaves no stray bold stars around a masked bold value', () => {
+    const runs = splitMasked(maskProse('Use **TOKEN: abc123** ok'));
+    expect(runs).toEqual([
+      { kind: 'text', text: 'Use ' },
+      { kind: 'withheld', name: 'TOKEN' },
+      { kind: 'text', text: ' ok' },
+    ]);
+  });
+
+  it('is idempotent', () => {
+    for (const [text] of MASKED) expect(maskProse(maskProse(text))).toBe(maskProse(text));
   });
 });

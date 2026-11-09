@@ -17,7 +17,7 @@
 // when the seed lift is missing or carries nothing beyond its id and idea, so the page keeps the promoted-section view
 // with no notice (Phase 10 C1, X2). T-11-35: every string is author text rendered as React text by the components.
 import type { SeedLift } from '../../planning-repo/handlers/seed-thread-lift.ts';
-import { maskValues, splitMasked } from '../../planning-repo/handlers/withhold-values.ts';
+import { maskProse, splitMasked } from '../../planning-repo/handlers/withhold-values.ts';
 import type { MaskedRun } from '../../planning-repo/handlers/withhold-values.ts';
 import { splitLinkText } from '../../presentation/seed-thread-links.ts';
 import type { SeedThreadLink } from '../../presentation/seed-thread-links.ts';
@@ -144,7 +144,7 @@ export function sincePlantedWords(planted: string | null, readAt: string | null 
  * and text planted unmasked draw the same. A withheld run with no readable name carries `name: null` and draws the mark
  * alone. */
 export function segmentsOf(text: string): SeedSegment[] {
-  return splitMasked(maskValues(text));
+  return splitMasked(maskProse(text));
 }
 
 /** Blank-line separated blocks of an author's text; a block whose every line starts "- " or "* " is a list. */
@@ -182,18 +182,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 /** A non-blank string field of the lift, passed through the shared mask: the handler masks at read time, and this second
  * pass (a no-op on masked text) covers a presentation built any other way. */
 function textOrNull(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() !== '' ? maskValues(value) : null;
+  return typeof value === 'string' && value.trim() !== '' ? maskProse(value) : null;
 }
 
 function stringList(value: unknown): string[] {
   return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string').map((item) => maskValues(item))
+    ? value.filter((item): item is string => typeof item === 'string').map((item) => maskProse(item))
     : [];
 }
 
 /** A resolved link's words, masked the same way. */
 function maskedOrNull(value: string | null | undefined): string | null {
-  return typeof value === 'string' ? maskValues(value) : null;
+  return typeof value === 'string' ? maskProse(value) : null;
 }
 
 /** The seed lift as the response carries it (JSON, so every field is read defensively), or null. */
@@ -267,7 +267,7 @@ function crumbsOf(input: ViewInput, seed: SeedLift): ComposedSeedCrumb[] {
       const link = links.breadcrumbs[at]!;
       const url = typeof link.url === 'string' && link.url !== '' ? link.url : null;
       if (link.path === null || link.path === undefined) {
-        return { key, path: null, text: maskValues(link.text), url: null, state: 'text' };
+        return { key, path: null, text: maskProse(link.text), url: null, state: 'text' };
       }
       return { key, path: link.path, text: maskedOrNull(link.description), url, state: url === null ? 'not-found' : 'resolved' };
     }
