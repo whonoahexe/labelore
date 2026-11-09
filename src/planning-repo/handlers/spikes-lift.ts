@@ -14,7 +14,7 @@
 // Author keys (idea keys, table headers) are read through Maps and Object.hasOwn, never spread into a plain
 // object (RESEARCH Pitfall 11). Tables are bounded (SPIKES_ROW_CAP rows, SPIKES_IDEA_CAP ideas) and every scan is
 // one linear pass over a capped body, because the whole structured record ships to the browser (T-11-15, T-11-16).
-import { eachLineOutsideFences, scanFencedLines, splitBodyLines } from './fenced-sections.ts';
+import { eachLineOutsideFences, fenceMarker, scanFencedLines, splitBodyLines } from './fenced-sections.ts';
 import type { FencedSection } from './fenced-sections.ts';
 import { parseMarkdownTable } from './markdown-sections.ts';
 
@@ -73,6 +73,12 @@ export interface SpikeReadmeBody {
   idea?: string;
   type?: string;
   validates?: SpikeValidates;
+  /**
+   * True only when the README has a level-2 What This Validates section that is one plain paragraph, was not cut by
+   * the text cap, and says the same words as the `validates` kept above, so a sheet that draws `validates` shows the
+   * whole section. Absent when the README has no such section.
+   */
+  validatesCoversSection?: boolean;
   verdictKeyword?: string;
   verdictText?: string;
   related: string[];
@@ -542,6 +548,72 @@ function splitValidates(text: string): SpikeValidates {
   };
 }
 
+/** True when a trimmed, non-blank line is more than plain paragraph text: a heading, list item, table row, quote,
+ * rule, raw HTML or image. */
+function isMarkupLine(trimmed: string): boolean {
+  const first = trimmed.charCodeAt(0);
+  // '#' heading, '|' table, '>' quote, '<' raw HTML.
+  if (first === 35 || first === 124 || first === 62 || first === 60) return true;
+  if (trimmed.includes('|') || trimmed.includes('![')) return true;
+  // '-', '*' or '+' followed by a space is a list item.
+  if ((first === 45 || first === 42 || first === 43) && trimmed.charCodeAt(1) === 32) return true;
+  // A run made only of '-', '*', '_', '=' and spaces is a rule or a heading underline.
+  let ruleOnly = trimmed.length >= 3;
+  for (let i = 0; ruleOnly && i < trimmed.length; i += 1) {
+    const c = trimmed.charCodeAt(i);
+    if (c !== 45 && c !== 42 && c !== 95 && c !== 61 && c !== 32) ruleOnly = false;
+  }
+  if (ruleOnly) return true;
+  // '1.' or '1)' followed by a space is an ordered list item.
+  let digits = 0;
+  while (digits < trimmed.length && trimmed.charCodeAt(digits) >= 48 && trimmed.charCodeAt(digits) <= 57) digits += 1;
+  if (digits > 0 && digits < 10) {
+    const mark = trimmed.charCodeAt(digits);
+    if ((mark === 46 || mark === 41) && trimmed.charCodeAt(digits + 1) === 32) return true;
+  }
+  return false;
+}
+
+/**
+ * The text of a What This Validates section when it is nothing but one plain paragraph, else null: no fence, table
+ * row, list item, heading line, quote, rule or raw HTML, no blank line between two text lines, and not longer than the
+ * text cap. One linear pass over the section's own lines.
+ */
+function plainParagraphOf(lines: readonly string[], from: number, to: number): string | null {
+  const parts: string[] = [];
+  let gap = false;
+  for (let i = from; i < to; i += 1) {
+    const line = lines[i];
+    if (fenceMarker(line) !== null) return null;
+    const trimmed = line.trim();
+    if (trimmed === '') {
+      if (parts.length > 0) gap = true;
+      continue;
+    }
+    if (gap || isMarkupLine(trimmed) || line.startsWith('    ') || line.startsWith('\t')) return null;
+    parts.push(trimmed);
+  }
+  if (parts.length === 0) return null;
+  const text = parts.join(' ');
+  return text.length > SPIKES_TEXT_CAP ? null : text;
+}
+
+/** Words as the reader sees them: whitespace collapsed, case folded, one final full stop dropped. */
+function wordsOf(text: string): string {
+  let out = '';
+  let pendingSpace = false;
+  for (const ch of text.toLowerCase()) {
+    if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') {
+      pendingSpace = out !== '';
+      continue;
+    }
+    if (pendingSpace) out += ' ';
+    pendingSpace = false;
+    out += ch;
+  }
+  return out.endsWith('.') ? out.slice(0, -1).trimEnd() : out;
+}
+
 const VALIDATES_HEADING = 'what this validates';
 const RESULTS_HEADING = 'results';
 
@@ -572,8 +644,8 @@ export function extractSpikeReadme(
   const sections = scanFencedLines(lines);
 
   let validatesText = scalarText(own(fm, 'validates')) ?? headScalar(headRows, 'validates');
+  const section = sections.find((s) => s.level === 2 && s.heading.trim().toLowerCase() === VALIDATES_HEADING);
   if (validatesText === undefined) {
-    const section = sections.find((s) => s.level === 2 && s.heading.trim().toLowerCase() === VALIDATES_HEADING);
     if (section !== undefined) {
       const paragraph: string[] = [];
       eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
@@ -582,6 +654,12 @@ export function extractSpikeReadme(
       });
       validatesText = paragraph.length === 0 ? undefined : capText(paragraph.join(' '));
     }
+  }
+  // The sheet may leave the section out only when the validates text it shows is the section, word for word.
+  let validatesCoversSection: boolean | undefined;
+  if (section !== undefined) {
+    const sectionText = plainParagraphOf(lines, section.startLine + 1, section.endLine);
+    validatesCoversSection = sectionText !== null && validatesText !== undefined && wordsOf(validatesText) === wordsOf(sectionText);
   }
 
   const headings: string[] = [];
@@ -606,6 +684,7 @@ export function extractSpikeReadme(
   const type = scalarText(own(fm, 'type')) ?? headScalar(headRows, 'type');
   if (type !== undefined) result.type = type;
   if (validatesText !== undefined) result.validates = splitValidates(validatesText);
+  if (validatesCoversSection !== undefined) result.validatesCoversSection = validatesCoversSection;
   if (verdict !== undefined) {
     result.verdictKeyword = verdict.keyword;
     result.verdictText = verdict.text;
