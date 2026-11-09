@@ -391,6 +391,14 @@ describe('maskProse (WR-01)', () => {
     ['`DB_PASS: correct horse`', '`DB_PASS: [Value not shown]`'],
     ['| DB_PASS | hunter |', '| DB_PASS | [Value not shown] |'],
     ['FOO=hunter', 'FOO=[Value not shown]'],
+    // T-11-70 (security audit): names the first secret list missed.
+    ['GH_PAT: ghp_abc123', 'GH_PAT: [Value not shown]'],
+    ['GH_PAT:ghp_abc123', 'GH_PAT:[Value not shown]'],
+    ['STRIPE_SK: sk_live_abc', 'STRIPE_SK: [Value not shown]'],
+    ['AUTH: Basic dXNlcjpwYXNz', 'AUTH: [Value not shown]'],
+    ['AUTHORIZATION: Bearer abc.def', 'AUTHORIZATION: [Value not shown]'],
+    ['WEBHOOK: https://hooks.example.com/x', 'WEBHOOK: [Value not shown]'],
+    ['| GH_PAT | ghp_abc123 |', '| GH_PAT | [Value not shown] |'],
   ];
   for (const [text, expected] of MASKED) {
     it(`masks a credential: ${text}`, () => {
@@ -409,5 +417,31 @@ describe('maskProse (WR-01)', () => {
 
   it('is idempotent', () => {
     for (const [text] of MASKED) expect(maskProse(maskProse(text))).toBe(maskProse(text));
+  });
+});
+
+// T-11-70 (security audit): a frontmatter key that is a variable name holds its value in a separate string.
+describe('maskData - a value under a variable-name key', () => {
+  it('masks a string or number under an upper-snake key in the default mode', () => {
+    expect(maskData({ API_KEY: 'sk_live_x', PORT: 8080, STATUS: 'done', title: 'kept' }, 0)).toEqual({
+      API_KEY: VALUE_NOT_SHOWN_MARK,
+      PORT: VALUE_NOT_SHOWN_MARK,
+      STATUS: VALUE_NOT_SHOWN_MARK,
+      title: 'kept',
+    });
+  });
+
+  it('masks only under a secret key in prose mode, and keeps placeholders and empty values', () => {
+    expect(maskData({ API_KEY: 'sk_live_x', PIN: 4821, NOTE: 'revisit later', DB_PASS: '[your password]', TOKEN: '' }, 0, { prose: true })).toEqual({
+      API_KEY: VALUE_NOT_SHOWN_MARK,
+      PIN: VALUE_NOT_SHOWN_MARK,
+      NOTE: 'revisit later',
+      DB_PASS: '[your password]',
+      TOKEN: '',
+    });
+  });
+
+  it('still walks a list under a secret key', () => {
+    expect(maskData({ API_KEYS: ['TOKEN=abc123', 'kept'] }, 0, { prose: true })).toEqual({ API_KEYS: ['TOKEN=[Value not shown]', 'kept'] });
   });
 });

@@ -364,7 +364,7 @@ export const PROSE_MASK: MaskOptions = { prose: true };
 const SECRET_SEGMENTS = new Set([
   'KEY', 'KEYS', 'TOKEN', 'TOKENS', 'SECRET', 'SECRETS', 'PASS', 'PASSWORD', 'PASSWD', 'PASSPHRASE', 'PWD', 'PIN',
   'CREDENTIAL', 'CREDENTIALS', 'CREDS', 'PRIVATE', 'SALT', 'DSN', 'URL', 'URI', 'COOKIE', 'SESSION', 'CERT', 'SIGNATURE',
-  'BEARER', 'OTP',
+  'BEARER', 'OTP', 'AUTH', 'AUTHORIZATION', 'PAT', 'SK', 'WEBHOOK', 'HOOK', 'APIKEY', 'ACCESS', 'REFRESH', 'CLIENT',
 ]);
 
 /** True when an upper-snake name reads as a secret: a segment from SECRET_SEGMENTS, or a segment ending in KEY, TOKEN or
@@ -552,6 +552,22 @@ export function maskProse(text: string): string {
 /** The deepest nesting `maskData` follows; past it a value is dropped rather than kept unmasked. */
 const FRONTMATTER_DEPTH = 8;
 
+/** True when a frontmatter key is itself a variable name whose value must not be shown (`API_KEY: sk_live_x` parses to
+ * the key `API_KEY` and the value `sk_live_x`, two strings no text scan sees together, T-11-70): any upper-snake name in
+ * the default mode, a secret name (`isSecretName`) in prose mode. */
+function keyHoldsValue(key: string, options: MaskOptions): boolean {
+  const token = tokenAt(key, 0);
+  if (token === null || token.end !== key.length) return false;
+  return options.prose !== true || isSecretName(token.name);
+}
+
+/** A string or number under a value-holding key: the marker, except an empty string or a placeholder (`[your key]`), kept
+ * as written. Lists and maps under the key are walked by `maskData` instead. */
+function withheldScalar(item: string | number | bigint): string {
+  if (typeof item !== 'string') return VALUE_NOT_SHOWN_MARK;
+  return isPlaceholder(item) ? item : VALUE_NOT_SHOWN_MARK;
+}
+
 /** A lifted or frontmatter value with every string in it (keys included) passed through `maskValues`: a pasted value can
  * sit in a title, a list item or a nested field as easily as in the body. A value nested deeper than FRONTMATTER_DEPTH is
  * dropped. Dates, numbers and booleans are returned as they are. */
@@ -564,7 +580,10 @@ export function maskData(value: unknown, depth: number, options: MaskOptions = {
   if (typeof value === 'object' && value !== null) {
     if (depth >= FRONTMATTER_DEPTH) return {};
     const out: Record<string, unknown> = {};
-    for (const [key, item] of Object.entries(value)) out[maskValues(key, options)] = maskData(item, depth + 1, options);
+    for (const [key, item] of Object.entries(value)) {
+      const scalar = typeof item === 'string' || typeof item === 'number' || typeof item === 'bigint';
+      out[maskValues(key, options)] = scalar && keyHoldsValue(key, options) ? withheldScalar(item) : maskData(item, depth + 1, options);
+    }
     return out;
   }
   return value;
