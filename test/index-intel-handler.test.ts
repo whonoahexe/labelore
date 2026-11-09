@@ -12,7 +12,7 @@ import { IndexIntelHandler } from '../src/planning-repo/handlers/index-intel.ts'
 import { GenericMarkdownHandler } from '../src/planning-repo/handlers/generic.ts';
 import { PlanningRepository } from '../src/planning-repo/snapshot.ts';
 import type { ArtifactRef, RawArtifact } from '../src/planning-repo/types.ts';
-import type { IntelSummary, StackSummary } from '../src/planning-repo/handlers/index-intel-lift.ts';
+import type { IntelSummary, StackSummary, SynthesisSummary } from '../src/planning-repo/handlers/index-intel-lift.ts';
 import { INDEX_BOUNDS } from '../src/server/index-bounds.ts';
 import { createApp } from '../src/server/index.ts';
 import type { CommitLog } from '../src/server/commit-times.ts';
@@ -414,7 +414,7 @@ describe('growth: the handler reads intel files in time that grows in step with 
   });
 
   it('still reads a count line indented with spaces or a tab, and gives no number for a label without digits', () => {
-    const read = (text: string): ReturnType<typeof summaryOf> =>
+    const read = (text: string): SynthesisSummary =>
       summaryOf(indexOf(IndexIntelHandler.parse(rawOf(`${INTEL}SYNTHESIS.md`, text), refOf(`${INTEL}SYNTHESIS.md`))) as IntelSummary, 'synthesis');
     expect(read('  Docs synthesized: 7\n').documents).toBe(7);
     expect(read('\t- Docs synthesized:\t8\n').documents).toBe(8);
