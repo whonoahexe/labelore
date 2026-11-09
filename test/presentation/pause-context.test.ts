@@ -1,7 +1,7 @@
 // Phase 11 (11-07, VIEW-17, D-05, D-07, D-08): the pause page's server-side join, over the real Lendshed and Shapes
 // presentations loaded through the repository. The two pause files are paired, dated and set against STATE and
 // ROADMAP; where they disagree both values are carried with their file names and nothing is merged.
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { buildPauseContext, movedOnForSpike } from '../../src/presentation/pause-context.ts';
 import { loadFixtureProject } from '../helpers/fixture-project.ts';
@@ -310,6 +310,87 @@ describe('buildPauseContext: nested pauses', () => {
   it('stands a note alone when the root HANDOFF names another phase', async () => {
     const context = buildPauseContext(await lendshed(), PHASE_NOTE)!;
     expect(context.files.handoff).toBeNull();
+  });
+});
+
+describe('buildPauseContext: pairing runs the same rule from both sides (L2A-WR-01)', () => {
+  // The Lendshed root note names phase 03; the HANDOFF is moved to phase 5 so the two name different phases.
+  function handoffOnPhase5(presentation: ProjectPresentation, dropPhaseDir: boolean): ProjectPresentation {
+    return planted(presentation, (draft) => {
+      const handoff = draft.artifacts.find((artifact) => artifact.path === HANDOFF)!;
+      const pause = handoff.structured.pause as { phase?: string; phaseDir?: string };
+      pause.phase = '5';
+      if (dropPhaseDir) delete pause.phaseDir;
+    });
+  }
+
+  it('does not pair a root note on another phase with the HANDOFF, and says nothing of disagreement', async () => {
+    const copy = handoffOnPhase5(await lendshed(), true);
+    const fromHandoff = buildPauseContext(copy, HANDOFF)!;
+    expect(fromHandoff.files.continueHere).toBeNull();
+    expect(fromHandoff.disagreements).toEqual([]);
+    expect(fromHandoff.nextActionOther).toBeNull();
+    expect(fromHandoff.restSections.some((section) => section.file === '.continue-here.md')).toBe(false);
+    // The same rule from the note's side: it stands alone.
+    expect(buildPauseContext(copy, ROOT_NOTE)!.files.handoff).toBeNull();
+  });
+
+  it('falls back to the note in the HANDOFF\'s phase_dir, as it does when there is no root note', async () => {
+    const copy = planted(handoffOnPhase5(await lendshed(), false), (draft) => {
+      const note = draft.artifacts.find((artifact) => artifact.path === PHASE_NOTE)!;
+      (note.structured.pause as { phase?: string }).phase = '5';
+    });
+    const context = buildPauseContext(copy, HANDOFF)!;
+    expect(context.files.continueHere?.path).toBe(PHASE_NOTE);
+    expect(context.disagreements.some((row) => row.field === 'nextAction')).toBe(true);
+    expect(context.restSections.some((section) => section.file === '.continue-here.md')).toBe(true);
+  });
+
+  it('still pairs a root note that names no phase, from either side', async () => {
+    const copy = planted(await lendshed(), (draft) => {
+      const note = draft.artifacts.find((artifact) => artifact.path === ROOT_NOTE)!;
+      delete (note.structured.pause as { phase?: string }).phase;
+    });
+    expect(buildPauseContext(copy, HANDOFF)!.files.continueHere?.path).toBe(ROOT_NOTE);
+    expect(buildPauseContext(copy, ROOT_NOTE)!.files.handoff?.path).toBe(HANDOFF);
+  });
+});
+
+describe('buildPauseContext: decimal phases compare as GSD numbers them (L2A-WR-02)', () => {
+  // The Lendshed phase 3 is renumbered to `pause`; the HANDOFF names it; STATE sits on `current`.
+  function movedOn(pause: string, current: string) {
+    const copy = planted(lendshedSync, (draft) => {
+      const phase = draft.milestones.flatMap((m) => m.phases).find((p) => p.dirPath?.endsWith('03-account-admin-and-sessions'))!;
+      phase.identity.number = pause;
+      (draft.artifacts.find((artifact) => artifact.path === HANDOFF)!.structured.pause as { phase?: string }).phase = pause;
+      draft.state!.phaseNumber = current;
+    });
+    return buildPauseContext(copy, HANDOFF)!.movedOn;
+  }
+  let lendshedSync: ProjectPresentation;
+  beforeAll(async () => {
+    lendshedSync = await lendshed();
+  });
+
+  it('reads STATE on 2.10 as ahead of a pause on 2.9', () => {
+    expect(movedOn('2.9', '2.10')?.what).toBe('Phase 2.9 Account Admin & Sessions is behind the current phase 2.10 Bulk Loan Export');
+  });
+
+  it('reads a pause on 2.1 as behind STATE on 2.10, printing 2.10 as written', () => {
+    const note = movedOn('2.1', '2.10');
+    expect(note?.what).toBe('Phase 2.1 Account Admin & Sessions is behind the current phase 2.10 Bulk Loan Export');
+    expect(note?.what).not.toMatch(/current phase 2\.1 /);
+  });
+
+  it('gives no note when STATE and the pause name the same number, or STATE is behind', () => {
+    expect(movedOn('2.1', '2.1')).toBeNull();
+    expect(movedOn('2.10', '2.9')).toBeNull();
+    expect(movedOn('2.1', '2.01')).toBeNull();
+  });
+
+  it('names a whole-number STATE ahead of a decimal pause, and strips a leading zero', () => {
+    expect(movedOn('2.10', '3')?.what).toContain('is behind the current phase 3 ');
+    expect(movedOn('2.10', '04')?.what).toContain('is behind the current phase 4 ');
   });
 });
 

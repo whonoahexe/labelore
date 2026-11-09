@@ -3,8 +3,10 @@
 // never a file, and imports nothing from Node. It builds no regular expression from file text and never
 // throws on presentation data; any failure gives null.
 //
-// Pairing. A HANDOFF.json pairs with the root `.continue-here.md`, else the one in the folder its `phase_dir`
-// names. A `.continue-here.md` pairs with the root HANDOFF.json when its `phase` matches, else stands alone.
+// Pairing. One rule, run from either side. A root HANDOFF.json and a root `.continue-here.md` pair when the
+// note names no phase or the two name the same phase. A HANDOFF.json whose root note names another phase falls
+// back to the note in the folder its `phase_dir` names (as it does when there is no root note); a
+// `.continue-here.md` whose root HANDOFF names another phase stands alone.
 // The `phase` frontmatter wins for the head even when the file sits in another phase's folder (seen for
 // real); the path keeps the folder.
 //
@@ -190,6 +192,18 @@ function leadingNumber(text: string): { number: string; rest: string } | null {
   return { number: integer + fraction, rest: trimmed.slice(end) };
 }
 
+/** Compares two numbers leadingNumber returned, part by part ("2.10" is after "2.9"; a missing part reads 0):
+ * negative when `a` is before `b`, 0 when equal, positive when after. */
+function comparePhaseNumbers(a: string, b: string): number {
+  const left = a.split('.');
+  const right = b.split('.');
+  for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
+    const diff = Number.parseInt(left[index] ?? '0', 10) - Number.parseInt(right[index] ?? '0', 10);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
 /** The slug after a leading number ("04-bulk-loan-export" gives "bulk-loan-export"), else null. */
 function slugAfterNumber(text: string): string | null {
   const parsed = leadingNumber(text);
@@ -296,9 +310,9 @@ function movedOnForPhase(presentation: ProjectPresentation, phase: PhaseDto): Pa
     };
   }
   if (state?.phaseNumber != null && !phase.archived && state.milestone === phase.identity.milestoneVersion) {
-    const current = Number.parseFloat(leadingNumber(state.phaseNumber)?.number ?? '');
-    const named = Number.parseFloat(leadingNumber(phase.identity.number)?.number ?? '');
-    if (Number.isFinite(current) && Number.isFinite(named) && current > named) {
+    const current = leadingNumber(state.phaseNumber)?.number ?? null;
+    const named = leadingNumber(phase.identity.number)?.number ?? null;
+    if (current !== null && named !== null && comparePhaseNumbers(current, named) > 0) {
       const now = state.phaseName == null || state.phaseName === '' ? '' : ` ${state.phaseName}`;
       return {
         what: `${phaseLabel(phase)} is behind the current phase ${current}${now}`,
@@ -484,7 +498,11 @@ export function buildPauseContext(presentation: ProjectPresentation, activePath:
     if (active.kind === 'handoff') {
       handoff = loadHandoff(active);
       if (handoff === null) return null;
-      cont = loadContinue(byPath(ROOT_CONTINUE_PATH));
+      // The root note pairs only when it names no phase or the HANDOFF's phase, as the continue-here branch
+      // below does for the root HANDOFF; otherwise the phase_dir lookup runs.
+      const root = loadContinue(byPath(ROOT_CONTINUE_PATH));
+      const pairs = root !== null && (root.pause.phase === undefined || samePhase(handoff.pause.phase, root.pause.phase));
+      cont = pairs ? root : null;
       if (cont === null) {
         const dir = normaliseDir(handoff.pause.phaseDir);
         if (dir !== null) {
