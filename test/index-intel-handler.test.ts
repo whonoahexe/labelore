@@ -18,6 +18,7 @@ import { createApp } from '../src/server/index.ts';
 import type { CommitLog } from '../src/server/commit-times.ts';
 import type { ProjectPresentation } from '../src/server/project-presentation.ts';
 import { FX_PLANNING } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 import { writeIngestDocsProject } from './helpers/index-fixtures.ts';
 
 const NO_COMMITS: CommitLog = { load: async () => null, reset: () => undefined };
@@ -348,6 +349,85 @@ describe('the ingest-docs markdown family', () => {
       expect(artifacts[path].body).not.toContain('docs/adr/');
       expect(artifacts[path].body.length).toBeLessThanOrEqual(INDEX_BOUNDS.digestBytes);
     }
+  });
+});
+
+describe('growth: the handler reads intel files in time that grows in step with their size (L1-WR-01)', () => {
+  const parseOf = (name: string, text: string): void => {
+    IndexIntelHandler.parse(rawOf(`${INTEL}${name}`, text), refOf(`${INTEL}${name}`));
+  };
+  const repeated = (block: string, n: number): string => {
+    let text = '';
+    while (text.length < n) text += block;
+    return text;
+  };
+
+  it('summarises a SYNTHESIS.md made of blank lines in linear time', () => {
+    const growth = measureGrowth({
+      make: (n) => '\n'.repeat(n),
+      run: (text) => parseOf('SYNTHESIS.md', text),
+      // The pre-fix scan costs seconds at 32k characters, so the cap keeps the RED run short.
+      maxSize: 1 << 15,
+      floorMs: 0,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('summarises a SYNTHESIS.md of whitespace-only lines in linear time', () => {
+    const growth = measureGrowth({
+      make: (n) => repeated('   \t \n', n),
+      run: (text) => parseOf('SYNTHESIS.md', text),
+      maxSize: 1 << 15,
+      floorMs: 0,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('summarises a SYNTHESIS.md of repeated writer-shaped blocks in linear time', () => {
+    const block = '- Docs synthesized: 5\n\n- ADR: 2\n- SPEC: 2\n- PRD: 1\n\nConflicts: 1 blockers, 2 competing variants, 3 auto-resolved\n\n\n';
+    const growth = measureGrowth({
+      make: (n) => repeated(block, n),
+      run: (text) => parseOf('SYNTHESIS.md', text),
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('summarises decisions.md and an unknown markdown file in linear time', () => {
+    const decisions = measureGrowth({
+      make: (n) => repeated('## D-1\n- status: locked\n\n\n', n),
+      run: (text) => parseOf('decisions.md', text),
+    });
+    expect(decisions.ratio).toBeLessThan(GROWTH_LIMIT);
+    const unknown = measureGrowth({
+      make: (n) => repeated('# Heading\n\n\n  \n', n),
+      run: (text) => parseOf('notes.md', text),
+    });
+    expect(unknown.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('summarises a JSON intel file with a long list in linear time', () => {
+    const growth = measureGrowth({
+      make: (n) => JSON.stringify({ languages: Array.from({ length: Math.max(1, Math.floor(n / 12)) }, (_, i) => `Item ${i}`) }),
+      run: (text) => parseOf('stack.json', text),
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('still reads a count line indented with spaces or a tab, and gives no number for a label without digits', () => {
+    const read = (text: string): ReturnType<typeof summaryOf> =>
+      summaryOf(indexOf(IndexIntelHandler.parse(rawOf(`${INTEL}SYNTHESIS.md`, text), refOf(`${INTEL}SYNTHESIS.md`))) as IntelSummary, 'synthesis');
+    expect(read('  Docs synthesized: 7\n').documents).toBe(7);
+    expect(read('\t- Docs synthesized:\t8\n').documents).toBe(8);
+    expect(read('Documents synthesized: 6\n').documents).toBe(6);
+    expect(read('Docs synthesized: many\n').documents).toBeNull();
+    expect(read('Docs synthesized:\n9\n').documents).toBeNull();
+  });
+
+  it('reads a CRLF file to the same numbers as its LF twin', () => {
+    const lf = '- Docs synthesized: 5\n- ADR: 2\n- SPEC: 2\n- PRD: 1\nConflicts: 1 blockers, 2 competing variants, 3 auto-resolved\n';
+    const read = (text: string): unknown =>
+      summaryOf(indexOf(IndexIntelHandler.parse(rawOf(`${INTEL}SYNTHESIS.md`, text), refOf(`${INTEL}SYNTHESIS.md`))) as IntelSummary, 'synthesis');
+    expect(read(lf.replace(/\n/g, '\r\n'))).toEqual(read(lf));
   });
 });
 
