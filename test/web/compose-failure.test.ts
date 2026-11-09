@@ -74,7 +74,7 @@ describe('a composer given its Lendshed context', () => {
     const { presentation } = await loadFixtureProject();
     const pause = buildPauseContext(presentation, '.planning/HANDOFF.json');
     expect(pause).not.toBeNull();
-    expect(composePause({ ...base, pauseContext: pause })).not.toBeNull();
+    expect(composePause({ ...base, pauseContext: pause === null ? null : { ...pause, readAt: '2026-04-21T09:00:00.000Z' } })).not.toBeNull();
 
     const spikes = buildSpikesContext(presentation, '.planning/spikes/MANIFEST.md');
     expect(spikes).not.toBeNull();

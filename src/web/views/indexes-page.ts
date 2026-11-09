@@ -21,6 +21,7 @@ import type { IndexTile, IndexTileKey } from '../../presentation/indexes-context
 import type { IntelSummary, SynthesisSummary } from '../../planning-repo/handlers/index-intel-lift.ts';
 import type { GraphSummary } from '../../server/index-summary.ts';
 import { formatByteSize } from '../../presentation/file-facts.ts';
+import { composeFailed } from './compose-failure.ts';
 import type { ViewInput } from './manifest.ts';
 
 export type IndexTone = 'complete' | 'in-flight' | 'missing' | 'quiet';
@@ -672,7 +673,7 @@ export function composeIndexes(input: ViewInput): ComposedIndexes | null {
       tiles,
       openKey: tiles.some((tile) => tile.open) ? context.openKey : null,
     };
-  } catch {
-    return null;
+  } catch (error) {
+    return composeFailed('indexes', error);
   }
 }

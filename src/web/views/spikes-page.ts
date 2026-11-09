@@ -28,6 +28,7 @@ import type {
 } from '../../presentation/spikes-context.ts';
 import { VERDICT_COLUMNS } from '../../presentation/spikes-context.ts';
 import { spikeFolderIdentity, spikeIdKey } from '../../planning-repo/handlers/spikes-lift.ts';
+import { composeFailed } from './compose-failure.ts';
 import type { ViewInput } from './manifest.ts';
 
 export type SpikeTone = 'complete' | 'in-flight' | 'missing' | 'quiet';
@@ -718,7 +719,7 @@ export function composeSpikes(input: ViewInput): ComposedSpikes | null {
       wrapUp: wrapUpOf(context),
       sheet: sheetOf(input, context),
     };
-  } catch {
-    return null;
+  } catch (error) {
+    return composeFailed('spikes', error);
   }
 }

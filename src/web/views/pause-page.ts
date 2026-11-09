@@ -23,6 +23,7 @@ import type {
   PauseText,
 } from '../../presentation/pause-context.ts';
 import type { PauseTaskRow } from '../../planning-repo/handlers/pause-lift.ts';
+import { composeFailed } from './compose-failure.ts';
 import type { ViewInput } from './manifest.ts';
 
 export const HANDOFF_NAME = 'HANDOFF.json';
@@ -477,7 +478,7 @@ export function composePause(input: ViewInput): ComposedPause | null {
       ahead: tasksOf(context?.ahead, 'quiet'),
       rest: restOf(input),
     };
-  } catch {
-    return null;
+  } catch (error) {
+    return composeFailed('pause', error);
   }
 }
