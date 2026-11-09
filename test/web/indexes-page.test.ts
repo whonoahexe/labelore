@@ -485,6 +485,13 @@ describe('IndexesView markup', () => {
     }
   });
 
+  it('makes the open tile a programmatic focus target: tabindex="-1" on the open section only (L2B-WR-04)', async () => {
+    const model = await lendshedModel('.planning/graphs/graph.json', graphSummary());
+    const markup = render(createElement(IndexesView, { model }));
+    expect((markup.match(/<section[^>]*data-open="true"[^>]*tabindex="-1"/g) ?? []).length).toBe(1);
+    expect((markup.match(/tabindex="-1"/g) ?? []).length).toBe(1);
+  });
+
   it('writes "Not sent to this page" with each big file and its size, and the header eyebrow', async () => {
     const model = await lendshedModel(
       '.planning/graphs/graph.json',
