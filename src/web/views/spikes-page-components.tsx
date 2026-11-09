@@ -521,11 +521,12 @@ export function SpikesView({
   const { notInManifest, wrapUp, sheet } = model;
   const rootRef = useRef<HTMLDivElement>(null);
   const navigate = useProjectNavigate();
-  const { state } = useProjectLocation();
-  // A sheet hidden in place (the project has no manifest to go back to) stays hidden until the address names another.
-  const [hidden, setHidden] = useState<string | null>(null);
+  const { state, key: locationKey } = useProjectLocation();
+  // A sheet hidden in place (the project has no manifest to go back to) stays hidden only at the router location it was
+  // closed at: any later navigation, even a click on the same tile (a fresh location key), opens it again.
+  const [hidden, setHidden] = useState<{ sheetKey: string; locationKey: string } | null>(null);
   const [localFocus, setLocalFocus] = useState<string | null>(null);
-  const open = sheet !== null && hidden !== sheet.key;
+  const open = sheet !== null && !(hidden !== null && hidden.sheetKey === sheet.key && hidden.locationKey === locationKey);
   const focusKey = localFocus ?? focusKeyOf(state);
 
   useEffect(() => {
@@ -547,7 +548,7 @@ export function SpikesView({
     if (sheet === null) return;
     if (sheet.closeTo === null) {
       setLocalFocus(sheet.focus);
-      setHidden(sheet.key);
+      setHidden({ sheetKey: sheet.key, locationKey });
       return;
     }
     navigate(sheet.closeTo, { state: { spikesFocus: sheet.focus } });

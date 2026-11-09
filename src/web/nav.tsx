@@ -159,14 +159,14 @@ export function useUnscopedProjectHref(to: string): string {
 
 /** The location with the slug (and a workstream scope) taken off the pathname, so pages and query keys see the
  * same project-relative path they saw before the slug existed. Outside a project route it is the
- * location unchanged. */
-export function useProjectLocation(): { pathname: string; search: string; hash: string; state: unknown } {
-  const { pathname, search, hash, state } = useLocation();
+ * location unchanged. `key` is the router's per-navigation identity: a Link to the address already open still gets a new one. */
+export function useProjectLocation(): { pathname: string; search: string; hash: string; state: unknown; key: string } {
+  const { pathname, search, hash, state, key } = useLocation();
   const slug = useProjectSlug();
   const scope = useProjectScope();
-  if (slug === null) return { pathname, search, hash, state };
+  if (slug === null) return { pathname, search, hash, state, key };
   const { rest } = splitProjectPath(pathname);
-  return { pathname: scope === null ? rest : splitScope(rest).rest, search, hash, state };
+  return { pathname: scope === null ? rest : splitScope(rest).rest, search, hash, state, key };
 }
 
 export function useProjectPathname(): string {

@@ -15,7 +15,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import { WarningChip } from '../components/warning-chip.tsx';
-import { useProjectNavigate } from '../nav.tsx';
+import { useProjectLocation, useProjectNavigate } from '../nav.tsx';
 import { ResearchInline } from '../pages/research-atoms.tsx';
 import type {
   ComposedIndexes,
@@ -452,14 +452,27 @@ function TileHead({ tile }: { tile: ComposedIndexesTile }): React.JSX.Element {
   );
 }
 
+/** The tile a navigation asks focus to move into, read from the router state it was sent with. */
+function focusKeyOf(state: unknown): string | null {
+  if (typeof state !== 'object' || state === null || !Object.hasOwn(state, 'indexesFocus')) return null;
+  const key = (state as { indexesFocus?: unknown }).indexesFocus;
+  return typeof key === 'string' && key !== '' ? key : null;
+}
+
 /** The Indexes page: the grid of tiles, with the tile the address names open in place. */
 export function IndexesView({ model }: { model: ComposedIndexes }): React.JSX.Element {
   const navigate = useProjectNavigate();
+  const { pathname, search, hash, state } = useProjectLocation();
   const idBase = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   // View state only: it is never sent anywhere or stored, and a reload shows the address's tile open again.
   const [closed, setClosed] = useState<string | null>(null);
   const [focusKey, setFocusKey] = useState<string | null>(null);
+  // A tile the user just opened by hand asks for focus: in place it is view state, across an address change it rides in
+  // the navigation's router state. A reload or a deep link carries neither, so focus stays where the load puts it.
+  const [openFocus, setOpenFocus] = useState<string | null>(null);
+  const routerFocus = focusKeyOf(state);
+  const wantedFocus = openFocus ?? routerFocus;
   const openKey = model.openKey !== null && closed !== model.openKey ? model.openKey : null;
 
   // A different address opens a different tile: forget what was collapsed for the last one (derived during render,
@@ -499,12 +512,26 @@ export function IndexesView({ model }: { model: ComposedIndexes }): React.JSX.El
     return () => window.cancelAnimationFrame(frame);
   }, [focusKey, openKey]);
 
+  // Once the opened panel is mounted, focus moves into it so the next Tab continues inside, then the request is spent.
+  // A request carried by the router state is cleared with a replace of the same address: the history entry outlives a
+  // reload, and a reload must not move focus.
+  useEffect(() => {
+    if (wantedFocus === null || openKey !== wantedFocus) return;
+    const section = rootRef.current?.querySelector<HTMLElement>('section[data-open="true"]');
+    if (section === null || section === undefined) return;
+    section.focus();
+    setOpenFocus(null);
+    if (routerFocus !== null) navigate({ pathname, search, hash }, { replace: true });
+  }, [wantedFocus, routerFocus, openKey, navigate, pathname, search, hash]);
+
   function open(tile: ComposedIndexesTile): void {
     if (tile.to === null) return;
     // The address already names this tile (it was collapsed in place): just open it again. Anywhere else, go to the
     // tile's own address; the collapsed state resets when the address's tile changes, so the old panel never flashes.
-    if (tile.key === model.openKey) setClosed(null);
-    else navigate(tile.to);
+    if (tile.key === model.openKey) {
+      setClosed(null);
+      setOpenFocus(tile.key);
+    } else navigate(tile.to, { state: { indexesFocus: tile.key } });
   }
 
   return (
@@ -528,7 +555,7 @@ export function IndexesView({ model }: { model: ComposedIndexes }): React.JSX.El
           if (isOpen && tile.panel !== null) {
             return (
               <li key={tile.key} className="view-indexes-cellwrap" data-open="true">
-                <section className="view-indexes-tile" data-open="true" aria-labelledby={`${panelId}-title`} id={panelId}>
+                <section className="view-indexes-tile" data-open="true" aria-labelledby={`${panelId}-title`} id={panelId} tabIndex={-1}>
                   <div className="view-indexes-top">
                     <h2 className="view-indexes-title" id={`${panelId}-title`}>
                       {tile.title}
