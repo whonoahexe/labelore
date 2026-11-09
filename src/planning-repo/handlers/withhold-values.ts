@@ -329,7 +329,7 @@ function opensQuote(text: string, start: number): boolean {
 /** The index just past the value that starts at `start`: the whole rest of a code span, a quoted run, the words up to
  * the end of the clause (`multiWord`: a comma, semicolon, closing bracket, full stop before a space, or a line break),
  * or the next space, tab or line break. Trailing sentence punctuation stays outside the value. */
-function maskedValueEnd(text: string, start: number, to: number, inSpan: boolean, multiWord: boolean): number {
+function maskedValueEnd(text: string, start: number, to: number, inSpan: boolean, multiWord: boolean, stopAtStar: boolean): number {
   if (inSpan) return to;
   if (opensQuote(text, start)) return quotedEnd(text, start, to);
   let end = start;
@@ -337,6 +337,8 @@ function maskedValueEnd(text: string, start: number, to: number, inSpan: boolean
     while (end < to) {
       const c = text.charCodeAt(end);
       if (c === 10 || c === 13 || c === 44 || c === 59 || c === 41 || c === 93 || c === 96) break;
+      // In prose a clause also ends at a closing bold or italic star (`Use **TOKEN: abc** ok`), so the rest stays.
+      if (stopAtStar && c === 42) break;
       if (c === 46 && (end + 1 >= to || isBreak(text.charCodeAt(end + 1)))) break;
       end += 1;
     }
@@ -348,34 +350,31 @@ function maskedValueEnd(text: string, start: number, to: number, inSpan: boolean
 }
 
 /** How `maskValues` reads a colon. The default reads an env-var map (User setup): `NAME: a few words` masks the clause.
- * `prose` (11, WR-01) is for free-form author prose (seeds, threads), where `NOTE: revisit later` and `UAT: passes` are
- * ordinary sentences: after a colon only one token that looks like a credential is masked. `NAME=value`, a code span and
- * a table row of a name and a credential-like value are masked in both modes. */
+ * `prose` (11, WR-01) is for free-form author prose (seeds, threads), where `NOTE: revisit later`, `REQ: AUTH-01` and
+ * `UAT: passes` are ordinary sentences: a colon (and a table row) masks only after a name that reads as a secret
+ * (`isSecretName`), and then exactly as the default does. `NAME=value` is masked after any name in both modes. */
 export interface MaskOptions {
   prose?: boolean;
 }
 
-/** True for a value token that reads as a credential and not as a word: no blanks, and either a letter and a digit
- * together (`abc123`, `Hunter2`) or a letter beside one of `_ / : @ + =` (`sk_live_x`, `postgres://u:p@h/db`). A word
- * (`revisit`, `GitHub`), a hyphenated word (`follow-up`) and a number (`429`) are not. Surrounding quotes and backticks
- * are ignored. */
-function looksLikeCredential(value: string): boolean {
-  let from = 0;
-  let to = value.length;
-  const edge = (c: number): boolean => c === 34 || c === 39 || c === 96 || c === 42;
-  while (from < to && edge(value.charCodeAt(from))) from += 1;
-  while (to > from && edge(value.charCodeAt(to - 1))) to -= 1;
-  let letter = false;
-  let digit = false;
-  let symbol = false;
-  for (let k = from; k < to; k += 1) {
-    const c = value.charCodeAt(k);
-    if (isBreak(c)) return false;
-    if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122)) letter = true;
-    else if (c >= 48 && c <= 57) digit = true;
-    else if (c === 95 || c === 47 || c === 58 || c === 64 || c === 43 || c === 61) symbol = true;
+/** The prose-mode options, shared by every seed and thread caller. */
+export const PROSE_MASK: MaskOptions = { prose: true };
+
+/** Name segments that mark a secret wherever they sit in an upper-snake name (`DB_PASS`, `STRIPE_KEY`, `DATABASE_URL`). */
+const SECRET_SEGMENTS = new Set([
+  'KEY', 'KEYS', 'TOKEN', 'TOKENS', 'SECRET', 'SECRETS', 'PASS', 'PASSWORD', 'PASSWD', 'PASSPHRASE', 'PWD', 'PIN',
+  'CREDENTIAL', 'CREDENTIALS', 'CREDS', 'PRIVATE', 'SALT', 'DSN', 'URL', 'URI', 'COOKIE', 'SESSION', 'CERT', 'SIGNATURE',
+  'BEARER', 'OTP',
+]);
+
+/** True when an upper-snake name reads as a secret: a segment from SECRET_SEGMENTS, or a segment ending in KEY, TOKEN or
+ * SECRET or starting with PASS (`APIKEY`, `AUTHTOKEN`, `PASSCODE`). `NOTE`, `REQ`, `HTTP` and `UAT` do not. */
+export function isSecretName(name: string): boolean {
+  for (const segment of name.split('_')) {
+    if (SECRET_SEGMENTS.has(segment)) return true;
+    if (segment.endsWith('KEY') || segment.endsWith('TOKEN') || segment.endsWith('SECRET') || segment.startsWith('PASS')) return true;
   }
-  return letter && (digit || symbol);
+  return false;
 }
 
 interface MaskState {
@@ -392,7 +391,15 @@ interface MaskState {
  * and `NAME://` are not. After a colon and a space the value runs to the end of the clause, so a value of several words
  * (`NAME: pass phrase here`) is masked whole; elsewhere it is one token.
  */
-function maskAssignment(state: MaskState, text: string, nameEnd: number, to: number, inSpan: boolean, prose: boolean): number {
+function maskAssignment(
+  state: MaskState,
+  text: string,
+  nameEnd: number,
+  to: number,
+  inSpan: boolean,
+  colonMasks: boolean,
+  prose: boolean,
+): number {
   let at = nameEnd;
   while (at < to && isCloser(text.charCodeAt(at))) at += 1;
   const afterName = at;
@@ -402,7 +409,6 @@ function maskAssignment(state: MaskState, text: string, nameEnd: number, to: num
   if (at >= to) return -1;
   let start: number;
   let multiWord = false;
-  let colon = false;
   if (sign === 61) {
     const after = at + 1;
     if (after >= to) return -1;
@@ -415,26 +421,23 @@ function maskAssignment(state: MaskState, text: string, nameEnd: number, to: num
       if (isBlank(next)) return -1;
       start = after;
     }
-  } else if (sign === 58 && !spaced) {
+  } else if (sign === 58 && !spaced && colonMasks) {
     const after = at + 1;
     if (after >= to) return -1;
     const next = text.charCodeAt(after);
     if (next === 58 || next === 47) return -1;
     start = after;
     while (start < to && (isBlank(text.charCodeAt(start)) || text.charCodeAt(start) === 42)) start += 1;
-    // `NAME: a few words` is a clause; `NAME:value` with no space after the colon is one token. In prose it is always one
-    // token, masked only when it reads as a credential (WR-01).
-    multiWord = !prose && start > after;
-    colon = true;
+    // `NAME: a few words` is a clause; `NAME:value` with no space after the colon is one token.
+    multiWord = start > after;
   } else {
     return -1;
   }
   if (start >= to) return -1;
   const placeholder = placeholderEnd(text, start, to);
   if (placeholder >= 0) return placeholder;
-  const end = maskedValueEnd(text, start, to, inSpan && !(prose && colon), multiWord);
+  const end = maskedValueEnd(text, start, to, inSpan, multiWord, prose);
   if (end <= start) return -1;
-  if (prose && colon && !looksLikeCredential(text.slice(start, end))) return -1;
   if (start > state.start) state.out.push(text.slice(state.start, start));
   state.out.push(VALUE_NOT_SHOWN_MARK);
   state.start = end;
@@ -461,7 +464,7 @@ function maskRange(text: string, from: number, to: number, inSpan: boolean, out:
       i = close + 1;
       // A name in backticks with the value outside them: `NAME`=value.
       if (inner !== null && inner.end === close) {
-        const next = maskAssignment(state, text, i, to, false, prose);
+        const next = maskAssignment(state, text, i, to, false, !prose || isSecretName(inner.name), prose);
         if (next >= 0) i = next;
       }
       continue;
@@ -471,7 +474,7 @@ function maskRange(text: string, from: number, to: number, inSpan: boolean, out:
     if (isUpper(code) && boundary) {
       const token = tokenAt(text, i);
       if (token !== null) {
-        const next = maskAssignment(state, text, token.end, to, inSpan, prose);
+        const next = maskAssignment(state, text, token.end, to, inSpan, !prose || isSecretName(token.name), prose);
         i = next >= 0 ? next : token.end;
         continue;
       }
@@ -482,14 +485,14 @@ function maskRange(text: string, from: number, to: number, inSpan: boolean, out:
 }
 
 /** True for a table cell that is only a variable name (optionally in backticks, bold or quotes). */
-function isNameCell(cell: string): boolean {
+function isNameCell(cell: string, prose: boolean): boolean {
   let from = 0;
   let to = cell.length;
   const edge = (c: number): boolean => c === 32 || c === 9 || c === 96 || c === 42 || c === 34 || c === 39;
   while (from < to && edge(cell.charCodeAt(from))) from += 1;
   while (to > from && edge(cell.charCodeAt(to - 1))) to -= 1;
   const token = tokenAt(cell, from);
-  return token !== null && token.end === to;
+  return token !== null && token.end === to && (!prose || isSecretName(token.name));
 }
 
 /**
@@ -503,7 +506,7 @@ function maskTableRow(text: string, prose: boolean): string {
   const cells = text.split('|');
   let named = -1;
   for (let i = 1; i < cells.length; i += 1) {
-    if (isNameCell(cells[i])) {
+    if (isNameCell(cells[i], prose)) {
       named = i;
       break;
     }
@@ -513,7 +516,6 @@ function maskTableRow(text: string, prose: boolean): string {
     const trimmed = cells[j].trim();
     if (trimmed === '' || trimmed === VALUE_NOT_SHOWN_MARK) continue;
     if (placeholderEnd(trimmed, 0, trimmed.length) === trimmed.length) continue;
-    if (prose && !looksLikeCredential(trimmed)) continue;
     cells[j] = ` ${VALUE_NOT_SHOWN_MARK} `;
   }
   return cells.join('|');
@@ -526,8 +528,8 @@ function maskTableRow(text: string, prose: boolean): string {
  * (`| NAME | value |`), anywhere in the string, any number of times. A name is upper-snake (A to Z, 0 to 9, underscore,
  * starting with a letter, two to eighty characters). A bracketed or angle-bracketed placeholder that reads as a description
  * (`PORT=[your port]`, `PORT=<port>`; not `<hunter2>`), an empty remainder and text with no assignment are returned as
- * written. The remainder is never returned. One pass, linear, no regular expression. With `{ prose: true }` a colon (and a
- * table cell) masks only one credential-like token (see MaskOptions).
+ * written. The remainder is never returned. One pass, linear, no regular expression. With `{ prose: true }` a colon and a
+ * table row mask only after a secret name (see MaskOptions).
  */
 export function maskValues(text: string, options: MaskOptions = {}): string {
   if (text === '') return text;
@@ -540,10 +542,8 @@ export function maskValues(text: string, options: MaskOptions = {}): string {
 
 /** `maskValues` in prose mode: the mask for free-form author prose (seed and thread strings, WR-01). */
 export function maskProse(text: string): string {
-  return maskValues(text, PROSE);
+  return maskValues(text, PROSE_MASK);
 }
-
-const PROSE: MaskOptions = { prose: true };
 
 // ---------------------------------------------------------------------------------------------------------------
 // maskData and splitMasked (11-37, L3-WR-01): the shared lift mask and the shared splitter of masked text.

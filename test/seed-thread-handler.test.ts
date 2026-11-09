@@ -495,7 +495,7 @@ describe('L3-WR-01: the seed and thread handlers mask a value beside a name', ()
 // 11 (WR-01): the seed and thread handlers read their strings as prose, so "WORD: words" survives in the title, the lift
 // and the frontmatter, while a credential after a colon is still masked.
 describe('WR-01: seed and thread prose is not masked as an env-var map', () => {
-  const PROSE = ['NOTE: revisit when the API ships', 'Use **TOKEN: xyz** ok'];
+  const PROSE = ['NOTE: revisit when the API ships', 'Use **REQ: AUTH-01** ok'];
 
   it('keeps prose in a seed title, trigger, why and notes', () => {
     const text = [

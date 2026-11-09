@@ -353,9 +353,16 @@ describe('maskProse (WR-01)', () => {
     'Seed title — IMPORTANT: revisit after v2 ships, then archive. Also see docs',
     '- UAT: passes',
     'Retry: max 3 times (see HTTP: 429)',
-    'Use **TOKEN: xyz** ok',
     'WARNING: follow-up on GitHub',
     '| NOTE | revisit later |',
+    // WR-03: GSD prose with ids, paths and links after a colon.
+    'REQ: AUTH-01',
+    'SEE: 11-CONTEXT.md',
+    'ADR: ADR-0012',
+    'STATUS: v1',
+    'DECISION: D-04 holds',
+    'NOTE: https://example.com/x',
+    '| REQ | AUTH-01 |',
   ];
   for (const text of KEPT) {
     it(`keeps prose as written: ${text}`, () => {
@@ -364,7 +371,9 @@ describe('maskProse (WR-01)', () => {
   }
 
   const MASKED: [string, string][] = [
-    ['Set TOKEN: abc123 in the vault', 'Set TOKEN: [Value not shown] in the vault'],
+    ['Set TOKEN: abc123 in the vault', 'Set TOKEN: [Value not shown]'],
+    // WR-01: after a secret name the value is masked, but the clause stops at the closing bold stars.
+    ['Use **TOKEN: xyz** ok', 'Use **TOKEN: [Value not shown]** ok'],
     ['API_KEY:sk_live_x', 'API_KEY:[Value not shown]'],
     ['DB_URL: postgres://u:p@h/db', 'DB_URL: [Value not shown]'],
     ['Use **TOKEN: abc123** ok', 'Use **TOKEN: [Value not shown]** ok'],
@@ -372,6 +381,16 @@ describe('maskProse (WR-01)', () => {
     ['API_KEY = hunter', 'API_KEY = [Value not shown]'],
     ['`TOKEN: abc123`', '`TOKEN: [Value not shown]`'],
     ['| STRIPE_KEY | sk_live_abc |', '| STRIPE_KEY | [Value not shown] |'],
+    // WR-02: after a secret name the default mask applies, whatever the value looks like.
+    ['PASSWORD: hunter', 'PASSWORD: [Value not shown]'],
+    ['PASSWORD: correct horse battery staple', 'PASSWORD: [Value not shown]'],
+    ['TOKEN: deadbeefcafebabe', 'TOKEN: [Value not shown]'],
+    ['API_KEY: sk-live-abcdefgh', 'API_KEY: [Value not shown]'],
+    ['PIN: 4821', 'PIN: [Value not shown]'],
+    ['SECRET: "hunter two"', 'SECRET: [Value not shown]'],
+    ['`DB_PASS: correct horse`', '`DB_PASS: [Value not shown]`'],
+    ['| DB_PASS | hunter |', '| DB_PASS | [Value not shown] |'],
+    ['FOO=hunter', 'FOO=[Value not shown]'],
   ];
   for (const [text, expected] of MASKED) {
     it(`masks a credential: ${text}`, () => {

@@ -8,14 +8,11 @@ import type { ArtifactHandler, ArtifactRef, HandlerParseResult, RawArtifact } fr
 import { tryParseFrontmatter } from '../frontmatter.ts';
 import { deriveTitle } from './title.ts';
 import { extractSeed, extractThread } from './seed-thread-lift.ts';
-import { maskData, maskProse } from './withhold-values.ts';
+import { PROSE_MASK, maskData, maskProse } from './withhold-values.ts';
 
 export type { SeedLift, ThreadLift } from './seed-thread-lift.ts';
 
 type Key = 'seed' | 'thread';
-
-/** Seeds and threads are free-form prose: the mask's prose mode keeps `NOTE: revisit later` as written (WR-01). */
-const PROSE = { prose: true } as const;
 
 /** The generic parse plus `structured.<key>` from `lift`; `{}` when the lift throws. */
 function parseWith(
@@ -30,13 +27,13 @@ function parseWith(
   try {
     // 11-37 (L3-WR-01, T-11-70): the lift, title and frontmatter pass through the shared mask, as User setup does, so a
     // value written beside a variable name never reaches the payload. The body stays as written (Source mode).
-    lifted = maskData(lift(fm), 0, PROSE);
+    lifted = maskData(lift(fm), 0, PROSE_MASK);
   } catch {
     lifted = undefined;
   }
   return {
     title,
-    frontmatter: maskData(fm.data, 0, PROSE) as Record<string, unknown>,
+    frontmatter: maskData(fm.data, 0, PROSE_MASK) as Record<string, unknown>,
     body: fm.body,
     warning: fm.warning,
     structured: lifted === undefined || lifted === null ? {} : { [key]: lifted },
