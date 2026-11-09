@@ -86,6 +86,33 @@ describe('fileTypeLabel', () => {
   });
 });
 
+describe('fileTypeLabel never reads an inherited object member (L2A-WR-03)', () => {
+  const MEMBERS = ['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf'];
+
+  it.each(MEMBERS)('a listed x.%s file reads File', (member) => {
+    const label = fileTypeLabel(`x.${member}`, 'listed');
+    expect(typeof label).toBe('string');
+    expect(label).toBe('File');
+  });
+
+  it.each(MEMBERS)('a binary x.%s file reads Binary file (.ext)', (member) => {
+    const label = fileTypeLabel(`x.${member}`, 'binary');
+    expect(typeof label).toBe('string');
+    expect(label).toBe(`Binary file (.${member.toLowerCase()})`);
+  });
+
+  it('keeps the drawer badge\'s spoken text free of function source and object text', () => {
+    expect(fileBadgeOf('x.__proto__', 'listed', 12).spoken).toBe(', File, 12 B');
+    for (const member of MEMBERS) {
+      for (const fileClass of ['listed', 'binary'] as const) {
+        const { spoken } = fileBadgeOf(`x.${member}`, fileClass, 12);
+        expect(spoken).not.toContain('function');
+        expect(spoken).not.toContain('[object');
+      }
+    }
+  });
+});
+
 describe('the drawer badge', () => {
   it.each([
     ['kiln-floor.png', 'PNG'],
