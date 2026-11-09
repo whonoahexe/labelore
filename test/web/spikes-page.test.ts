@@ -350,6 +350,52 @@ describe('composeSpikes: the sheet at a spike README', () => {
     expect(markup).not.toContain('<details class="view-spikes-bar" open');
   });
 
+  it("keeps a What This Validates section as a bar when the validates block does not show it whole (L2B-WR-02)", async () => {
+    const section = group('What This Validates', '<table><tr><td>a</td></tr></table>');
+    // 003b: the section says "API host's disk", the frontmatter "API host", so the lift flags it not covered.
+    const sheet003b = spikeSheetOf(modelOf(await lendshed(), README_003B, [section, group('Research', '<p>r</p>')]));
+    expect(sheet003b.validates).not.toBeNull();
+    expect(sheet003b.bars.map((bar) => bar.title)).toEqual(['What This Validates', 'Research']);
+    expect(sheet003b.bars[0].html).toContain('<table>');
+
+    // A lift with no flag at all (an older shape) keeps the section too: nothing is dropped on a guess.
+    const unflagged = planted(await lendshed(), (copy) => {
+      delete lift(copy, README_001).validatesCoversSection;
+    });
+    expect(spikeSheetOf(modelOf(unflagged, README_001, [section])).bars.map((bar) => bar.title)).toEqual(['What This Validates']);
+
+    // A section the lift says is the validates block's whole text is left out of the bars, as before.
+    const flagged = planted(await lendshed(), (copy) => {
+      lift(copy, README_001).validatesCoversSection = true;
+    });
+    expect(spikeSheetOf(modelOf(flagged, README_001, [section])).bars).toEqual([]);
+
+    // The flag with no validates block to show it in does not hide the section.
+    const noBlock = planted(await lendshed(), (copy) => {
+      delete lift(copy, README_001).validates;
+      lift(copy, README_001).validatesCoversSection = true;
+    });
+    const sheetNoBlock = spikeSheetOf(modelOf(noBlock, README_001, [section]));
+    expect(sheetNoBlock.validates).toBeNull();
+    expect(sheetNoBlock.bars.map((bar) => bar.title)).toEqual(['What This Validates']);
+  });
+
+  it('leaves only the Results group the sheet draws out of the bars; a second Results group stays a bar (L2B-WR-02)', async () => {
+    const first = group('Results', '<p>first</p>');
+    const second = { ...group('Results', '<p>second</p>'), id: 'results-2' };
+    const sheet = spikeSheetOf(modelOf(await lendshed(), README_001, [first, group('Research', '<p>r</p>'), second]));
+    expect(sheet.resultsHtml).toContain('first');
+    expect(sheet.bars.map((bar) => bar.title)).toEqual(['Research', 'Results']);
+    expect(sheet.bars[1].html).toContain('second');
+    expect(new Set(sheet.bars.map((bar) => bar.key)).size).toBe(sheet.bars.length);
+
+    // The same pair under one id still gives bars with distinct keys.
+    const clash = group('Results', '<p>second</p>');
+    const clashed = spikeSheetOf(modelOf(await lendshed(), README_001, [first, clash]));
+    expect(clashed.bars.map((bar) => bar.title)).toEqual(['Results']);
+    expect(clashed.bars[0].html).toContain('second');
+  });
+
   it('lists a script and an output by name with no anchor, and issues no request for them', async () => {
     const sheet = spikeSheetOf(modelOf(await lendshed(), README_001));
     const markup = renderBody(sheet);
