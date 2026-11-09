@@ -839,3 +839,94 @@ describe('report page: milestone Stats and debt sections are never dropped (11-3
     for (const chip of model.index) expect(html, chip.target).toContain(`id="${chip.target}"`);
   });
 });
+
+// Phase 11 (11-38, G-11-2: L3-WR-04): the session report claims only the sections it read.
+describe('report page: no session-report section is lost (11-38, L3-WR-04)', () => {
+  function sessionFrom(text: string): ComposedSessionReport {
+    return session(composeReport(inputFromText('SESSION_REPORT.md', text, groupsOf(text))));
+  }
+
+  it("Lendshed's two session reports draw what they drew before: nothing in the closing bars", async () => {
+    const presentation = await lendshed();
+    for (const path of [SESSION, CLEAR]) {
+      const name = path.slice(path.lastIndexOf('/') + 1);
+      const text = fxRead(`reports/${name}`);
+      const model = sessionFrom(text);
+      expect(model.more, name).toEqual([]);
+      expect(session(composeReport(inputOf(presentation, path, groupsOf(text)))).more, name).toEqual([]);
+    }
+  });
+
+  it('a Key Outcomes written as prose is listed under the closing bars with its text', () => {
+    const text = '# GSD Session Report\n\n## Key Outcomes\n\nWe shipped the throttle and wrote the proof.\n\n## Decisions Made\n\n- Keep it small.\n';
+    const model = sessionFrom(text);
+    expect(model.more.map((section) => section.title)).toEqual(['Key Outcomes']);
+    expect(model.more[0]!.html).toContain('We shipped the throttle');
+    expect(markup(model, (html) => html)).toContain('We shipped the throttle');
+  });
+
+  it('a Work Performed whose Key Outcomes could not be read is listed whole; the read groups are not', () => {
+    const text = [
+      '# GSD Session Report',
+      '',
+      '## Session Summary',
+      '',
+      '**Duration:** 2 hours',
+      '',
+      '## Work Performed',
+      '',
+      '### Phases Touched',
+      '- Phase 1 — sign-in',
+      '',
+      '### Key Outcomes',
+      '',
+      'Prose, not bullets.',
+      '',
+      '## Files Changed',
+      '',
+      '3 files changed.',
+      '',
+    ].join('\n');
+    const model = sessionFrom(text);
+    expect(model.more.map((section) => section.title)).toEqual(['Work Performed']);
+  });
+
+  it('a Files Changed, an Estimated Resource Usage and a Session Summary with nothing readable are listed', () => {
+    const text = [
+      '# GSD Session Report',
+      '',
+      '## Session Summary',
+      '',
+      'It went well.',
+      '',
+      '## Key Outcomes',
+      '- One.',
+      '',
+      '## Files Changed',
+      '',
+      'Not stated here.',
+      '',
+      '## Estimated Resource Usage',
+      '',
+      'Not measured.',
+      '',
+    ].join('\n');
+    const model = sessionFrom(text);
+    expect(model.more.map((section) => section.title)).toEqual(['Session Summary', 'Files Changed', 'Estimated Resource Usage']);
+  });
+
+  it('a heading outside the session set is kept as today, and a lift with no unread list reads as all read', () => {
+    const text = '# GSD Session Report\n\n## Key Outcomes\n- One.\n\n## Follow-ups\n\nCall the steward.\n';
+    expect(sessionFrom(text).more.map((section) => section.title)).toEqual(['Follow-ups']);
+    const lift = extractReport('SESSION_REPORT.md', {}, '# GSD Session Report\n\n## Key Outcomes\n\nProse.\n') as unknown as Record<string, unknown>;
+    delete lift.unread;
+    const input: ViewInput = {
+      kind: 'report',
+      frontmatter: {},
+      structured: { report: lift },
+      groups: groupsOf('# GSD Session Report\n\n## Key Outcomes\n\nProse.\n'),
+      planSegments: [],
+    };
+    expect(session(composeReport(input)).more).toEqual([]);
+  });
+});
