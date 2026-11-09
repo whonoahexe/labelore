@@ -789,12 +789,16 @@ function decisionsOf(value: unknown): { bars: ReportDecisionBar[]; rows: ReportD
   return { bars, rows };
 }
 
+/** The kind of a numbered milestone section, by its heading with any leading `N.` removed. Debt is tested first, so a heading
+ * such as "Tech debt and deferred requirements" is the debt section and never the requirements page. */
 function sectionKind(heading: string): 'phases' | 'requirements' | 'decisions' | 'debt' | 'other' {
-  const lower = heading.trim().toLowerCase();
-  if (lower.includes('phases delivered')) return 'phases';
-  if (lower.includes('requirements')) return 'requirements';
-  if (lower.includes('key decisions')) return 'decisions';
-  if (lower.includes('tech debt')) return 'debt';
+  let lower = heading.trim().toLowerCase();
+  const dot = lower.indexOf('.');
+  if (dot > 0 && isDigits(lower.slice(0, dot))) lower = lower.slice(dot + 1).trim();
+  if (lower.startsWith('tech debt')) return 'debt';
+  if (lower.startsWith('phases delivered')) return 'phases';
+  if (lower.startsWith('requirements')) return 'requirements';
+  if (lower.startsWith('key decisions')) return 'decisions';
   return 'other';
 }
 
@@ -806,6 +810,10 @@ function composeMilestone(report: Record<string, unknown>, input: ViewInput): Co
   const decisions = decisionsOf(report.decisions);
   const groups = groupsOf(input);
   const used = new Set<number>();
+  const numerals = stats
+    .map((stat, at) => numeralOf(`stat-${at}`, stat.label ?? '', stat.value, false))
+    .filter((numeral): numeral is ReportNumeral => numeral !== null);
+  const ruler = calendarOf(stats, phases);
 
   const plain: ReportRawSection[] = [];
   const bars: (ReportRawSection & { number: string })[] = [];
@@ -819,10 +827,11 @@ function composeMilestone(report: Record<string, unknown>, input: ViewInput): Co
     const heading = textOrNull(section.heading) ?? '';
     const kind = sectionKind(heading);
     const id = `view-report-sec-${number}`;
+    // Only the first section of a kind is composed and anchored; a later one is shown as written.
     const composed =
-      (kind === 'phases' && phases.length > 0) ||
-      (kind === 'requirements' && requirements.rows.length > 0) ||
-      (kind === 'decisions' && decisions.rows.length > 0);
+      (kind === 'phases' && phases.length > 0 && anchors.phases === null) ||
+      (kind === 'requirements' && requirements.rows.length > 0 && anchors.requirements === null) ||
+      (kind === 'decisions' && decisions.rows.length > 0 && anchors.decisions === null);
     const label =
       kind === 'phases' && composed
         ? PHASES_DELIVERED_LABEL
@@ -844,12 +853,19 @@ function composeMilestone(report: Record<string, unknown>, input: ViewInput): Co
     if (group === null) continue;
     const raw: ReportRawSection = { key: `sec-${number}`, id, title: heading, html: group.html };
     index.push({ key: `idx-${number}`, target: id, number, label });
-    if (kind === 'debt') debt = { ...raw, title: TECH_DEBT_LABEL };
+    if (kind === 'debt' && debt === null) debt = { ...raw, title: TECH_DEBT_LABEL };
+    else if (kind === 'debt') bars.push({ ...raw, number });
     else if (kind === 'phases' || kind === 'requirements' || kind === 'decisions') plain.push(raw);
     else bars.push({ ...raw, number });
   }
   // Any other section the document holds (a heading the writer added) is a closed bar, never lost.
+  // The stats card carries the Stats id when it renders; a Stats section the lift read no lines from is a closed bar with that id.
+  const statsId = 'view-report-sec-stats';
+  const cardRenders = numerals.length > 0 || ruler !== null;
   const statsGroup = claimGroup(groups, used, (found) => sameHeading(found, 'stats'));
+  if (statsGroup !== null && !cardRenders) {
+    bars.push({ key: 'sec-stats', id: statsId, title: STATS_LABEL, html: statsGroup.html, number: '' });
+  }
   groups.forEach((group, at) => {
     if (used.has(at) || group.heading === null || group.html.trim() === '') return;
     used.add(at);
@@ -857,8 +873,7 @@ function composeMilestone(report: Record<string, unknown>, input: ViewInput): Co
     bars.push({ key: `more-${at}`, id, title: group.heading.trim(), html: group.html, number: '' });
     index.push({ key: `idx-more-${at}`, target: id, number: '·', label: group.heading.trim() });
   });
-  const statsId = 'view-report-sec-stats';
-  if (stats.length > 0 || statsGroup !== null) index.push({ key: 'idx-stats', target: statsId, number: '·', label: STATS_LABEL });
+  if (cardRenders || statsGroup !== null) index.push({ key: 'idx-stats', target: statsId, number: '·', label: STATS_LABEL });
 
   return {
     variant: 'milestone',
@@ -868,10 +883,8 @@ function composeMilestone(report: Record<string, unknown>, input: ViewInput): Co
       generated: textOrNull(report.generated),
       context: textOrNull(report.purpose),
     },
-    numerals: stats
-      .map((stat, at) => numeralOf(`stat-${at}`, stat.label ?? '', stat.value, false))
-      .filter((numeral): numeral is ReportNumeral => numeral !== null),
-    ruler: calendarOf(stats, phases),
+    numerals,
+    ruler,
     index,
     phases,
     requirements,
