@@ -267,6 +267,59 @@ describe('onboarding page: the sketch states with no fixture, planted inside the
     expect(html).toContain('data-form="other">sparse<');
   });
 
+  describe('the Codebase card and the closed Codebase bar agree about the map (L3-WR-06)', () => {
+    /** The text of the Codebase card's caption (heading and chip) in the first screen. */
+    function cardCaption(html: string): string {
+      const from = html.indexOf('<h2 class="view-onboarding-heading">Codebase</h2>');
+      expect(from).toBeGreaterThan(-1);
+      return html.slice(from, html.indexOf('</div>', from));
+    }
+    /** The value drawn beside a label in the closed bar's facts list. */
+    function factValue(html: string, label: string): string {
+      const from = html.indexOf(`<dt>${label}</dt><dd>`);
+      expect(from, label).toBeGreaterThan(-1);
+      return html.slice(from, html.indexOf('</dd>', from));
+    }
+    const MAP = '- Codebase map: .planning/codebase/ (4 documents)';
+
+    it('a map path with no readiness line reads the not-stated word on the card, never Not found', async () => {
+      const body = edited(fxRead('onboarding/SUMMARY.md'), [['- Map readiness: none\n- Codebase map: missing', MAP]]);
+      const model = composed(composeOnboarding(inputOf(planted(await lendshed(), body))));
+      expect(model.codebase).toMatchObject({ found: true, readiness: null, readinessNone: false });
+      const html = markup(model);
+      expect(cardCaption(html)).toContain('>Not stated<');
+      expect(cardCaption(html)).not.toContain('Not found');
+      expect(factValue(html, 'Map readiness')).toContain('Not stated');
+    });
+
+    it('a map path with readiness none reads None on the card, as the bar does', async () => {
+      const body = edited(fxRead('onboarding/SUMMARY.md'), [['- Codebase map: missing', MAP]]);
+      const model = composed(composeOnboarding(inputOf(planted(await lendshed(), body))));
+      expect(model.codebase).toMatchObject({ found: true, readiness: null, readinessNone: true });
+      const html = markup(model);
+      expect(cardCaption(html)).toContain('>None<');
+      expect(cardCaption(html)).not.toContain('Not found');
+      expect(factValue(html, 'Map readiness')).toContain('None');
+    });
+
+    it('a map path with a readiness word reads the readiness chip on the card, as the bar does', async () => {
+      const body = edited(fxRead('onboarding/SUMMARY.md'), [
+        ['- Map readiness: none', '- Map readiness: complete'],
+        ['- Codebase map: missing', MAP],
+      ]);
+      const html = markup(composed(composeOnboarding(inputOf(planted(await lendshed(), body)))));
+      expect(cardCaption(html)).toContain('Complete map');
+      expect(cardCaption(html)).not.toContain('Not found');
+      expect(factValue(html, 'Map readiness')).toContain('Complete map');
+    });
+
+    it('no map path reads Not found on the card, as the bar does for the map', async () => {
+      const html = markup(composed(composeOnboarding(inputOf(await lendshed()))));
+      expect(cardCaption(html)).toContain('>Not found<');
+      expect(factValue(html, 'Codebase map')).toContain('Not found');
+    });
+  });
+
   it('a map count that does not read, or exceeds seven, leaves the figure out and keeps the plain line', async () => {
     const base = fxRead('onboarding/SUMMARY.md');
     for (const detail of ['(several documents)', '(12 documents)']) {

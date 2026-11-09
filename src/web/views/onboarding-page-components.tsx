@@ -213,13 +213,21 @@ function FilesObject({ files, onOpen }: { files: ComposedOnboardingFiles; onOpen
   );
 }
 
+/** The card's caption chip, branching on the same facts as the Codebase bar: no map path is Not found; otherwise the readiness
+ * chip when one was read, None for `none`, and the not-stated word when the summary has no readiness line. */
+function CodebaseCaptionChip({ codebase }: { codebase: ComposedOnboardingCodebase }): React.JSX.Element {
+  if (!codebase.found) return <NotFoundChip word={NOT_FOUND_WORD} />;
+  if (codebase.readiness !== null) return <ReadinessChip readiness={codebase.readiness} />;
+  return <NotFoundChip word={codebase.readinessNone ? 'None' : NOT_STATED_WORD} />;
+}
+
 function CodebaseObject({ codebase, onOpen }: { codebase: ComposedOnboardingCodebase; onOpen: () => void }): React.JSX.Element {
   const tone = codebase.readiness?.tone === 'in-flight' ? 'in-flight' : 'complete';
   return (
     <div className="view-onboarding-obj">
       <ObjectCaption
         label={CODEBASE_LABEL}
-        extra={codebase.found && codebase.readiness !== null ? <ReadinessChip readiness={codebase.readiness} /> : <NotFoundChip word={NOT_FOUND_WORD} />}
+        extra={<CodebaseCaptionChip codebase={codebase} />}
       />
       <button type="button" className="view-onboarding-fig" aria-label={`Show details: ${CODEBASE_LABEL}`} onClick={onOpen}>
         <span className="view-onboarding-folder" data-small="true" data-found={codebase.found ? 'yes' : 'no'}>

@@ -368,46 +368,58 @@ function phaseHeadOf(phase: string, ordinal: number): ForensicsPhaseHead {
   return { key: `phase-${ordinal}`, number: String(ordinal + 1), name: text };
 }
 
-/** The lift's flat phase-by-artifact list as a grid: a row of the report is a run of cells, as many as the first row has
- * artifacts (the first artifact name repeating marks the next row). */
+/** The lift's flat phase-by-artifact list as a grid. The lift writes one table row's cells together, so a new phase column
+ * starts when a cell's phase text differs from the one before it. Each cell is then placed by its own artifact name (a
+ * second cell of the same name in one phase is the second of that name; an unnamed cell is a row of its own), never by its
+ * position, so a phase that lists fewer artifacts leaves its missing squares empty and only cells the report holds are counted. */
 function gridOf(value: unknown): ComposedForensicsGrid | null {
   const cells = recordList(value);
   if (cells.length === 0) return null;
-  const firstArtifact = textOrNull(cells[0]!.artifact);
-  let width = cells.length;
-  for (let at = 1; at < cells.length; at += 1) {
-    if (textOrNull(cells[at]!.artifact) === firstArtifact) {
-      width = at;
-      break;
+  const columns: { phase: string; byKey: Map<string, Record<string, unknown>> }[] = [];
+  const rowKeys: string[] = [];
+  const rowNames = new Map<string, string>();
+  let lastPhase: string | null = null;
+  cells.forEach((cell, at) => {
+    const phase = textOrNull(cell.phase) ?? '';
+    if (lastPhase === null || phase !== lastPhase) columns.push({ phase, byKey: new Map() });
+    lastPhase = phase;
+    const column = columns[columns.length - 1]!;
+    const name = textOrNull(cell.artifact);
+    let key: string;
+    if (name === null || name.trim() === '') {
+      key = `unnamed-${at}`;
+    } else {
+      let seen = 0;
+      while (column.byKey.has(`name-${seen}-${name}`)) seen += 1;
+      key = `name-${seen}-${name}`;
     }
-  }
-  const chunks: Record<string, unknown>[][] = [];
-  for (let at = 0; at < cells.length; at += width) chunks.push(cells.slice(at, at + width));
-  const phases = chunks.map((chunk, at) => phaseHeadOf(textOrNull(chunk[0]!.phase) ?? '', at));
+    column.byKey.set(key, cell);
+    if (!rowNames.has(key)) {
+      rowNames.set(key, name === null ? '' : name);
+      rowKeys.push(key);
+    }
+  });
+  const phases = columns.map((column, at) => phaseHeadOf(column.phase, at));
   let absent = 0;
   let total = 0;
-  const rows: ForensicsGridRow[] = [];
-  for (let artifactAt = 0; artifactAt < width; artifactAt += 1) {
-    const row: ForensicsGridRow = {
-      key: `artifact-${artifactAt}`,
-      artifact: textOrNull(cells[artifactAt]!.artifact) ?? '',
-      cells: [],
-    };
-    chunks.forEach((chunk, phaseAt) => {
-      const cell = chunk[artifactAt];
-      const present = cell === undefined ? null : cell.present;
+  const rows: ForensicsGridRow[] = rowKeys.map((rowKey, artifactAt) => {
+    const row: ForensicsGridRow = { key: `artifact-${artifactAt}`, artifact: rowNames.get(rowKey) ?? '', cells: [] };
+    columns.forEach((column, phaseAt) => {
+      const cell = column.byKey.get(rowKey);
+      const held = cell !== undefined;
+      const present = held ? cell.present : null;
       const state: ForensicsCellState = present === true ? 'present' : present === false ? 'absent' : 'unstated';
-      const written = cell === undefined || typeof cell.cell !== 'string' ? '' : cell.cell;
+      const written = !held || typeof cell.cell !== 'string' ? '' : cell.cell;
+      if (held) total += 1;
       if (state === 'absent') absent += 1;
-      total += 1;
       row.cells.push({
         key: `cell-${artifactAt}-${phaseAt}`,
         state,
         note: state === 'unstated' ? written.trim() : withoutMark(written),
       });
     });
-    rows.push(row);
-  }
+    return row;
+  });
   return { phases, rows, absent, total, summary: `${absent} of ${total} artifacts absent` };
 }
 
