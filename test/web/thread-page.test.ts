@@ -9,6 +9,8 @@ import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { buildSeedThreadLinks } from '../../src/presentation/seed-thread-links.ts';
+import { ThreadHandler } from '../../src/planning-repo/handlers/seed-thread.ts';
+import type { ArtifactRef } from '../../src/planning-repo/types.ts';
 import {
   composeThread,
   createdNoteDay,
@@ -384,6 +386,76 @@ describe('thread page: a value-looking string in the prose', () => {
       expect(html, value).not.toContain(value);
       expect(JSON.stringify(model), value).not.toContain(value);
     }
+  });
+});
+
+// 11-37 (G-11-2, L3-WR-01): every field the thread page draws is masked, the reference description and the status word
+// included, from the handler to the markup.
+describe('thread page: a value beside a name in any field (L3-WR-01)', () => {
+  const VALUE = 'abc123';
+  const THREAD_PATH = '.planning/threads/rotate-token.md';
+  const threadFile = [
+    '---',
+    'slug: rotate-token',
+    'title: Rotate TOKEN=abc123',
+    'status: TOKEN=abc123',
+    'created: 2026-06-01',
+    '---',
+    '',
+    '## Goal',
+    '',
+    'Rotate **TOKEN=abc123** safely.',
+    '',
+    '## Context',
+    '',
+    'It sits in API_KEY = abc123 now.',
+    '',
+    '## References',
+    '',
+    '- `a.md` - see TOKEN=abc123',
+    '',
+    '## Next Steps',
+    '',
+    '- Set `DB_URL=postgres://u:p@h/db` in the vault',
+    '- Then TOKEN: abc123',
+    '',
+  ].join('\n');
+
+  function fromFile(): { model: ComposedThread; html: string; payload: string } {
+    const ref = { path: THREAD_PATH, kind: 'thread', location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0 } as ArtifactRef;
+    const result = ThreadHandler.parse({ path: THREAD_PATH, content: threadFile, mtimeMs: 0, size: threadFile.length }, ref);
+    const model = composeThread({ kind: 'thread', frontmatter: {}, structured: result.structured ?? {}, groups: [], planSegments: [], seedThreadLinks: null });
+    expect(model).not.toBeNull();
+    const payload = JSON.stringify({ title: result.title, frontmatter: result.frontmatter, structured: result.structured });
+    return { model: model as ComposedThread, html: markup(model as ComposedThread), payload };
+  }
+
+  it('holds no value in the payload, the model or the markup, and draws the names and the shared mark', () => {
+    const { model, html, payload } = fromFile();
+    for (const [where, text] of [['payload', payload], ['model', JSON.stringify(model)], ['markup', html]] as const) {
+      expect(text, where).not.toContain(VALUE);
+      expect(text, where).not.toContain('postgres');
+    }
+    for (const name of ['TOKEN', 'API_KEY', 'DB_URL']) expect(html, name).toContain(`<code>${name}</code>`);
+    expect(html).not.toContain('**');
+    expect(html).toContain('Value not shown');
+  });
+
+  it("draws a reference description's mark and never its value, in the model or the markup (planted without the handler)", async () => {
+    const presentation = withThread(await lendshed(), IN_PROGRESS, {
+      references: ['`.planning/ROADMAP.md` - holds TOKEN=abc123', 'prose with API_KEY: abc123'],
+    });
+    const model = threadOf(presentation, IN_PROGRESS, false);
+    const html = markup(model);
+    expect(html).not.toContain(VALUE);
+    expect(JSON.stringify(model)).not.toContain(VALUE);
+    expect(html).toContain('<code>TOKEN</code>');
+    expect(html).toContain('<code>API_KEY</code>');
+  });
+
+  it('keeps a lower-case name as written, the same as the shared mask', async () => {
+    const presentation = withThread(await lendshed(), IN_PROGRESS, { context: 'api_key=abc123 stays' });
+    expect(markup(threadOf(presentation, IN_PROGRESS))).toContain('api_key=abc123');
   });
 });
 

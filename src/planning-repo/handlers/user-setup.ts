@@ -11,30 +11,10 @@ import { deriveTitle } from './title.ts';
 import { artifactTokenOf } from './artifact-token.ts';
 import { extractUserSetup } from './user-setup-body.ts';
 import type { UserSetupBody } from './user-setup-body.ts';
-import { maskValues } from './withhold-values.ts';
+import { maskData, maskValues } from './withhold-values.ts';
 
 export { extractUserSetup } from './user-setup-body.ts';
 export type { UserSetupBody } from './user-setup-body.ts';
-
-/** The deepest frontmatter nesting the mask follows; past it a value is dropped rather than kept unmasked. */
-const FRONTMATTER_DEPTH = 8;
-
-/** A frontmatter value with every string in it (keys included) passed through `maskValues`: a pasted value can sit in a
- * title, a list item or a nested field as easily as in the body. A value nested deeper than FRONTMATTER_DEPTH is dropped. */
-function maskData(value: unknown, depth: number): unknown {
-  if (typeof value === 'string') return maskValues(value);
-  if (Array.isArray(value)) {
-    return depth >= FRONTMATTER_DEPTH ? [] : value.map((item) => maskData(item, depth + 1));
-  }
-  if (value instanceof Date) return value;
-  if (typeof value === 'object' && value !== null) {
-    if (depth >= FRONTMATTER_DEPTH) return {};
-    const out: Record<string, unknown> = {};
-    for (const [key, item] of Object.entries(value)) out[maskValues(key)] = maskData(item, depth + 1);
-    return out;
-  }
-  return value;
-}
 
 export const UserSetupHandler: ArtifactHandler = {
   kind: 'user-setup',

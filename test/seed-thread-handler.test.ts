@@ -405,3 +405,89 @@ describe('edge probes: threads', () => {
     expect(thread.title).toBe('Unmarked');
   });
 });
+
+// 11-37 (G-11-2, L3-WR-01, T-11-70): a value written beside a variable name is masked at read time, from the title, the
+// frontmatter and the lift alike; the body stays as written for Source mode.
+describe('L3-WR-01: the seed and thread handlers mask a value beside a name', () => {
+  const VALUE = 'abc123';
+
+  it('masks every field of a seed: trigger, planted during, scope, status, audit parts, a breadcrumb and the idea', () => {
+    const text = [
+      '---',
+      'id: SEED-260601-w3p',
+      'status: TOKEN=abc123',
+      'planted: 2026-06-01',
+      'planted_during: v1.0 TOKEN=abc123',
+      'trigger_when: when TOKEN=abc123 is rotated',
+      'scope: TOKEN=abc123',
+      'audit_acknowledged:',
+      '  milestone: TOKEN=abc123',
+      '  at: "TOKEN=abc123"',
+      '  status: TOKEN=abc123',
+      '---',
+      '',
+      '# SEED-260601-w3p: Rotate TOKEN=abc123',
+      '',
+      '## Why This Matters',
+      '',
+      'Because TOKEN=abc123 leaks.',
+      '',
+      '## Breadcrumbs',
+      '',
+      '- `a.md` - keep TOKEN=abc123 out',
+      '',
+      '## Notes',
+      '',
+      '**TOKEN=abc123**',
+      '',
+    ].join('\n');
+    const path = `${SEEDS}SEED-260601-w3p-rotate.md`;
+    const result = SeedHandler.parse(rawOf(path, text), refOf(path, 'seed'));
+    const payload = JSON.stringify({ title: result.title, frontmatter: result.frontmatter, structured: result.structured });
+    expect(payload).not.toContain(VALUE);
+    expect(payload).toContain('TOKEN');
+    expect(result.body).toContain('TOKEN=abc123');
+  });
+
+  it('masks every field of a thread: title, status, goal, context, next steps and a reference description', () => {
+    const text = [
+      '---',
+      'slug: rotate-token',
+      'title: Rotate TOKEN=abc123',
+      'status: TOKEN=abc123',
+      'created: 2026-06-01',
+      '---',
+      '',
+      '## Goal',
+      '',
+      'Rotate TOKEN=abc123 safely.',
+      '',
+      '## Context',
+      '',
+      'It sits in **API_KEY=abc123** now.',
+      '',
+      '## References',
+      '',
+      '- `a.md` - see TOKEN=abc123',
+      '',
+      '## Next Steps',
+      '',
+      '- Set TOKEN: abc123 in the vault',
+      '',
+    ].join('\n');
+    const path = `${THREADS}rotate-token.md`;
+    const result = ThreadHandler.parse(rawOf(path, text), refOf(path, 'thread'));
+    const payload = JSON.stringify({ title: result.title, frontmatter: result.frontmatter, structured: result.structured });
+    expect(payload).not.toContain(VALUE);
+    expect(payload).toContain('TOKEN');
+    expect(result.body).toContain('TOKEN=abc123');
+  });
+
+  it('leaves the made-up Lendshed and Shapes lifts as written (nothing in them is value-shaped)', async () => {
+    const lendshed = await loadFixtureProject();
+    for (const artifact of lendshed.presentation.artifacts) {
+      if (artifact.kind !== 'seed' && artifact.kind !== 'thread') continue;
+      expect(JSON.stringify(artifact.structured), artifact.path).not.toContain('Value not shown');
+    }
+  });
+});

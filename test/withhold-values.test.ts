@@ -4,7 +4,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   VALUE_NOT_SHOWN_MARK,
+  maskData,
   maskValues,
+  splitMasked,
   stripControlCharacters,
   withholdInText,
   withholdValue,
@@ -266,5 +268,77 @@ describe('withholdInText - a quoted value is removed whole (10-REVIEW CR-02)', (
   it('removes a single-quoted value of several words and a double-quoted one', () => {
     expect(withholdInText("STRIPE_KEY='sk live' now").text).toBe('STRIPE_KEY now');
     expect(withholdInText('Use STRIPE_KEY="a b c" now').text).toBe('Use STRIPE_KEY now');
+  });
+});
+
+describe('splitMasked (11-37, L3-WR-01): masked text as text and withheld-name runs', () => {
+  const MARK = VALUE_NOT_SHOWN_MARK;
+
+  it('gives the text, the withheld name and the text after it, for each written form', () => {
+    for (const written of [`Set API_KEY=${MARK} now`, `Set API_KEY = ${MARK} now`, `Set API_KEY: ${MARK} now`]) {
+      expect(splitMasked(written), written).toEqual([
+        { kind: 'text', text: 'Set ' },
+        { kind: 'withheld', name: 'API_KEY' },
+        { kind: 'text', text: ' now' },
+      ]);
+    }
+  });
+
+  it('takes the bold stars and the backticks that wrap the pair away with it', () => {
+    expect(splitMasked(`**API_KEY=${MARK}** next`)).toEqual([
+      { kind: 'withheld', name: 'API_KEY' },
+      { kind: 'text', text: ' next' },
+    ]);
+    expect(splitMasked(`a \`DB_URL=${MARK}\` b`)).toEqual([
+      { kind: 'text', text: 'a ' },
+      { kind: 'withheld', name: 'DB_URL' },
+      { kind: 'text', text: ' b' },
+    ]);
+    expect(splitMasked(`**STRIPE_KEY** = ${MARK}`)).toEqual([{ kind: 'withheld', name: 'STRIPE_KEY' }]);
+  });
+
+  it('gives a withheld run with no name when no name can be read before the mark, and one text run for plain text', () => {
+    expect(splitMasked(`| ${MARK} |`)).toEqual([
+      { kind: 'text', text: '| ' },
+      { kind: 'withheld', name: null },
+      { kind: 'text', text: ' |' },
+    ]);
+    expect(splitMasked('plain words')).toEqual([{ kind: 'text', text: 'plain words' }]);
+    expect(splitMasked('')).toEqual([]);
+  });
+
+  it('reads what maskValues writes, for every form in the planted-value set', () => {
+    for (const written of [
+      '**API_KEY=abc123**',
+      'API_KEY = abc123',
+      'API_KEY: abc123',
+      '`DB_URL=postgres://u:p@h/db`',
+      'TOKEN=abc123',
+    ]) {
+      const runs = splitMasked(maskValues(written));
+      expect(runs.filter((run) => run.kind === 'withheld'), written).toHaveLength(1);
+      expect(JSON.stringify(runs), written).not.toContain('abc123');
+      expect(JSON.stringify(runs), written).not.toContain('postgres');
+      expect(JSON.stringify(runs), written).not.toContain('*');
+      expect(JSON.stringify(runs), written).not.toContain('`');
+    }
+  });
+
+  it('shows a lower-case name as written: outside the shared mask contract', () => {
+    expect(maskValues('api_key=abc123 and token: sk-abcdef')).toBe('api_key=abc123 and token: sk-abcdef');
+  });
+});
+
+describe('maskData (11-37): every string of a lifted value, keys included', () => {
+  it('masks strings in objects and arrays, keeps dates and numbers, and drops what nests past eight levels', () => {
+    const when = new Date(0);
+    const out = maskData({ a: 'TOKEN=abc123', list: ['x', { 'KEY=zzz': 1 }], when, n: 3 }, 0) as Record<string, unknown>;
+    expect(JSON.stringify(out)).not.toContain('abc123');
+    expect(JSON.stringify(out)).not.toContain('zzz');
+    expect(out.when).toBe(when);
+    expect(out.n).toBe(3);
+    let deep: unknown = 'TOKEN=abc123';
+    for (let level = 0; level < 12; level += 1) deep = { next: deep };
+    expect(JSON.stringify(maskData(deep, 0))).not.toContain('abc123');
   });
 });

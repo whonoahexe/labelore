@@ -22,6 +22,7 @@ import {
   THREAD_DIAL,
   UPDATED_LABEL,
 } from './thread-page.ts';
+import { segmentsOf } from './seed-page.ts';
 import type {
   ComposedThread,
   ComposedThreadBlock,
@@ -76,7 +77,7 @@ function Segments({ segments }: { segments: ThreadSegment[] }): React.JSX.Elemen
       {segments.map((segment, index) =>
         segment.kind === 'withheld' ? (
           <span key={index} className="view-thread-withheld">
-            <code>{segment.name}</code>
+            {segment.name === null ? null : <code>{segment.name}</code>}
             <ValueNotShown />
           </span>
         ) : (
@@ -85,6 +86,11 @@ function Segments({ segments }: { segments: ThreadSegment[] }): React.JSX.Elemen
       )}
     </>
   );
+}
+
+/** A plain-string field of the model (already masked by the composer) drawn through the shared splitter. */
+function Masked({ text }: { text: string }): React.JSX.Element {
+  return <Segments segments={segmentsOf(text)} />;
 }
 
 // The dial: a half circle of radius 80 about (100, 100) in a 200 x 112 box. Each status owns an arc (open on the left, in
@@ -255,10 +261,10 @@ function Reference({ reference }: { reference: ComposedThreadRef }): React.JSX.E
         ) : null}
         {reference.text !== null ? (
           reference.path === null ? (
-            <ResearchInline text={reference.text} />
+            <Masked text={reference.text} />
           ) : (
             <span className="view-thread-why">
-              <ResearchInline text={reference.text} />
+              <Masked text={reference.text} />
             </span>
           )
         ) : null}

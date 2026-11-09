@@ -25,6 +25,7 @@ import {
   SURFACE_WHEN_LABEL,
   TRIGGER_LABEL,
   WHY_LABEL,
+  segmentsOf,
 } from './seed-page.ts';
 import type {
   ComposedSeed,
@@ -70,7 +71,7 @@ function Segments({ segments }: { segments: SeedSegment[] }): React.JSX.Element 
       {segments.map((segment, index) =>
         segment.kind === 'withheld' ? (
           <span key={index} className="view-seed-withheld">
-            <code>{segment.name}</code>
+            {segment.name === null ? null : <code>{segment.name}</code>}
             <ValueNotShown />
           </span>
         ) : (
@@ -79,6 +80,12 @@ function Segments({ segments }: { segments: SeedSegment[] }): React.JSX.Element 
       )}
     </>
   );
+}
+
+/** A plain-string field of the model (already masked by the composer) drawn through the shared splitter, so a withheld
+ * value shows the name and the shared mark here as it does in a block. */
+function Masked({ text }: { text: string }): React.JSX.Element {
+  return <Segments segments={segmentsOf(text)} />;
 }
 
 function Blocks({ blocks }: { blocks: ComposedSeedBlock[] }): React.JSX.Element {
@@ -152,7 +159,9 @@ function Packet({ model }: { model: ComposedSeed }): React.JSX.Element {
         {packet.plantedDuring !== null ? (
           <div className="view-seed-from">
             <span className="view-seed-key">{PLANTED_DURING_LABEL}</span>
-            <span>{packet.plantedDuring}</span>
+            <span>
+              <Masked text={packet.plantedDuring} />
+            </span>
           </div>
         ) : null}
         <div className="view-seed-marks">
@@ -168,7 +177,9 @@ function Packet({ model }: { model: ComposedSeed }): React.JSX.Element {
       <div className="view-seed-address" data-empty={packet.surfaceWhen === null ? 'true' : 'false'}>
         <span className="view-seed-key">{SURFACE_WHEN_LABEL}</span>
         {packet.surfaceWhen !== null ? (
-          <p className="view-seed-sentence">{packet.surfaceWhen}</p>
+          <p className="view-seed-sentence">
+            <Masked text={packet.surfaceWhen} />
+          </p>
         ) : (
           <span className="status-chip" data-tone="quiet">
             {NO_SURFACING_LABEL}
@@ -202,7 +213,7 @@ function Crumb({ crumb }: { crumb: ComposedSeedCrumb }): React.JSX.Element {
         ) : null}
         {crumb.text !== null ? (
           <span className="view-seed-why">
-            <ResearchInline text={crumb.text} />
+            <Masked text={crumb.text} />
           </span>
         ) : null}
       </span>
@@ -224,7 +235,7 @@ function Bar({ bar }: { bar: ComposedSeedBar }): React.JSX.Element {
           <p className="view-seed-prose">
             <span className="view-seed-key">{TRIGGER_LABEL}</span>
             <br />
-            {bar.trigger}
+            <Masked text={bar.trigger} />
           </p>
         ) : null}
         <Blocks blocks={bar.blocks} />
@@ -241,7 +252,11 @@ export function SeedView({ model }: { model: ComposedSeed }): React.JSX.Element 
       {model.audit !== null ? (
         <div className="view-seed-audit">
           <span className="view-seed-audit-key">{AUDIT_KEY}</span>
-          {model.audit !== '' ? <span className="view-seed-meta">{model.audit}</span> : null}
+          {model.audit !== '' ? (
+            <span className="view-seed-meta">
+              <Masked text={model.audit} />
+            </span>
+          ) : null}
         </div>
       ) : null}
       {model.why.length > 0 ? (

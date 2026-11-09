@@ -1,11 +1,14 @@
 // The seed and thread handlers (Phase 11, 11-20, VIEW-15, VIEW-16, D-02): `seeds/SEED-*.md` and
 // `threads/<slug>.md`. Each claims one kind from folders.ts, keeps the generic title, frontmatter, body and
 // warning, and adds `structured.seed` or `structured.thread` read by seed-thread-lift.ts. The lift is guarded by
-// its own try/catch: a throw only omits the key, and the page then falls back to the plain document.
+// its own try/catch: a throw only omits the key, and the page then falls back to the plain document. The title, the
+// frontmatter and the lift pass through the shared mask (`maskValues` / `maskData`) so a value written beside a variable
+// name never reaches the payload (11-37, L3-WR-01, T-11-70); the body stays as written, as Source mode shows the file.
 import type { ArtifactHandler, ArtifactRef, HandlerParseResult, RawArtifact } from '../types.ts';
 import { tryParseFrontmatter } from '../frontmatter.ts';
 import { deriveTitle } from './title.ts';
 import { extractSeed, extractThread } from './seed-thread-lift.ts';
+import { maskData, maskValues } from './withhold-values.ts';
 
 export type { SeedLift, ThreadLift } from './seed-thread-lift.ts';
 
@@ -19,16 +22,18 @@ function parseWith(
   lift: (fm: ReturnType<typeof tryParseFrontmatter>) => unknown,
 ): HandlerParseResult {
   const fm = tryParseFrontmatter(raw.content);
-  const title = deriveTitle(fm.data, fm.body, ref.path);
+  const title = maskValues(deriveTitle(fm.data, fm.body, ref.path));
   let lifted: unknown;
   try {
-    lifted = lift(fm);
+    // 11-37 (L3-WR-01, T-11-70): the lift, title and frontmatter pass through the shared mask, as User setup does, so a
+    // value written beside a variable name never reaches the payload. The body stays as written (Source mode).
+    lifted = maskData(lift(fm), 0);
   } catch {
     lifted = undefined;
   }
   return {
     title,
-    frontmatter: fm.data,
+    frontmatter: maskData(fm.data, 0) as Record<string, unknown>,
     body: fm.body,
     warning: fm.warning,
     structured: lifted === undefined || lifted === null ? {} : { [key]: lifted },

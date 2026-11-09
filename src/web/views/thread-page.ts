@@ -18,6 +18,7 @@
 import type { ThreadLift } from '../../planning-repo/handlers/seed-thread-lift.ts';
 import { splitLinkText } from '../../presentation/seed-thread-links.ts';
 import type { SeedThreadLink } from '../../presentation/seed-thread-links.ts';
+import { maskValues } from '../../planning-repo/handlers/withhold-values.ts';
 import { dayOfIso } from './pause-page.ts';
 import { segmentsOf } from './seed-page.ts';
 import type { SeedSegment } from './seed-page.ts';
@@ -175,12 +176,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** A non-blank string field of the lift, passed through the shared mask: the handler masks at read time, and this second
+ * pass (a no-op on masked text) covers a presentation built any other way. */
 function textOrNull(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() !== '' ? value : null;
+  return typeof value === 'string' && value.trim() !== '' ? maskValues(value) : null;
 }
 
 function stringList(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string').map((item) => maskValues(item))
+    : [];
+}
+
+/** A resolved link's words, masked the same way. */
+function maskedOrNull(value: string | null | undefined): string | null {
+  return typeof value === 'string' ? maskValues(value) : null;
 }
 
 /** The thread lift as the response carries it (JSON, so every field is read defensively), or null. */
@@ -245,9 +255,9 @@ function referencesOf(input: ViewInput, thread: ThreadLift): ComposedThreadRef[]
       const link = links.references[at]!;
       const url = typeof link.url === 'string' && link.url !== '' ? link.url : null;
       if (link.path === null || link.path === undefined) {
-        return { key, path: null, text: link.text, url: null, state: 'text' };
+        return { key, path: null, text: maskValues(link.text), url: null, state: 'text' };
       }
-      return { key, path: link.path, text: link.description ?? null, url, state: url === null ? 'not-found' : 'resolved' };
+      return { key, path: link.path, text: maskedOrNull(link.description), url, state: url === null ? 'not-found' : 'resolved' };
     }
     const { path, description } = splitLinkText(bullet);
     return path === null

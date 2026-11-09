@@ -9,6 +9,8 @@ import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { buildSeedThreadLinks } from '../../src/presentation/seed-thread-links.ts';
+import { SeedHandler } from '../../src/planning-repo/handlers/seed-thread.ts';
+import type { ArtifactRef } from '../../src/planning-repo/types.ts';
 import {
   blocksOf,
   composeSeed,
@@ -327,6 +329,122 @@ describe('seed page: a value-looking string in the prose', () => {
     expect(blocks.map((block) => block.kind)).toEqual(['paragraph', 'list', 'paragraph']);
     expect(blocksOf(null)).toEqual([]);
     expect(blocksOf('')).toEqual([]);
+  });
+});
+
+// 11-37 (G-11-2, L3-WR-01): the seed handler masks at read time with the project's one shared mask, and the page draws
+// every field through the one shared splitter, so a value written beside a name is in no payload field and no markup.
+describe('seed page: a value beside a name, from the file to the markup (L3-WR-01)', () => {
+  const VALUE = 'abc123';
+  const SEED_PATH = '.planning/seeds/SEED-260601-w3p-mask-me.md';
+  const seedFile = (over: { notes?: string; why?: string; trigger?: string; during?: string; status?: string } = {}): string =>
+    [
+      '---',
+      'id: SEED-260601-w3p',
+      `status: ${over.status ?? 'dormant'}`,
+      'planted: 2026-06-01',
+      `planted_during: ${over.during ?? 'v1.0 / Phase 1'}`,
+      `trigger_when: ${over.trigger ?? 'when asked'}`,
+      'scope: small',
+      'audit_acknowledged:',
+      '  milestone: v1.0',
+      '  at: "2026-06-02"',
+      `  status: ${over.status ?? 'dormant'}`,
+      '---',
+      '',
+      '# SEED-260601-w3p: Mask the idea',
+      '',
+      '## Why This Matters',
+      '',
+      over.why ?? 'Because.',
+      '',
+      '## Notes',
+      '',
+      over.notes ?? 'Nothing.',
+      '',
+    ].join('\n');
+
+  function parsed(text: string): { structured: Record<string, unknown>; title: string; frontmatter: Record<string, unknown> } {
+    const ref = { path: SEED_PATH, kind: 'seed', location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0 } as ArtifactRef;
+    const result = SeedHandler.parse({ path: SEED_PATH, content: text, mtimeMs: 0, size: text.length }, ref);
+    return { structured: result.structured as Record<string, unknown>, title: result.title, frontmatter: result.frontmatter };
+  }
+
+  function composed(text: string): { model: ComposedSeed; html: string; payload: string } {
+    const result = parsed(text);
+    const model = composeSeed({ kind: 'seed', frontmatter: {}, structured: result.structured, groups: [], planSegments: [], seedThreadLinks: null });
+    expect(model).not.toBeNull();
+    return { model: model as ComposedSeed, html: markup(model as ComposedSeed), payload: JSON.stringify(result.structured) };
+  }
+
+  const FORMS: [string, string][] = [
+    ['bold', '**API_KEY=abc123**'],
+    ['spaced', 'API_KEY = abc123'],
+    ['colon', 'API_KEY: abc123'],
+    ['code span', '`API_KEY=abc123`'],
+    ['plain', 'API_KEY=abc123'],
+  ];
+
+  for (const [form, written] of FORMS) {
+    it(`masks the ${form} form (${written}) in the payload, the model and the markup, and draws the name and the mark`, () => {
+      const { model, html, payload } = composed(seedFile({ notes: `Set ${written} before the run.` }));
+      for (const [where, text] of [['payload', payload], ['model', JSON.stringify(model)], ['markup', html]] as const) {
+        expect(text, `${form} ${where}`).not.toContain(VALUE);
+      }
+      expect(html, form).toContain('<code>API_KEY</code>');
+      expect(count(html, 'Value not shown'), form).toBe(1);
+      expect(html, form).not.toContain('**');
+    });
+  }
+
+  it('keeps the body as written (Source mode) while the lift, title and frontmatter hold no value', () => {
+    const text = seedFile({ notes: 'Set **API_KEY=abc123** now.' });
+    const ref = { path: SEED_PATH, kind: 'seed', location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0 } as ArtifactRef;
+    const result = SeedHandler.parse({ path: SEED_PATH, content: text, mtimeMs: 0, size: text.length }, ref);
+    expect(result.body).toContain('API_KEY=abc123');
+    expect(JSON.stringify(result.structured)).not.toContain(VALUE);
+  });
+
+  it('masks every field the page draws: trigger, planted during, status, why, notes, audit and the idea', () => {
+    const planted = seedFile({
+      trigger: 'when TOKEN=abc123 is rotated',
+      during: 'v1.0 TOKEN=abc123',
+      status: 'TOKEN=abc123',
+      why: 'Because TOKEN=abc123 leaks.',
+      notes: '- TOKEN=abc123 goes in the vault\n\nTOKEN: abc123',
+    }).replace('# SEED-260601-w3p: Mask the idea', '# SEED-260601-w3p: Rotate TOKEN=abc123');
+    const result = parsed(planted);
+    expect(JSON.stringify({ s: result.structured, t: result.title, f: result.frontmatter })).not.toContain(VALUE);
+    expect(JSON.stringify(result.structured)).toContain('TOKEN');
+    const { model, html } = composed(planted);
+    expect(JSON.stringify(model)).not.toContain(VALUE);
+    expect(html).not.toContain(VALUE);
+    expect(html).toContain('<code>TOKEN</code>');
+    const sentence = html.slice(html.indexOf('view-seed-sentence'), html.indexOf('view-seed-foot'));
+    expect(sentence).toContain('Value not shown');
+    expect(sentence).not.toContain('=[');
+    const top = html.slice(html.indexOf('view-seed-top'), html.indexOf('view-seed-postmark'));
+    expect(top).toContain('Value not shown');
+    const props = seedHeaderProps(model, 'Fallback');
+    expect(props.title).not.toContain(VALUE);
+    expect(props.title).toContain('Value not shown');
+  });
+
+  it('masks a presentation planted directly in a test: the page keeps its own pass', async () => {
+    const model = seedOf(
+      withSeed(await lendshed(), FULL, { triggerWhen: 'when API_KEY=abc123 is set', notes: '**API_KEY=abc123**', breadcrumbs: ['`a.md` — keep TOKEN: abc123 out'] }),
+      FULL,
+      false,
+    );
+    const html = markup(model);
+    expect(html).not.toContain(VALUE);
+    expect(JSON.stringify(model)).not.toContain(VALUE);
+    expect(html).toContain('<code>API_KEY</code>');
+  });
+
+  it('shows a lower-case name as written: outside the shared mask contract', () => {
+    const { html } = composed(seedFile({ notes: 'api_key=abc123' }));
+    expect(html).toContain('api_key=abc123');
   });
 });
 
