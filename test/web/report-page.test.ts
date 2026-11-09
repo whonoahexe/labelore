@@ -741,3 +741,101 @@ describe('report view contract - the real sources', () => {
     expect(missing).not.toContain('(Phase 11, 11-24)');
   });
 });
+
+// Phase 11 (11-38, G-11-2: L3-WR-02, L3-WR-03): a milestone summary keeps its Stats and debt sections, and every chip lands.
+describe('report page: milestone Stats and debt sections are never dropped (11-38, L3-WR-02, L3-WR-03)', () => {
+  const PHASE_TABLE = [
+    '| Phase | Name | Status | One-Liner |',
+    '|-------|------|--------|-----------|',
+    '| 5 | Reports | Complete (2026-05-02) | Report pages |',
+  ].join('\n');
+
+  function milestoneFrom(text: string): ComposedMilestoneReport {
+    return milestone(composeReport(inputFromText('MILESTONE_SUMMARY-v3.0.md', text, groupsOf(text))));
+  }
+
+  it('a Stats section the lift read no stat lines from is a closed bar carrying the Stats id, and the Stats chip lands on it', () => {
+    const text = `# Milestone v3.0 — Project Summary\n\n## 3. Phases Delivered\n\n${PHASE_TABLE}\n\n## Stats\n\nThe numbers are in the changelog.\n`;
+    const model = milestoneFrom(text);
+    expect(model.numerals).toEqual([]);
+    const bar = model.bars.find((candidate) => candidate.id === model.statsId);
+    expect(bar).toBeDefined();
+    expect(bar!.html).toContain('The numbers are in the changelog.');
+    expect(model.index.filter((chip) => chip.label === 'Stats')).toHaveLength(1);
+    const html = markup(model, () => null);
+    expect(count(html, `id="${model.statsId}"`)).toBe(1);
+    for (const chip of model.index) expect(html, chip.target).toContain(`id="${chip.target}"`);
+  });
+
+  it('no Stats section and no stat lines gives no Stats chip', () => {
+    const text = `# Milestone v3.0 — Project Summary\n\n## 3. Phases Delivered\n\n${PHASE_TABLE}\n`;
+    const model = milestoneFrom(text);
+    expect(model.index.some((chip) => chip.label === 'Stats')).toBe(false);
+    expect(model.bars.some((bar) => bar.id === model.statsId)).toBe(false);
+  });
+
+  it('with the stats read, the card carries the Stats id and no Stats bar exists', () => {
+    const text = fxRead('reports/MILESTONE_SUMMARY-v1.0.md');
+    const model = milestone(composeReport(inputFromText('MILESTONE_SUMMARY-v1.0.md', text, groupsOf(text))));
+    expect(model.bars.some((bar) => bar.id === model.statsId)).toBe(false);
+    const html = markup(model, () => null);
+    expect(count(html, `id="${model.statsId}"`)).toBe(1);
+  });
+
+  it('a section titled "Tech debt and deferred requirements" is the debt section, never the requirements page', () => {
+    const text = [
+      '# Milestone v3.0 — Project Summary',
+      '',
+      '## 4. Requirements Coverage',
+      '',
+      '- ✅ **Reports** — REPT-01, REPT-02 (Phase 5)',
+      '',
+      '## 7. Tech debt and deferred requirements',
+      '',
+      'Nothing blocking; two items carried forward.',
+      '',
+    ].join('\n');
+    const model = milestoneFrom(text);
+    expect(model.requirements.rows).toHaveLength(1);
+    expect(model.anchors.requirements).toBe('view-report-sec-4');
+    expect(model.debt).not.toBeNull();
+    expect(model.debt!.html).toContain('two items carried forward');
+    expect(markup(model, () => null)).toContain('>Tech debt and deferred<');
+    const noRows = milestoneFrom('# Milestone v3.0 — Project Summary\n\n## 6. Tech Debt & Deferred Items\n\nOne item.\n');
+    expect(noRows.debt).not.toBeNull();
+    expect(noRows.plain).toEqual([]);
+  });
+
+  it('only the first section of a kind is composed and anchored; a later one is shown as written, never dropped', () => {
+    const text = [
+      '# Milestone v3.0 — Project Summary',
+      '',
+      '## 4. Requirements Coverage',
+      '',
+      '- ✅ **Reports** — REPT-01, REPT-02 (Phase 5)',
+      '',
+      '## 5. Requirements follow-up',
+      '',
+      'Second requirements section text.',
+      '',
+      '## 6. Tech Debt',
+      '',
+      'First debt text.',
+      '',
+      '## 7. Tech Debt, continued',
+      '',
+      'Second debt text.',
+      '',
+    ].join('\n');
+    const model = milestoneFrom(text);
+    expect(model.anchors.requirements).toBe('view-report-sec-4');
+    expect(model.plain.map((section) => section.id)).toEqual(['view-report-sec-5']);
+    expect(model.debt!.html).toContain('First debt text.');
+    expect(model.bars.map((bar) => bar.id)).toContain('view-report-sec-7');
+    const html = markup(model, (section) => (typeof section === 'string' ? section : null));
+    expect(html).toContain('Second requirements section text.');
+    expect(html).toContain('Second debt text.');
+    expect(html).toContain('First debt text.');
+    for (const chip of model.index) expect(html, chip.target).toContain(`id="${chip.target}"`);
+  });
+});
