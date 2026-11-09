@@ -928,3 +928,45 @@ describe('report page: no session-report section is lost (11-38, L3-WR-04)', () 
     expect(session(composeReport(input)).more).toEqual([]);
   });
 });
+
+describe('report page: the ruler states what the stamps are (11-38, L3-WR-05)', () => {
+  function rulerFrom(duration: string): { model: ComposedSessionReport; html: string } {
+    const text = `# GSD Session Report\n\n## Session Summary\n\n**Duration:** ${duration}\n`;
+    const model = session(composeReport(inputFromText('SESSION_REPORT.md', text, groupsOf(text))));
+    return { model, html: markup(model) };
+  }
+
+  it('labels a session whose stamps fall on two days as spanning more than one day, with both stamps as text', () => {
+    const { model, html } = rulerFrom('~2 hours (first commit 2026-03-27 23:10, last commit 2026-03-28 01:05)');
+    expect(model.ruler).toMatchObject({ kind: 'none', label: 'Commit stamps span more than one day' });
+    expect(model.ruler).toMatchObject({ stamps: { from: '23:10', to: '01:05' } });
+    expect(html).toContain('aria-label="Commit stamps span more than one day"');
+    expect(html).not.toContain('No commit stamps in the file');
+    expect(html).toContain('23:10');
+    expect(html).toContain('01:05');
+  });
+
+  it('labels a session that wrapped past midnight on one day the same way', () => {
+    const { model, html } = rulerFrom('~15 hours (first commit 18:00, last commit 09:00)');
+    expect(model.ruler).toMatchObject({ kind: 'none', label: 'Commit stamps span more than one day' });
+    expect(html).toContain('aria-label="Commit stamps span more than one day"');
+    expect(html).toContain('18:00');
+    expect(html).toContain('09:00');
+  });
+
+  it("keeps 'No commit stamps in the file' for a report without two stamps, and the axis says the same", () => {
+    const { model, html } = rulerFrom('Single session');
+    expect(model.ruler).toMatchObject({ kind: 'none', label: 'No commit stamps in the file' });
+    expect(html).toContain('aria-label="No commit stamps in the file"');
+    expect(html).not.toContain('Commit stamps span more than one day');
+  });
+
+  it('draws a first and last commit at the same minute as a clock ruler, and the span rule has a minimum width', async () => {
+    const { model } = rulerFrom('~0 minutes (first commit 10:30, last commit 10:30)');
+    expect(model.ruler).toMatchObject({ kind: 'clock', from: '10:30', to: '10:30' });
+    const css = await source('src/web/styles/globals.css');
+    const block = css.slice(css.indexOf(START), css.indexOf(END));
+    const rule = block.slice(block.indexOf('.view-report-span {'));
+    expect(rule.slice(0, rule.indexOf('}'))).toContain('min-width');
+  });
+});
