@@ -243,6 +243,74 @@ function readmeOfPath(path: string, text: string = lendshedText(path.slice('.pla
   return { result, readme: spikesOf<SpikeReadmeBody>(result, 'readme')! };
 }
 
+describe('SpikeReadmeBody.validatesCoversSection (L2B-WR-02)', () => {
+  const PATH = `${SPIKES}011-cover/README.md`;
+  const readmeWith = (frontmatterValidates: string | null, section: string | null) => {
+    const front = frontmatterValidates === null ? '' : `---\nvalidates: "${frontmatterValidates}"\n---\n`;
+    const body =
+      section === null ? '# Spike 011\n\n## Research\n\nr\n' : `# Spike 011\n\n## What This Validates\n\n${section}\n\n## Research\n\nr\n`;
+    return readmeOfPath(PATH, `${front}${body}`).readme;
+  };
+
+  it('is true for every Lendshed README whose frontmatter and section say the same sentence', () => {
+    for (const path of [README_001, `${SPIKES}002-offline-ledger-queue/README.md`, README_004, `${SPIKES}005-pdf-receipts/README.md`]) {
+      expect(readmeOfPath(path).readme.validatesCoversSection, path).toBe(true);
+    }
+  });
+
+  it("is false for 003b, whose section says \"API host's disk\" where the frontmatter says \"API host\"", () => {
+    expect(readmeOfPath(README_003B).readme.validatesCoversSection).toBe(false);
+  });
+
+  it('is true when the section is the sole source of validates, one paragraph, uncut', () => {
+    const readme = readmeWith(null, 'A probe answers within a second.');
+    expect(readme.validates).toEqual({ whole: 'A probe answers within a second.' });
+    expect(readme.validatesCoversSection).toBe(true);
+  });
+
+  it('ignores whitespace, case and one final full stop when comparing the two', () => {
+    expect(readmeWith('a  probe answers within a second', 'A probe answers\nwithin a second.').validatesCoversSection).toBe(true);
+  });
+
+  it('is false for a section that holds a table', () => {
+    expect(readmeWith(null, '| Approach | Tool |\n|---|---|\n| Local | tar |').validatesCoversSection).toBe(false);
+  });
+
+  it('is false for a section that holds a fenced block', () => {
+    expect(readmeWith('A probe answers.', 'A probe answers.\n\n```bash\nbash probe.sh\n```').validatesCoversSection).toBe(false);
+    expect(readmeWith(null, '```bash\nbash probe.sh\n```').validatesCoversSection).toBe(false);
+  });
+
+  it('is false for a section that holds a list', () => {
+    expect(readmeWith(null, '- first thing\n- second thing').validatesCoversSection).toBe(false);
+    expect(readmeWith(null, '1. first thing\n2. second thing').validatesCoversSection).toBe(false);
+  });
+
+  it('is false for a section that holds a sub-heading', () => {
+    expect(readmeWith('A probe answers.', 'A probe answers.\n\n### Detail\n\nmore').validatesCoversSection).toBe(false);
+  });
+
+  it('is false for a section of two paragraphs', () => {
+    expect(readmeWith(null, 'First paragraph.\n\nSecond paragraph.').validatesCoversSection).toBe(false);
+  });
+
+  it('is false for a section the cap cut', () => {
+    const long = 'word '.repeat(600).trim();
+    const readme = readmeWith(null, long);
+    expect(readme.validates).toBeDefined();
+    expect(readme.validatesCoversSection).toBe(false);
+  });
+
+  it('is false when the frontmatter validates says something else than the section', () => {
+    expect(readmeWith('Something else entirely.', 'A probe answers within a second.').validatesCoversSection).toBe(false);
+  });
+
+  it('is false (or absent) when the README has no such section', () => {
+    expect(readmeWith('A probe answers.', null).validatesCoversSection ?? false).toBe(false);
+    expect(readmeWith(null, null).validatesCoversSection ?? false).toBe(false);
+  });
+});
+
 describe('SpikeReadmeHandler', () => {
   it('is registered, claims kind spike only, and sits before the generic handler', () => {
     expect(SpikeReadmeHandler.match(refOf(README_001, 'spike'))).toBe(true);

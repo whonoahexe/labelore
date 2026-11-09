@@ -28,6 +28,7 @@ import type {
 } from '../../presentation/spikes-context.ts';
 import { VERDICT_COLUMNS } from '../../presentation/spikes-context.ts';
 import { spikeFolderIdentity, spikeIdKey } from '../../planning-repo/handlers/spikes-lift.ts';
+import { composeFailed } from './compose-failure.ts';
 import type { ViewInput } from './manifest.ts';
 
 export type SpikeTone = 'complete' | 'in-flight' | 'missing' | 'quiet';
@@ -504,18 +505,25 @@ function headingOf(group: { heading: string | null }): string {
   return group.heading === null ? '' : group.heading.trim().toLowerCase();
 }
 
-function barsOf(input: ViewInput, skip: readonly string[]): ComposedSpikesBar[] {
+/** Every headed group as a closed bar, except those the sheet draws itself, named by index so a later group with
+ * the same heading stays a bar. A key already used falls back to the group's position. */
+function barsOf(input: ViewInput, consumed: ReadonlySet<number>): ComposedSpikesBar[] {
   const bars: ComposedSpikesBar[] = [];
+  const keys = new Set<string>();
   input.groups.forEach((group, index) => {
-    if (group.heading === null || skip.includes(headingOf(group))) return;
-    bars.push({ key: group.id ?? `section-${index}`, title: group.heading, html: group.html });
+    if (group.heading === null || consumed.has(index)) return;
+    const wanted = group.id ?? `section-${index}`;
+    const key = keys.has(wanted) ? `section-${index}` : wanted;
+    keys.add(key);
+    bars.push({ key, title: group.heading, html: group.html });
   });
   return bars;
 }
 
-function groupHtml(input: ViewInput, heading: string): string | null {
-  const found = input.groups.find((group) => headingOf(group) === heading);
-  return found === undefined ? null : found.html;
+/** The first group headed `heading`: its HTML and its index in the input, or null. */
+function groupHtml(input: ViewInput, heading: string): { html: string; index: number } | null {
+  const index = input.groups.findIndex((group) => headingOf(group) === heading);
+  return index === -1 ? null : { html: input.groups[index].html, index };
 }
 
 function validatesOf(lift: Record<string, unknown> | null): ComposedSpikesValidates | null {
@@ -552,6 +560,15 @@ function spikeSheet(input: ViewInput, context: SpikesContext, panel: Panel, pane
       ? { word: columnLabel(panel.columnKey), tone: COLUMN_TONE[panel.columnKey], freeText: panel.verdictText }
       : { word: panel.verdictKeyword === '' ? 'No verdict' : panel.verdictKeyword, tone: null, freeText: panel.verdictText };
 
+  // The sheet draws the Results group it names and the validates block; each is left out of the bars only when it
+  // is shown whole: a validates block stands for its section only when the lift says it says the same words.
+  const results = groupHtml(input, 'results');
+  const validates = validatesOf(lift);
+  const consumed = new Set<number>();
+  if (results !== null) consumed.add(results.index);
+  const validatesGroup = groupHtml(input, 'what this validates');
+  if (validatesGroup !== null && validates !== null && lift?.validatesCoversSection === true) consumed.add(validatesGroup.index);
+
   const readmeCell = cellAsWritten(textOf(lift?.verdictKeyword), textOf(lift?.verdictText));
   const where = context.manifest === null ? 'the manifest' : 'MANIFEST.md';
   const orphanNote = panel.inManifest
@@ -580,13 +597,13 @@ function spikeSheet(input: ViewInput, context: SpikesContext, panel: Panel, pane
             note: DISAGREE_NOTE,
           },
     orphanNote,
-    validates: validatesOf(lift),
-    resultsHtml: groupHtml(input, 'results'),
+    validates,
+    resultsHtml: results === null ? null : results.html,
     related: listOf(lift?.related).map((raw) => chipOf(raw, panels)),
     filesTitle: folder === '' ? 'Files' : `Files in ${folder}/`,
     files: panel.files.map((file) => ({ name: file.name, kind: file.kind, size: sizeWords(file.sizeBytes) })),
     tags: listOf(lift?.tags),
-    bars: barsOf(input, ['what this validates', 'results']),
+    bars: barsOf(input, consumed),
     pauseTo: panel.pauseUrl,
   };
 }
@@ -595,6 +612,7 @@ function wrapSheet(input: ViewInput, context: SpikesContext, panels: Panel[], cl
   const wrap = context.wrapUp;
   if (wrap === null) return null;
   const missed = wrap.notProcessed.map((entry) => entry.id);
+  const findings = groupHtml(input, 'key findings');
   return {
     kind: 'wrap-up',
     key: 'wrap-up-summary',
@@ -605,7 +623,7 @@ function wrapSheet(input: ViewInput, context: SpikesContext, panels: Panel[], cl
     focus: null,
     skill: wrap.skillPath === null || wrap.skillPath === '' ? null : wrap.skillPath,
     processed: wrap.processed.map((row) => chipOf(row.id, panels)),
-    findingsHtml: groupHtml(input, 'key findings'),
+    findingsHtml: findings === null ? null : findings.html,
     notProcessed: missed.length === 0 ? null : `${NOT_PROCESSED_WORDS}: ${missed.join(', ')}.`,
   };
 }
@@ -619,7 +637,7 @@ function conventionsSheet(input: ViewInput, closeTo: string | null): ComposedSpi
     address: 'CONVENTIONS.md',
     closeTo,
     focus: null,
-    sections: barsOf(input, []),
+    sections: barsOf(input, new Set<number>()),
   };
 }
 
@@ -701,7 +719,7 @@ export function composeSpikes(input: ViewInput): ComposedSpikes | null {
       wrapUp: wrapUpOf(context),
       sheet: sheetOf(input, context),
     };
-  } catch {
-    return null;
+  } catch (error) {
+    return composeFailed('spikes', error);
   }
 }
