@@ -3,8 +3,14 @@
 // manifest's address; the tile that opened a sheet gets focus back when it closes. Every address is built from the
 // served project's own payload through app-url.ts, so no URL shape is pinned here.
 import { expect, test } from '@playwright/test';
+import { cpSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { artifactUrl, exactUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
+import { startProjectsServer } from './projects-server.ts';
+
+const LENDSHED_ROOT = new URL('../fixtures/lendshed', import.meta.url).pathname.replace(/\/$/, '');
 
 const MANIFEST = '.planning/spikes/MANIFEST.md';
 const README_001 = '.planning/spikes/001-badge-reader-latency/README.md';
@@ -46,5 +52,44 @@ test.describe('Spikes sheet (Lendshed)', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page).toHaveURL(exactUrl(await artifactUrl(FIXTURE_BASE_URL, MANIFEST)));
     await expect(tile).toBeFocused();
+  });
+
+  // L2B-WR-01 (11-REVIEW.md): with no manifest to go back to, closing hides the sheet in place; the hidden state must
+  // end on the next navigation, including a click on the very tile that was closed. The manifest is deleted only in a
+  // mkdtemp copy of the fixture, which is removed afterwards.
+  test('a closed sheet reopens from its tile in a project with no manifest', async ({ page }) => {
+    const parent = realpathSync(mkdtempSync(join(tmpdir(), 'spikes-sheet-spec-')));
+    const project = join(parent, 'lendshed');
+    cpSync(LENDSHED_ROOT, project, { recursive: true });
+    rmSync(join(project, MANIFEST), { force: true });
+    const server = await startProjectsServer({ paths: [project] });
+    try {
+      await page.goto(await artifactUrl(server.base, README_001));
+      const sheet = page.getByRole('dialog');
+      await expect(sheet).toBeVisible();
+      await expect(sheet.getByRole('heading', { level: 2, name: 'badge-reader-latency' })).toBeVisible();
+
+      // Close in place, then activate the same tile: the sheet opens again.
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+      const tile001 = page.locator('a.view-spikes-tile[aria-label^="001 "]');
+      await tile001.click();
+      await expect(sheet).toBeVisible();
+      await expect(sheet.getByRole('heading', { level: 2, name: 'badge-reader-latency' })).toBeVisible();
+
+      // Close A, open B, close B, activate A: A shows.
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+      await page.locator('a.view-spikes-tile[aria-label^="002 "]').click();
+      await expect(sheet).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+      await tile001.click();
+      await expect(sheet).toBeVisible();
+      await expect(sheet.getByRole('heading', { level: 2, name: 'badge-reader-latency' })).toBeVisible();
+    } finally {
+      await server.stop();
+      rmSync(parent, { recursive: true, force: true });
+    }
   });
 });
