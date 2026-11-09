@@ -12,6 +12,7 @@ import type { ProjectPresentation } from '../../src/server/project-presentation.
 import { createApp } from '../../src/server/index.ts';
 import { ProjectRegistry, createSnapshotSource } from '../../src/server/project-registry.ts';
 import { createRegistryApp } from '../../src/server/registry-api.ts';
+import type { PacePlanDto } from '../../src/server/dashboard-ledger.ts';
 import type { WorkstreamInventory } from '../../src/server/workstreams.ts';
 import { FX_ROOT } from '../helpers/fixture-project.ts';
 import { guardedRequest, testPolicy } from '../helpers/guarded-request.ts';
@@ -199,6 +200,26 @@ describe('the workstream scope mount (11-29)', () => {
       expect(flat).toEqual({ mode: 'flat', entries: [], active: { name: null, state: 'absent' }, completed: [], midMigration: null });
       const inside = (await get(app, '/api/projects/brinkwater/ws/intake/workstreams')).body as WorkstreamInventory;
       expect(inside.mode).toBe('flat');
+    } finally {
+      registry.dispose();
+    }
+  });
+
+  it("times no workstream plan from commits it cannot attribute to that workstream (L1-WR-02)", async () => {
+    const { registry, app } = await registryApp([BRINKWATER]);
+    try {
+      const parent = await registry.runtime('brinkwater');
+      const child = await parent!.workstreamRuntime('intake');
+      expect(child).not.toBeNull();
+      expect(await child!.commits.load()).toBeNull();
+      const { status, body } = await get(app, '/api/projects/brinkwater/ws/intake/dashboard');
+      expect(status).toBe(200);
+      const plans = (body as { pace: { plans: PacePlanDto[] } }).pace.plans;
+      expect(plans.length).toBeGreaterThan(0);
+      expect(plans.some((plan) => plan.timing === 'commits')).toBe(false);
+      for (const plan of plans) {
+        if (plan.timing === 'summary') expect(plan.approx).toBe(true);
+      }
     } finally {
       registry.dispose();
     }

@@ -67,8 +67,28 @@ export class ScopedPlanningFilesystem implements PlanningFilesystem {
     }
     if (parent.readBytesWithin) {
       const readBytesWithin = parent.readBytesWithin.bind(parent);
-      this.readBytesWithin = async (baseRelDir, relPath) =>
-        readBytesWithin(await this.resolveFile(baseRelDir), await this.resolveFile(relPath));
+      this.readBytesWithin = async (baseRelDir, relPath) => {
+        // The file resolves first and the base follows it (L1-WR-04): a scope with its own sketches/ folder
+        // must still read a sketch that lives only in the shared root, so the base is the copy the file came
+        // from. The parent's confinement check still runs on the real pair, so a file outside the base throws.
+        const file = await this.resolveFile(relPath);
+        return readBytesWithin(this.baseFor(baseRelDir, file), file);
+      };
+    }
+  }
+
+  /** The real base directory for a byte read whose file resolved to `realFile`. */
+  private baseFor(baseRelDir: string, realFile: string): string {
+    const target = this.targetOf(baseRelDir);
+    switch (target.kind) {
+      case 'hidden':
+        throw enoent(baseRelDir);
+      case 'passthrough':
+        return target.real;
+      case 'workstream':
+        return target.real;
+      case 'either':
+        return realFile.startsWith(`${this.base}/`) ? target.real : target.root;
     }
   }
 
