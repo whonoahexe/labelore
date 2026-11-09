@@ -86,6 +86,8 @@ const PINNED: Record<string, Pinned> = {
   'LB:phases/07-recognised-files-and-readable-urls/07-UAT.md': { ...DONE, tests: 6, pass: 6 },
   // Session completed by /gsd-verify-work 09: both items passed.
   'LB:phases/09-review-audit-and-root-document-pages/09-UAT.md': { ...DONE, tests: 2, pass: 2, extras: ['Deferred Follow-Ups'] },
+  // Session completed by /gsd-verify-work 11: both decision items passed (WR-01 fixed, this pin kept).
+  'LB:phases/11-exploration-handoff-report-and-workstream-pages/11-UAT.md': { ...DONE, tests: 2, pass: 2 },
   'FX:phases/01-member-sign-in-sessions/01-UAT.md': { ...DONE, tests: 7, pass: 6, skipped: 1, extras: ['Notes'] },
   'FX:phases/02-roles-and-permissions/02-UAT.md': { ...DONE, tests: 3, pass: 3, gaps: 4, mode: 'prose' },
   'FX:phases/03-account-admin-and-sessions/03-UAT.md': { ...DONE, tests: 5, pass: 5, gaps: 1, mode: 'items' },
