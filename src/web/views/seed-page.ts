@@ -17,6 +17,8 @@
 // when the seed lift is missing or carries nothing beyond its id and idea, so the page keeps the promoted-section view
 // with no notice (Phase 10 C1, X2). T-11-35: every string is author text rendered as React text by the components.
 import type { SeedLift } from '../../planning-repo/handlers/seed-thread-lift.ts';
+import { maskValues, splitMasked } from '../../planning-repo/handlers/withhold-values.ts';
+import type { MaskedRun } from '../../planning-repo/handlers/withhold-values.ts';
 import { splitLinkText } from '../../presentation/seed-thread-links.ts';
 import type { SeedThreadLink } from '../../presentation/seed-thread-links.ts';
 import { dayOfIso } from './pause-page.ts';
@@ -47,7 +49,7 @@ export type SeedTone = 'quiet' | 'in-flight';
 // ---------------------------------------------------------------------------------------------------------
 
 /** A run of an author's prose: plain text, or the name of a `NAME=value` pair whose value is never drawn. */
-export type SeedSegment = { kind: 'text'; text: string } | { kind: 'withheld'; name: string };
+export type SeedSegment = MaskedRun;
 
 export type ComposedSeedBlock =
   | { kind: 'paragraph'; segments: SeedSegment[] }
@@ -137,54 +139,12 @@ export function sincePlantedWords(planted: string | null, readAt: string | null 
   return days === 1 ? '1 day since planted' : `${days} days since planted`;
 }
 
-function isNameCode(code: number): boolean {
-  return (code >= 65 && code <= 90) || (code >= 48 && code <= 57) || code === 95;
-}
-
-/** The variable name when `word` is a `NAME=value` pair (upper-case name of two characters or more, a value after the
- * equals sign), tolerating an opening backtick, bracket or quote; else null. */
-function withheldNameOf(word: string): string | null {
-  let start = 0;
-  while (start < word.length && '`("\''.includes(word.charAt(start))) start += 1;
-  const equals = word.indexOf('=', start);
-  if (equals < start + 2 || equals >= word.length - 1) return null;
-  const first = word.charCodeAt(start);
-  if (first < 65 || first > 90) return null;
-  for (let at = start; at < equals; at += 1) if (!isNameCode(word.charCodeAt(at))) return null;
-  return word.slice(start, equals);
-}
-
-/** The prose as plain-text runs and the names of `NAME=value` pairs, their values dropped (UI-SPEC section 1, rule 8). */
+/** The prose as plain-text runs and the names of `NAME=value` pairs, their values dropped (UI-SPEC section 1, rule 8):
+ * the text passes through the project's one shared mask, then the shared splitter, so text the handler already masked
+ * and text planted unmasked draw the same. A withheld run with no readable name carries `name: null` and draws the mark
+ * alone. */
 export function segmentsOf(text: string): SeedSegment[] {
-  const segments: SeedSegment[] = [];
-  let pending = '';
-  let word = '';
-  const flushText = (): void => {
-    if (pending !== '') segments.push({ kind: 'text', text: pending });
-    pending = '';
-  };
-  const endWord = (): void => {
-    if (word === '') return;
-    const name = withheldNameOf(word);
-    if (name === null) {
-      pending += word;
-    } else {
-      flushText();
-      segments.push({ kind: 'withheld', name });
-    }
-    word = '';
-  };
-  for (const char of text) {
-    if (char === ' ' || char === '\n' || char === '\t') {
-      endWord();
-      pending += char;
-    } else {
-      word += char;
-    }
-  }
-  endWord();
-  flushText();
-  return segments;
+  return splitMasked(maskValues(text));
 }
 
 /** Blank-line separated blocks of an author's text; a block whose every line starts "- " or "* " is a list. */
@@ -219,12 +179,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** A non-blank string field of the lift, passed through the shared mask: the handler masks at read time, and this second
+ * pass (a no-op on masked text) covers a presentation built any other way. */
 function textOrNull(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() !== '' ? value : null;
+  return typeof value === 'string' && value.trim() !== '' ? maskValues(value) : null;
 }
 
 function stringList(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string').map((item) => maskValues(item))
+    : [];
+}
+
+/** A resolved link's words, masked the same way. */
+function maskedOrNull(value: string | null | undefined): string | null {
+  return typeof value === 'string' ? maskValues(value) : null;
 }
 
 /** The seed lift as the response carries it (JSON, so every field is read defensively), or null. */
@@ -298,9 +267,9 @@ function crumbsOf(input: ViewInput, seed: SeedLift): ComposedSeedCrumb[] {
       const link = links.breadcrumbs[at]!;
       const url = typeof link.url === 'string' && link.url !== '' ? link.url : null;
       if (link.path === null || link.path === undefined) {
-        return { key, path: null, text: link.text, url: null, state: 'text' };
+        return { key, path: null, text: maskValues(link.text), url: null, state: 'text' };
       }
-      return { key, path: link.path, text: link.description ?? null, url, state: url === null ? 'not-found' : 'resolved' };
+      return { key, path: link.path, text: maskedOrNull(link.description), url, state: url === null ? 'not-found' : 'resolved' };
     }
     const { path, description } = splitLinkText(bullet);
     return path === null

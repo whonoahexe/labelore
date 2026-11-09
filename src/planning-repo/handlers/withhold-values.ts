@@ -499,3 +499,123 @@ export function maskValues(text: string): string {
   maskRange(row, 0, row.length, false, out);
   return out.join('');
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// maskData and splitMasked (11-37, L3-WR-01): the shared lift mask and the shared splitter of masked text.
+// ---------------------------------------------------------------------------------------------------------------
+
+/** The deepest nesting `maskData` follows; past it a value is dropped rather than kept unmasked. */
+const FRONTMATTER_DEPTH = 8;
+
+/** A lifted or frontmatter value with every string in it (keys included) passed through `maskValues`: a pasted value can
+ * sit in a title, a list item or a nested field as easily as in the body. A value nested deeper than FRONTMATTER_DEPTH is
+ * dropped. Dates, numbers and booleans are returned as they are. */
+export function maskData(value: unknown, depth: number): unknown {
+  if (typeof value === 'string') return maskValues(value);
+  if (Array.isArray(value)) {
+    return depth >= FRONTMATTER_DEPTH ? [] : value.map((item) => maskData(item, depth + 1));
+  }
+  if (value instanceof Date) return value;
+  if (typeof value === 'object' && value !== null) {
+    if (depth >= FRONTMATTER_DEPTH) return {};
+    const out: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value)) out[maskValues(key)] = maskData(item, depth + 1);
+    return out;
+  }
+  return value;
+}
+
+/** A run of masked text: plain text, or a value that was withheld with the name written beside it (null when no name can
+ * be read before the mark, as in a table cell). */
+export type MaskedRun = { kind: 'text'; text: string } | { kind: 'withheld'; name: string | null };
+
+function isMarkOpener(code: number): boolean {
+  return code === 42 || code === 34 || code === 39 || code === 96;
+}
+
+/** The index just past the run of `code` that starts at `at`: every following bold star, or one character otherwise. */
+function runEnd(text: string, at: number, code: number): number {
+  if (code !== 42) return at + 1;
+  let end = at;
+  while (end < text.length && text.charCodeAt(end) === 42) end += 1;
+  return end;
+}
+
+/** What `splitMasked` reads back from the text before a mark: where the name starts and ends, and where the text ahead
+ * of the sign ends (the blanks before the sign excluded). Null when no upper-snake name sits before a sign. */
+interface NameBeforeMark {
+  nameStart: number;
+  nameEnd: number;
+  beforeSign: number;
+}
+
+function nameBeforeMark(text: string, from: number, mark: number): NameBeforeMark | null {
+  let at = mark;
+  // Blanks and bold stars between the sign and the mark.
+  while (at > from && (isBlank(text.charCodeAt(at - 1)) || text.charCodeAt(at - 1) === 42)) at -= 1;
+  const sign = text.charCodeAt(at - 1);
+  if (at - 1 < from || (sign !== 61 && sign !== 58)) return null;
+  at -= 1;
+  while (at > from && isBlank(text.charCodeAt(at - 1))) at -= 1;
+  const beforeSign = at;
+  let nameEnd = at;
+  while (nameEnd > from && isCloser(text.charCodeAt(nameEnd - 1))) nameEnd -= 1;
+  let nameStart = nameEnd;
+  while (nameStart > from && isNameChar(text.charCodeAt(nameStart - 1))) nameStart -= 1;
+  const prev = nameStart > from ? text.charCodeAt(nameStart - 1) : 0;
+  if (nameEnd - nameStart < 2 || !isUpper(text.charCodeAt(nameStart)) || (prev >= 97 && prev <= 122)) return null;
+  return { nameStart, nameEnd, beforeSign };
+}
+
+/**
+ * Masked text (the output of `maskValues`) as plain-text runs and withheld-name runs. At each VALUE_NOT_SHOWN_MARK the
+ * sign before it (`=` or `:`, blanks around it), any closing stars or quotes between the name and the sign, and the upper-
+ * snake name are read back from the text before it. A bold star, quote or backtick that opens right before the name and has
+ * enough closers (between the name and the sign, or right after the mark) is dropped with them, so no stray `**` or
+ * backtick is left in a text run. A mark with no readable name gives a withheld run with name null. One pass, linear, no
+ * regular expression; text with no mark is one text run and '' gives [].
+ */
+export function splitMasked(text: string): MaskedRun[] {
+  const runs: MaskedRun[] = [];
+  const pushText = (from: number, to: number): void => {
+    if (to > from) runs.push({ kind: 'text', text: text.slice(from, to) });
+  };
+  let pos = 0;
+  while (pos < text.length) {
+    const mark = text.indexOf(VALUE_NOT_SHOWN_MARK, pos);
+    if (mark < 0) break;
+    const markEnd = mark + VALUE_NOT_SHOWN_MARK.length;
+    const found = nameBeforeMark(text, pos, mark);
+    if (found === null) {
+      pushText(pos, mark);
+      runs.push({ kind: 'withheld', name: null });
+      pos = markEnd;
+      continue;
+    }
+    const { nameStart, nameEnd, beforeSign } = found;
+    let textEnd = nameStart;
+    let resume = markEnd;
+    const opener = nameStart > pos ? text.charCodeAt(nameStart - 1) : 0;
+    if (isMarkOpener(opener)) {
+      let open = 1;
+      if (opener === 42) {
+        let from = nameStart - 1;
+        while (from > pos && text.charCodeAt(from - 1) === 42) from -= 1;
+        open = nameStart - from;
+      }
+      let between = 0;
+      for (let k = nameEnd; k < beforeSign; k += 1) if (text.charCodeAt(k) === opener) between += 1;
+      const afterEnd = text.charCodeAt(markEnd) === opener ? runEnd(text, markEnd, opener) : markEnd;
+      const after = afterEnd - markEnd;
+      if (between + after >= open) {
+        textEnd = nameStart - open;
+        resume = markEnd + Math.min(after, Math.max(0, open - between));
+      }
+    }
+    pushText(pos, textEnd);
+    runs.push({ kind: 'withheld', name: text.slice(nameStart, nameEnd) });
+    pos = resume;
+  }
+  pushText(pos, text.length);
+  return runs;
+}
