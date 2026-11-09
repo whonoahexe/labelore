@@ -111,7 +111,7 @@ export interface ReportTimeMark {
 
 export type ComposedRuler =
   | { kind: 'clock'; label: string; from: string; to: string; fromAt: number; toAt: number }
-  | { kind: 'none'; label: string; text: string }
+  | { kind: 'none'; label: string; text: string; stamps?: { from: string; to: string } }
   | {
       kind: 'calendar';
       label: string;
@@ -542,6 +542,10 @@ function rulerOf(duration: string | null): ComposedRuler | null {
       fromAt: first.fraction,
       toAt: last.fraction,
     };
+  }
+  if (first !== null && last !== null) {
+    // Both stamps read but one 24 hour axis cannot hold them: say what they are, and show them as written.
+    return { kind: 'none', label: 'Commit stamps span more than one day', text: main, stamps: { from: first.text, to: last.text } };
   }
   return { kind: 'none', label: 'No commit stamps in the file', text: main };
 }
