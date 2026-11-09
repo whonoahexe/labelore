@@ -904,8 +904,6 @@ describe('report page: no session-report section is lost (11-38, L3-WR-04)', () 
       '',
       '## Files Changed',
       '',
-      'Not stated here.',
-      '',
       '## Estimated Resource Usage',
       '',
       'Not measured.',

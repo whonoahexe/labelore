@@ -614,11 +614,14 @@ function usageOf(resources: unknown): ComposedUsage | null {
   return rows.length === 0 ? null : { rows };
 }
 
-/** The document sections no part of the session page claims (a heading the writer added later), in the file's order. */
-function sessionMore(input: ViewInput): ReportRawSection[] {
+/** The document sections no part of the session page claims (a heading the writer added later), and the session-named sections
+ * the lift lists as unread, in the file's order. A lift with no unread list (an older payload) reads as all read. */
+function sessionMore(report: Record<string, unknown>, input: ViewInput): ReportRawSection[] {
   const more: ReportRawSection[] = [];
+  const unread = new Set(stringList(report.unread).map((heading) => heading.trim().toLowerCase()));
   groupsOf(input).forEach((group, at) => {
-    if (group.heading === null || group.html.trim() === '' || isSessionHeading(group.heading)) return;
+    if (group.heading === null || group.html.trim() === '') return;
+    if (isSessionHeading(group.heading) && !unread.has(group.heading.trim().toLowerCase())) return;
     more.push({ key: `more-${at}`, id: `view-report-more-${at}`, title: group.heading.trim(), html: group.html });
   });
   return more;
@@ -651,7 +654,7 @@ function composeSession(report: Record<string, unknown>, input: ViewInput): Comp
     blockers: stringList(report.blockers).map(blockerOf),
     files: filesOf(report.filesChanged),
     usage: usageOf(report.resources),
-    more: sessionMore(input),
+    more: sessionMore(report, input),
   };
 }
 
