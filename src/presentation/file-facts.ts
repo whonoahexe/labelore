@@ -103,16 +103,22 @@ const LISTED_LABELS: Readonly<Record<string, string>> = {
   xml: 'XML file',
 };
 
+/** A label table's own entry for an extension, else undefined: a file named `x.constructor` or `x.__proto__`
+ * must not reach a member the plain object literal inherits (L2A-WR-03). */
+function ownLabel(table: Readonly<Record<string, string>>, ext: string): string | undefined {
+  return Object.hasOwn(table, ext) ? table[ext] : undefined;
+}
+
 /** The type label for a file, keyed by lowercase extension (the UI-SPEC table). */
 export function fileTypeLabel(name: string, fileClass: FileClass): string {
   if (fileClass === 'large') return 'Text file';
   if (fileClass === 'listed') {
     const listedExt = extensionOf(name);
-    return (listedExt === null ? undefined : (LISTED_LABELS[listedExt] ?? TYPE_LABELS[listedExt])) ?? 'File';
+    return (listedExt === null ? undefined : (ownLabel(LISTED_LABELS, listedExt) ?? ownLabel(TYPE_LABELS, listedExt))) ?? 'File';
   }
   const ext = extensionOf(name);
   if (ext === null) return 'Binary file';
-  return TYPE_LABELS[ext] ?? `Binary file (.${ext})`;
+  return ownLabel(TYPE_LABELS, ext) ?? `Binary file (.${ext})`;
 }
 
 /**
