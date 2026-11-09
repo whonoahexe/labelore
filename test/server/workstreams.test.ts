@@ -113,6 +113,50 @@ describe('readWorkstreamInventory edges', () => {
     expect(byName.get('empty')).toMatchObject({ kind: 'folder', dashed: 'STATE.md not found', status: null, hasRoadmap: false });
   });
 
+  it("lists a folder whose name GSD's grammar rejects as unscoped and dashed, and never reads it (L1-WR-03)", async () => {
+    const reads: string[] = [];
+    const inner = brinkwater((files) => {
+      for (const name of ['my stream', '-x', 'é']) {
+        files[`.planning/workstreams/${name}/STATE.md`] = stateFile('**Status:** Executing');
+        files[`.planning/workstreams/${name}/ROADMAP.md`] = '# Roadmap\n\n- [ ] **Phase 1: One** - x\n';
+      }
+    });
+    const spy: PlanningFilesystem = {
+      capabilities: inner.capabilities,
+      list: (dir: string) => inner.list(dir),
+      read: (path: string) => {
+        reads.push(path);
+        return inner.read(path);
+      },
+      exists: (path: string) => inner.exists(path),
+      readHead: inner.readHead?.bind(inner),
+    };
+    const inventory = await readWorkstreamInventory(spy);
+    const byName = new Map(inventory.entries.map((entry) => [entry.name, entry]));
+    expect(byName.get('intake')?.kind).toBe('folder');
+    for (const name of ['my stream', '-x', 'é']) {
+      expect(byName.get(name), name).toMatchObject({
+        kind: 'unscoped',
+        status: null,
+        currentPhase: null,
+        progress: null,
+        hasRoadmap: false,
+        ownFiles: [],
+        phaseCount: 0,
+      });
+      expect(byName.get(name)?.dashed, name).not.toBeNull();
+      expect(reads.some((path) => path.includes(`workstreams/${name}/`)), name).toBe(false);
+    }
+    // The active pointer naming an invalid folder is still no pointer.
+    const pointed = await readWorkstreamInventory(
+      brinkwater((files) => {
+        files['.planning/workstreams/my stream/STATE.md'] = stateFile('**Status:** Executing');
+        files['.planning/active-workstream'] = 'my stream\n';
+      }),
+    );
+    expect(pointed.active).toEqual({ name: null, state: 'absent' });
+  });
+
   it('is flat when workstreams/ holds no subfolder', async () => {
     const files = { '.planning/PROJECT.md': '# P', '.planning/ROADMAP.md': '# R', '.planning/workstreams/README.txt': 'x' };
     const inventory = await readWorkstreamInventory(new InMemoryPlanningFilesystem(files));

@@ -192,7 +192,7 @@ function toneOf(entry: WorkstreamEntry): WorkstreamTone {
 }
 
 function branchOf(entry: WorkstreamEntry, active: WorkstreamInventory['active']): WorkstreamBranch {
-  if (entry.kind === 'file') {
+  if (entry.kind !== 'folder') {
     return {
       name: entry.name,
       url: null,
