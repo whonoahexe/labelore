@@ -387,31 +387,53 @@ function numberAt(text: string, pattern: RegExp): number | null {
   return Number.isSafeInteger(n) ? n : null;
 }
 
+/** One SYNTHESIS.md line is clipped to this many characters before any pattern runs on it. */
+const SYNTHESIS_LINE_CHARS = 400;
+const DOCS_SYNTHESIZED = /^[ \t]*(?:[-*][ \t]*)?Docs synthesized:[ \t]*(\d+)/i;
+const DOCUMENTS_SYNTHESIZED = /^[ \t]*(?:[-*][ \t]*)?Documents?(?: synthesized)?:[ \t]*(\d+)/i;
+const TYPE_ROW = /^[ \t]*[-*][ \t]*(ADR|SPEC|PRD|DOC|UNKNOWN)s?[ \t]*[:x×-][ \t]*(\d+)\b/i;
+const CONFLICTS_LINE = /^[ \t]*(?:[-*][ \t]*)?Conflicts:[ \t]*(.*)/i;
+
 /**
  * SYNTHESIS.md (gsd-doc-synthesizer.md): the document count, the per-type counts and the conflicts line. The
  * conflicts line is read in the file's own words: `Conflicts: N blockers, N competing-variants, N
  * auto-resolved` (the return message says `variants`). A line the pattern cannot read gives no buckets (C5).
+ *
+ * The file is scanned line by line, each line clipped to SYNTHESIS_LINE_CHARS before a pattern touches it, and
+ * every pattern is anchored to that one line with a space-or-tab class (never a whitespace class that runs
+ * across line ends). No pattern carries the multiline flag, so no regular expression ever runs over the whole
+ * file text (L1-WR-01: a file of blank lines made the multiline scans quadratic). First match wins in every
+ * category.
  */
 function extractSynthesis(text: string): SynthesisSummary {
-  const documents =
-    numberAt(text, /^\s*(?:[-*]\s*)?Docs synthesized:\s*(\d+)/im) ??
-    numberAt(text, /^\s*(?:[-*]\s*)?Documents?(?: synthesized)?:\s*(\d+)/im);
+  let docs: number | null | undefined;
+  let documentsForm: number | null | undefined;
   const types = new Set<string>();
   const split: CountRow[] = [];
-  const typeRow = /^\s*[-*]\s*(ADR|SPEC|PRD|DOC|UNKNOWN)s?\s*[:x×-]\s*(\d+)\b/gim;
-  for (let found = typeRow.exec(text); found !== null; found = typeRow.exec(text)) {
-    const type = found[1].toUpperCase();
-    if (types.has(type)) continue;
-    types.add(type);
-    split.push({ label: type, count: Number(found[2]) });
+  let conflictText: string | undefined;
+  for (const raw of text.split('\n')) {
+    const line = raw.length > SYNTHESIS_LINE_CHARS ? raw.slice(0, SYNTHESIS_LINE_CHARS) : raw;
+    if (docs === undefined && DOCS_SYNTHESIZED.test(line)) docs = numberAt(line, DOCS_SYNTHESIZED);
+    if (documentsForm === undefined && DOCUMENTS_SYNTHESIZED.test(line)) documentsForm = numberAt(line, DOCUMENTS_SYNTHESIZED);
+    const row = TYPE_ROW.exec(line);
+    if (row) {
+      const type = row[1].toUpperCase();
+      if (!types.has(type)) {
+        types.add(type);
+        split.push({ label: type, count: Number(row[2]) });
+      }
+    }
+    if (conflictText === undefined) {
+      const conflict = CONFLICTS_LINE.exec(line);
+      if (conflict) conflictText = conflict[1];
+    }
   }
-  const conflictLine = /^\s*(?:[-*]\s*)?Conflicts:\s*(.*)$/im.exec(text);
+  const documents = docs ?? documentsForm ?? null;
   let conflicts: ConflictBuckets | null = null;
-  if (conflictLine) {
-    const line = conflictLine[1].slice(0, 400);
-    const blockers = numberAt(line, /(\d+)\s+blockers?\b/i);
-    const competing = numberAt(line, /(\d+)\s+(?:competing[- ]variants?|variants?|competing)\b/i);
-    const autoResolved = numberAt(line, /(\d+)\s+auto[- ]resolved\b/i);
+  if (conflictText !== undefined) {
+    const blockers = numberAt(conflictText, /(\d+)\s+blockers?\b/i);
+    const competing = numberAt(conflictText, /(\d+)\s+(?:competing[- ]variants?|variants?|competing)\b/i);
+    const autoResolved = numberAt(conflictText, /(\d+)\s+auto[- ]resolved\b/i);
     if (blockers !== null && competing !== null && autoResolved !== null) {
       conflicts = { blockers, competing, autoResolved };
     }

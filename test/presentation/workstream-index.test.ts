@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
-import { buildWorkstreamIndex, NO_POINTER_LINE, sharedRootFiles } from '../../src/presentation/workstream-index.ts';
+import { buildScopeChipModel, buildWorkstreamIndex, NO_POINTER_LINE, sharedRootFiles } from '../../src/presentation/workstream-index.ts';
 import type { WorkstreamIndexModel } from '../../src/presentation/workstream-index.ts';
 import { toProjectPresentation } from '../../src/server/project-presentation.ts';
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
@@ -229,6 +229,24 @@ describe('a branch that is not a workstream folder', () => {
     const model = buildWorkstreamIndex(inventory, presentation);
     expect(model.countText).toBe('1 workstream');
     expect(model.branches[1]).toMatchObject({ url: null, dashed: true, dashedLabel: 'Not a workstream folder', active: false });
+  });
+});
+
+describe('a folder whose name is outside the workstream grammar (L1-WR-03)', () => {
+  it('is a dashed branch with no address, labelled as not a workstream folder, and is not counted', () => {
+    const presentation = { artifacts: [], projectName: null, rootPath: '/x' } as unknown as ProjectPresentation;
+    const inventory: WorkstreamInventory = {
+      ...flatInventory(),
+      mode: 'workstreams',
+      entries: [
+        entry({ name: 'real' }),
+        entry({ name: 'my stream', kind: 'unscoped', status: null, hasRoadmap: false, ownFiles: [], dashed: 'Name is not a workstream name' }),
+      ],
+    };
+    const model = buildWorkstreamIndex(inventory, presentation);
+    expect(model.countText).toBe('1 workstream');
+    expect(model.branches[1]).toMatchObject({ url: null, dashed: true, dashedLabel: 'Not a workstream folder', active: false });
+    expect(buildScopeChipModel(inventory, 'real').rows.map((row) => row.name)).toEqual(['real']);
   });
 });
 

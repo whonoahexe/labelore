@@ -2,7 +2,9 @@
 // /api/projects/:slug/ws/:name (and /api/ws/:name in the single-project wrapper) by the unchanged pipeline,
 // an unlisted or malformed name is a 404, scoped artifacts carry their real paths, and a flat project's API
 // answers exactly what it did before the mount existed.
-import { realpathSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
@@ -12,6 +14,7 @@ import type { ProjectPresentation } from '../../src/server/project-presentation.
 import { createApp } from '../../src/server/index.ts';
 import { ProjectRegistry, createSnapshotSource } from '../../src/server/project-registry.ts';
 import { createRegistryApp } from '../../src/server/registry-api.ts';
+import type { PacePlanDto } from '../../src/server/dashboard-ledger.ts';
 import type { WorkstreamInventory } from '../../src/server/workstreams.ts';
 import { FX_ROOT } from '../helpers/fixture-project.ts';
 import { guardedRequest, testPolicy } from '../helpers/guarded-request.ts';
@@ -201,6 +204,52 @@ describe('the workstream scope mount (11-29)', () => {
       expect(inside.mode).toBe('flat');
     } finally {
       registry.dispose();
+    }
+  });
+
+  it("times no workstream plan from commits it cannot attribute to that workstream (L1-WR-02)", async () => {
+    const { registry, app } = await registryApp([BRINKWATER]);
+    try {
+      const parent = await registry.runtime('brinkwater');
+      const child = await parent!.workstreamRuntime('intake');
+      expect(child).not.toBeNull();
+      expect(await child!.commits.load()).toBeNull();
+      const { status, body } = await get(app, '/api/projects/brinkwater/ws/intake/dashboard');
+      expect(status).toBe(200);
+      const plans = (body as { pace: { plans: PacePlanDto[] } }).pace.plans;
+      expect(plans.length).toBeGreaterThan(0);
+      expect(plans.some((plan) => plan.timing === 'commits')).toBe(false);
+      for (const plan of plans) {
+        if (plan.timing === 'summary') expect(plan.approx).toBe(true);
+      }
+    } finally {
+      registry.dispose();
+    }
+  });
+
+  it('lists only names the /ws route can open: every folder entry answers 200 and every other entry 404 (L1-WR-03)', async () => {
+    const root = realpathSync(mkdtempSync(join(tmpdir(), 'labelore-ws-agree-')));
+    cpSync(BRINKWATER, root, { recursive: true });
+    for (const name of ['my stream', '-x', 'é']) {
+      mkdirSync(join(root, '.planning', 'workstreams', name), { recursive: true });
+      writeFileSync(join(root, '.planning', 'workstreams', name, 'STATE.md'), '---\nworkstream: x\n---\n\n# Project State\n\n**Status:** Executing\n');
+    }
+    writeFileSync(join(root, '.planning', 'workstreams', 'stray.txt'), 'not a workstream');
+    const registry = new ProjectRegistry({ createSource: (target: string) => createSnapshotSource(target) });
+    try {
+      const outcome = await registry.register(root);
+      if (!outcome.ok) throw new Error('registration failed');
+      const app = createRegistryApp(registry, { policy: testPolicy(), production: false });
+      const inventory = (await get(app, `/api/projects/${outcome.slug}/workstreams`)).body as WorkstreamInventory;
+      expect(inventory.entries.map((entry) => entry.name)).toEqual(expect.arrayContaining(['intake', 'my stream', '-x', 'é', 'stray.txt']));
+      for (const entry of inventory.entries) {
+        const { status } = await get(app, `/api/projects/${outcome.slug}/ws/${encodeURIComponent(entry.name)}/presentation`);
+        expect(status, entry.name).toBe(entry.kind === 'folder' ? 200 : 404);
+      }
+      expect(inventory.entries.filter((entry) => entry.kind === 'folder').map((entry) => entry.name)).toEqual(['intake', 'ledger', 'notices']);
+    } finally {
+      registry.dispose();
+      rmSync(root, { recursive: true, force: true });
     }
   });
 

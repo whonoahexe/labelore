@@ -114,6 +114,38 @@ describe('ScopedPlanningFilesystem (11-29)', () => {
     expect(new TextDecoder().decode(await fs.readHead!('.planning/ROADMAP.md', 4))).toBe('# Ro');
   });
 
+  it('reads a root-only sketch inside a scope that has its own sketches/ folder (L1-WR-04)', async () => {
+    const parent = new InMemoryPlanningFilesystem({
+      '.planning/workstreams/a/ROADMAP.md': '# Roadmap',
+      '.planning/workstreams/a/sketches/own/index.html': new Uint8Array([7, 7]),
+      '.planning/sketches/shared/index.html': new Uint8Array([9, 9, 9]),
+      '.planning/PROJECT.md': 'project',
+    });
+    for (const name of ['a', 'other']) {
+      const fs = new ScopedPlanningFilesystem(parent, name);
+      const shared = await fs.readBytesWithin!('.planning/sketches', '.planning/sketches/shared/index.html');
+      expect(Array.from(shared.bytes)).toEqual([9, 9, 9]);
+    }
+    const own = new ScopedPlanningFilesystem(parent, 'a');
+    const mine = await own.readBytesWithin!('.planning/sketches', '.planning/sketches/own/index.html');
+    expect(Array.from(mine.bytes)).toEqual([7, 7]);
+    await expect(own.readBytesWithin!('.planning/sketches', '.planning/PROJECT.md')).rejects.toBeInstanceOf(PathEscapeError);
+    await expect(own.readBytesWithin!('.planning/sketches', '.planning/ROADMAP.md')).rejects.toBeInstanceOf(PathEscapeError);
+    await expect(own.readBytesWithin!('.planning/sketches', 'src/app.css')).rejects.toBeInstanceOf(PathEscapeError);
+  });
+
+  it("keeps the .planning base reading a moved name's workstream copy", async () => {
+    const parent = new InMemoryPlanningFilesystem({
+      '.planning/workstreams/a/STATE.md': 'a state',
+      '.planning/STATE.md': 'root state',
+      '.planning/PROJECT.md': 'project',
+    });
+    const fs = new ScopedPlanningFilesystem(parent, 'a');
+    expect(new TextDecoder().decode((await fs.readBytesWithin!('.planning', '.planning/STATE.md')).bytes)).toBe('a state');
+    expect(new TextDecoder().decode((await fs.readBytesWithin!('.planning', '.planning/PROJECT.md')).bytes)).toBe('project');
+    await expect(fs.readBytesWithin!('.planning/workstreams', '.planning/STATE.md')).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
   it('refuses a path that climbs, and a name that is not a workstream name', async () => {
     const parent = await brinkwater();
     const fs = new ScopedPlanningFilesystem(parent, 'intake');

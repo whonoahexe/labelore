@@ -21,6 +21,15 @@ import { createSearchIndexState } from './search-index.ts';
 import { flatInventory, isValidWorkstreamName, readWorkstreamInventory } from './workstreams.ts';
 import type { WorkstreamInventory } from './workstreams.ts';
 
+/**
+ * The commit log a workstream-scoped runtime gets: no history at all. GSD numbers each workstream's phases from
+ * 1, so a `type(NN-MM)` subject in the repository cannot be attributed to one workstream, and narrowing the log
+ * to commits under the workstream's folder would miss the execution commits that touch code. A workstream
+ * cannot attribute repository commits to its own plans, so Pace falls back to SUMMARY durations, marked
+ * approximate (L1-WR-02). It also stops each scope reading its own copy of the repository log.
+ */
+const NO_COMMIT_HISTORY: CommitLog = { load: async () => null, reset: () => undefined };
+
 export interface SnapshotSource {
   getSnapshot(): ProjectSnapshot;
   /** Optional: a source with nothing to refresh into (the failed-initial-load literal) simply omits
@@ -232,7 +241,7 @@ export class ProjectRuntime {
     const repository = new PlanningRepository(scopedFs, this.derived.presentation.rootPath);
     await repository.load();
     if (this.disposed) return null;
-    const runtime = new ProjectRuntime(repository, this.slug, undefined, this.runGit, {
+    const runtime = new ProjectRuntime(repository, this.slug, NO_COMMIT_HISTORY, this.runGit, {
       name,
       realPathOf: (virtualPath) => scopedFs.realPathOf(virtualPath),
     });

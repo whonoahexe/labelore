@@ -25,7 +25,7 @@ const MAX_STATUS_CHARS = 80;
 const MAX_PHASE_NAME_CHARS = 120;
 const MAX_COMPLETED = 500;
 
-export type WorkstreamDashedReason = 'STATE.md not found' | 'No roadmap yet';
+export type WorkstreamDashedReason = 'STATE.md not found' | 'No roadmap yet' | 'Name is not a workstream name';
 
 export interface WorkstreamProgress {
   phasesDone: number;
@@ -36,8 +36,12 @@ export interface WorkstreamProgress {
 
 export interface WorkstreamEntry {
   name: string;
-  /** A `workstreams/` entry that is a file is listed (dashed) and has no scope of its own. */
-  kind: 'folder' | 'file';
+  /**
+   * A `workstreams/` entry that is a file is listed (dashed) and has no scope of its own. A folder whose name
+   * fails GSD's workstream-name grammar is 'unscoped': listed dashed, never read, and never opened at /ws/<name>
+   * (the route and createScoped accept only a 'folder' entry, so the inventory and the route agree, L1-WR-03).
+   */
+  kind: 'folder' | 'file' | 'unscoped';
   /** The status word as the workstream's STATE wrote it (frontmatter first, then the bold line), or null. */
   status: string | null;
   currentPhase: { number: string; name: string | null } | null;
@@ -207,6 +211,20 @@ async function inspectWorkstream(fs: PlanningFilesystem, entry: DirEntry): Promi
       ownFiles: [],
       phaseCount: 0,
       dashed: 'STATE.md not found',
+    };
+  }
+  // A name is a path segment only after validation: an invalid name is listed and nothing under it is read.
+  if (!isValidWorkstreamName(name)) {
+    return {
+      name,
+      kind: 'unscoped',
+      status: null,
+      currentPhase: null,
+      progress: null,
+      hasRoadmap: false,
+      ownFiles: [],
+      phaseCount: 0,
+      dashed: 'Name is not a workstream name',
     };
   }
   const folder = `${WORKSTREAMS_DIR}/${name}`;
