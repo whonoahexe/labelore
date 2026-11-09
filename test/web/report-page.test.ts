@@ -741,3 +741,232 @@ describe('report view contract - the real sources', () => {
     expect(missing).not.toContain('(Phase 11, 11-24)');
   });
 });
+
+// Phase 11 (11-38, G-11-2: L3-WR-02, L3-WR-03): a milestone summary keeps its Stats and debt sections, and every chip lands.
+describe('report page: milestone Stats and debt sections are never dropped (11-38, L3-WR-02, L3-WR-03)', () => {
+  const PHASE_TABLE = [
+    '| Phase | Name | Status | One-Liner |',
+    '|-------|------|--------|-----------|',
+    '| 5 | Reports | Complete (2026-05-02) | Report pages |',
+  ].join('\n');
+
+  function milestoneFrom(text: string): ComposedMilestoneReport {
+    return milestone(composeReport(inputFromText('MILESTONE_SUMMARY-v3.0.md', text, groupsOf(text))));
+  }
+
+  it('a Stats section the lift read no stat lines from is a closed bar carrying the Stats id, and the Stats chip lands on it', () => {
+    const text = `# Milestone v3.0 — Project Summary\n\n## 3. Phases Delivered\n\n${PHASE_TABLE}\n\n## Stats\n\nThe numbers are in the changelog.\n`;
+    const model = milestoneFrom(text);
+    expect(model.numerals).toEqual([]);
+    const bar = model.bars.find((candidate) => candidate.id === model.statsId);
+    expect(bar).toBeDefined();
+    expect(bar!.html).toContain('The numbers are in the changelog.');
+    expect(model.index.filter((chip) => chip.label === 'Stats')).toHaveLength(1);
+    const html = markup(model, () => null);
+    expect(count(html, `id="${model.statsId}"`)).toBe(1);
+    for (const chip of model.index) expect(html, chip.target).toContain(`id="${chip.target}"`);
+  });
+
+  it('no Stats section and no stat lines gives no Stats chip', () => {
+    const text = `# Milestone v3.0 — Project Summary\n\n## 3. Phases Delivered\n\n${PHASE_TABLE}\n`;
+    const model = milestoneFrom(text);
+    expect(model.index.some((chip) => chip.label === 'Stats')).toBe(false);
+    expect(model.bars.some((bar) => bar.id === model.statsId)).toBe(false);
+  });
+
+  it('with the stats read, the card carries the Stats id and no Stats bar exists', () => {
+    const text = fxRead('reports/MILESTONE_SUMMARY-v1.0.md');
+    const model = milestone(composeReport(inputFromText('MILESTONE_SUMMARY-v1.0.md', text, groupsOf(text))));
+    expect(model.bars.some((bar) => bar.id === model.statsId)).toBe(false);
+    const html = markup(model, () => null);
+    expect(count(html, `id="${model.statsId}"`)).toBe(1);
+  });
+
+  it('a section titled "Tech debt and deferred requirements" is the debt section, never the requirements page', () => {
+    const text = [
+      '# Milestone v3.0 — Project Summary',
+      '',
+      '## 4. Requirements Coverage',
+      '',
+      '- ✅ **Reports** — REPT-01, REPT-02 (Phase 5)',
+      '',
+      '## 7. Tech debt and deferred requirements',
+      '',
+      'Nothing blocking; two items carried forward.',
+      '',
+    ].join('\n');
+    const model = milestoneFrom(text);
+    expect(model.requirements.rows).toHaveLength(1);
+    expect(model.anchors.requirements).toBe('view-report-sec-4');
+    expect(model.debt).not.toBeNull();
+    expect(model.debt!.html).toContain('two items carried forward');
+    expect(markup(model, () => null)).toContain('>Tech debt and deferred<');
+    const noRows = milestoneFrom('# Milestone v3.0 — Project Summary\n\n## 6. Tech Debt & Deferred Items\n\nOne item.\n');
+    expect(noRows.debt).not.toBeNull();
+    expect(noRows.plain).toEqual([]);
+  });
+
+  it('only the first section of a kind is composed and anchored; a later one is shown as written, never dropped', () => {
+    const text = [
+      '# Milestone v3.0 — Project Summary',
+      '',
+      '## 4. Requirements Coverage',
+      '',
+      '- ✅ **Reports** — REPT-01, REPT-02 (Phase 5)',
+      '',
+      '## 5. Requirements follow-up',
+      '',
+      'Second requirements section text.',
+      '',
+      '## 6. Tech Debt',
+      '',
+      'First debt text.',
+      '',
+      '## 7. Tech Debt, continued',
+      '',
+      'Second debt text.',
+      '',
+    ].join('\n');
+    const model = milestoneFrom(text);
+    expect(model.anchors.requirements).toBe('view-report-sec-4');
+    expect(model.plain.map((section) => section.id)).toEqual(['view-report-sec-5']);
+    expect(model.debt!.html).toContain('First debt text.');
+    expect(model.bars.map((bar) => bar.id)).toContain('view-report-sec-7');
+    const html = markup(model, (section) => (typeof section === 'string' ? section : null));
+    expect(html).toContain('Second requirements section text.');
+    expect(html).toContain('Second debt text.');
+    expect(html).toContain('First debt text.');
+    for (const chip of model.index) expect(html, chip.target).toContain(`id="${chip.target}"`);
+  });
+});
+
+// Phase 11 (11-38, G-11-2: L3-WR-04): the session report claims only the sections it read.
+describe('report page: no session-report section is lost (11-38, L3-WR-04)', () => {
+  function sessionFrom(text: string): ComposedSessionReport {
+    return session(composeReport(inputFromText('SESSION_REPORT.md', text, groupsOf(text))));
+  }
+
+  it("Lendshed's two session reports draw what they drew before: nothing in the closing bars", async () => {
+    const presentation = await lendshed();
+    for (const path of [SESSION, CLEAR]) {
+      const name = path.slice(path.lastIndexOf('/') + 1);
+      const text = fxRead(`reports/${name}`);
+      const model = sessionFrom(text);
+      expect(model.more, name).toEqual([]);
+      expect(session(composeReport(inputOf(presentation, path, groupsOf(text)))).more, name).toEqual([]);
+    }
+  });
+
+  it('a Key Outcomes written as prose is listed under the closing bars with its text', () => {
+    const text = '# GSD Session Report\n\n## Key Outcomes\n\nWe shipped the throttle and wrote the proof.\n\n## Decisions Made\n\n- Keep it small.\n';
+    const model = sessionFrom(text);
+    expect(model.more.map((section) => section.title)).toEqual(['Key Outcomes']);
+    expect(model.more[0]!.html).toContain('We shipped the throttle');
+    expect(markup(model, (html) => html)).toContain('We shipped the throttle');
+  });
+
+  it('a Work Performed whose Key Outcomes could not be read is listed whole; the read groups are not', () => {
+    const text = [
+      '# GSD Session Report',
+      '',
+      '## Session Summary',
+      '',
+      '**Duration:** 2 hours',
+      '',
+      '## Work Performed',
+      '',
+      '### Phases Touched',
+      '- Phase 1 — sign-in',
+      '',
+      '### Key Outcomes',
+      '',
+      'Prose, not bullets.',
+      '',
+      '## Files Changed',
+      '',
+      '3 files changed.',
+      '',
+    ].join('\n');
+    const model = sessionFrom(text);
+    expect(model.more.map((section) => section.title)).toEqual(['Work Performed']);
+  });
+
+  it('a Files Changed, an Estimated Resource Usage and a Session Summary with nothing readable are listed', () => {
+    const text = [
+      '# GSD Session Report',
+      '',
+      '## Session Summary',
+      '',
+      'It went well.',
+      '',
+      '## Key Outcomes',
+      '- One.',
+      '',
+      '## Files Changed',
+      '',
+      '## Estimated Resource Usage',
+      '',
+      'Not measured.',
+      '',
+    ].join('\n');
+    const model = sessionFrom(text);
+    expect(model.more.map((section) => section.title)).toEqual(['Session Summary', 'Files Changed', 'Estimated Resource Usage']);
+  });
+
+  it('a heading outside the session set is kept as today, and a lift with no unread list reads as all read', () => {
+    const text = '# GSD Session Report\n\n## Key Outcomes\n- One.\n\n## Follow-ups\n\nCall the steward.\n';
+    expect(sessionFrom(text).more.map((section) => section.title)).toEqual(['Follow-ups']);
+    const lift = extractReport('SESSION_REPORT.md', {}, '# GSD Session Report\n\n## Key Outcomes\n\nProse.\n') as unknown as Record<string, unknown>;
+    delete lift.unread;
+    const input: ViewInput = {
+      kind: 'report',
+      frontmatter: {},
+      structured: { report: lift },
+      groups: groupsOf('# GSD Session Report\n\n## Key Outcomes\n\nProse.\n'),
+      planSegments: [],
+    };
+    expect(session(composeReport(input)).more).toEqual([]);
+  });
+});
+
+describe('report page: the ruler states what the stamps are (11-38, L3-WR-05)', () => {
+  function rulerFrom(duration: string): { model: ComposedSessionReport; html: string } {
+    const text = `# GSD Session Report\n\n## Session Summary\n\n**Duration:** ${duration}\n`;
+    const model = session(composeReport(inputFromText('SESSION_REPORT.md', text, groupsOf(text))));
+    return { model, html: markup(model) };
+  }
+
+  it('labels a session whose stamps fall on two days as spanning more than one day, with both stamps as text', () => {
+    const { model, html } = rulerFrom('~2 hours (first commit 2026-03-27 23:10, last commit 2026-03-28 01:05)');
+    expect(model.ruler).toMatchObject({ kind: 'none', label: 'Commit stamps span more than one day' });
+    expect(model.ruler).toMatchObject({ stamps: { from: '23:10', to: '01:05' } });
+    expect(html).toContain('aria-label="Commit stamps span more than one day"');
+    expect(html).not.toContain('No commit stamps in the file');
+    expect(html).toContain('23:10');
+    expect(html).toContain('01:05');
+  });
+
+  it('labels a session that wrapped past midnight on one day the same way', () => {
+    const { model, html } = rulerFrom('~15 hours (first commit 18:00, last commit 09:00)');
+    expect(model.ruler).toMatchObject({ kind: 'none', label: 'Commit stamps span more than one day' });
+    expect(html).toContain('aria-label="Commit stamps span more than one day"');
+    expect(html).toContain('18:00');
+    expect(html).toContain('09:00');
+  });
+
+  it("keeps 'No commit stamps in the file' for a report without two stamps, and the axis says the same", () => {
+    const { model, html } = rulerFrom('Single session');
+    expect(model.ruler).toMatchObject({ kind: 'none', label: 'No commit stamps in the file' });
+    expect(html).toContain('aria-label="No commit stamps in the file"');
+    expect(html).not.toContain('Commit stamps span more than one day');
+  });
+
+  it('draws a first and last commit at the same minute as a clock ruler, and the span rule has a minimum width', async () => {
+    const { model } = rulerFrom('~0 minutes (first commit 10:30, last commit 10:30)');
+    expect(model.ruler).toMatchObject({ kind: 'clock', from: '10:30', to: '10:30' });
+    const css = await source('src/web/styles/globals.css');
+    const block = css.slice(css.indexOf(START), css.indexOf(END));
+    const rule = block.slice(block.indexOf('.view-report-span {'));
+    expect(rule.slice(0, rule.indexOf('}'))).toContain('min-width');
+  });
+});

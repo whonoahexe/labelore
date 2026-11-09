@@ -196,11 +196,18 @@ function Ruler({ ruler }: { ruler: ComposedRuler }): React.JSX.Element {
   );
   if (ruler.kind === 'none') {
     return (
-      <div className="view-report-axis" role="img" aria-label="No first and last commit stamps in the file">
+      <div className="view-report-axis" role="img" aria-label={ruler.label}>
         <i className="view-report-base" data-ghost="true" />
         {ticks}
-        <span className="view-report-none status-chip" data-tone="quiet">
-          {ruler.text}
+        <span className="view-report-none">
+          <span className="status-chip" data-tone="quiet">
+            {ruler.text}
+          </span>
+          {ruler.stamps === undefined ? null : (
+            <span className="view-report-stamps">
+              First commit {ruler.stamps.from} · last commit {ruler.stamps.to}
+            </span>
+          )}
         </span>
       </div>
     );

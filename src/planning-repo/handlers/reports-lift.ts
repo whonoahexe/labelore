@@ -60,6 +60,9 @@ export interface SessionReportLift {
   /** Blockers & Open Items bullets; a bullet that only says there are none reads as no blocker. */
   blockers: string[];
   resources: { metric: string; estimate: string }[];
+  /** The H2 headings, as written, whose session content the lift did not read (a Key Outcomes written as prose, a Work Performed
+   * whose Key Outcomes it could not read, a Files Changed with nothing in it). The page shows these sections instead of hiding them. */
+  unread: string[];
 }
 
 export interface MilestoneStat {
@@ -295,6 +298,40 @@ const SESSION_HEADINGS: ReadonlySet<string> = new Set([
   'estimated resource usage',
 ]);
 
+function isSessionHeading(lower: string): boolean {
+  return SESSION_HEADINGS.has(lower) || lower.startsWith('blockers');
+}
+
+/**
+ * The H2 headings, as written, whose session content was not read. `read` holds the sections the lift took content from. A
+ * session-named H2 is unread when it is not in `read`; Work Performed is a container, so it is unread when it holds no
+ * session-named H3, or any session-named H3 in it is not in `read`. A session-named H3 that is not in `read` also makes its
+ * enclosing session-named H2 unread. One pass over the sections, bounded by the section cap.
+ */
+function unreadHeadings(sections: readonly FencedSection[], read: ReadonlySet<FencedSection>): string[] {
+  const unread: string[] = [];
+  let current: { heading: string; lower: string; section: FencedSection; children: number; childUnread: boolean } | null = null;
+  const close = (): void => {
+    if (current === null || !isSessionHeading(current.lower)) return;
+    const isRead =
+      current.lower === 'work performed' ? current.children > 0 && !current.childUnread : read.has(current.section) && !current.childUnread;
+    if (!isRead) unread.push(current.heading);
+  };
+  // Sections come in document order, so an H3 belongs to the H2 before it.
+  for (const section of sections) {
+    if (section.level === 2) {
+      close();
+      const heading = section.heading.trim();
+      current = { heading, lower: heading.toLowerCase(), section, children: 0, childUnread: false };
+    } else if (current !== null && isSessionHeading(section.heading.trim().toLowerCase())) {
+      current.children += 1;
+      if (!read.has(section)) current.childUnread = true;
+    }
+  }
+  close();
+  return unread;
+}
+
 function hasSessionHeading(sections: readonly FencedSection[]): boolean {
   return sections.some((section) => {
     const lower = section.heading.trim().toLowerCase();
@@ -323,10 +360,31 @@ function extractSession(lines: readonly string[], sections: readonly FencedSecti
 
   const fileLines = files === undefined ? [] : sectionLines(lines, files);
   const fileSummary = proseOnly(fileLines);
+  const fileItems = listItems(fileLines);
 
   const table = resources === undefined ? { headers: [], rows: [] } : pipeTable(sectionLines(lines, resources));
   const metricCol = columnOf(table.headers, 'metric');
   const estimateCol = columnOf(table.headers, 'estimate');
+  const resourceRows = table.rows
+    .map((row) => ({ metric: cellAt(row, metricCol), estimate: cellAt(row, estimateCol) }))
+    .filter((row) => row.metric !== '' || row.estimate !== '');
+
+  const phaseItems = phases === undefined ? [] : listItems(sectionLines(lines, phases));
+  const outcomeItems = outcomes === undefined ? [] : listItems(sectionLines(lines, outcomes));
+  const blockerItems = blockers === undefined ? [] : listItems(sectionLines(lines, blockers));
+
+  // The sections the lift took content from; every other session-named section is reported as unread.
+  const read = new Set<FencedSection>();
+  const take = (section: FencedSection | undefined, got: boolean): void => {
+    if (section !== undefined && got) read.add(section);
+  };
+  take(summary, summary !== undefined && labelValues(lines, sectionRange(summary), SESSION_LABELS).size > 0);
+  take(phases, phaseItems.length > 0);
+  take(outcomes, outcomeItems.length > 0);
+  take(decisions, decisionItems.length > 0 || decisionProse !== '');
+  take(files, fileSummary !== '' || fileItems.length > 0);
+  take(blockers, blockerItems.length > 0);
+  take(resources, resourceRows.length > 0);
 
   return {
     variant: 'session',
@@ -338,15 +396,14 @@ function extractSession(lines: readonly string[], sections: readonly FencedSecti
     phaseProgress: labels.get('phase progress') ?? null,
     plansExecuted: labels.get('plans executed') ?? null,
     commitsMade: labels.get('commits made') ?? null,
-    phases: phases === undefined ? [] : listItems(sectionLines(lines, phases)),
-    outcomes: outcomes === undefined ? [] : listItems(sectionLines(lines, outcomes)),
+    phases: phaseItems,
+    outcomes: outcomeItems,
     decisions: decisionItems,
     decisionsNote: decisionProse === '' ? null : decisionProse,
-    filesChanged: { summary: fileSummary === '' ? null : fileSummary, items: listItems(fileLines) },
-    blockers: blockers === undefined ? [] : listItems(sectionLines(lines, blockers)).filter((item) => !isNoneBullet(item)),
-    resources: table.rows
-      .map((row) => ({ metric: cellAt(row, metricCol), estimate: cellAt(row, estimateCol) }))
-      .filter((row) => row.metric !== '' || row.estimate !== ''),
+    filesChanged: { summary: fileSummary === '' ? null : fileSummary, items: fileItems },
+    blockers: blockerItems.filter((item) => !isNoneBullet(item)),
+    resources: resourceRows,
+    unread: unreadHeadings(sections, read),
   };
 }
 

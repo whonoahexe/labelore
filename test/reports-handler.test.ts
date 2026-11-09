@@ -292,6 +292,80 @@ describe('report edges', () => {
     expect(report.blockers).toEqual(['None of the kiosk screens were checked on the real device.']);
   });
 
+  it('11-38 L3-WR-04: both Lendshed session reports have nothing unread', async () => {
+    for (const name of ['SESSION_REPORT.md', '20260409-session-report.md']) {
+      const report = (await reportAt(`${REPORTS}${name}`)) as SessionReportLift;
+      expect(report.unread, name).toEqual([]);
+    }
+  });
+
+  it('11-38 L3-WR-04: a Key Outcomes written as prose is unread', () => {
+    const body = '# GSD Session Report\n\n## Key Outcomes\n\nWe shipped the throttle and wrote the proof.\n\n## Decisions Made\n\n- Keep it small.\n';
+    const report = extractReport('SESSION_REPORT.md', {}, body) as SessionReportLift;
+    expect(report.outcomes).toEqual([]);
+    expect(report.unread).toEqual(['Key Outcomes']);
+  });
+
+  it('11-38 L3-WR-04: a Work Performed whose Key Outcomes the lift could not read is unread, though its Phases Touched read', () => {
+    const body = [
+      '# GSD Session Report',
+      '',
+      '## Work Performed',
+      '',
+      '### Phases Touched',
+      '- Phase 1 — sign-in',
+      '',
+      '### Key Outcomes',
+      '',
+      'Prose, not bullets.',
+      '',
+    ].join('\n');
+    const report = extractReport('SESSION_REPORT.md', {}, body) as SessionReportLift;
+    expect(report.phases).toEqual(['Phase 1 — sign-in']);
+    expect(report.unread).toEqual(['Work Performed']);
+  });
+
+  it('11-38 L3-WR-04: a Work Performed holding no session subsection is unread, one whose subsections all read is not', () => {
+    const none = extractReport('SESSION_REPORT.md', {}, '# GSD Session Report\n\n## Work Performed\n\nWe did things.\n\n## Key Outcomes\n- One.\n') as SessionReportLift;
+    expect(none.unread).toEqual(['Work Performed']);
+    const all = extractReport(
+      'SESSION_REPORT.md',
+      {},
+      '# GSD Session Report\n\n## Work Performed\n\n### Phases Touched\n- P1\n\n### Key Outcomes\n- One.\n\n### Decisions Made\n- D1\n',
+    ) as SessionReportLift;
+    expect(all.unread).toEqual([]);
+  });
+
+  it('11-38 L3-WR-04: a Files Changed, an Estimated Resource Usage and a Session Summary with nothing readable are each unread', () => {
+    const body = [
+      '# GSD Session Report',
+      '',
+      '## Session Summary',
+      '',
+      'It went well.',
+      '',
+      '## Key Outcomes',
+      '- One.',
+      '',
+      '## Files Changed',
+      '',
+      '## Estimated Resource Usage',
+      '',
+      '| Metric | Estimate |',
+      '|--------|----------|',
+      '',
+    ].join('\n');
+    const report = extractReport('SESSION_REPORT.md', {}, body) as SessionReportLift;
+    expect(report.unread).toEqual(['Session Summary', 'Files Changed', 'Estimated Resource Usage']);
+  });
+
+  it('11-38 L3-WR-04: a Blockers section holding only "- None" says none, so it is read', () => {
+    const body = '# GSD Session Report\n\n## Key Outcomes\n- One.\n\n## Blockers & Open Items\n\n- None\n';
+    const report = extractReport('SESSION_REPORT.md', {}, body) as SessionReportLift;
+    expect(report.blockers).toEqual([]);
+    expect(report.unread).toEqual([]);
+  });
+
   it('edge probe VIEW-18: report-20260406-090000, a forensics file with no anomalies, still builds a lift (hypothesis kept)', async () => {
     const forensics = await forensicsAt(`${FORENSICS}report-20260406-090000.md`);
     expect(forensics.hypothesis).toContain('No issue was found.');
@@ -339,6 +413,22 @@ describe('growth', () => {
       },
       run: (body) => {
         extractReport('MILESTONE_SUMMARY-v1.0.md', {}, body);
+      },
+      startSize: 20,
+      maxSize: 40,
+      floorMs: 0,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('extractReport on a session report with many sections and subsections (the unread scan) is linear', () => {
+    const growth = measureGrowth({
+      make: (n) => {
+        const blocks = Array.from({ length: n }, (_, i) => `## Work Performed\n\n### Key Outcomes\nProse ${i}.\n\n### Decisions Made\n- D${i}\n`).join('\n');
+        return `# GSD Session Report\n\n${blocks}`;
+      },
+      run: (body) => {
+        extractReport('SESSION_REPORT.md', {}, body);
       },
       startSize: 20,
       maxSize: 40,
