@@ -56,6 +56,7 @@ export const FRONTMATTER_MASK_BY_KIND: ReadonlyMap<string, MaskOptions> = new Ma
 ]);
 
 const FENCE = '---';
+const BOM = '\uFEFF';
 
 function lastSegment(path: string): string {
   return path.slice(path.lastIndexOf('/') + 1);
@@ -64,6 +65,17 @@ function lastSegment(path: string): string {
 /** Whether a line is exactly the frontmatter fence (a trailing carriage return is part of the line ending). */
 function isFence(line: string): boolean {
   return line === FENCE || line === `${FENCE}\r`;
+}
+
+/** Every line of `text` as its indentation plus the marker (a trailing carriage return kept): the fail-closed form. */
+function markEveryLine(text: string): string {
+  return text
+    .split('\n')
+    .map((line) => {
+      const content = line.endsWith('\r') ? line.slice(0, -1) : line;
+      return content.slice(0, content.length - content.trimStart().length) + VALUE_NOT_SHOWN_MARK + line.slice(content.length);
+    })
+    .join('\n');
 }
 
 /** The shortest raw string the residual check looks for (a shorter one would match ordinary text). */
@@ -122,7 +134,14 @@ export function sourceTextOf(
   const options = FRONTMATTER_MASK_BY_KIND.get(artifact.kind);
   if (options === undefined) return { text: raw, masked: false };
   const lines = raw.split('\n');
-  if (lines.length === 0 || !isFence(lines[0] ?? '')) return { text: raw, masked: false };
+  // The handler's parser accepts a leading byte-order mark before the fence, so this scan must too.
+  const firstLine = lines[0] ?? '';
+  if (lines.length === 0 || !isFence(firstLine.startsWith(BOM) ? firstLine.slice(BOM.length) : firstLine)) {
+    if (Object.keys(artifact.frontmatter).length === 0) return { text: raw, masked: false };
+    // Fail closed: the handler read frontmatter that this fence scan did not find, so no line before the body is trusted.
+    const bodyAt = raw.endsWith(artifact.body) ? raw.length - artifact.body.length : raw.length;
+    return { text: markEveryLine(raw.slice(0, bodyAt)) + raw.slice(bodyAt), masked: true };
+  }
   let end = 1;
   while (end < lines.length && !isFence(lines[end] ?? '')) end += 1;
   const original = lines.slice(1, end);

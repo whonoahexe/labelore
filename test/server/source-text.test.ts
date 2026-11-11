@@ -238,6 +238,41 @@ describe('sourceTextOf', () => {
     expect(out.text).not.toContain(PLANTED_PASSWORD);
   });
 
+  it('masks the frontmatter of a file that starts with a byte-order mark', () => {
+    const raw = `\uFEFF---\nDB_PASSWORD: ${PLANTED_PASSWORD}\n---\nbody\n`;
+    const out = sourceTextOf(
+      { kind: 'user-setup', path: 'x/01-USER-SETUP.md', body: 'body\n', frontmatter: handlerFrontmatter('user-setup', raw) },
+      raw,
+    );
+    expect(out.text).not.toContain(PLANTED_PASSWORD);
+    expect(out.text.startsWith('\uFEFF---\n')).toBe(true);
+    expect(out.text.split('\n').length).toBe(raw.split('\n').length);
+    expect(out.masked).toBe(true);
+  });
+
+  it('masks the frontmatter of a byte-order-marked file with carriage returns', () => {
+    const raw = `\uFEFF---\r\nDB_PASSWORD: ${PLANTED_PASSWORD}\r\n---\r\nbody\r\n`;
+    const out = sourceTextOf(
+      { kind: 'user-setup', path: 'x/01-USER-SETUP.md', body: 'body\r\n', frontmatter: handlerFrontmatter('user-setup', raw) },
+      raw,
+    );
+    expect(out.text).not.toContain(PLANTED_PASSWORD);
+    expect(out.text.split('\n')[1]?.endsWith('\r')).toBe(true);
+    expect(out.masked).toBe(true);
+  });
+
+  it('fails closed when the handler found frontmatter that the fence scan did not', () => {
+    const raw = `--- \nDB_PASSWORD: ${PLANTED_PASSWORD}\n---\nbody\n`;
+    const out = sourceTextOf(
+      { kind: 'user-setup', path: 'x/01-USER-SETUP.md', body: 'body\n', frontmatter: { DB_PASSWORD: VALUE_NOT_SHOWN_MARK } },
+      raw,
+    );
+    expect(out.text).not.toContain(PLANTED_PASSWORD);
+    expect(out.text.endsWith('body\n')).toBe(true);
+    expect(out.text.split('\n').length).toBe(raw.split('\n').length);
+    expect(out.masked).toBe(true);
+  });
+
   it('names the three masking kinds', () => {
     expect([...FRONTMATTER_MASK_BY_KIND.keys()].sort()).toEqual(['seed', 'thread', 'user-setup']);
   });
