@@ -10,7 +10,8 @@ import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.t
 import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
 import type { PlanningFilesystem } from '../../src/planning-fs/types.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
-import { VALUE_NOT_SHOWN_MARK } from '../../src/planning-repo/handlers/withhold-values.ts';
+import { tryParseFrontmatter } from '../../src/planning-repo/frontmatter.ts';
+import { VALUE_NOT_SHOWN_MARK, maskData } from '../../src/planning-repo/handlers/withhold-values.ts';
 import { createApp } from '../../src/server/index.ts';
 import { bodyStartOf, sourceTextOf, FRONTMATTER_MASK_BY_KIND } from '../../src/server/source-text.ts';
 import type { SourceTextResponse } from '../../src/server/source-text.ts';
@@ -167,15 +168,21 @@ describe('GET /api/source?route= over a made-up in-memory project', () => {
   });
 });
 
+/** The frontmatter a masking handler would carry for `raw`: parsed, then masked with the kind's own options. */
+function handlerFrontmatter(kind: string, raw: string): Record<string, unknown> {
+  const options = FRONTMATTER_MASK_BY_KIND.get(kind) ?? {};
+  return maskData(tryParseFrontmatter(raw).data, 0, options) as Record<string, unknown>;
+}
+
 describe('sourceTextOf', () => {
   it('returns config.json from its body and ignores the raw text', () => {
-    const out = sourceTextOf({ kind: 'config', path: '.planning/config.json', body: '{"a":"****cdef"}\n' }, 'RAW SECRET');
+    const out = sourceTextOf({ kind: 'config', path: '.planning/config.json', body: '{"a":"****cdef"}\n', frontmatter: {} }, 'RAW SECRET');
     expect(out).toEqual({ text: '{"a":"****cdef"}\n', masked: true });
   });
 
   it('returns a plain file unchanged', () => {
     const raw = '---\nphase: 1\n---\nbody\n';
-    expect(sourceTextOf({ kind: 'plan', path: '.planning/phases/01/01-01-PLAN.md', body: 'body\n' }, raw)).toEqual({
+    expect(sourceTextOf({ kind: 'plan', path: '.planning/phases/01/01-01-PLAN.md', body: 'body\n', frontmatter: {} }, raw)).toEqual({
       text: raw,
       masked: false,
     });
@@ -183,7 +190,10 @@ describe('sourceTextOf', () => {
 
   it('masks only the frontmatter lines of a masking kind and leaves the body as written', () => {
     const raw = `---\nDB_PASSWORD: ${PLANTED_PASSWORD}\n---\nDB_PASSWORD: ${PLANTED_PASSWORD}\n`;
-    const out = sourceTextOf({ kind: 'user-setup', path: '.planning/phases/01/01-USER-SETUP.md', body: '' }, raw);
+    const out = sourceTextOf(
+      { kind: 'user-setup', path: '.planning/phases/01/01-USER-SETUP.md', body: '', frontmatter: handlerFrontmatter('user-setup', raw) },
+      raw,
+    );
     const lines = out.text.split('\n');
     expect(lines[1]).not.toContain(PLANTED_PASSWORD);
     expect(lines[3]).toContain(PLANTED_PASSWORD);
@@ -193,7 +203,7 @@ describe('sourceTextOf', () => {
 
   it('reads a text with no opening fence as having no frontmatter', () => {
     const raw = `DB_PASSWORD: ${PLANTED_PASSWORD}\n`;
-    expect(sourceTextOf({ kind: 'user-setup', path: 'x/01-USER-SETUP.md', body: raw }, raw)).toEqual({
+    expect(sourceTextOf({ kind: 'user-setup', path: 'x/01-USER-SETUP.md', body: raw, frontmatter: {} }, raw)).toEqual({
       text: raw,
       masked: false,
     });
@@ -201,7 +211,10 @@ describe('sourceTextOf', () => {
 
   it('keeps carriage returns on the lines it masks', () => {
     const raw = `---\r\nDB_PASSWORD: ${PLANTED_PASSWORD}\r\n---\r\nbody\r\n`;
-    const out = sourceTextOf({ kind: 'user-setup', path: 'x/01-USER-SETUP.md', body: 'body\r\n' }, raw);
+    const out = sourceTextOf(
+      { kind: 'user-setup', path: 'x/01-USER-SETUP.md', body: 'body\r\n', frontmatter: handlerFrontmatter('user-setup', raw) },
+      raw,
+    );
     expect(out.text.split('\n')[1]?.endsWith('\r')).toBe(true);
     expect(out.text).not.toContain(PLANTED_PASSWORD);
   });
@@ -217,5 +230,144 @@ describe('bodyStartOf', () => {
     expect(bodyStartOf('xx body yy', 'body')).toBe(3);
     expect(bodyStartOf('abc', 'zzz')).toBe(0);
     expect(bodyStartOf('abc', '')).toBe(3);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------
+// 12-06 (T-12-17): every frontmatter shape a masking handler withholds stays out of /source.
+// ---------------------------------------------------------------------------------------------------------------
+
+const PLANTED = {
+  inline: 'madeup-inline-pw-1111',
+  nextLine: 'madeup-nextline-tok-2222',
+  literal: 'madeup-block-literal-3333',
+  literalSecond: 'madeup-block-second-4444',
+  folded: 'madeup-block-folded-5555',
+  foldedList: 'madeup-folded-in-list-6666',
+};
+
+const USER_SETUP_PATH = '.planning/phases/01-first/01-USER-SETUP.md';
+const SEED_PATH = '.planning/seeds/SEED-001-cache.md';
+const THREAD_PATH = '.planning/threads/cache-thread.md';
+
+const shapeFiles: Record<string, string> = {
+  '.planning/PROJECT.md': PROJECT,
+  [USER_SETUP_PATH]: [
+    '---',
+    'phase: 01-first',
+    `DB_PASSWORD: ${PLANTED.inline}`,
+    'API_TOKEN:',
+    `  ${PLANTED.nextLine}`,
+    'SMTP_PASS: |',
+    `  ${PLANTED.literal}`,
+    `  ${PLANTED.literalSecond}`,
+    'WEBHOOK_SECRET: >-',
+    `  ${PLANTED.folded}`,
+    'service: Made-up mail',
+    '---',
+    '',
+    '# Phase 1: User Setup Required',
+    '',
+  ].join('\n'),
+  [SEED_PATH]: [
+    '---',
+    'title: Cache the lookups',
+    'NOTE: revisit the cache later',
+    `STRIPE_KEY: ${PLANTED.inline}`,
+    'API_TOKEN:',
+    `  ${PLANTED.nextLine}`,
+    'DB_PASS: |',
+    `  ${PLANTED.literal}`,
+    '---',
+    '',
+    '# Seed',
+    '',
+  ].join('\n'),
+  [THREAD_PATH]: [
+    '---',
+    'title: Cache thread',
+    'status: open',
+    `AUTH_TOKEN: ${PLANTED.inline}`,
+    'CLIENT_SECRET: >',
+    `  ${PLANTED.folded}`,
+    '---',
+    '',
+    '# Thread',
+    '',
+  ].join('\n'),
+};
+
+const shapes = await appOver(new InMemoryPlanningFilesystem(shapeFiles), '/project');
+
+async function sourceOf(app: App, path: string): Promise<{ raw: string; body: SourceTextResponse }> {
+  const res = await app.request(sourceUrl(await keyOf(app, path)));
+  expect(res.status).toBe(200);
+  const raw = await res.text();
+  return { raw, body: JSON.parse(raw) as SourceTextResponse };
+}
+
+describe('GET /api/source?route= never serves a frontmatter value a masking handler withholds (T-12-17)', () => {
+  it('a user-setup file with an inline, next-line, literal and folded value serves none of them', async () => {
+    const { raw, body } = await sourceOf(shapes.app, USER_SETUP_PATH);
+    for (const value of Object.values(PLANTED)) expect(raw, value).not.toContain(value);
+    expect(body.masked).toBe(true);
+    expect(body.text.split('\n').length).toBe(shapeFiles[USER_SETUP_PATH]!.split('\n').length);
+    expect(body.text).toContain('service: Made-up mail');
+    expect(body.text).toContain('phase: 01-first');
+    expect(body.text).toContain('# Phase 1: User Setup Required');
+  });
+
+  it('a seed keeps its NOTE: line and loses every secret-named value', async () => {
+    const { raw, body } = await sourceOf(shapes.app, SEED_PATH);
+    for (const value of Object.values(PLANTED)) expect(raw, value).not.toContain(value);
+    expect(body.text).toContain('NOTE: revisit the cache later');
+    expect(body.text.split('\n').length).toBe(shapeFiles[SEED_PATH]!.split('\n').length);
+  });
+
+  it('a thread loses an inline and a folded secret and keeps its status line', async () => {
+    const { raw, body } = await sourceOf(shapes.app, THREAD_PATH);
+    for (const value of Object.values(PLANTED)) expect(raw, value).not.toContain(value);
+    expect(body.text).toContain('status: open');
+  });
+
+  it('serves the frontmatter lines as indentation plus the marker when a withheld value survives the line mask', () => {
+    const raw = [
+      '---',
+      'phase: 01-first',
+      'notes:',
+      '  - >-',
+      '    remember DB_PASSWORD',
+      `    = ${PLANTED.foldedList}`,
+      '---',
+      'body line',
+      '',
+    ].join('\n');
+    const frontmatter = handlerFrontmatter('user-setup', raw);
+    // The folded string reads "remember DB_PASSWORD = <value>": the handler masks it, the line mask cannot see it.
+    expect(JSON.stringify(frontmatter)).not.toContain(PLANTED.foldedList);
+    const out = sourceTextOf({ kind: 'user-setup', path: USER_SETUP_PATH, body: 'body line\n', frontmatter }, raw);
+    expect(out.text).not.toContain(PLANTED.foldedList);
+    expect(out.masked).toBe(true);
+    const lines = out.text.split('\n');
+    expect(lines.length).toBe(raw.split('\n').length);
+    expect(lines.slice(1, 6)).toEqual([
+      VALUE_NOT_SHOWN_MARK,
+      VALUE_NOT_SHOWN_MARK,
+      `  ${VALUE_NOT_SHOWN_MARK}`,
+      `    ${VALUE_NOT_SHOWN_MARK}`,
+      `    ${VALUE_NOT_SHOWN_MARK}`,
+    ]);
+    expect(lines[0]).toBe('---');
+    expect(lines[6]).toBe('---');
+    expect(lines[7]).toBe('body line');
+  });
+
+  it('does not fail closed for a file whose frontmatter the line mask covers', () => {
+    const raw = `---\nDB_PASSWORD: ${PLANTED.inline}\nservice: Made-up mail\n---\nbody\n`;
+    const out = sourceTextOf(
+      { kind: 'user-setup', path: USER_SETUP_PATH, body: 'body\n', frontmatter: handlerFrontmatter('user-setup', raw) },
+      raw,
+    );
+    expect(out.text).toContain('service: Made-up mail');
   });
 });

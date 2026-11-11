@@ -550,7 +550,7 @@ export function maskProse(text: string): string {
 // ---------------------------------------------------------------------------------------------------------------
 
 /** The deepest nesting `maskData` follows; past it a value is dropped rather than kept unmasked. */
-const FRONTMATTER_DEPTH = 8;
+export const FRONTMATTER_DEPTH = 8;
 
 /** True when a frontmatter key is itself a variable name whose value must not be shown (`API_KEY: sk_live_x` parses to
  * the key `API_KEY` and the value `sk_live_x`, two strings no text scan sees together, T-11-70): any upper-snake name in
@@ -587,6 +587,74 @@ export function maskData(value: unknown, depth: number, options: MaskOptions = {
     return out;
   }
   return value;
+}
+
+/** The number of leading spaces and tabs of a line. */
+function leadingBlanks(line: string): number {
+  let at = 0;
+  while (at < line.length && isBlank(line.charCodeAt(at))) at += 1;
+  return at;
+}
+
+/** The key of a `key:` line (an optional indentation, any number of `- ` list dashes, a bare or quoted key, a colon
+ * followed by a blank or the end of the line), and the column the key starts at; null for any other line. */
+function keyLineOf(line: string): { key: string; column: number } | null {
+  let at = leadingBlanks(line);
+  while (line.charCodeAt(at) === 45 && at + 1 < line.length && isBlank(line.charCodeAt(at + 1))) {
+    at += 1;
+    while (at < line.length && isBlank(line.charCodeAt(at))) at += 1;
+  }
+  const column = at;
+  let key: string;
+  let after: number;
+  const first = line.charCodeAt(at);
+  if (first === 34 || first === 39) {
+    const close = line.indexOf(line[at], at + 1);
+    if (close < 0) return null;
+    key = line.slice(at + 1, close);
+    after = close + 1;
+  } else {
+    const colon = line.indexOf(':', at);
+    if (colon < 0) return null;
+    key = line.slice(at, colon).trimEnd();
+    after = colon;
+  }
+  while (after < line.length && isBlank(line.charCodeAt(after))) after += 1;
+  if (line.charCodeAt(after) !== 58) return null;
+  const next = after + 1;
+  if (next < line.length && !isBlank(line.charCodeAt(next))) return null;
+  return { key, column };
+}
+
+/**
+ * Raw frontmatter lines (the text between the fences, as written) through the shared mask (12-06, T-10-33, T-11-70).
+ * Every line passes through `maskValues`; a line that is `key:` for a key `maskData` also treats as holding a value
+ * (`keyHoldsValue`) additionally masks every following line that is more indented than the key, whatever follows the
+ * colon: the value on the next line, a `|` or `>` block scalar, or the continuation of a plain scalar. Each such line
+ * becomes its own indentation plus VALUE_NOT_SHOWN_MARK; a blank line stays blank. The result has as many lines as the
+ * input. One pass, linear, no regular expression.
+ */
+export function maskFrontmatterLines(lines: readonly string[], options: MaskOptions = {}): string[] {
+  const out: string[] = [];
+  let holdColumn = -1;
+  for (const line of lines) {
+    const indent = leadingBlanks(line);
+    if (holdColumn >= 0) {
+      if (indent === line.length) {
+        out.push(line);
+        continue;
+      }
+      if (indent > holdColumn) {
+        out.push(line.slice(0, indent) + VALUE_NOT_SHOWN_MARK);
+        continue;
+      }
+      holdColumn = -1;
+    }
+    out.push(maskValues(line, options));
+    const keyLine = keyLineOf(line);
+    if (keyLine !== null && keyHoldsValue(keyLine.key, options)) holdColumn = keyLine.column;
+  }
+  return out;
 }
 
 /** A run of masked text: plain text, or a value that was withheld with the name written beside it (null when no name can

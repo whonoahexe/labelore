@@ -15,7 +15,13 @@ import type { Artifact } from '../domain/model.ts';
 import { PathEscapeError } from '../planning-fs/types.ts';
 import type { PlanningFilesystem } from '../planning-fs/types.ts';
 import { MAX_TEXT_BYTES } from '../planning-repo/file-class.ts';
-import { PROSE_MASK, maskValues } from '../planning-repo/handlers/withhold-values.ts';
+import { tryParseFrontmatter } from '../planning-repo/frontmatter.ts';
+import {
+  FRONTMATTER_DEPTH,
+  PROSE_MASK,
+  VALUE_NOT_SHOWN_MARK,
+  maskFrontmatterLines,
+} from '../planning-repo/handlers/withhold-values.ts';
 import type { MaskOptions } from '../planning-repo/handlers/withhold-values.ts';
 import { parseRoutePath } from '../presentation/routes.ts';
 import type { ArtifactIndex } from './artifact-index.ts';
@@ -48,13 +54,56 @@ function isFence(line: string): boolean {
   return line === FENCE || line === `${FENCE}\r`;
 }
 
+/** The shortest raw string the residual check looks for (a shorter one would match ordinary text). */
+const RESIDUAL_MIN_LENGTH = 4;
+
+/** Every string of a parsed frontmatter value (keys included), to the depth `maskData` walks. */
+function collectStrings(value: unknown, depth: number, into: Set<string>): void {
+  if (typeof value === 'string') {
+    into.add(value);
+  } else if (Array.isArray(value)) {
+    if (depth >= FRONTMATTER_DEPTH) return;
+    for (const item of value) collectStrings(item, depth + 1, into);
+  } else if (typeof value === 'object' && value !== null && !(value instanceof Date)) {
+    if (depth >= FRONTMATTER_DEPTH) return;
+    for (const [key, item] of Object.entries(value)) {
+      into.add(key);
+      collectStrings(item, depth + 1, into);
+    }
+  }
+}
+
+function collapseWhitespace(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Fail-closed residual check (T-12-17): true when a string the handler's masked frontmatter no longer holds but the
+ * raw frontmatter does (four characters or longer) still reads in the masked frontmatter text, whitespace-collapsed
+ * so a value folded across lines is found too. The line mask then missed a shape and the frontmatter is not served.
+ */
+function withheldValueSurvives(raw: string, maskedFrontmatter: Record<string, unknown>, maskedLines: readonly string[]): boolean {
+  const rawStrings = new Set<string>();
+  collectStrings(tryParseFrontmatter(raw).data, 0, rawStrings);
+  const keptStrings = new Set<string>();
+  collectStrings(maskedFrontmatter, 0, keptStrings);
+  const haystack = collapseWhitespace(maskedLines.join('\n'));
+  for (const candidate of rawStrings) {
+    if (candidate.length < RESIDUAL_MIN_LENGTH || keptStrings.has(candidate)) continue;
+    const needle = collapseWhitespace(candidate);
+    if (needle.length >= RESIDUAL_MIN_LENGTH && haystack.includes(needle)) return true;
+  }
+  return false;
+}
+
 /**
  * The text Source serves for one artifact, from the file's raw text. config.json is served from the
- * handler's already-masked body and `raw` is ignored. For a kind in FRONTMATTER_MASK_BY_KIND each
- * frontmatter line passes through the shared mask, line by line so the line count never changes.
+ * handler's already-masked body and `raw` is ignored. For a kind in FRONTMATTER_MASK_BY_KIND the frontmatter
+ * lines pass through the shared mask (`maskFrontmatterLines`, line count kept); when a string the handler
+ * withheld still reads in the result, every frontmatter line is served as its indentation plus the marker.
  */
 export function sourceTextOf(
-  artifact: Pick<Artifact, 'kind' | 'path' | 'body'>,
+  artifact: Pick<Artifact, 'kind' | 'path' | 'body' | 'frontmatter'>,
   raw: string,
 ): { text: string; masked: boolean } {
   if (lastSegment(artifact.path) === 'config.json') return { text: artifact.body, masked: true };
@@ -62,16 +111,21 @@ export function sourceTextOf(
   if (options === undefined) return { text: raw, masked: false };
   const lines = raw.split('\n');
   if (lines.length === 0 || !isFence(lines[0] ?? '')) return { text: raw, masked: false };
+  let end = 1;
+  while (end < lines.length && !isFence(lines[end] ?? '')) end += 1;
+  const original = lines.slice(1, end);
+  const contents = original.map((line) => (line.endsWith('\r') ? line.slice(0, -1) : line));
+  let masked = maskFrontmatterLines(contents, options);
+  if (withheldValueSurvives(raw, artifact.frontmatter, masked)) {
+    masked = contents.map((line) => line.slice(0, line.length - line.trimStart().length) + VALUE_NOT_SHOWN_MARK);
+  }
   let changed = false;
-  for (let index = 1; index < lines.length; index += 1) {
-    const line = lines[index] ?? '';
-    if (isFence(line)) break;
-    const hasCarriageReturn = line.endsWith('\r');
-    const content = hasCarriageReturn ? line.slice(0, -1) : line;
-    const masked = maskValues(content, options);
-    if (masked !== content) {
+  for (let index = 0; index < original.length; index += 1) {
+    const line = original[index] ?? '';
+    const next = line.endsWith('\r') ? `${masked[index] ?? ''}\r` : (masked[index] ?? '');
+    if (next !== line) {
       changed = true;
-      lines[index] = hasCarriageReturn ? `${masked}\r` : masked;
+      lines[index + 1] = next;
     }
   }
   return { text: changed ? lines.join('\n') : raw, masked: changed };
