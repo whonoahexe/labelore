@@ -1137,15 +1137,19 @@ export function ArtifactPage({
   if (mode === 'view' && sourceTarget !== null) setSourceTarget(null);
   // Pitfall 2: a same-page link that adds ?source=1 or #L.. to the open document changes the router location
   // but never remounts this page (history.replaceState elsewhere is invisible to the router), so a new router
-  // location key re-opens Source here. State is adjusted while rendering, keyed on the location key (the
-  // react-hooks rules forbid setState in an effect); the address is only read, never written.
-  const [seenLocationKey, setSeenLocationKey] = useState(locationKey);
-  if (seenLocationKey !== locationKey) {
-    setSeenLocationKey(locationKey);
+  // location key re-opens Source here. Only a flag or a line fragment that is NEW since the last location counts: a
+  // page opened at ?source=1 and then switched to View still carries the flag, and a later heading link must not
+  // snap it back. State is adjusted while rendering, keyed on the location key (the react-hooks rules forbid
+  // setState in an effect); the address is only read, never written.
+  const [seenLocation, setSeenLocation] = useState({ key: locationKey, search, hash });
+  if (seenLocation.key !== locationKey) {
+    setSeenLocation({ key: locationKey, search, hash });
     const lineRange = hasLineHash(hash) ? parseLineHash(hash, Number.MAX_SAFE_INTEGER) : null;
-    if (hasSourceFlag(search) || lineRange !== null) {
+    const flagAdded = hasSourceFlag(search) && !hasSourceFlag(seenLocation.search);
+    const lineAdded = lineRange !== null && hash !== seenLocation.hash;
+    if (flagAdded || lineAdded) {
       setMode('source');
-      if (lineRange !== null) {
+      if (lineRange !== null && lineAdded) {
         setSourceTarget((previous) => ({
           kind: 'line',
           line: lineRange.from,

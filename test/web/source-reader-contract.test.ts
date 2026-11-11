@@ -218,12 +218,15 @@ describe('artifact-page.tsx Source targets (source-text contract)', () => {
   });
 
   it('re-opens Source from a same-page link on a new router location key, without writing the URL', () => {
-    const effect = PAGE.indexOf('seenLocationKey');
+    const effect = PAGE.indexOf('seenLocation');
     expect(effect).toBeGreaterThan(0);
     const body = PAGE.slice(effect, effect + 1500);
     expect(body).toContain("setMode('source')");
     expect(body).toContain('hasLineHash(');
     expect(body).toContain('hasSourceFlag(');
+    // WR-06: only a flag or fragment that is new since the last location re-opens Source.
+    expect(body).toContain('!hasSourceFlag(seenLocation.search)');
+    expect(body).toContain('hash !== seenLocation.hash');
     expect(PAGE.match(/replaceState\(/g)?.length).toBe(1);
   });
 });
