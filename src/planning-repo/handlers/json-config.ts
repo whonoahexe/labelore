@@ -15,7 +15,8 @@
 import { basename } from 'node:path';
 import type { ArtifactHandler, RawArtifact, ArtifactRef } from '../types.ts';
 import { tryParseJson } from '../frontmatter.ts';
-import { maskConfig, redactSecretText } from '../secret-mask.ts';
+import { hasCompoundSecretEntry, hasUnmaskedSecretKey, maskConfig, redactSecretText } from '../secret-mask.ts';
+import { VALUE_NOT_SHOWN_MARK } from './withhold-values.ts';
 
 const JSON_ARTIFACT_NAMES = new Set(['config.json', 'HANDOFF.json', 'estimation-calibration.json']);
 
@@ -35,18 +36,22 @@ export const JsonConfigHandler: ArtifactHandler = {
       // string that a later duplicate shadows is invisible to the parsed object but still sits in
       // the raw body. This also covers a file that did not parse (no object to mask at all).
       body = redactSecretText(raw.content);
-      if (!result.warning) {
+      if (result.warning) {
+        // A file that does not parse: the redactor reaches only a quoted key followed by a quoted string. When a
+        // secret key name is still written some other way (unquoted, a comment before the colon, an object value),
+        // its value cannot be told from the rest of the text, so the body is withheld whole.
+        if (hasUnmaskedSecretKey(body)) body = `${VALUE_NOT_SHOWN_MARK}\n`;
+      } else {
         const masked = maskConfig(result.data);
-        if (masked.masked) {
-          frontmatter = masked.data as Record<string, unknown>;
-          // Source is the file as written (12-06, D-01): the redacted text (same lines, secret values masked in place)
-          // stays the body when it parses back to exactly the masked data. The re-formatted view (the masked object,
-          // two-space indented, with a trailing newline) is the fail-closed fallback for a secret value
-          // `redactSecretText` cannot reach in place (one nested in an object or array).
-          const reread = tryParseJson(body);
-          const sameAsMasked = !reread.warning && JSON.stringify(reread.data) === JSON.stringify(masked.data);
-          if (!sameAsMasked) body = `${JSON.stringify(masked.data, null, 2)}\n`;
-        }
+        if (masked.masked) frontmatter = masked.data as Record<string, unknown>;
+        // Source is the file as written (12-06, D-01): the redacted text (same lines, secret values masked in place)
+        // stays the body when it parses back to exactly the masked data. The re-formatted view (the masked object,
+        // two-space indented, with a trailing newline) is the fail-closed fallback for a secret value
+        // `redactSecretText` cannot reach in place (one nested in an object or array), and for a text that holds a
+        // secret object or array that a later duplicate key shadows (it is in the text but in no parsed data).
+        const reread = tryParseJson(body);
+        const sameAsMasked = !reread.warning && JSON.stringify(reread.data) === JSON.stringify(masked.data);
+        if (!sameAsMasked || hasCompoundSecretEntry(raw.content)) body = `${JSON.stringify(masked.data, null, 2)}\n`;
       }
     }
     return {

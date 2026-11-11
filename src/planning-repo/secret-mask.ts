@@ -107,3 +107,38 @@ export function redactSecretText(raw: string): string {
     },
   );
 }
+
+const SECRET_KEY_NAME = new RegExp(String.raw`\b(?:${[...SECRET_CONFIG_KEYS].join('|')})\b`, 'gi');
+// What may follow a secret key name once `redactSecretText` has run: the closing quote, a colon, then a masked
+// string ("****..." or "(unset)") or a plain literal (a boolean, null or a number is a setting, not a secret).
+const ACCOUNTED_FOR = /^["']?\s*:\s*(?:["'](?:\*{4}|\(unset\))|true\b|false\b|null\b|-?\d)/;
+/** How far past a key name the accounted-for form is looked for; a longer gap is treated as not accounted for. */
+const ACCOUNT_WINDOW = 64;
+
+/** Fail-closed check on text `redactSecretText` has already run over: true when a secret key name (any letter case) is
+ * written in a way that left its value unmasked and not a plain literal, as in an unquoted key (`brave_search: "..."`),
+ * a comment between the key and its colon, or a value that is an object or array. */
+export function hasUnmaskedSecretKey(redacted: string): boolean {
+  for (const match of redacted.matchAll(SECRET_KEY_NAME)) {
+    const from = match.index + match[0].length;
+    if (!ACCOUNTED_FOR.test(redacted.slice(from, from + ACCOUNT_WINDOW))) return true;
+  }
+  return false;
+}
+
+// A secret key, then an object or an array: the shape `redactSecretText` cannot mask in place.
+const COMPOUND_SECRET_ENTRY = new RegExp(
+  String.raw`(?:"(${DOUBLE_BODY})"|'(${SINGLE_BODY})')\s*:\s*[\[{]`,
+  'g',
+);
+
+/** True when the text holds a secret key (quoted, at any depth) whose value is an object or an array. For a text that
+ * parses, JSON.parse keeps only the last of a duplicated key, so such a value shadowed by a later duplicate is in the
+ * text but in no parsed data: the text then cannot be shown as written. */
+export function hasCompoundSecretEntry(raw: string): boolean {
+  for (const match of raw.matchAll(COMPOUND_SECRET_ENTRY)) {
+    const key = match[1] !== undefined ? unescapeQuoted(match[1], '"') : unescapeQuoted(match[2] ?? '', "'");
+    if (SECRET_CONFIG_KEYS.has(key)) return true;
+  }
+  return false;
+}

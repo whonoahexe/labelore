@@ -137,6 +137,26 @@ describe('config.json masking edge cases (SEC-04)', () => {
     }
   });
 
+  it.each([
+    ['an object that a later duplicate key shadows', `{"brave_search": {"api": "${SECRET}"}, "brave_search": true}\n`],
+    ['an array that a later duplicate key shadows', `{"brave_search": ["${SECRET}"], "brave_search": false}\n`],
+    ['an unquoted key in a file that does not parse', `{brave_search: "${SECRET}",}\n`],
+    ['a comment between the key and its colon', `{\n  "brave_search" /*x*/ : "${SECRET}",\n}\n`],
+  ])('ships no planted value for %s (WR-01)', async (_name, text) => {
+    const { app } = await appFor({ '.planning/config.json': text });
+
+    const key = await keyFor(app, '.planning/config.json');
+    expect(await pagePayload(app, key)).not.toContain(SECRET);
+    expect(await pagePayload(app, key)).not.toContain(FRAGMENT);
+    expect(await textOf(app, `/api/source?route=${encodeURIComponent(key)}`)).not.toContain(FRAGMENT);
+    expect(await textOf(app, '/api/presentation')).not.toContain(SECRET);
+    for (const query of ['brave_search', FRAGMENT]) {
+      const found = await search(app, query);
+      expect(found).not.toContain(SECRET);
+      expect(found).not.toContain(FRAGMENT);
+    }
+  });
+
   it('returns HANDOFF.json exactly as before (D-09 scopes masking to config.json) and keeps the GSD-internal estimation-calibration.json out of the index (D-11)', async () => {
     const handoff = `{"brave_search": "${SECRET}", "note": "handoff"}\n`;
     const calibration = `{"firecrawl": "${SECRET}"}\n`;
