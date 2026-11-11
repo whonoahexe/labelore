@@ -444,6 +444,39 @@ describe('parseError: a .json file that does not parse is located by position on
   });
 });
 
+describe('a masked config.json keeps its layout as written in Source (D-01, T-12-34)', () => {
+  it('serves the file with the same lines and the secret masked in place', async () => {
+    const config = [
+      '{',
+      '    "mode": "interactive",',
+      '    "granularity": "standard",',
+      '    "commit_docs": true,',
+      '    "parallelization": true,',
+      '    "exa_search": false,',
+      `    "brave_search": "${BRAVE_VALUE}",`,
+      '    "workflow": { "research": true }',
+      '}',
+      '',
+    ].join('\n');
+    const { app } = await configApp(config);
+    const { raw, body } = await sourceOf(app, '.planning/config.json');
+    expect(raw).not.toContain(BRAVE_VALUE);
+    expect(body.masked).toBe(true);
+    expect(body.parseError).toBeNull();
+    const lines = body.text.split('\n');
+    expect(lines).toHaveLength(config.split('\n').length);
+    expect(lines[6]).toBe('    "brave_search": "****cdef",');
+    expect(lines[7]).toBe('    "workflow": { "research": true }');
+  });
+
+  it('serves the re-formatted masked JSON when the secret is nested and cannot be masked in place', async () => {
+    const { app } = await configApp(`{"mode":"x","brave_search":{"token":"${BRAVE_VALUE}"}}`);
+    const { raw, body } = await sourceOf(app, '.planning/config.json');
+    expect(raw).not.toContain(BRAVE_VALUE);
+    expect(body.text).toBe('{\n  "mode": "x",\n  "brave_search": {\n    "token": "****cdef"\n  }\n}\n');
+  });
+});
+
 /** A hand-made project snapshot over one in-memory filesystem, for sizes, races and read errors. */
 function makeArtifact(overrides: Partial<Artifact> & { path: string }): Artifact {
   return {
