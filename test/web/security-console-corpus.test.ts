@@ -102,6 +102,14 @@ const PINNED: Record<string, Pinned> = {
     disposition: { mitigate: 32, accept: 16 }, columns: { S: 4, T: 29, R: 2, I: 4, D: 9 }, boundaries: 20,
     destinations: 5, singles: 10, stores: 0, risks: 0, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
+  // 11: awk over the 79 `| T-` rows of the register (the file's own lead line says 118 rows but the table holds 79;
+  // 79 is what is counted), the 7 Trust Boundaries rows (none has an arrow, so all 7 are at-rest), the 6 `| AR-` rows,
+  // the 2 dated audit rows and the 4 checked Sign-Off lines.
+  'LB:phases/11-exploration-handoff-report-and-workstream-pages/11-SECURITY.md': {
+    rows: 79, open: 0, openLow: 0, closed: 79, severity: { high: 8, medium: 35, low: 36 },
+    disposition: { mitigate: 74, accept: 5 }, columns: { S: 5, T: 30, R: 8, I: 22, D: 9, E: 5 }, boundaries: 7,
+    destinations: 0, singles: 0, stores: 7, risks: 6, audit: 2, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
+  },
   'LB:phases/07-recognised-files-and-readable-urls/07-SECURITY.md': {
     rows: 43, open: 0, openLow: 0, closed: 43, severity: { high: 9, medium: 17, low: 17 },
     disposition: { mitigate: 31, accept: 12 }, columns: { S: 6, T: 19, R: 2, I: 10, D: 5, E: 1 }, boundaries: 18,
