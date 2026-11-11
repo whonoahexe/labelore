@@ -695,4 +695,11 @@ describe('the reader wires selection through the selection module only', () => {
   it('never makes the file text a selector or a pattern', () => {
     expect(READER).not.toContain('new RegExp(');
   });
+
+  it('keys the body by the route and the text, so per-file state never carries across files (WR-04)', () => {
+    expect(READER).toMatch(/<SourceBody\s+key=\{`\$\{route\}:\$\{textSignature\(query\.data\.text\)\}`\}/);
+    const PAIR = readFileSync(new URL('../../src/web/pages/plan-pair-page.tsx', import.meta.url), 'utf8');
+    expect(PAIR).toContain('<ArtifactPage key={planUrl}');
+    expect(PAIR).not.toContain('key="plan"');
+  });
 });

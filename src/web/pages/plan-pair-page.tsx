@@ -111,6 +111,6 @@ export function PlanPairPage({
   // The PLAN and SUMMARY tabs are the same per-type pages their artifact URLs open (the task
   // navigator, the run view), keyed by route so View/Source mode resets between them.
   if (active === 'summary' && pair.summaryRoute)
-    return <ArtifactPage key="summary" route={pair.summaryRoute} switcher={switcher} />;
-  return <ArtifactPage key="plan" route={planUrl} switcher={switcher} />;
+    return <ArtifactPage key={pair.summaryRoute} route={pair.summaryRoute} switcher={switcher} />;
+  return <ArtifactPage key={planUrl} route={planUrl} switcher={switcher} />;
 }

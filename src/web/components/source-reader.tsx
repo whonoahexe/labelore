@@ -725,6 +725,17 @@ function SourceBody({
   );
 }
 
+/** A short signature of a text (FNV-1a over its UTF-16 units, with its length): a body keyed on it starts clean when
+ * the file's text changes or another file opens, and keeps its folds, selection and wrap when a refetch returns the
+ * same text. */
+function textSignature(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let at = 0; at < text.length; at += 1) {
+    hash = Math.imul(hash ^ text.charCodeAt(at), 0x01000193);
+  }
+  return `${text.length}.${(hash >>> 0).toString(36)}`;
+}
+
 export function SourceReader({
   route,
   name,
@@ -792,6 +803,7 @@ export function SourceReader({
   if (query.data.text === '') return notice('empty');
   return (
     <SourceBody
+      key={`${route}:${textSignature(query.data.text)}`}
       text={query.data.text}
       masked={query.data.masked}
       bodyStart={query.data.bodyStart}
