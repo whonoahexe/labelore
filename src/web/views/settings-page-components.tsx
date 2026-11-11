@@ -249,8 +249,9 @@ function Panel({ panel }: { panel: SettingsPanel }): React.JSX.Element {
       <PanelHeader panel={panel} />
       {panel.rows.length > 0 ? (
         <ul className="view-settings-rows">
-          {panel.rows.map((row) => (
-            <Row key={row.key} row={row} panel={panel} />
+          {panel.rows.map((row, index) => (
+            // A flat 'a.b' key and a nested a.b can sit in one panel with the same path, so the position is part of the key.
+            <Row key={`${index}:${row.key}`} row={row} panel={panel} />
           ))}
         </ul>
       ) : null}

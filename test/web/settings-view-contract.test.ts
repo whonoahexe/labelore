@@ -385,3 +385,16 @@ describe('the unreadable config.json (12-09 Task 3)', () => {
     expect(source).toContain('source-notice-lead');
   });
 });
+
+describe('rows that share one path (WR-05)', () => {
+  it('composes two Not recognised rows for a flat dotted key and the nested key of the same path', () => {
+    const model = ready({ 'workflow.foo': 1, workflow: { foo: 2 } });
+    const unknown = model.panels.find((panel) => panel.kind === 'not-recognised');
+    expect(unknown?.rows.map((row) => row.key)).toEqual(['workflow.foo', 'workflow.foo']);
+  });
+
+  it('keys each panel row by its position as well as its path, so two rows with one path never collide', () => {
+    const source = readFileSync(fileURLToPath(new URL('../../src/web/views/settings-page-components.tsx', import.meta.url)), 'utf8');
+    expect(source).toContain('<Row key={`${index}:${row.key}`}');
+  });
+});
