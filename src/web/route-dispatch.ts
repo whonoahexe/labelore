@@ -47,6 +47,18 @@ function redirectTo(target: string): RouteOutcome {
   return { kind: 'redirect', to: target };
 }
 
+/** A redirect target with the literal `?source=1` flag added: before any fragment, `?` or `&` by whether the target
+ * already holds a query. Only the flag is appended, nothing from the request (T-12-14); redirectTo still guards the
+ * result. A target that already carries the flag is returned as it is. */
+function withSourceFlag(target: string): string {
+  const hashAt = target.indexOf('#');
+  const base = hashAt === -1 ? target : target.slice(0, hashAt);
+  const fragment = hashAt === -1 ? '' : target.slice(hashAt);
+  const queryAt = base.indexOf('?');
+  if (queryAt !== -1 && hasSourceFlag(base.slice(queryAt))) return target;
+  return `${base}${queryAt === -1 ? '?' : '&'}source=1${fragment}`;
+}
+
 /** An old encoded address (`/milestones/m~...`, `/artifacts/a~...`): a redirect to the readable address it
  * stands for, or the not-found outcome when the payload has nothing there (D-13). */
 function legacyOutcome(pathname: string, search: string, presentation: ProjectPresentation): RouteOutcome {
@@ -232,7 +244,8 @@ export function resolveProjectRoute(
       const alias = Object.hasOwn(presentation.routeAliases, route.url)
         ? presentation.routeAliases[route.url]
         : undefined;
-      if (alias !== undefined) return redirectTo(alias);
+      // Phase 12 (D-05): a Source line link keeps opening Source through the redirect, so the literal flag rides along.
+      if (alias !== undefined) return redirectTo(hasSourceFlag(search) ? withSourceFlag(alias) : alias);
       // 09 D-01: a root document with a designed page redirects there (replacing the history entry),
       // unless its own address carries `?source=1`. The target is a value of the fixed table in
       // root-redirects.ts and passes redirectTo (T-09-01). The flag only skips the redirect for an
