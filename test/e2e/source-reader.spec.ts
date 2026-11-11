@@ -20,9 +20,15 @@ async function pathOf(pathIncludes: string): Promise<string> {
   return artifact.path;
 }
 
+/** A Lendshed file's one URL in Source: artifactUrl plus ?source=1 and an optional fragment. */
+async function sourceUrl(pathIncludes: string, fragment: string): Promise<string> {
+  return `${await artifactUrl(FIXTURE_BASE_URL, await pathOf(pathIncludes))}?source=1${fragment}`;
+}
+
 /** Opens a Lendshed file in Source (the file's one URL plus ?source=1, and an optional fragment). */
 async function openSource(page: Page, pathIncludes: string, fragment = ''): Promise<void> {
-  await page.goto(`${await artifactUrl(FIXTURE_BASE_URL, await pathOf(pathIncludes))}?source=1${fragment}`);
+  const url = await sourceUrl(pathIncludes, fragment);
+  await page.goto(url);
   await page.locator('.source-reader .source-row').first().waitFor({ state: 'visible' });
 }
 
