@@ -20,6 +20,7 @@ import { trackRouteChunk } from './components/route-chunk-store.ts';
 import { Link, ProjectScopeProvider, useProjectScope } from './nav.tsx';
 import { InvalidProjectScreen } from './pages/invalid-project-screen.tsx';
 import { NotFoundPage } from './pages/not-found-page.tsx';
+import { SettingsMissingPage } from './pages/settings-missing-page.tsx';
 import { ProjectLayout } from './pages/project-layout.tsx';
 import { decodeAddress, splitProjectPath, splitScope, withProjectScope } from './project-path.ts';
 import { projectKey, projectsKey } from './query-keys.ts';
@@ -150,6 +151,8 @@ function ProjectRouteSwitch({
       return <PlanPairPage planUrl={outcome.planUrl} active={outcome.active} />;
     case 'document':
       return <DocumentRoute url={outcome.url} />;
+    case 'settings-missing':
+      return <SettingsMissingPage slug={presentation.projectSlug} />;
     case 'redirect':
       return (
         <Navigate replace to={redirectLocation(presentation.projectSlug, scope, outcome.to, location.hash)} />

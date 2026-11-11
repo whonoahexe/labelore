@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChartLine, LayoutDashboard, ListChecks, Map, PencilRuler } from 'lucide-react';
+import { ChartLine, LayoutDashboard, ListChecks, Map, PencilRuler, Settings } from 'lucide-react';
 import { Outlet } from 'react-router';
 import type { ProjectListEntry } from '../../presentation/project-list.ts';
 import { formatProjectMeta } from '../../presentation/shell-header.ts';
@@ -9,7 +9,7 @@ import { projectMapState } from '../../presentation/project-map-state.ts';
 import { projectHasResearch } from '../../presentation/project-research-files.ts';
 import { projectHasSketches } from '../../presentation/sketches.ts';
 import { fetchPresentation } from '../api.ts';
-import { NavLink, useProjectScope } from '../nav.tsx';
+import { NavLink, UnscopedLink, useProjectLocation, useProjectScope } from '../nav.tsx';
 import { projectKey } from '../query-keys.ts';
 import { LabeloreMark } from './labelore-mark.tsx';
 import { ProjectSwitcher } from './project-switcher.tsx';
@@ -19,6 +19,7 @@ import { SearchDialog } from './search-field.tsx';
 import { SidebarDrawer } from './sidebar-drawer.tsx';
 import { SnapshotStatus } from './snapshot-status.tsx';
 import { ThemeToggle } from './theme-toggle.tsx';
+import { Button } from './ui/button.tsx';
 import { ToastProvider } from './ui/toast.tsx';
 
 function navigationClass({ isActive }: { isActive: boolean }): string {
@@ -46,6 +47,10 @@ export function AppShell({
   children?: React.ReactNode;
 }): React.JSX.Element {
   const scope = useProjectScope();
+  // D-11: the gear is the project's own /settings, never a workstream's config.json, so it is lit only when no
+  // scope is open and the project pathname is /settings.
+  const projectPathname = useProjectLocation().pathname;
+  const onSettings = scope === null && projectPathname === '/settings';
   const presentation = useQuery({
     queryKey: projectKey(project.slug, scope, 'presentation'),
     queryFn: () => fetchPresentation(project.slug, scope),
@@ -137,6 +142,17 @@ export function AppShell({
               phase={presentation.isPending ? 'pending' : presentation.isError ? 'error' : 'ready'}
             />
             <SearchDialog />
+            <Button
+              aria-current={onSettings ? 'page' : undefined}
+              aria-label="Project settings"
+              nativeButton={false}
+              render={<UnscopedLink to="/settings" />}
+              size="icon-sm"
+              variant="ghost"
+            >
+              <Settings aria-hidden="true" />
+              <span className="sr-only">Project settings</span>
+            </Button>
             <ThemeToggle />
           </div>
         </header>

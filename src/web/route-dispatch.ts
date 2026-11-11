@@ -34,6 +34,7 @@ export type RouteOutcome =
   | { kind: 'plan-pair'; planUrl: string; active: 'plan' | 'summary' }
   | { kind: 'document'; url: string; artifactPath: string }
   | { kind: 'archive-block'; page: 'roadmap' | 'traceability'; version: string }
+  | { kind: 'settings-missing' }
   | { kind: 'redirect'; to: string }
   | { kind: 'not-found' };
 
@@ -44,6 +45,18 @@ const NOT_FOUND: RouteOutcome = { kind: 'not-found' };
 function redirectTo(target: string): RouteOutcome {
   if (!target.startsWith('/') || target.startsWith('//') || target.startsWith('/\\')) return NOT_FOUND;
   return { kind: 'redirect', to: target };
+}
+
+/** A redirect target with the literal `?source=1` flag added: before any fragment, `?` or `&` by whether the target
+ * already holds a query. Only the flag is appended, nothing from the request (T-12-14); redirectTo still guards the
+ * result. A target that already carries the flag is returned as it is. */
+function withSourceFlag(target: string): string {
+  const hashAt = target.indexOf('#');
+  const base = hashAt === -1 ? target : target.slice(0, hashAt);
+  const fragment = hashAt === -1 ? '' : target.slice(hashAt);
+  const queryAt = base.indexOf('?');
+  if (queryAt !== -1 && hasSourceFlag(base.slice(queryAt))) return target;
+  return `${base}${queryAt === -1 ? '?' : '&'}source=1${fragment}`;
 }
 
 /** An old encoded address (`/milestones/m~...`, `/artifacts/a~...`): a redirect to the readable address it
@@ -221,11 +234,18 @@ export function resolveProjectRoute(
         const key = indexesLandingKey(presentation);
         return key === null ? NOT_FOUND : redirectTo(key);
       }
+      // Phase 12 (D-09, D-12): the header gear always leads to /settings, config.json's one address. A project with no
+      // root config.json has no artifact there, so the address answers its own honest page instead of the one
+      // not-found; every other miss stays not-found, so this reveals no file (T-12-15).
+      if (route.url === '/settings' && documentOutcome(route.url, presentation) === null) {
+        return { kind: 'settings-missing' };
+      }
       // D-03: a live alias has one address, the file's own.
       const alias = Object.hasOwn(presentation.routeAliases, route.url)
         ? presentation.routeAliases[route.url]
         : undefined;
-      if (alias !== undefined) return redirectTo(alias);
+      // Phase 12 (D-05): a Source line link keeps opening Source through the redirect, so the literal flag rides along.
+      if (alias !== undefined) return redirectTo(hasSourceFlag(search) ? withSourceFlag(alias) : alias);
       // 09 D-01: a root document with a designed page redirects there (replacing the history entry),
       // unless its own address carries `?source=1`. The target is a value of the fixed table in
       // root-redirects.ts and passes redirectTo (T-09-01). The flag only skips the redirect for an
