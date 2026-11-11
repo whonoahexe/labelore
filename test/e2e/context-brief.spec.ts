@@ -71,7 +71,7 @@ test.describe('CONTEXT brief — LB v1.1/05 (tracer)', () => {
     await expect(page.locator('.artifact-heading .eyebrow')).toHaveText(/^Context/);
   });
 
-  test('toggling to Source shows the full document and back restores the brief', async ({ page, baseURL }) => {
+  test('toggling to Source shows the raw source and back restores the brief', async ({ page, baseURL }) => {
     const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '05-per-type-document-views/05-CONTEXT.md'));
     await page.goto(url);
     await page.locator('#context-boundary').waitFor({ state: 'visible' });
@@ -79,7 +79,7 @@ test.describe('CONTEXT brief — LB v1.1/05 (tracer)', () => {
     expect(viewBlocksBefore).toBeGreaterThan(0);
 
     await page.getByRole('button', { name: 'Source', exact: true }).click();
-    await expect(page.locator('.artifact-document')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Source of 05-CONTEXT.md' })).toBeVisible();
     await expect(page.locator('.view-block')).toHaveCount(0);
 
     await page.getByRole('button', { name: 'View', exact: true }).click();

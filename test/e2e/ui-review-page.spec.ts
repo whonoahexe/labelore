@@ -10,6 +10,7 @@ import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
+import { expectLandedOn, watchSourceHits } from './source-landing.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -116,16 +117,16 @@ test.describe('UI review page', () => {
       expect(radii.every((r) => r === '0px'), selector).toBe(true);
     }
 
-    // The source-only strip: three buttons; the scores table lands in Source mode at its heading.
+    // The source-only strip: three buttons; the scores table lands in the raw Source reader on its heading row.
     const strip = page.locator('#ui-review-source-only');
     await expect(strip.getByRole('button')).toHaveCount(3);
     await expect(strip.getByRole('button', { name: 'Frontmatter', exact: true })).toBeVisible();
     await expect(strip.getByRole('button', { name: 'Audit method notes', exact: true })).toBeVisible();
+    await watchSourceHits(page);
     await strip.getByRole('button', { name: 'Pillar Scores table', exact: true }).click();
-    await expect(page.locator('.artifact-document')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Source of 05-UI-REVIEW.md' })).toBeVisible();
     await expect(page.locator('.view-ui-review-tab')).toHaveCount(0);
-    const heading = page.locator('.artifact-document h2', { hasText: 'Pillar Scores' });
-    await expect.poll(() => inViewport(page, heading)).toBe(true);
+    await expectLandedOn(page, '## Pillar Scores');
 
     // Back to View restores the page.
     await page.getByRole('button', { name: 'View', exact: true }).click();
