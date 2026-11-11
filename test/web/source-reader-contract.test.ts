@@ -34,10 +34,8 @@ describe('SourceNotice', () => {
       const html = noticeOf(kind);
       expect(html).toContain(lead);
       expect(html).toContain(second);
-      expect(html).toContain('source-notice');
-      expect(html).toContain('role="status"');
-      expect(html).not.toContain('destructive');
-      expect(html).not.toContain('warning');
+      // Quiet tone only: the aside's own class list is exactly the shared notice plus its own name.
+      expect(html).toContain('<aside class="notice source-notice" role="status">');
       expect(html).toContain('Copy path');
     });
   }

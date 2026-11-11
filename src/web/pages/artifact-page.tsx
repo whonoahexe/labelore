@@ -1460,6 +1460,8 @@ export function ArtifactPage({
   // phase name in the H1. The CONTEXT brief's eyebrow already carries the phase, so it only takes
   // the stripped H1.
   const kindLabel = humanizeKind(artifact.kind);
+  // The presentation artifact this page shows, by path: its class and size decide whether Source has text.
+  const shownFile = presentationQuery.data?.artifacts.find((candidate) => candidate.path === artifact.path);
   const coverTitle = layout || brief ? splitPhaseTitle(artifact.title, kindLabel) : null;
   // The RESEARCH briefing's cover replaces the header's copy in View mode only; Source mode keeps
   // the plain header (the same rule the CONTEXT brief follows).
@@ -1553,6 +1555,27 @@ export function ArtifactPage({
     (domVerifyPageCover ? domVerifyHeaderProps(domVerifyPageCover, artifact.title) : null) ??
     (reviewsPageCover ? reviewsHeaderProps(reviewsPageCover, artifact.title) : null) ??
     (fixCover ? ledgerHeaderProps(fixCover, artifact.title) : null);
+  // Phase 12 (D-06): in Source the header names the file itself - its kind, its name - and nothing else: no
+  // lede, no header copy-path icon (the Source bar carries Copy path), no meta row, no cover. Spread after
+  // every cover override, so Source wins.
+  const sourceHeader: {
+    eyebrow?: string;
+    title?: string;
+    lead?: null;
+    path?: null;
+    meta?: undefined;
+    cover?: undefined;
+  } | null =
+    mode === 'source'
+      ? {
+          eyebrow: kindLabel,
+          title: fileNameOf(artifact.path),
+          lead: null,
+          path: null,
+          meta: undefined,
+          cover: undefined,
+        }
+      : null;
   return (
     <main className="artifact-page page-stack">
         {switcher}
@@ -1625,11 +1648,12 @@ export function ArtifactPage({
           </>
         }
         {...(headerOverride ?? {})}
+        {...(sourceHeader ?? {})}
       >
-        {viewAvailable ? <DocumentViewToggle mode={mode} onChange={setMode} /> : null}
+        <DocumentViewToggle mode={mode} onChange={setMode} />
       </ArtifactHeader>
 
-      {panels.length > 0 ? (
+      {panels.length > 0 && mode === 'view' ? (
         // The UI-SPEC page's cover and shadcn card already carry the frontmatter facts, and the
         // Winner lists the frontmatter as source-only — View mode hides the disclosure (Source
         // mode keeps it). The UAT page's cover carries its facts and its "In the source only"
@@ -1719,10 +1743,19 @@ export function ArtifactPage({
         </details>
       ) : null}
 
-      {!recognized ? <UnrecognizedNotice kind={artifact.kind} /> : null}
+      {!recognized && mode === 'view' ? <UnrecognizedNotice kind={artifact.kind} /> : null}
 
       {mode === 'source' ? (
-        <SourceReader route={route} name={fileNameOf(artifact.path)} target={null} />
+        <SourceReader
+          route={route}
+          name={fileNameOf(artifact.path)}
+          path={artifact.path}
+          {...(shownFile?.realPath === undefined ? {} : { realPath: shownFile.realPath })}
+          fileClass={shownFile?.fileClass ?? null}
+          sizeBytes={shownFile?.sizeBytes ?? null}
+          target={null}
+          onOpenView={() => setMode('view')}
+        />
       ) : layout && mode === 'view' ? (
         <div className="document-reader-layout" data-outline="false">
           <article className="document-canvas" aria-label={`${artifact.title} document`}>

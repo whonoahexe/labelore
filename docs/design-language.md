@@ -1403,6 +1403,12 @@ Sketch 038 C (quick-261024-vty): places on the left, the chosen place's files on
 | `source-row` | Source reader | One line of the file: `id="L{n}"`; `data-selected` marks a line named by a line fragment and `data-source-hit` the line an "In the source only" link landed on |
 | `source-line-number` | Source reader | The line-number link to `#L{n}` (`aria-label="Line {n}"`) at the start of a row |
 | `source-line-text` | Source reader | The line's text, drawn as plain text and never as markup |
+| `source-bar` | Source reader | The `role="toolbar"` row above the pane that holds the labelled Copy path and Copy contents buttons |
+| `source-notice` | Source reader | The quiet `notice` shown in place of the reader for a file with no text (image, image over the cap, binary, large, listed) and for an empty file: nothing failed, so never destructive or warning |
+| `source-notice-glyph` | Source reader | The file or image glyph box at the head of the notice (`aria-hidden`) |
+| `source-notice-lead` | Source reader | The notice's one semibold sentence |
+| `source-notice-facts` | Source reader | The notice's facts row: type, size and the limit where there is one |
+| `source-notice-actions` | Source reader | The notice's action row: Open View (images only) and Copy path |
 
 ### Sketches
 
