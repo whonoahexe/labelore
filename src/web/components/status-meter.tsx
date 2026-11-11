@@ -30,8 +30,9 @@ export interface StatusMeterProps {
   label: string;
   /** Words drawn above the squares; hidden from assistive technology because `label` already says them. */
   caption?: ReactNode;
-  /** `large` is the page-level meter; the default is the in-line one. */
-  size?: 'default' | 'large';
+  /** `large` is the page-level meter; the default is the in-line one; `compact` draws narrow 6 by 10 squares so a 40-square meter
+   * keeps to one line in a panel header (the settings page's group panels, Phase 12). */
+  size?: 'default' | 'large' | 'compact';
 }
 
 /** The squares to draw and how many of them are filled: one per item up to the cap, else one per bucket. */

@@ -6,8 +6,13 @@
 // foot. The page makes no request, with one exception: the unreadable state asks /source for the parser's position (a GET, the
 // same cached query the Source reader uses). Every string is author text rendered as plain React text - never React's raw-HTML
 // injection prop (T-12-29) - and nothing here is an input, a form or an acting control: no pointer cursor, no focus stop, no hover.
-import { ChevronRight, Lock } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { ChevronRight, Lock, TriangleAlert } from 'lucide-react';
+import type { SourceParseError } from '../../server/source-text.ts';
 import { StatusMeter } from '../components/status-meter.tsx';
+import { Button } from '../components/ui/button.tsx';
+import { useProjectScope, useProjectSlug } from '../nav.tsx';
+import { fetchSource, sourceKey } from '../source/source-api.ts';
 import { highlightLine } from '../source/source-highlight.ts';
 import type { ToneToken } from '../source/source-highlight.ts';
 import type { ComposedSettings, SettingsPanel, SettingsRow, SettingsValue } from './settings-page.ts';
@@ -208,6 +213,7 @@ function PanelHeader({ panel }: { panel: SettingsPanel }): React.JSX.Element {
           total={panel.total}
           items={Array.from({ length: panel.total }, (_unused, index) => index < panel.setCount)}
           label={label}
+          size="compact"
         />
       ) : null}
       <span className="view-settings-panel-meta">{panel.kind === 'group' ? label : `${panel.setCount} keys`}</span>
@@ -253,14 +259,81 @@ function Panel({ panel }: { panel: SettingsPanel }): React.JSX.Element {
   );
 }
 
-export function SettingsView({ model }: { model: ComposedSettings }): React.JSX.Element {
-  if (model.state === 'unreadable') {
-    return (
-      <aside className="notice" role="status">
-        <p>The file isn&apos;t valid JSON, so no settings are shown.</p>
-      </aside>
-    );
-  }
+// ---------------------------------------------------------------------------------------------------------
+// The unreadable file
+// ---------------------------------------------------------------------------------------------------------
+
+/** The words for the closed set of reasons the raw-text route answers with (it never sends the parser's own message, which can quote the file). */
+const REASON_WORDS: Readonly<Record<SourceParseError['reason'], string>> = {
+  'unexpected-end': 'the file ends before the JSON does',
+  'unexpected-character': 'an unexpected character',
+  'expected-value': 'a value or a key name was expected',
+  'not-valid': 'this is not valid JSON',
+};
+
+/** The notice for a config.json that is not valid JSON: the page's one error look. The sentence names the line when the parser gave
+ * one, and the button switches to Source with that line selected (with no line it just opens Source). Pure, so the copy is testable. */
+export function UnreadableNotice({
+  parseError,
+  onOpenSourceAt,
+}: {
+  parseError: SourceParseError | null;
+  onOpenSourceAt: (line: number | null) => void;
+}): React.JSX.Element {
+  const line = parseError?.line ?? null;
+  return (
+    <aside className="notice source-notice view-settings-unreadable" role="status">
+      <span className="source-notice-glyph" aria-hidden="true">
+        <TriangleAlert />
+      </span>
+      <span className="status-chip" data-tone="destructive">
+        {"Can't read config.json"}
+      </span>
+      <p className="source-notice-lead">The file isn&apos;t valid JSON, so no settings are shown.</p>
+      {line !== null && parseError !== null ? (
+        <p>
+          The parser stopped at line {line}: {REASON_WORDS[parseError.reason]}.
+        </p>
+      ) : null}
+      <div className="source-notice-actions">
+        <Button type="button" size="xs" variant="outline" onClick={() => onOpenSourceAt(line)}>
+          {line === null ? 'Open Source' : `Open Source at line ${line}`}
+        </Button>
+      </div>
+    </aside>
+  );
+}
+
+/** Asks the raw-text route (a GET, the Source reader's own cached query) where the parser stopped, then draws the notice. */
+function SettingsUnreadable({
+  route,
+  onOpenSourceAt,
+}: {
+  route: string;
+  onOpenSourceAt: (line: number | null) => void;
+}): React.JSX.Element {
+  const slug = useProjectSlug() ?? '';
+  const scope = useProjectScope();
+  const text = useQuery({
+    queryKey: sourceKey(slug, scope, route),
+    queryFn: () => fetchSource(slug, scope, route),
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+  return <UnreadableNotice parseError={text.data?.parseError ?? null} onOpenSourceAt={onOpenSourceAt} />;
+}
+
+export function SettingsView({
+  model,
+  route,
+  onOpenSourceAt,
+}: {
+  model: ComposedSettings;
+  /** The page's own address: the key the raw-text route answers for. */
+  route: string;
+  /** Switches the page to Source; `line` is where the parser stopped, or null for none. */
+  onOpenSourceAt: (line: number | null) => void;
+}): React.JSX.Element {
+  if (model.state === 'unreadable') return <SettingsUnreadable route={route} onOpenSourceAt={onOpenSourceAt} />;
   return (
     <div className="view-settings-page">
       <Counts counts={model.counts} />

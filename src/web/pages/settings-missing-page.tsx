@@ -7,6 +7,7 @@ import { fetchPresentation } from '../api.ts';
 import { ArtifactHeader } from '../components/artifact-header.tsx';
 import { useProjectScope } from '../nav.tsx';
 import { projectKey } from '../query-keys.ts';
+import { settingsHeaderProps } from '../views/settings-page-components.tsx';
 
 export function SettingsMissingPage({ slug }: { slug: string }): React.JSX.Element {
   const scope = useProjectScope();
@@ -21,14 +22,14 @@ export function SettingsMissingPage({ slug }: { slug: string }): React.JSX.Eleme
         crumbs={[{ label: projectName, to: '/' }, { label: 'Settings' }]}
         eyebrow="Settings"
         title="Project settings"
-        lead={null}
+        lead={settingsHeaderProps(projectName).lead}
         path={null}
       />
-      <aside className="notice" role="status">
-        <FileText aria-hidden="true" />
-        <p>
-          <strong>This project has no settings file.</strong>
-        </p>
+      <aside className="notice source-notice" role="status">
+        <span className="source-notice-glyph" aria-hidden="true">
+          <FileText />
+        </span>
+        <p className="source-notice-lead">This project has no settings file.</p>
         <p>
           There is no <code>.planning/config.json</code>, so GSD runs on its built-in defaults. Labelore doesn&apos;t
           show those defaults; running <code>/gsd-settings</code> writes the file.

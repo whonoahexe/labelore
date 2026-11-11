@@ -339,9 +339,9 @@ describe('the unreadable config.json (12-09 Task 3)', () => {
 
   it('names the line and the reason words, and the button opens Source at that line', () => {
     const out = html({ line: 14, column: 3, reason: 'unexpected-character' });
-    expect(out).toContain("Can't read config.json");
+    expect(out).toContain('Can&#x27;t read config.json</span>');
     expect(out).toContain('data-tone="destructive"');
-    expect(out).toContain("The file isn&#x27;t valid JSON, so no settings are shown.");
+    expect(out).toContain('The file isn&#x27;t valid JSON, so no settings are shown.');
     expect(out).toContain('The parser stopped at line 14: an unexpected character.');
     expect(out).toContain('Open Source at line 14');
     expect(out).toContain('class="source-notice-glyph"');

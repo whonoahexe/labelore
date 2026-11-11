@@ -30406,6 +30406,15 @@ button.view-codebase-mark:hover {
   --status-square-size: var(--space-5);
 }
 
+.status-meter[data-size='compact'] .status-meter-cells {
+  gap: var(--space-0-5);
+}
+
+.status-meter[data-size='compact'] .status-meter-sq {
+  width: var(--space-1-5);
+  height: var(--space-2-5);
+}
+
 @media (max-width: 42rem) {
   .status-meter[data-size='large'] .status-meter-cells {
     gap: var(--space-0-5);
@@ -39308,7 +39317,7 @@ a.view-workstreams-file:hover {
 
 .view-settings-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) fit-content(60%);
   align-items: center;
   gap: var(--space-1) var(--space-4);
   padding: var(--space-2-5) var(--space-4);
@@ -39535,6 +39544,18 @@ a.view-workstreams-file:hover {
   font-family: var(--font-mono);
   font-size: var(--fs-2);
   letter-spacing: var(--ls-wider);
+}
+
+/* The unreadable config.json: the page's one error look, the Source notice with a solid destructive frame and glyph (a genuine read failure). */
+.notice.source-notice.view-settings-unreadable {
+  border-style: solid;
+  border-color: var(--destructive-border);
+}
+
+.notice.source-notice.view-settings-unreadable > .source-notice-glyph {
+  border-style: solid;
+  border-color: var(--destructive-border);
+  color: var(--destructive);
 }
 
 /* The header gear is lit on the settings page (D-09): the accent glyph on the accent tint. It takes a 40px hit area under a coarse pointer. */

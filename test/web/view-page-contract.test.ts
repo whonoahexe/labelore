@@ -91,9 +91,14 @@ describe('view-page contract (VIEW-01/D-11)', () => {
 
     // Neither destructive/warning parse-degradation tone belongs to a view — those chips are the
     // page's own artifact-parse badge, never duplicated into per-type view chrome.
+    // The one sanctioned exception (Phase 12, 12-09, UI-SPEC Color): the settings page's own "Can't read config.json" chip, for a
+    // config.json that is not valid JSON. It is the page's one error look, not a copy of the artifact-parse badge (the page hides that
+    // badge for it), and it appears exactly once.
+    const SETTINGS_ERROR_CHIP = 'src/web/views/settings-page-components.tsx';
     for (const file of await viewsFiles()) {
       const text = await source(file);
-      expect(text).not.toContain('data-tone="destructive"');
+      if (file === SETTINGS_ERROR_CHIP) expect(text.split('data-tone="destructive"').length - 1).toBe(1);
+      else expect(text).not.toContain('data-tone="destructive"');
       expect(text).not.toContain('data-tone="warning"');
     }
   });

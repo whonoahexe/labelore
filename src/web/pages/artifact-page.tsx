@@ -1122,6 +1122,17 @@ export function ArtifactPage({
     setSourceTarget((previous) => ({ kind: 'heading', id, seq: (previous?.seq ?? 0) + 1 }));
     setMode('source');
   }, []);
+  // The settings page's unreadable notice ("Open Source at line N") switches to Source with that line selected; with no line it opens
+  // Source at the top and selects nothing (Phase 12, 12-09).
+  const openSourceAt = useCallback((line: number | null) => {
+    setSourceTarget((previous) => ({
+      kind: 'line',
+      line: line ?? 1,
+      select: line !== null,
+      seq: (previous?.seq ?? 0) + 1,
+    }));
+    setMode('source');
+  }, []);
   // A target belongs to one stay in Source: leaving for View drops it, so the next Source opens clean.
   if (mode === 'view' && sourceTarget !== null) setSourceTarget(null);
   // Pitfall 2: a same-page link that adds ?source=1 or #L.. to the open document changes the router location
@@ -1528,6 +1539,9 @@ export function ArtifactPage({
   // The settings page's header override (crumbs "{project} / Settings", eyebrow "Settings", the h1 "Project settings" and the read-only
   // lock line) rides the same spread; the page carries what the metadata disclosure would repeat.
   const settingsCover = settingsPage && mode === 'view' ? settingsPage : null;
+  // An unreadable config.json already says so in the settings notice, so the generic Warning chip and disclosure stay out of its way:
+  // the notice is the one error look on the page.
+  const settingsOwnsWarning = settingsCover !== null && settingsCover.state === 'unreadable';
   // The Spec page's header override ("Phase N · Spec", the phase name as the h1, created date and requirement count
   // as meta) rides the same spread; the page's strip carries what the metadata disclosure would repeat.
   const specPageCover = specPage && mode === 'view' ? specPage : null;
@@ -1650,7 +1664,7 @@ export function ArtifactPage({
         }
         chip={
           <>
-            {warningTone ? (
+            {warningTone && !settingsOwnsWarning ? (
               <span
                 className="status-chip"
                 data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}
@@ -1713,7 +1727,7 @@ export function ArtifactPage({
         )
       ) : null}
 
-      {warningTone ? (
+      {warningTone && !settingsOwnsWarning ? (
         <details className="artifact-metadata artifact-warning-disclosure">
           <summary>
             <span className="warning-disclosure-label">
@@ -1834,7 +1848,7 @@ export function ArtifactPage({
       ) : onboardingCover ? (
         <OnboardingView key={artifact.path} model={onboardingCover} />
       ) : settingsCover ? (
-        <SettingsView key={artifact.path} model={settingsCover} />
+        <SettingsView key={artifact.path} model={settingsCover} route={route} onOpenSourceAt={openSourceAt} />
       ) : specPageCover ? (
         <SpecView key={artifact.path} model={specPageCover} renderHtml={renderHtml} onShowSource={showSource} />
       ) : aiSpecPageCover ? (
