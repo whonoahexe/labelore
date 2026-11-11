@@ -2,7 +2,7 @@
 // page header and counts draw from the composer, and nothing on the page can change a setting. The D-12 block proves the one-URL
 // claim on made-up committed projects: the gear, search, the drawer and the document route all reach /settings, HANDOFF.json keeps its
 // pause page and the GSD-internal estimation-calibration.json stays without one.
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -23,7 +23,7 @@ import { VIEW_MANIFESTS, resolveViewFor } from '../../src/web/views/manifests.ts
 import { composeSettings } from '../../src/web/views/settings-page.ts';
 import type { ComposedSettings } from '../../src/web/views/settings-page.ts';
 import { SettingsView, settingsHeaderProps } from '../../src/web/views/settings-page-components.tsx';
-import { fxPath, loadFixtureProject } from '../helpers/fixture-project.ts';
+import { fxPath, loadFixtureProject, loadProject } from '../helpers/fixture-project.ts';
 import { SHAPES_ROOT, loadShapesProject, shapesPath } from '../helpers/shapes-project.ts';
 
 const lendshed = await loadFixtureProject();
@@ -166,5 +166,148 @@ describe("config.json's one URL (D-12)", () => {
 
   it('the Lendshed config.json file the tests read exists', () => {
     expect(existsSync(fxPath('config.json'))).toBe(true);
+  });
+});
+
+// Task 2 (12-09): every state of every instrument, over the dense fixture, this repository's own config and a made-up config that
+// holds a masked secret, nulls, a polymorphic object and a list of objects.
+const RICH = {
+  mode: 'yolo',
+  granularity: 'coarse',
+  commit_docs: true,
+  search_gitignored: false,
+  parallelization: { enabled: true, plan_level: true, max_concurrent_agents: 3 },
+  brave_search: '****7c2e',
+  project_code: null,
+  context_window: 120000,
+  response_language: 'English',
+  git: { branching_strategy: 'phase', quick_branch_template: null },
+  ship: {
+    pr_body_sections: [
+      { heading: 'Steward sign-off', enabled: true, source: 'VERIFICATION.md ## Human Verification' },
+      { heading: 'Rollback notes', enabled: false, fallback: '- No schema change in this PR.' },
+    ],
+  },
+  workflow: { research: true, auto_advance: false },
+  lendshed_desk_url: 'http://desk.example.test',
+  telemetry: { sink: 'none' },
+  vibe_check: true,
+};
+
+function pageOf(frontmatter: Record<string, unknown>): string {
+  return renderToStaticMarkup(createElement(SettingsView, { model: ready(frontmatter) }));
+}
+
+describe('the settings instruments (read-only, 12-09 Task 2)', () => {
+  const rich = pageOf(RICH);
+
+  it('a boolean is a switch with the word On or Off, and the track is hidden from assistive technology', () => {
+    expect(rich).toMatch(/<span class="view-settings-switch" data-on="true"><span class="view-settings-track" aria-hidden="true"><\/span>On<\/span>/);
+    expect(rich).toMatch(/<span class="view-settings-switch" data-on="false"><span class="view-settings-track" aria-hidden="true"><\/span>Off<\/span>/);
+  });
+
+  it('an enum is a scale of every option, the chosen one aria-current with a screen-reader word', () => {
+    expect(rich).toContain('class="view-settings-scale"');
+    expect(rich).toMatch(/<span class="view-settings-option" aria-current="true">yolo<span class="sr-only"> \(chosen\)<\/span><\/span>/);
+    expect(rich).toMatch(/<span class="view-settings-option">interactive<\/span>/);
+  });
+
+  it('null reads "set to null", an unset key reads the label, the key path and "not set"', () => {
+    expect(rich).toContain('set to null');
+    expect(rich).toMatch(
+      /<li class="view-settings-unset-row"><span><span class="view-settings-unset-label">[^<]+<\/span> <span class="view-settings-key">[a-z_.]+<\/span><\/span><span class="view-settings-notset">not set<\/span><\/li>/,
+    );
+  });
+
+  it('a masked value is its masked text inside the dashed source-t-mask box with a lock and the mask title', () => {
+    expect(rich).toMatch(
+      /<span class="source-t-mask view-settings-mask" title="Masked by Labelore; the file holds the real value"><svg[^>]*aria-hidden="true"[^>]*>.*?<\/svg>\*\*\*\*7c2e<\/span>/,
+    );
+  });
+
+  it('numbers keep their grouping and strings stay as written, in the value shape', () => {
+    expect(rich).toContain('>120,000</span>');
+    expect(rich).toContain('>English</span>');
+  });
+
+  it('an object and a list of objects take the full panel width, keys as source-t-key spans', () => {
+    expect(rich).toMatch(/data-wide="true"/);
+    expect(rich).toContain('<span class="source-t-key">&quot;enabled&quot;</span>');
+    expect(rich).toContain('Steward sign-off');
+    expect(rich).toContain('Rollback notes');
+  });
+
+  it('the not-set fold is a details with the summary "{N} not set", open only when the panel has nothing set', () => {
+    const model = ready(RICH);
+    const withSomething = model.state === 'ready' ? model.panels.find((panel) => panel.setCount > 0 && panel.unset.length > 0) : undefined;
+    const nothing = model.state === 'ready' ? model.panels.find((panel) => panel.setCount === 0 && panel.kind === 'group') : undefined;
+    expect(withSomething).toBeDefined();
+    expect(nothing).toBeDefined();
+    expect(rich).toContain(`${withSomething?.unset.length} not set</summary>`);
+    expect(rich).toMatch(/<details class="view-settings-unset"><summary>/);
+    expect(rich).toMatch(/<details class="view-settings-unset" open=""><summary>/);
+  });
+
+  it('a panel with nothing set comes last and is muted', () => {
+    const html = pageOf({ mode: 'yolo' });
+    const sections = [...html.matchAll(/<section class="view-settings-panel" data-kind="([a-z-]+)" data-muted="(true|false)"/g)];
+    expect(sections.length).toBeGreaterThan(1);
+    expect(sections[0]?.[2]).toBe('false');
+    expect(sections[sections.length - 1]?.[2]).toBe('true');
+  });
+
+  it('the Not recognised panel is absent with no unknown key and present, by full path, with some', () => {
+    expect(pageOf({ mode: 'yolo' })).not.toContain('data-kind="not-recognised"');
+    expect(pageOf({ mode: 'yolo' })).toContain(
+      '<span class="view-settings-count-number">0</span><span class="view-settings-count-caption">Not recognised</span>',
+    );
+    expect(rich).toContain('data-kind="not-recognised"');
+    expect(rich).toContain('lendshed_desk_url');
+    expect(rich).toContain('telemetry');
+    expect(rich).toContain('http://desk.example.test');
+  });
+
+  it("the dense fixture's seven unknown keys show by full path, as written", async () => {
+    const dense = await loadProject(fileURLToPath(new URL('../../fixtures/dense', import.meta.url)).replace(/[\\/]$/, ''));
+    const html = pageOf(configOf(dense.presentation));
+    for (const path of [
+      'workflow.windows_enforce',
+      'workflow.schema_drift_gate',
+      'workflow.drift_threshold',
+      'workflow.drift_action',
+      'vibe_check',
+      'experimental_widget_pipeline',
+      'telemetry',
+    ]) {
+      expect(html).toContain(path);
+    }
+    expect(html).toContain('>0.2</span>');
+  });
+
+  it("this repository's own config draws with every state present and no input", () => {
+    const own = JSON.parse(
+      readFileSync(fileURLToPath(new URL('../../.planning/config.json', import.meta.url)), 'utf8'),
+    ) as Record<string, unknown>;
+    const html = pageOf(own);
+    expect(html).toContain('view-settings-panel');
+    expect(html).toContain('not set');
+  });
+
+  it('an empty config draws every group open and muted, with no Not recognised panel', () => {
+    const html = pageOf({});
+    const sections = (html.match(/<section /g) ?? []).length;
+    expect(html).not.toContain('data-kind="not-recognised"');
+    expect(sections).toBeGreaterThan(0);
+    expect((html.match(/data-muted="true"/g) ?? []).length).toBe(sections);
+    expect((html.match(/<details class="view-settings-unset" open="">/g) ?? []).length).toBe(sections);
+  });
+
+  it('nothing on the page can change a setting: no input, select, textarea, form, switch role or tab stop', () => {
+    for (const html of [rich, pageOf({}), pageOf({ mode: 'yolo' })]) {
+      expect(html).not.toMatch(/<(input|select|textarea|form|button)\b/);
+      expect(html).not.toMatch(/role="(switch|checkbox|button|radio|slider|textbox|combobox)"/);
+      expect(html).not.toMatch(/tabindex=/i);
+      expect(html).not.toMatch(/\bonclick\b|\bhref=/i);
+    }
   });
 });
