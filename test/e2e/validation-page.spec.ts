@@ -11,6 +11,7 @@ import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
+import { expectLandedOn, watchSourceHits } from './source-landing.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -90,13 +91,13 @@ test.describe('VALIDATION strategy page', () => {
     await expect(page.locator('.view-validation-outcome', { hasText: 'Awaiting a human' })).toHaveCount(6);
     await expect(page.locator('.view-validation-stamp')).toContainText('Pending');
 
-    // Source-only: Status legend lands in Source mode at the map heading; View restores the page.
+    // Source-only: Status legend lands in the raw Source reader on the map heading row; View restores the page.
     const strip = page.locator('#validation-source-only');
+    await watchSourceHits(page);
     await strip.getByRole('button', { name: 'Status legend', exact: true }).click();
-    await expect(page.locator('.artifact-document')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Source of 02-VALIDATION.md' })).toBeVisible();
     await expect(page.locator('.view-validation-tile')).toHaveCount(0);
-    const heading = page.locator('.artifact-document h2', { hasText: 'Per-Task Verification Map' });
-    await expect.poll(() => inViewport(page, heading)).toBe(true);
+    await expectLandedOn(page, '## Per-Task Verification Map');
     await page.getByRole('button', { name: 'View', exact: true }).click();
     await expect(page.locator('.view-validation-tile')).toHaveCount(15);
 

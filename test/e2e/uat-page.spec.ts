@@ -11,6 +11,7 @@ import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
+import { expectLandedOn, watchSourceHits } from './source-landing.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -84,15 +85,15 @@ test.describe('UAT session page', () => {
       expect(radii.every((r) => r === '0px'), selector).toBe(true);
     }
 
-    // The source-only strip: two buttons; Summary block lands in Source mode at its heading.
+    // The source-only strip: two buttons; Summary block lands in the raw Source reader on its heading row.
     const strip = page.locator('#uat-source-only');
     await expect(strip.getByRole('button')).toHaveCount(2);
     await expect(strip.getByRole('button', { name: 'Frontmatter', exact: true })).toBeVisible();
+    await watchSourceHits(page);
     await strip.getByRole('button', { name: 'Summary block', exact: true }).click();
-    await expect(page.locator('.artifact-document')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Source of 01-UAT.md' })).toBeVisible();
     await expect(page.locator('.view-uat-pair')).toHaveCount(0);
-    const heading = page.locator('.artifact-document h2', { hasText: 'Summary' });
-    await expect.poll(() => inViewport(page, heading)).toBe(true);
+    await expectLandedOn(page, '## Summary');
 
     // Back to View restores the page.
     await page.getByRole('button', { name: 'View', exact: true }).click();
