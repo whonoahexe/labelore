@@ -4,11 +4,15 @@
 // disk; the frontmatter of a user-setup, seed or thread file passes through the same mask its handler uses.
 // Real cases run over the committed Lendshed fixture; masking and refusal cases use in-memory projects with
 // made-up values.
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
 import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
-import type { PlanningFilesystem } from '../../src/planning-fs/types.ts';
+import { PathEscapeError } from '../../src/planning-fs/types.ts';
+import type { FileRead, PlanningFilesystem } from '../../src/planning-fs/types.ts';
+import type { Artifact, Project } from '../../src/domain/model.ts';
+import { MAX_TEXT_BYTES } from '../../src/planning-repo/file-class.ts';
+import type { ProjectSnapshot } from '../../src/planning-repo/types.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { tryParseFrontmatter } from '../../src/planning-repo/frontmatter.ts';
 import { VALUE_NOT_SHOWN_MARK, maskData } from '../../src/planning-repo/handlers/withhold-values.ts';
@@ -369,5 +373,288 @@ describe('GET /api/source?route= never serves a frontmatter value a masking hand
       raw,
     );
     expect(out.text).toContain('service: Made-up mail');
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------
+// 12-06 Task 2 (T-12-18, T-12-19, T-12-20, T-12-21): parse errors by position only, the byte cap, one bundle per
+// request, the uniform answers and the handler drift contract.
+// ---------------------------------------------------------------------------------------------------------------
+
+const REASONS = ['unexpected-end', 'unexpected-character', 'expected-value', 'not-valid'];
+const PARSER_WORDING = /is not valid JSON|Unexpected token|Unexpected end of JSON|in JSON at position|Expected property name/;
+const BRAVE_VALUE = 'BSA-madeup-0123456789abcdef';
+
+async function configApp(config: string) {
+  return appOver(new InMemoryPlanningFilesystem({ '.planning/PROJECT.md': PROJECT, '.planning/config.json': config }), '/project');
+}
+
+/** The response with the served `text` taken out: nothing else may carry the file's content or a parser message. */
+function withoutText(body: SourceTextResponse): string {
+  return JSON.stringify({ ...body, text: '' });
+}
+
+describe('parseError: a .json file that does not parse is located by position only (T-12-18)', () => {
+  it('gives a numeric line and column and a closed-set reason for {"mode": }, and no parser wording', async () => {
+    const { app } = await configApp('{\n  "mode": }\n');
+    const { body } = await sourceOf(app, '.planning/config.json');
+    expect(body.parseError).not.toBeNull();
+    expect(Object.keys(body.parseError!).sort()).toEqual(['column', 'line', 'reason']);
+    expect(body.parseError).toEqual({ line: 2, column: 11, reason: expect.any(String) });
+    expect(REASONS).toContain(body.parseError!.reason);
+    expect(['unexpected-character', 'expected-value']).toContain(body.parseError!.reason);
+    expect(withoutText(body)).not.toMatch(PARSER_WORDING);
+    expect(withoutText(body)).not.toContain('"mode"');
+  });
+
+  it('uses the position the parser reports when it gives one', async () => {
+    const { app } = await configApp('{\n  "a": 1\n  "b": 2\n}\n');
+    const { body } = await sourceOf(app, '.planning/config.json');
+    expect(body.parseError).toEqual({ line: 3, column: 3, reason: 'expected-value' });
+    expect(withoutText(body)).not.toMatch(PARSER_WORDING);
+  });
+
+  it('reports a file that ends inside a value as unexpected-end', async () => {
+    const { app } = await configApp('{\n  "a": [1, 2\n');
+    const { body } = await sourceOf(app, '.planning/config.json');
+    expect(body.parseError?.reason).toBe('unexpected-end');
+    expect(body.parseError?.line).toEqual(expect.any(Number));
+  });
+
+  it('gives a parse error for single quotes and still serves the secret redacted', async () => {
+    const { app } = await configApp(`{\n  'mode': 'interactive',\n  'brave_search': '${BRAVE_VALUE}'\n}\n`);
+    const { raw, body } = await sourceOf(app, '.planning/config.json');
+    expect(body.parseError).not.toBeNull();
+    expect(REASONS).toContain(body.parseError!.reason);
+    expect(raw).not.toContain(BRAVE_VALUE);
+    expect(withoutText(body)).not.toMatch(PARSER_WORDING);
+  });
+
+  it('gives no parse error for a parsing .json file or for a markdown file', async () => {
+    const { app } = await configApp(`{\n  "mode": "interactive",\n  "brave_search": "${BRAVE_VALUE}"\n}\n`);
+    expect((await sourceOf(app, '.planning/config.json')).body.parseError).toBeNull();
+    expect((await sourceOf(app, '.planning/PROJECT.md')).body.parseError).toBeNull();
+  });
+
+  it('counts columns in UTF-16 code units and lines between newline characters', async () => {
+    const { app } = await configApp('{\n  "é😀": }\n');
+    const { body } = await sourceOf(app, '.planning/config.json');
+    // Nine UTF-16 units come before the brace: two spaces, the quoted name (five, the emoji counting two), a colon, a space.
+    expect(body.parseError).toEqual({ line: 2, column: 10, reason: expect.any(String) });
+  });
+});
+
+/** A hand-made project snapshot over one in-memory filesystem, for sizes, races and read errors. */
+function makeArtifact(overrides: Partial<Artifact> & { path: string }): Artifact {
+  return {
+    id: overrides.path,
+    kind: 'context',
+    fileClass: 'text',
+    sizeBytes: 0,
+    location: 'root',
+    frontmatter: {},
+    title: overrides.path,
+    body: '',
+    bodyLength: 0,
+    bodyHash: 'x',
+    mtimeMs: 0,
+    warnings: [],
+    structured: {},
+    ...overrides,
+  };
+}
+
+function makeSnapshot(readAt: string, artifacts: Artifact[]): ProjectSnapshot {
+  const project: Project = {
+    rootPath: '/fixture',
+    name: 'Source Fixture',
+    artifacts: Object.fromEntries(artifacts.map((artifact) => [artifact.path, artifact])),
+    config: {},
+    milestones: [],
+    phases: [],
+    quickTasks: [],
+    requirements: [],
+    mentions: { byId: {}, all: [] },
+  };
+  return { loadStatus: { status: 'ok' }, readAt, rootPath: '/fixture', project, warnings: [], exclusions: [] };
+}
+
+/** An in-memory filesystem that records read() paths and lets a test hold or change a read. */
+class ScriptFs implements PlanningFilesystem {
+  readonly capabilities;
+  readonly reads: string[] = [];
+  constructor(
+    private readonly inner: PlanningFilesystem,
+    private readonly onRead?: (read: () => Promise<FileRead>) => Promise<FileRead>,
+  ) {
+    this.capabilities = inner.capabilities;
+  }
+  list(relDir: string) {
+    return this.inner.list(relDir);
+  }
+  read(relPath: string): Promise<FileRead> {
+    this.reads.push(relPath);
+    const read = () => this.inner.read(relPath);
+    return this.onRead ? this.onRead(read) : read();
+  }
+  exists(relPath: string) {
+    return this.inner.exists(relPath);
+  }
+}
+
+const NOTE_PATH = '.planning/notes/big.md';
+const PROJECT_MD = makeArtifact({ path: '.planning/PROJECT.md', body: 'Project' });
+const noteAt = (sizeBytes: number): Artifact => makeArtifact({ path: NOTE_PATH, kind: 'note', sizeBytes, body: 'x' });
+
+function scriptedApp(artifacts: Artifact[], fs: ScriptFs | null) {
+  const snapshot = makeSnapshot('2026-10-01T00:00:00.000Z', artifacts);
+  return createApp({ getSnapshot: () => snapshot, ...(fs ? { planningFilesystem: () => fs } : {}) }, true, '.');
+}
+
+describe('the 1 MiB cap is measured in bytes (T-12-20)', () => {
+  it('answers 413 for an indexed size above MAX_TEXT_BYTES before any read', async () => {
+    const fs = new ScriptFs(new InMemoryPlanningFilesystem({ [NOTE_PATH]: 'x' }));
+    const app = scriptedApp([PROJECT_MD, noteAt(MAX_TEXT_BYTES + 1)], fs);
+    const res = await app.request(sourceUrl(await keyOf(app, NOTE_PATH)));
+    expect(res.status).toBe(413);
+    expect(fs.reads).toEqual([]);
+  });
+
+  it('answers 413 for 600,000 two-byte characters although the string is shorter than the cap', async () => {
+    const text = 'é'.repeat(600_000);
+    expect(text.length).toBeLessThan(MAX_TEXT_BYTES);
+    const fs = new ScriptFs(new InMemoryPlanningFilesystem({ [NOTE_PATH]: text }));
+    const app = scriptedApp([PROJECT_MD, noteAt(10)], fs);
+    const res = await app.request(sourceUrl(await keyOf(app, NOTE_PATH)));
+    expect(res.status).toBe(413);
+    expect(fs.reads).toEqual([NOTE_PATH]);
+  });
+
+  it('serves a text of exactly MAX_TEXT_BYTES bytes', async () => {
+    const text = 'a'.repeat(MAX_TEXT_BYTES);
+    const app = scriptedApp([PROJECT_MD, noteAt(MAX_TEXT_BYTES)], new ScriptFs(new InMemoryPlanningFilesystem({ [NOTE_PATH]: text })));
+    const res = await app.request(sourceUrl(await keyOf(app, NOTE_PATH)));
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as SourceTextResponse).text.length).toBe(MAX_TEXT_BYTES);
+  });
+
+  it('answers 413 when the file grew past the cap after indexing', async () => {
+    const fs = new ScriptFs(new InMemoryPlanningFilesystem({ [NOTE_PATH]: 'a'.repeat(MAX_TEXT_BYTES + 1) }));
+    const app = scriptedApp([PROJECT_MD, noteAt(5)], fs);
+    const res = await app.request(sourceUrl(await keyOf(app, NOTE_PATH)));
+    expect(res.status).toBe(413);
+  });
+});
+
+describe('uniform answers, methods and read errors', () => {
+  const withCode = (code: string): Error => Object.assign(new Error(code), { code });
+
+  it('answers a file removed after indexing with the same plain 404 as any other miss', async () => {
+    const fs = new ScriptFs(new InMemoryPlanningFilesystem({}));
+    const app = scriptedApp([PROJECT_MD, noteAt(5)], fs);
+    const removed = await app.request(sourceUrl(await keyOf(app, NOTE_PATH)));
+    const unknown = await app.request(sourceUrl('/notes/no-such.md'));
+    expect(removed.status).toBe(404);
+    expect(unknown.status).toBe(404);
+    expect(await removed.text()).toBe(await unknown.text());
+  });
+
+  it('answers HEAD with 200 and no body for a text file, and POST, PUT and DELETE with 405 and Allow, reading nothing', async () => {
+    const fs = new ScriptFs(new InMemoryPlanningFilesystem({ [NOTE_PATH]: 'hello\n' }));
+    const app = scriptedApp([PROJECT_MD, noteAt(6)], fs);
+    const url = sourceUrl(await keyOf(app, NOTE_PATH));
+    const head = await app.request(url, { method: 'HEAD' });
+    expect(head.status).toBe(200);
+    expect((await head.arrayBuffer()).byteLength).toBe(0);
+    fs.reads.length = 0;
+    for (const method of ['POST', 'PUT', 'DELETE']) {
+      const res = await app.request(url, { method });
+      expect(res.status, method).toBe(405);
+      expect(res.headers.get('allow')).toBe('GET, HEAD');
+    }
+    expect(fs.reads).toEqual([]);
+  });
+
+  it.each([
+    ['ENOENT', withCode('ENOENT'), 404],
+    ['EACCES', withCode('EACCES'), 403],
+    ['PathEscapeError', new PathEscapeError(NOTE_PATH, '/elsewhere'), 403],
+    ['anything else', new Error('boom'), 500],
+  ])('maps a read rejected with %s to its status', async (_name, error, status) => {
+    const fs = new ScriptFs(new InMemoryPlanningFilesystem({ [NOTE_PATH]: 'x' }), () => Promise.reject(error));
+    const app = scriptedApp([PROJECT_MD, noteAt(1)], fs);
+    const res = await app.request(sourceUrl(await keyOf(app, NOTE_PATH)));
+    expect(res.status).toBe(status);
+    expect(await res.text()).not.toContain('boom');
+  });
+
+  it('answers 404 when the source has no filesystem', async () => {
+    const app = scriptedApp([PROJECT_MD, noteAt(1)], null);
+    const res = await app.request(sourceUrl(await keyOf(app, NOTE_PATH)));
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('a request is answered from the one bundle it captured (T-12-21)', () => {
+  it('a read held open across a refresh that drops the file still answers 200; the next request answers 404', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((done) => (release = done));
+    let entered!: () => void;
+    const hasEntered = new Promise<void>((done) => (entered = done));
+    const fs = new ScriptFs(new InMemoryPlanningFilesystem({ [NOTE_PATH]: 'held text\n' }), async (read) => {
+      entered();
+      await gate;
+      return read();
+    });
+    let current = makeSnapshot('2026-10-01T00:00:00.000Z', [PROJECT_MD, noteAt(10)]);
+    const after = makeSnapshot('2026-10-02T00:00:00.000Z', [PROJECT_MD]);
+    const app = createApp(
+      { getSnapshot: () => current, refresh: async () => (current = after), planningFilesystem: () => fs },
+      true,
+      '.',
+    );
+    const url = sourceUrl(await keyOf(app, NOTE_PATH));
+
+    const pending = app.request(url);
+    await hasEntered;
+    const refreshed = await app.request('/api/refresh', { method: 'POST' });
+    expect(refreshed.status).toBe(200);
+    release();
+    const res = await pending;
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as SourceTextResponse).text).toBe('held text\n');
+
+    expect((await app.request(url)).status).toBe(404);
+    expect(fs.reads).toEqual([NOTE_PATH]);
+  });
+
+  it("the handler's first statement captures the bundle", async () => {
+    const source = await readFile(new URL('../../src/server/source-text.ts', import.meta.url), 'utf8');
+    const start = source.indexOf('return async (c) => {');
+    expect(start).toBeGreaterThan(-1);
+    const body = source.slice(start + 'return async (c) => {'.length);
+    expect(body).toMatch(/^(\s*\/\/[^\n]*\n)*\s*const activeDerived = getBundle\(\);/);
+  });
+});
+
+describe('handler drift contract (T-12-19)', () => {
+  it('every handler that sets its frontmatter through maskData has its kind in FRONTMATTER_MASK_BY_KIND with the same mode', async () => {
+    const dir = new URL('../../src/planning-repo/handlers/', import.meta.url);
+    const found: string[] = [];
+    for (const name of (await readdir(dir)).filter((entry) => entry.endsWith('.ts'))) {
+      const source = await readFile(new URL(name, dir), 'utf8');
+      const call = /frontmatter:\s*maskData\(([^)]*)\)/.exec(source);
+      if (call === null) continue;
+      const prose = (call[1] ?? '').includes('PROSE_MASK');
+      const kinds = [...source.matchAll(/\bkind:\s*'([a-z-]+)'/g)].map((match) => match[1] ?? '');
+      expect(kinds.length, `${name} declares no kind`).toBeGreaterThan(0);
+      for (const kind of kinds) {
+        const options = FRONTMATTER_MASK_BY_KIND.get(kind);
+        expect(options, `${name}: kind ${kind} is missing from FRONTMATTER_MASK_BY_KIND`).toBeDefined();
+        expect(options?.prose === true, `${name}: kind ${kind} lists the other mask mode`).toBe(prose);
+        found.push(kind);
+      }
+    }
+    expect(found.sort()).toEqual([...FRONTMATTER_MASK_BY_KIND.keys()].sort());
   });
 });

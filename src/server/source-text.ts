@@ -34,6 +34,18 @@ export interface SourceTextResponse {
   bodyStart: number;
   /** True when the text differs from the file on disk because a mask changed it. */
   masked: boolean;
+  /** Where a .json text stops parsing; null for a text that parses and for every other file. */
+  parseError: SourceParseError | null;
+}
+
+/** Why and where a served .json text does not parse. Only a position and a closed-set reason: the parser's own
+ * message can quote the input, so it is discarded (T-12-18, RESEARCH Pitfall 10). */
+export interface SourceParseError {
+  /** 1-based, lines being the text between newline characters; null when no position could be told. */
+  line: number | null;
+  /** 1-based, counted in UTF-16 code units as the parser counts; null when no position could be told. */
+  column: number | null;
+  reason: 'unexpected-end' | 'unexpected-character' | 'expected-value' | 'not-valid';
 }
 
 /** The frontmatter mask each masking kind applies, keyed by wire kind: user-setup reads an env-var map, seed and thread read prose. */
@@ -131,6 +143,158 @@ export function sourceTextOf(
   return { text: changed ? lines.join('\n') : raw, masked: changed };
 }
 
+const MAX_LOCATE_DEPTH = 200;
+const NUMBER = /-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/y;
+
+/**
+ * The offset of the first character a strict JSON reader cannot accept (the end of the text when it stops inside a
+ * value), or null when the text reads as valid or nests deeper than MAX_LOCATE_DEPTH. Only used when `JSON.parse`
+ * has already failed and gave no position. Recursive descent, linear, no backtracking.
+ */
+function jsonErrorOffset(text: string): number | null {
+  const n = text.length;
+  let i = 0;
+  let gaveUp = false;
+  const skipBlanks = (): void => {
+    while (i < n) {
+      const c = text.charCodeAt(i);
+      if (c !== 32 && c !== 9 && c !== 10 && c !== 13) return;
+      i += 1;
+    }
+  };
+  const advance = (by: number): true => {
+    i += by;
+    return true;
+  };
+  const string = (): boolean => {
+    i += 1;
+    while (i < n) {
+      const c = text.charCodeAt(i);
+      if (c === 34) {
+        i += 1;
+        return true;
+      }
+      if (c < 32) return false;
+      if (c === 92) {
+        i += 1;
+        const e = text[i] ?? '';
+        if (e === 'u') {
+          for (let k = 1; k <= 4; k += 1) {
+            if (!/[0-9a-fA-F]/.test(text[i + k] ?? '')) {
+              i += k;
+              return false;
+            }
+          }
+          i += 4;
+        } else if (!'"\\/bfnrt'.includes(e) || e === '') {
+          return false;
+        }
+      }
+      i += 1;
+    }
+    return false;
+  };
+  const value = (depth: number): boolean => {
+    if (depth > MAX_LOCATE_DEPTH) {
+      gaveUp = true;
+      return false;
+    }
+    skipBlanks();
+    const c = text[i];
+    if (c === '{') {
+      i += 1;
+      skipBlanks();
+      if (text[i] === '}') return advance(1);
+      for (;;) {
+        skipBlanks();
+        if (text[i] !== '"' || !string()) return false;
+        skipBlanks();
+        if (text[i] !== ':') return false;
+        i += 1;
+        if (!value(depth + 1)) return false;
+        skipBlanks();
+        if (text[i] === ',') {
+          i += 1;
+          continue;
+        }
+        if (text[i] === '}') return advance(1);
+        return false;
+      }
+    }
+    if (c === '[') {
+      i += 1;
+      skipBlanks();
+      if (text[i] === ']') return advance(1);
+      for (;;) {
+        if (!value(depth + 1)) return false;
+        skipBlanks();
+        if (text[i] === ',') {
+          i += 1;
+          continue;
+        }
+        if (text[i] === ']') return advance(1);
+        return false;
+      }
+    }
+    if (c === '"') return string();
+    for (const literal of ['true', 'false', 'null']) {
+      if (text.startsWith(literal, i)) return advance(literal.length);
+    }
+    NUMBER.lastIndex = i;
+    const number = NUMBER.exec(text);
+    if (number !== null) return advance(number[0].length);
+    return false;
+  };
+  const ok = value(0);
+  if (gaveUp) return null;
+  if (!ok) return i;
+  skipBlanks();
+  return i < n ? i : null;
+}
+
+/** The 1-based line and column of an offset: lines are split at newline characters, columns count UTF-16 units. */
+function lineAndColumn(text: string, offset: number): { line: number; column: number } {
+  let line = 1;
+  let lineStart = 0;
+  for (let at = text.indexOf('\n'); at >= 0 && at < offset; at = text.indexOf('\n', at + 1)) {
+    line += 1;
+    lineStart = at + 1;
+  }
+  return { line, column: offset - lineStart + 1 };
+}
+
+/**
+ * Where a served .json text stops parsing, or null when it parses. The position is the one `JSON.parse` reports
+ * (a "line L column C" pair, else an "at position N" offset); when the parser reports none, a small strict scanner
+ * finds it, and when that cannot either both stay null. The reason comes from the opening words of the parser's
+ * message, mapped onto a closed set; the message itself is dropped.
+ */
+export function parseErrorOf(text: string): SourceParseError | null {
+  try {
+    JSON.parse(text);
+    return null;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    const pair = /\(line (\d+) column (\d+)\)/.exec(message);
+    const at = /\bat position (\d+)/.exec(message);
+    const offset = at?.[1] !== undefined ? Number(at[1]) : jsonErrorOffset(text);
+    let line: number | null = null;
+    let column: number | null = null;
+    if (pair?.[1] !== undefined && pair[2] !== undefined) {
+      line = Number(pair[1]);
+      column = Number(pair[2]);
+    } else if (offset !== null) {
+      ({ line, column } = lineAndColumn(text, offset));
+    }
+    let reason: SourceParseError['reason'] = 'not-valid';
+    if (/^(?:Unexpected end|Unterminated)/.test(message)) reason = 'unexpected-end';
+    else if (offset !== null && text.slice(offset).trim() === '') reason = 'unexpected-end';
+    else if (/^(?:Unexpected|Bad )/.test(message)) reason = 'unexpected-character';
+    else if (/^Expected/.test(message)) reason = 'expected-value';
+    return { line, column, reason };
+  }
+}
+
 /** The offset in `text` where `body` starts: the tail match, else the first match, else 0. */
 export function bodyStartOf(text: string, body: string): number {
   if (text.endsWith(body)) return text.length - body.length;
@@ -184,7 +348,12 @@ export function createSourceHandler(
         if (new TextEncoder().encode(raw).length > MAX_TEXT_BYTES) return plain(413, 'File too large');
       }
       const { text, masked } = sourceTextOf(artifact, raw);
-      const body: SourceTextResponse = { text, bodyStart: bodyStartOf(text, artifact.body), masked };
+      const body: SourceTextResponse = {
+        text,
+        bodyStart: bodyStartOf(text, artifact.body),
+        masked,
+        parseError: artifact.path.endsWith('.json') ? parseErrorOf(text) : null,
+      };
       if (c.req.method === 'HEAD') return new Response(null, { status: 200, headers: { 'Cache-Control': 'no-cache' } });
       return c.json(body);
     } catch (error) {
