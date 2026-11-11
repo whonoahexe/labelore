@@ -265,7 +265,15 @@ const URL_CLASSES: UrlClass[] = [
       await expect(page.locator('#view-codebase-panel-title')).toHaveText('Architecture');
     },
   },
-  documentClass('the settings page', '.planning/config.json'),
+  {
+    // Phase 12 (12-09): config.json's one URL is the settings page, whose h1 is "Project settings" (not the file's title).
+    name: 'the settings page',
+    open: { artifact: '.planning/config.json' },
+    check: async ({ page }) => {
+      await expect(page.locator('h1').first()).toHaveText('Project settings');
+      await expect(page.getByRole('heading', { name: 'How work runs' })).toBeVisible();
+    },
+  },
   namedPageClass('a phase page', '/v1.1/phase-2.1', phaseNamed),
   namedPageClass('a phase page with a trailing slash', '/v1.1/phase-2.1/', phaseNamed),
   namedPageClass('a milestone overview', '/v1.1/overview', milestoneNamed),

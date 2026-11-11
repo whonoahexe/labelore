@@ -398,8 +398,8 @@ describe('onboarding page: the header and the registry', () => {
     expect(renderToStaticMarkup(createElement('div', null, props.meta))).toContain('SUMMARY.md');
   });
 
-  it('VIEW_KINDS holds 39 kinds, every one with a manifest and every manifest key a kind', () => {
-    expect(VIEW_KINDS.length).toBe(39);
+  it('VIEW_KINDS holds 40 kinds, every one with a manifest and every manifest key a kind', () => {
+    expect(VIEW_KINDS.length).toBe(40);
     expect(VIEW_KINDS).toContain('onboarding');
     for (const kind of VIEW_KINDS) expect(VIEW_MANIFESTS[kind], kind).toBeDefined();
     expect(Object.keys(VIEW_MANIFESTS).sort()).toEqual([...VIEW_KINDS].sort());

@@ -4,7 +4,7 @@
 // to the existing source reader with no toggle.
 import type { DiscussionTopic } from '../../planning-repo/handlers/section-projection.ts';
 import { DESIGNED_ELSEWHERE_KINDS, designedElsewhereLead } from '../../presentation/root-redirects.ts';
-import { factsBlock } from './facts.ts';
+import { factsBlock, selectFacts } from './facts.ts';
 import { planTaskIndexBlock } from './plan-task-index.ts';
 import { fallbackManifest } from './fallback.ts';
 import { discussionLogLayout } from './layout-discussion-log.ts';
@@ -37,6 +37,7 @@ import { composeThread } from './thread-page.ts';
 import { composeReport } from './report-page.ts';
 import { composeForensics } from './forensics-page.ts';
 import { composeOnboarding } from './onboarding-page.ts';
+import { composeSettings } from './settings-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -544,6 +545,24 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     lead: 'How GSD read this project when onboarding it, and the command it suggests next.',
     promote: [{ type: 'section', heading: /\S/, all: true }],
     onboardingPage: composeOnboarding,
+  },
+  // Phase 12 (12-09, sketch 063 winner A): the project's root config.json, reached through `viewKindOf`'s table (wire kind `config`). The
+  // settings page covers it when `settingsPage` composes; a workstream's own config.json and a config.json that is not an object (D-11)
+  // compose nothing and open as a plain file, whose View is `promote`'s one fact-list over the frontmatter and whose Source is the masked text.
+  settings: {
+    kind: 'settings',
+    lead: 'A GSD settings file, shown as written.',
+    promote: [
+      {
+        type: 'data',
+        id: 'settings-frontmatter',
+        label: 'Settings',
+        component: 'fact-list',
+        select: (input) => selectFacts(input.frontmatter, Object.keys(input.frontmatter)),
+      },
+    ],
+    settingsPage: (input) =>
+      composeSettings(input.frontmatter, { scope: input.scope ?? null, unreadable: input.structuralWarning === true }),
   },
 });
 

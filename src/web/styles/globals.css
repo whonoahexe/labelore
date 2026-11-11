@@ -30406,6 +30406,15 @@ button.view-codebase-mark:hover {
   --status-square-size: var(--space-5);
 }
 
+.status-meter[data-size='compact'] .status-meter-cells {
+  gap: var(--space-0-5);
+}
+
+.status-meter[data-size='compact'] .status-meter-sq {
+  width: var(--space-1-5);
+  height: var(--space-2-5);
+}
+
 @media (max-width: 42rem) {
   .status-meter[data-size='large'] .status-meter-cells {
     gap: var(--space-0-5);
@@ -39150,3 +39159,415 @@ a.view-workstreams-file:hover {
   border-color: var(--border);
 }
 /* phase-12-source:end */
+
+/* phase-12-settings:start */
+/* Phase 12 (12-09): the settings page, sketch 063 winner A "Control panel". Four counts under a thick foreground rule, then the
+   groups as --card panels in two columns, each set key drawn as a read-only instrument (a switch, a scale, a value in its shape),
+   the unset keys folded at the panel's foot, and Not recognised as a hatched dashed panel. Colour comes only from tokens: the
+   accent marks an On switch, the chosen scale option, the filled meter squares and the lit gear; "not set" and masked values are
+   dashed and quiet; nothing here is destructive except the unreadable notice. Type is the Body (--fs-4), Label (--fs-2 uppercase
+   mono) and Code (--fs-3 mono) roles, and the Display numerals of the counts; bold is semibold. Instruments are plain spans: no
+   pointer cursor, no focus stop and no hover state, because nothing on this page changes a setting. The counts and the panels
+   follow the page's own width (a container query), so a phone gets one column and a 2 by 2 grid of counts. */
+.view-settings-lock {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1-5);
+}
+
+.view-settings-lock svg {
+  flex: none;
+  width: var(--space-3-5);
+  height: var(--space-3-5);
+}
+
+.view-settings-page {
+  container-name: settings;
+  container-type: inline-size;
+  display: grid;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+/* The counts: the largest type on the page after the h1. */
+.view-settings-counts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  border-top: var(--space-2) solid var(--foreground);
+  border-bottom: 1px solid var(--border);
+  list-style: none;
+}
+
+.view-settings-count {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-4) var(--space-4) 0;
+}
+
+.view-settings-count + .view-settings-count {
+  padding-left: var(--space-4);
+  border-left: 1px solid var(--border);
+}
+
+.view-settings-count-number {
+  font-size: var(--fs-display-1);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-none);
+}
+
+.view-settings-count[data-count='notSet'] .view-settings-count-number,
+.view-settings-count[data-count='notRecognised'] .view-settings-count-number {
+  color: var(--muted-foreground);
+}
+
+.view-settings-count-caption {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-normal);
+  text-transform: uppercase;
+}
+
+@container settings (max-width: 52rem) {
+  .view-settings-counts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .view-settings-count:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .view-settings-count:nth-child(n + 3) {
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* The panels: two columns of at least 22rem, one column when the page is narrower. */
+.view-settings-panels {
+  columns: 2 calc(var(--space-8) * 11);
+  column-gap: var(--space-6);
+}
+
+.view-settings-panel {
+  display: grid;
+  margin-bottom: var(--space-6);
+  border: 1px solid var(--border);
+  background: var(--card);
+  break-inside: avoid;
+}
+
+.view-settings-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-settings-panel-head h2 {
+  margin: 0;
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+.view-settings-panel-meta {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-settings-panel[data-muted='true'] .view-settings-panel-head {
+  color: var(--muted-foreground);
+}
+
+/* Not recognised: a dashed frame and a hatched header; the heading and the count sit on a --card chip so they stay legible. */
+.view-settings-panel[data-kind='not-recognised'] {
+  border-style: dashed;
+  border-color: var(--muted-foreground);
+}
+
+.view-settings-panel[data-kind='not-recognised'] .view-settings-panel-head {
+  background: var(--hatch);
+}
+
+.view-settings-panel[data-kind='not-recognised'] .view-settings-panel-head h2,
+.view-settings-panel[data-kind='not-recognised'] .view-settings-panel-meta {
+  padding-inline: var(--space-1);
+  background: var(--card);
+}
+
+/* A row: the label over its key path, and the instrument at the right; objects and lists of objects take the full width. */
+.view-settings-rows {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-settings-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) fit-content(60%);
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+  padding: var(--space-2-5) var(--space-4);
+  border-bottom: 1px solid var(--border-faint);
+}
+
+.view-settings-row[data-wide='true'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.view-settings-label {
+  display: grid;
+  min-width: 0;
+}
+
+.view-settings-name {
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-settings-key {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  overflow-wrap: anywhere;
+}
+
+.view-settings-value {
+  min-width: 0;
+  max-width: 100%;
+  justify-self: end;
+}
+
+.view-settings-row[data-wide='true'] .view-settings-value {
+  justify-self: stretch;
+}
+
+/* Values in the shape they arrive: long text wraps instead of overflowing. */
+.view-settings-text,
+.view-settings-json {
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-settings-number {
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-semibold);
+}
+
+.view-settings-null {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-settings-json {
+  display: block;
+}
+
+.view-settings-row[data-wide='true'] .view-settings-json {
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--border);
+}
+
+.view-settings-json-line {
+  display: block;
+  white-space: pre-wrap;
+}
+
+/* The masked value: the masked text with a lock in the dashed quiet box the Source reader uses (.source-t-mask). */
+.view-settings-mask {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  max-width: 100%;
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.view-settings-mask svg {
+  flex: none;
+  width: var(--space-3);
+  height: var(--space-3);
+}
+
+/* A boolean: a switch drawn from the file's value, with the word. The track is decoration (aria-hidden). */
+.view-settings-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-settings-track {
+  position: relative;
+  width: var(--space-8);
+  height: var(--space-4);
+  border: 1px solid var(--muted-foreground);
+}
+
+.view-settings-track::after {
+  position: absolute;
+  top: var(--space-0-5);
+  left: var(--space-0-5);
+  width: calc(var(--space-4) - var(--space-1-5));
+  height: calc(var(--space-4) - var(--space-1-5));
+  background: var(--muted-foreground);
+  content: '';
+}
+
+.view-settings-switch[data-on='true'] {
+  color: var(--foreground);
+}
+
+.view-settings-switch[data-on='true'] .view-settings-track {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.view-settings-switch[data-on='true'] .view-settings-track::after {
+  right: var(--space-0-5);
+  left: auto;
+  background: var(--background);
+}
+
+/* A value from a closed set the catalogue documents: every allowed option, the chosen one lit. Options never mark a default. */
+.view-settings-scale {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.view-settings-option {
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--border-faint);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-settings-option + .view-settings-option {
+  border-left: 0;
+}
+
+.view-settings-option[aria-current='true'] {
+  border-color: var(--primary-border);
+  background: var(--primary-tint);
+  color: var(--primary);
+  font-weight: var(--fw-semibold);
+}
+
+.view-settings-option[aria-current='true'] + .view-settings-option {
+  border-left: 1px solid var(--border-faint);
+}
+
+/* The unset keys: a native details at the panel's foot; opens on its own for a panel with nothing set. */
+.view-settings-unset > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.view-settings-unset > summary::-webkit-details-marker {
+  display: none;
+}
+
+.view-settings-unset > summary:hover {
+  background: var(--state-hover);
+  color: var(--foreground);
+}
+
+.view-settings-unset > summary svg {
+  flex: none;
+  width: var(--space-3);
+  height: var(--space-3);
+}
+
+.view-settings-unset[open] > summary svg {
+  transform: rotate(90deg);
+}
+
+.view-settings-unset > ul {
+  display: grid;
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-3);
+  list-style: none;
+}
+
+.view-settings-unset-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-1-5) 0;
+  border-top: 1px dashed var(--border-faint);
+  color: var(--muted-foreground);
+}
+
+.view-settings-notset {
+  display: inline-block;
+  padding: 0 var(--space-1-5);
+  border: 1px dashed var(--muted-foreground);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+/* The unreadable config.json: the page's one error look, the Source notice with a solid destructive frame and glyph (a genuine read failure). */
+.notice.source-notice.view-settings-unreadable {
+  border-style: solid;
+  border-color: var(--destructive-border);
+}
+
+.notice.source-notice.view-settings-unreadable > .source-notice-glyph {
+  border-style: solid;
+  border-color: var(--destructive-border);
+  color: var(--destructive);
+}
+
+/* The header gear is lit on the settings page (D-09): the accent glyph on the accent tint. It takes a 40px hit area under a coarse pointer. */
+.shell-controls a[aria-label='Project settings'][aria-current='page'] {
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+
+@media (pointer: coarse) {
+  .shell-controls a[aria-label='Project settings'] {
+    min-width: var(--space-10);
+    min-height: var(--space-10);
+  }
+}
+/* phase-12-settings:end */
