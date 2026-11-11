@@ -12,6 +12,9 @@ import {
 } from '../../presentation/artifact-warning-tone.ts';
 import { artifactWarningSummary } from '../../presentation/artifact-warning-summary.ts';
 import { hasSourceFlag } from '../../presentation/root-redirects.ts';
+import { fileNameOf } from '../../presentation/file-facts.ts';
+import { hasLineHash } from '../../presentation/source-link.ts';
+import { SourceReader } from '../components/source-reader.tsx';
 import {
   presentationRoutePatterns,
 } from '../../presentation/routes.ts';
@@ -717,7 +720,7 @@ export function ArtifactPage({
   route: routeOverride,
   switcher: pairSwitcher = null,
 }: { route?: string; switcher?: React.ReactNode } = {}): React.JSX.Element {
-  const { pathname: locationPath, search } = useProjectLocation();
+  const { pathname: locationPath, search, hash } = useProjectLocation();
   const route = routeOverride ?? locationPath;
   const slug = useProjectSlug() ?? '';
   const scope = useProjectScope();
@@ -737,7 +740,11 @@ export function ArtifactPage({
     () => (query.data ? buildFrontmatterPanels(query.data.artifact.frontmatter) : []),
     [query.data],
   );
-  const [mode, setMode] = useState<'view' | 'source'>('view');
+  // D-05: a file's one URL opens in Source when it carries ?source=1 or a line fragment; the same URL
+  // without either opens View. DocumentRoute keys this page by its URL, so the mode never carries over.
+  const [mode, setMode] = useState<'view' | 'source'>(() =>
+    hasSourceFlag(search) || hasLineHash(hash) ? 'source' : 'view',
+  );
   const shown = useMemo(
     () => (query.data ? dropLeadingTitle(query.data.document, query.data.artifact.title) : null),
     [query.data],
@@ -1714,7 +1721,9 @@ export function ArtifactPage({
 
       {!recognized ? <UnrecognizedNotice kind={artifact.kind} /> : null}
 
-      {layout && mode === 'view' ? (
+      {mode === 'source' ? (
+        <SourceReader route={route} name={fileNameOf(artifact.path)} target={null} />
+      ) : layout && mode === 'view' ? (
         <div className="document-reader-layout" data-outline="false">
           <article className="document-canvas" aria-label={`${artifact.title} document`}>
             <ChapterBar layout={layout} title={artifact.title} mode={mode} onModeChange={setMode} />
@@ -1792,7 +1801,6 @@ export function ArtifactPage({
         <ArtifactReader
           title={artifact.title}
           document={document}
-          figures={!(viewAvailable && mode === 'source')}
         />
       )}
     </main>

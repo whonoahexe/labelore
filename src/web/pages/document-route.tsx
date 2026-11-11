@@ -33,5 +33,5 @@ export function DocumentRoute({ url }: { url: string }): React.JSX.Element {
       return <FileDetailsPage artifact={artifact} presentation={presentation} variant={kind} />;
     }
   }
-  return <ArtifactPage route={url} />;
+  return <ArtifactPage key={url} route={url} />;
 }
