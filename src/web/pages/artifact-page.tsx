@@ -96,6 +96,8 @@ import type { ComposedForensics } from '../views/forensics-page.ts';
 import { ForensicsView, forensicsHeaderProps } from '../views/forensics-page-components.tsx';
 import type { ComposedOnboarding } from '../views/onboarding-page.ts';
 import { OnboardingView, onboardingHeaderProps } from '../views/onboarding-page-components.tsx';
+import type { ComposedSettings } from '../views/settings-page.ts';
+import { SettingsView, settingsHeaderProps } from '../views/settings-page-components.tsx';
 import type { ComposedSpec } from '../views/spec-page.ts';
 import { SpecView, specHeaderProps } from '../views/spec-page-components.tsx';
 import type { ComposedAiSpec } from '../views/ai-spec-page.ts';
@@ -817,8 +819,10 @@ export function ArtifactPage({
       indexesContext: query.data.indexesContext ?? null,
       seedThreadLinks: query.data.seedThreadLinks ?? null,
       onboardingContext: query.data.onboardingContext ?? null,
+      scope,
+      structuralWarning: query.data.artifact.warnings.length > 0,
     };
-  }, [query.data, groups, planSegments, planProgress, planContext, phaseRequirementIds, phaseName, shown, siblingArtifacts]);
+  }, [query.data, scope, groups, planSegments, planProgress, planContext, phaseRequirementIds, phaseName, shown, siblingArtifacts]);
   // VIEW-06: a registered manifest, or fallback.ts's synthesized structural-read manifest — one
   // dispatch path either way (`resolveView` itself stays registry-only, for 05-06's completeness
   // test).
@@ -1059,6 +1063,13 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.onboardingPage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // Phase 12 (12-09, sketch 063 A): the settings page, when the resolved manifest opts into one - `null` for every other kind, for a
+  // workstream's own config.json and for a config.json that is not an object (D-11), where the fact-list of the frontmatter renders.
+  // The composer is pure and the page changes nothing: its one request is the unreadable state's GET of the parser's position.
+  const settingsPage = useMemo<ComposedSettings | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.settingsPage?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // Phase 10 (10-16, sketch 047 B): the Spec page, when the resolved manifest opts into one - `null` for every other
   // kind and for a SPEC the page cannot shape (no `structured.spec`, or no score, requirement, dimension, goal or
   // scope), where the promoted-section view renders with no notice. The composer is pure, so two spec pages open at
@@ -1171,6 +1182,7 @@ export function ArtifactPage({
     reportPage !== null ||
     forensicsPage !== null ||
     onboardingPage !== null ||
+    settingsPage !== null ||
     specPage !== null ||
     aiSpecPage !== null ||
     userSetupPage !== null ||
@@ -1513,6 +1525,9 @@ export function ArtifactPage({
   // The onboarding page's header override (eyebrow "Onboarding", the file's title as the h1, the file name as meta) rides the same
   // spread; the page carries what the metadata disclosure would repeat.
   const onboardingCover = onboardingPage && mode === 'view' ? onboardingPage : null;
+  // The settings page's header override (crumbs "{project} / Settings", eyebrow "Settings", the h1 "Project settings" and the read-only
+  // lock line) rides the same spread; the page carries what the metadata disclosure would repeat.
+  const settingsCover = settingsPage && mode === 'view' ? settingsPage : null;
   // The Spec page's header override ("Phase N · Spec", the phase name as the h1, created date and requirement count
   // as meta) rides the same spread; the page's strip carries what the metadata disclosure would repeat.
   const specPageCover = specPage && mode === 'view' ? specPage : null;
@@ -1551,6 +1566,7 @@ export function ArtifactPage({
     (reportCover ? reportHeaderProps(reportCover, artifact.title, artifact.path) : null) ??
     (forensicsCover ? forensicsHeaderProps(forensicsCover, artifact.title, artifact.path) : null) ??
     (onboardingCover ? onboardingHeaderProps(onboardingCover, artifact.title, artifact.path) : null) ??
+    (settingsCover ? settingsHeaderProps(presentationQuery.data?.projectName ?? slug) : null) ??
     (specPageCover ? specHeaderProps(specPageCover, artifact.title) : null) ??
     (aiSpecPageCover ? aiSpecHeaderProps(aiSpecPageCover, artifact.title) : null) ??
     (userSetupPageCover ? userSetupHeaderProps(userSetupPageCover, artifact.title) : null) ??
@@ -1676,6 +1692,7 @@ export function ArtifactPage({
         reportCover ||
         forensicsCover ||
         onboardingCover ||
+        settingsCover ||
         specPageCover ||
         aiSpecPageCover ||
         userSetupPageCover ||
@@ -1816,6 +1833,8 @@ export function ArtifactPage({
         <ForensicsView key={artifact.path} model={forensicsCover} />
       ) : onboardingCover ? (
         <OnboardingView key={artifact.path} model={onboardingCover} />
+      ) : settingsCover ? (
+        <SettingsView key={artifact.path} model={settingsCover} />
       ) : specPageCover ? (
         <SpecView key={artifact.path} model={specPageCover} renderHtml={renderHtml} onShowSource={showSource} />
       ) : aiSpecPageCover ? (

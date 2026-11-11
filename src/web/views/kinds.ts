@@ -21,6 +21,7 @@
 // `reports/` files, both the session report and the milestone summary; its wire kind is `report` itself, so it needs no table row).
 // Phase 11 (11-25) adds `forensics` (the forensics page for `forensics/` reports; its wire kind is `forensics` itself, so it needs no table row).
 // Phase 11 (11-26) adds `onboarding` (the onboarding page for `onboarding/SUMMARY.md`; its wire kind is `onboarding` itself, so it needs no table row).
+// Phase 12 (12-09) adds `settings` (the settings page for the root `config.json`; its wire kind is `config`, which the table below maps to `settings`).
 export const VIEW_KINDS = [
   'discussion-log',
   'verification',
@@ -61,6 +62,7 @@ export const VIEW_KINDS = [
   'report',
   'forensics',
   'onboarding',
+  'settings',
 ] as const;
 
 export type ViewKind = (typeof VIEW_KINDS)[number];
@@ -78,6 +80,7 @@ const VIEW_KIND_TABLE: ReadonlyMap<string, string> = new Map([
   ['spikes-conventions', 'spikes'],
   ['intel', 'indexes'],
   ['graph', 'indexes'],
+  ['config', 'settings'],
 ]);
 
 /** Wire kinds whose designed page reads a bounded summary of a file too large to read as text (Phase 11, 11-18,
@@ -89,7 +92,7 @@ export function viewOwnsLargeFile(kind: string): boolean {
 
 /** The view kind a wire `artifact.kind` is looked up under: every `codebase-*` kind (the seven map documents)
  * shares the one `codebase` view, a kind with a row in the table shares that row's view (the two pause files
- * share `pause`, the four spike files share `spikes`, `intel` and `graph` share `indexes`), any other kind is its own view kind (Phase 10, RESEARCH C8; Phase 11, RESEARCH Pattern 3). Pure. */
+ * share `pause`, the four spike files share `spikes`, `intel` and `graph` share `indexes`, `config` opens the `settings` view), any other kind is its own view kind (Phase 10, RESEARCH C8; Phase 11, RESEARCH Pattern 3). Pure. */
 export function viewKindOf(kind: string): string {
   if (kind.startsWith(CODEBASE_KIND_PREFIX)) return 'codebase';
   return VIEW_KIND_TABLE.get(kind) ?? kind;
