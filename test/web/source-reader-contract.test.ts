@@ -17,8 +17,8 @@ import {
   SourceRows,
   foldsAfterPreset,
   highlightAll,
+  landingLineOf,
   presetPressed,
-  resolveTargetLine,
   sourceLinesOf,
 } from '../../src/web/components/source-reader.tsx';
 import { buildSourceModel, defaultFolds, foldPresetsOf, gutterOf, languageOf } from '../../src/web/source/source-model.ts';
@@ -170,21 +170,35 @@ describe('artifact-page.tsx Source chrome (source-text contract)', () => {
   });
 });
 
-describe('resolveTargetLine', () => {
-  const TEXT = 'one\ntwo\nthree\n';
+describe('landingLineOf', () => {
+  const TEXT = '---\nname: x\n---\n\n# Title\n\n## Second part\n\ntext here\n';
+  const model = buildSourceModel(TEXT, 'markdown');
+  // The body starts after the frontmatter (the served text keeps it): offset 0 of the body is line 5.
+  const bodyStart = TEXT.indexOf('# Title');
 
   it('lands a heading target with no id on line 1', () => {
-    expect(resolveTargetLine(TEXT, 0, { kind: 'heading', id: null, seq: 1 })).toBe(1);
+    expect(landingLineOf(model, TEXT, bodyStart, { kind: 'heading', id: null, seq: 1 })).toBe(1);
   });
 
-  it('lands a heading id on line 1 until the heading-to-line mapper arrives', () => {
-    expect(resolveTargetLine(TEXT, 0, { kind: 'heading', id: 'some-heading', seq: 2 })).toBe(1);
+  it('lands a rendered heading id on the line of that heading, through targetLineOf', () => {
+    expect(landingLineOf(model, TEXT, bodyStart, { kind: 'heading', id: 'second-part', seq: 2 })).toBe(7);
+    expect(landingLineOf(model, TEXT, bodyStart, { kind: 'heading', id: 'title', seq: 3 })).toBe(5);
+  });
+
+  it('lands a plan-at-N id on the line holding that body offset', () => {
+    const offset = TEXT.indexOf('text here') - bodyStart;
+    expect(landingLineOf(model, TEXT, bodyStart, { kind: 'heading', id: `plan-at-${offset}`, seq: 4 })).toBe(9);
+  });
+
+  it('lands an id it cannot map on line 1', () => {
+    expect(landingLineOf(model, TEXT, bodyStart, { kind: 'heading', id: 'plan-section-3', seq: 5 })).toBe(1);
+    expect(landingLineOf(model, TEXT, bodyStart, { kind: 'heading', id: 'no-such-heading', seq: 6 })).toBe(1);
   });
 
   it('lands a line target on its line and clamps one past the end', () => {
-    expect(resolveTargetLine(TEXT, 0, { kind: 'line', line: 2, select: true, seq: 3 })).toBe(2);
-    expect(resolveTargetLine(TEXT, 0, { kind: 'line', line: 99, select: true, seq: 4 })).toBe(3);
-    expect(resolveTargetLine(TEXT, 0, { kind: 'line', line: 0, select: false, seq: 5 })).toBe(1);
+    expect(landingLineOf(model, TEXT, bodyStart, { kind: 'line', line: 2, select: true, seq: 7 })).toBe(2);
+    expect(landingLineOf(model, TEXT, bodyStart, { kind: 'line', line: 99, select: true, seq: 8 })).toBe(9);
+    expect(landingLineOf(model, TEXT, bodyStart, { kind: 'line', line: 0, select: false, seq: 9 })).toBe(1);
   });
 });
 
@@ -580,5 +594,105 @@ describe('the phase-12-source stylesheet block', () => {
     const block = sourceBlock();
     expect(block).toMatch(/\.notice\.source-notice \{[^}]*border: 1px dashed var\(--muted-foreground\)/);
     expect(block).toMatch(/\.notice\.source-notice > \.source-notice-glyph \{[^}]*width: var\(--space-10\);[^}]*height: var\(--space-10\);[^}]*border: 1px dashed var\(--muted-foreground\)/);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------
+// 12-08: selection, links and the Here path (SRC-02, D-03, D-05, D-06).
+// ---------------------------------------------------------------------------------------------------------------
+
+describe('the selection chip in the Here row', () => {
+  const chipOf = (range: { from: number; to: number } | null, line = 40): string => {
+    const model = buildSourceModel(PLAN_06, 'markdown');
+    return plain(renderToStaticMarkup(createElement(SourceHere, { model, line, selection: range })));
+  };
+
+  it('says L33 for one line and L33–L40 for a range, with Copy link and a labelled clear button', () => {
+    expect(chipOf({ from: 33, to: 33 })).toContain('<span class="source-selection status-chip" data-tone="active"><span>L33</span>');
+    const html = chipOf({ from: 33, to: 40 });
+    expect(html).toContain('<span>L33–L40</span>');
+    expect(html).toContain('class="source-selection-link">Copy link</button>');
+    expect(html).toMatch(/<button[^>]*class="source-selection-clear"[^>]*aria-label="Clear selection"/);
+  });
+
+  it('gives a whole block its own range label', () => {
+    expect(chipOf({ from: 88, to: 134 })).toContain('<span>L88–L134</span>');
+  });
+
+  it('draws no chip with nothing selected', () => {
+    expect(chipOf(null)).not.toContain('source-selection');
+  });
+
+  it('puts the chip after the line number, inside the Position-in-file nav', () => {
+    const html = chipOf({ from: 33, to: 33 });
+    expect(html.indexOf('source-here-line')).toBeLessThan(html.indexOf('source-selection'));
+    expect(html.indexOf('source-selection')).toBeLessThan(html.indexOf('</nav>'));
+  });
+});
+
+describe('the Here path is a plain landmark', () => {
+  it('is nav "Position in file" and announces nothing as it changes', () => {
+    const model = buildSourceModel(PLAN_06, 'markdown');
+    const html = renderToStaticMarkup(createElement(SourceHere, { model, line: 90, selection: { from: 90, to: 91 } }));
+    expect(html).toContain('<nav class="source-here" aria-label="Position in file">');
+    expect(html).not.toContain('aria-live');
+    expect(html).not.toContain('role="status"');
+    expect(html).not.toContain('role="alert"');
+  });
+
+  it('follows the scroll with a passive, frame-throttled listener that is cleaned up', () => {
+    expect(READER).toContain("addEventListener('scroll'");
+    expect(READER).toContain('passive: true');
+    expect(READER).toContain("removeEventListener('scroll'");
+    expect(READER).toContain('requestAnimationFrame');
+    expect(READER).toContain('cancelAnimationFrame');
+    expect(READER).toContain('elementFromPoint');
+    // The line is kept in state only when it changes.
+    expect(READER).toContain('previous === line ? previous : line');
+    // The reader reads the position; the active-section seam stays free of the URL and of the reader.
+    expect(READER).not.toContain('use-active-section');
+  });
+
+  it('has no live region anywhere in the reader', () => {
+    expect(READER).not.toContain('aria-live="assertive"');
+    expect(READER.match(/aria-live/g)?.length).toBe(1); // the loading backstop's polite status, outside the Here path
+  });
+
+  it('names the chain around the line it is given, outermost first, the innermost current', () => {
+    const model = buildSourceModel(PLAN_06, 'markdown');
+    const task = model.blocks.find((block) => block.kind === 'xml' && block.tag === 'task');
+    if (!task) throw new Error('plan-06 has no task');
+    const html = plain(renderToStaticMarkup(createElement(SourceHere, { model, line: task.from + 1 })));
+    expect(html).toContain(`<span class="source-here-line">L${task.from + 1}</span>`);
+    expect(html.match(/data-current="true"/g)).toHaveLength(1);
+    expect(html.indexOf('&lt;tasks&gt;') === -1 ? html.indexOf('<tasks>') : html.indexOf('&lt;tasks&gt;')).toBeGreaterThan(-1);
+  });
+});
+
+describe('the reader wires selection through the selection module only', () => {
+  it('runs number, bracket and clear events through selectionAfter and the URL through writeSelectionHash', () => {
+    expect(READER).toContain('selectionAfter(');
+    expect(READER).toContain('writeSelectionHash(');
+    expect(READER).not.toMatch(/replaceState|pushState|navigate\(/);
+    expect(PAGE.match(/replaceState\(/g)?.length).toBe(1);
+  });
+
+  it('selects a whole block from a click on its bracket cells, but leaves the fold toggle to fold', () => {
+    expect(READER).toContain("kind: 'block'");
+    expect(READER).toContain("closest('.source-fold-toggle')");
+  });
+
+  it('clears on Escape from inside the reader', () => {
+    expect(READER).toContain("event.key === 'Escape'");
+    expect(READER).toContain("kind: 'clear'");
+  });
+
+  it('lands headings through targetLineOf and replaces the 12-01 stand-in', () => {
+    expect(READER).toContain('targetLineOf(');
+    expect(READER).not.toContain('export function resolveTargetLine');
+  });
+
+  it('never makes the file text a selector or a pattern', () => {
+    expect(READER).not.toContain('new RegExp(');
   });
 });
