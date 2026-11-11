@@ -22,7 +22,7 @@ import type { ViewInput, ViewManifest } from '../../src/web/views/manifest.ts';
 import { VIEW_MANIFESTS, resolveViewFor } from '../../src/web/views/manifests.ts';
 import { composeSettings } from '../../src/web/views/settings-page.ts';
 import type { ComposedSettings } from '../../src/web/views/settings-page.ts';
-import { SettingsView, settingsHeaderProps } from '../../src/web/views/settings-page-components.tsx';
+import { SettingsView, UnreadableNotice, settingsHeaderProps } from '../../src/web/views/settings-page-components.tsx';
 import { fxPath, loadFixtureProject, loadProject } from '../helpers/fixture-project.ts';
 import { SHAPES_ROOT, loadShapesProject, shapesPath } from '../helpers/shapes-project.ts';
 
@@ -95,7 +95,7 @@ describe('the settings page header and counts', () => {
 
   it("draws Lendshed's four counts and one panel per group", () => {
     const model = ready(configOf(lendshed.presentation));
-    const html = renderToStaticMarkup(createElement(SettingsView, { model }));
+    const html = renderToStaticMarkup(createElement(SettingsView, { model, route: '/settings', onOpenSourceAt: () => undefined }));
     for (const caption of ['Set', 'Not set', 'Not recognised', 'Masked']) expect(html).toContain(`>${caption}</span>`);
     expect(html).toContain('>13</span>');
     expect(html).toContain('4 of 47 set');
@@ -195,7 +195,7 @@ const RICH = {
 };
 
 function pageOf(frontmatter: Record<string, unknown>): string {
-  return renderToStaticMarkup(createElement(SettingsView, { model: ready(frontmatter) }));
+  return renderToStaticMarkup(createElement(SettingsView, { model: ready(frontmatter), route: '/settings', onOpenSourceAt: () => undefined }));
 }
 
 describe('the settings instruments (read-only, 12-09 Task 2)', () => {
@@ -302,6 +302,10 @@ describe('the settings instruments (read-only, 12-09 Task 2)', () => {
     expect((html.match(/<details class="view-settings-unset" open="">/g) ?? []).length).toBe(sections);
   });
 
+  it('the only destructive mark on a settings page is the unreadable chip, never on a ready page', () => {
+    for (const html of [rich, pageOf({}), pageOf({ mode: 'yolo' })]) expect(html).not.toContain('data-tone="destructive"');
+  });
+
   it('nothing on the page can change a setting: no input, select, textarea, form, switch role or tab stop', () => {
     for (const html of [rich, pageOf({}), pageOf({ mode: 'yolo' })]) {
       expect(html).not.toMatch(/<(input|select|textarea|form|button)\b/);
@@ -309,5 +313,75 @@ describe('the settings instruments (read-only, 12-09 Task 2)', () => {
       expect(html).not.toMatch(/tabindex=/i);
       expect(html).not.toMatch(/\bonclick\b|\bhref=/i);
     }
+  });
+});
+
+// Task 3 (12-09): the unreadable state and the empty-state parity.
+type ElementLike = { type: unknown; props: { children?: unknown; onClick?: () => void } };
+
+function findClickHandler(node: unknown): (() => void) | null {
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const found = findClickHandler(child);
+      if (found !== null) return found;
+    }
+    return null;
+  }
+  if (typeof node !== 'object' || node === null || !('props' in node)) return null;
+  const element = node as ElementLike;
+  if (typeof element.props.onClick === 'function') return element.props.onClick;
+  return findClickHandler(element.props.children);
+}
+
+describe('the unreadable config.json (12-09 Task 3)', () => {
+  const html = (parseError: Parameters<typeof UnreadableNotice>[0]['parseError']): string =>
+    renderToStaticMarkup(createElement(UnreadableNotice, { parseError, onOpenSourceAt: () => undefined }));
+
+  it('names the line and the reason words, and the button opens Source at that line', () => {
+    const out = html({ line: 14, column: 3, reason: 'unexpected-character' });
+    expect(out).toContain("Can't read config.json");
+    expect(out).toContain('data-tone="destructive"');
+    expect(out).toContain("The file isn&#x27;t valid JSON, so no settings are shown.");
+    expect(out).toContain('The parser stopped at line 14: an unexpected character.');
+    expect(out).toContain('Open Source at line 14');
+    expect(out).toContain('class="source-notice-glyph"');
+    expect(out).toContain('class="source-notice-lead"');
+  });
+
+  it('says each closed-set reason in its own plain words', () => {
+    const words = {
+      'unexpected-end': 'the file ends before the JSON does',
+      'unexpected-character': 'an unexpected character',
+      'expected-value': 'a value or a key name was expected',
+      'not-valid': 'this is not valid JSON',
+    } as const;
+    for (const [reason, phrase] of Object.entries(words)) {
+      expect(html({ line: 2, column: 1, reason: reason as keyof typeof words })).toContain(`line 2: ${phrase}.`);
+    }
+  });
+
+  it('with no line the sentence ends after "shown." and the button reads "Open Source"', () => {
+    for (const parseError of [null, { line: null, column: null, reason: 'not-valid' as const }]) {
+      const out = html(parseError);
+      expect(out).not.toContain('The parser stopped');
+      expect(out).toContain('>Open Source</button>');
+      expect(out).not.toContain('Open Source at line');
+    }
+  });
+
+  it('the button reports the line to open (or none)', () => {
+    const calls: (number | null)[] = [];
+    const withLine = UnreadableNotice({ parseError: { line: 14, column: 3, reason: 'not-valid' }, onOpenSourceAt: (line) => calls.push(line) });
+    findClickHandler(withLine)?.();
+    const without = UnreadableNotice({ parseError: null, onOpenSourceAt: (line) => calls.push(line) });
+    findClickHandler(without)?.();
+    expect(calls).toEqual([14, null]);
+  });
+
+  it('the no-settings page draws its notice with the same glyph box and lead styling', () => {
+    const source = readFileSync(fileURLToPath(new URL('../../src/web/pages/settings-missing-page.tsx', import.meta.url)), 'utf8');
+    expect(source).toContain('notice source-notice');
+    expect(source).toContain('source-notice-glyph');
+    expect(source).toContain('source-notice-lead');
   });
 });
