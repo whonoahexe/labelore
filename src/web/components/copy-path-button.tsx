@@ -117,7 +117,7 @@ export function CopyPathButton({
         variant="ghost"
       >
         {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-        <span>{copied ? 'Copied' : label}</span>
+        <span className="source-copy-label">{copied ? 'Copied' : label}</span>
       </Button>
     );
   }

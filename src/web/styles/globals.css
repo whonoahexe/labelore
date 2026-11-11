@@ -359,7 +359,7 @@
   }
 
   ::selection {
-    background: color-mix(in oklch, var(--primary) 28%, transparent);
+    background: var(--primary-flash);
   }
 }
 
@@ -1131,7 +1131,7 @@
 }
 
 .status-chip {
-  background: color-mix(in oklch, var(--muted) 55%, transparent);
+  background: var(--veil);
 }
 
 .status-chip svg {
@@ -38596,3 +38596,557 @@ a.view-workstreams-file:hover {
   }
 }
 /* phase-11-workstreams:end */
+
+/* phase-12-source:start */
+/* Phase 12 (12-07): Source mode's structure reader, sketch 062 winner E. A row is [line number | bracket gutter | text];
+   the number and gutter are pinned on --background while the text scrolls sideways; the gutter draws every block as a
+   nested bracket with a fold toggle at its first row; the sticky bar holds the fold presets, Wrap, the copy buttons and
+   the "Here" path. Colour comes only from tokens: keys are --t-key, markup and punctuation --muted-foreground, a
+   selection --sel and --primary-border, the mask box and every fold chip a dashed --muted-foreground; no hue is
+   invented and nothing here is destructive (a notice is quiet: nothing failed). Type is the Code role (--fs-3 mono,
+   --fw-medium, --source-row-height) and the Label role (--fs-2 uppercase mono, --fw-semibold); bold is semibold.
+   Under 42rem (a container query on the reader) the copy buttons show their icon alone, the numbers narrow to 4ch and
+   the bar stacks. Media and container overrides sit directly after their base rules (css-source-order). */
+:root {
+  --t-key: var(--primary);
+  --sel: color-mix(in oklch, var(--primary) 12%, transparent);
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--muted-foreground) 0 1px, transparent 1px var(--space-1-5));
+  --source-row-height: 1.6;
+  /* The accent at 28%: the text-selection ground, and the first frame of the 1.4 s flash on a row Source lands on. */
+  --primary-flash: color-mix(in oklch, var(--primary) 28%, transparent);
+}
+
+.dark {
+  --t-key: color-mix(in oklch, var(--primary) 60%, var(--foreground));
+}
+
+.source-reader {
+  container-name: source;
+  container-type: inline-size;
+  min-width: 0;
+}
+
+/* The sticky bar: row 1 the tools, row 2 the Here path. A hairline, no fill, so it never competes with the text. */
+.source-bar {
+  position: sticky;
+  top: var(--space-22);
+  z-index: 10;
+  display: grid;
+  gap: var(--space-2);
+  padding-block: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+
+/* Under 42rem the shell header scrolls away with the page, so the bar pins to the top of the screen and needs no strip. */
+@media (max-width: 42rem) {
+  .source-bar {
+    top: 0;
+  }
+
+  .source-bar::before {
+    display: none;
+  }
+}
+
+/* The shell header is shorter than the bar's offset, so a strip of --background above the bar keeps scrolled text from showing in the gap. */
+.source-bar::before {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  height: var(--space-8);
+  background: var(--background);
+  content: '';
+}
+
+.source-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.source-fold-label,
+.source-here-label {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-normal);
+  text-transform: uppercase;
+}
+
+.source-presets {
+  display: inline-flex;
+  flex-wrap: wrap;
+}
+
+.source-presets > button + button {
+  border-left-width: 0;
+}
+
+/* The bar's buttons take the Label role (the sketch's btn-xs): --fs-2 uppercase semibold, the quiet actions boxed by a hairline. */
+.source-tools button {
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+}
+
+.source-actions button {
+  border-color: var(--border);
+}
+
+.source-tools button[aria-pressed='true'] {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.source-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1-5);
+  margin-left: auto;
+}
+
+/* The Here path: one line, so the crumbs give way (ellipsis at 28ch) before the label or the line number do. */
+.source-here {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  min-height: var(--space-7);
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  line-height: var(--lh-normal);
+}
+
+.source-here-label {
+  flex: none;
+  margin-right: var(--space-1);
+}
+
+.source-here-step {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.source-here-crumb {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 28ch;
+  padding: var(--space-0-5) var(--space-1-5);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.source-here-crumb:hover {
+  background: var(--state-hover);
+}
+
+.source-here-crumb[data-current='true'] {
+  border-color: var(--primary-border);
+  color: var(--primary);
+}
+
+.source-here-sep {
+  flex: none;
+  color: var(--muted-foreground);
+}
+
+.source-here-line {
+  flex: none;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+/* The selection chip (12-08 draws it into the Here row): the status-chip active look, pushed to the trailing edge. */
+.source-selection {
+  flex: none;
+  gap: 0;
+  margin-left: auto;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.source-selection > * {
+  padding: var(--space-1) var(--space-2);
+}
+
+.source-selection button {
+  cursor: pointer;
+}
+
+.source-selection button:hover {
+  background: var(--sel);
+}
+
+.source-selection > * + * {
+  border-left: 1px solid var(--primary-border);
+}
+
+/* The reading pane: no wrap by default, so it scrolls sideways under the pinned numbers and gutter. */
+.source-pane {
+  padding-block: var(--space-3);
+  overflow-x: auto;
+}
+
+.source-code {
+  --source-code-width: 100%;
+  width: max-content;
+  min-width: max(100%, var(--source-code-width));
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  font-weight: var(--fw-medium);
+  line-height: var(--source-row-height);
+  tab-size: 2;
+}
+
+.source-pane[data-wrap='true'] .source-code {
+  width: auto;
+  min-width: 0;
+}
+
+.source-row {
+  display: flex;
+  min-width: 0;
+  scroll-margin-top: calc(var(--space-22) + var(--space-22));
+}
+
+/* Rows below the fold are not laid out until they scroll near; a fixed row height keeps their size honest. */
+.source-pane:not([data-wrap='true']) .source-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto calc(var(--fs-3) * var(--source-row-height));
+}
+
+.source-lead {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  background: var(--background);
+}
+
+.source-line-number {
+  position: relative;
+  flex: none;
+  width: 6ch;
+  padding-right: 1.5ch;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  text-decoration: none;
+  white-space: nowrap;
+  opacity: 0.7;
+  user-select: none;
+}
+
+.source-line-number:hover {
+  color: var(--foreground);
+  opacity: 1;
+}
+
+.source-gutter {
+  display: flex;
+  padding-right: 1ch;
+}
+
+.source-gutter-cell {
+  position: relative;
+  align-self: stretch;
+  width: 1.6ch;
+}
+
+.source-gutter-cell[data-state]::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  border-left: 1px solid var(--border);
+  content: '';
+}
+
+.source-gutter-cell[data-state='start']::before {
+  top: 50%;
+}
+
+.source-gutter-cell[data-state='end']::before {
+  bottom: 50%;
+}
+
+.source-gutter-cell[data-state='end']::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 45%;
+  border-top: 1px solid var(--border);
+  content: '';
+}
+
+.source-gutter-cell[data-state='one']::before {
+  display: none;
+}
+
+.source-gutter-cell[data-hot='true']::before,
+.source-gutter-cell[data-hot='true']::after {
+  border-color: var(--primary);
+}
+
+.source-fold-toggle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 1.4ch;
+  height: 1.4ch;
+  padding: 0;
+  border: 1px solid var(--muted-foreground);
+  background: var(--background);
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  line-height: var(--lh-none);
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+
+.source-fold-toggle:hover,
+.source-gutter-cell[data-hot='true'] .source-fold-toggle {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.source-line-text {
+  flex: 1;
+  min-width: 0;
+  padding-right: 2ch;
+  white-space: pre;
+}
+
+.source-pane[data-wrap='true'] .source-line-text {
+  padding-left: 2ch;
+  overflow-wrap: anywhere;
+  text-indent: -2ch;
+  white-space: pre-wrap;
+}
+
+/* The folded block's chip: the one dashed object on a line, leading into the next visible row. */
+.source-fold-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 1ch;
+  padding-inline: var(--space-1-5);
+  border: 1px dashed var(--muted-foreground);
+  color: var(--muted-foreground);
+  text-indent: 0;
+  cursor: pointer;
+}
+
+.source-fold-chip:hover {
+  border-color: var(--foreground);
+  color: var(--foreground);
+}
+
+.source-fold-chip strong {
+  color: var(--foreground);
+  font-weight: var(--fw-semibold);
+}
+
+.source-fold-toggle:focus-visible,
+.source-fold-chip:focus-visible,
+.source-line-number:focus-visible,
+.source-here-crumb:focus-visible {
+  outline: 2px solid var(--ring);
+}
+
+/* Tone-only highlighting: keys are the accent, markup and punctuation are quiet, emphasis is semibold, a mask is a dashed box. */
+.source-t-key {
+  color: var(--t-key);
+}
+
+.source-t-p,
+.source-t-tag {
+  color: var(--muted-foreground);
+}
+
+.source-t-h,
+.source-t-b {
+  font-weight: var(--fw-semibold);
+}
+
+.source-t-c {
+  background: var(--veil);
+}
+
+.source-t-mask {
+  padding-inline: var(--space-0-5);
+  border: 1px dashed var(--muted-foreground);
+  color: var(--muted-foreground);
+  cursor: help;
+}
+
+/* A selection (12-08 sets these attributes): the tint, the accent number, a 1px rule above the first row and below the last. */
+.source-row[data-selected='true'] {
+  background: var(--sel);
+}
+
+.source-row[data-selected='true'] .source-lead {
+  background: color-mix(in oklch, var(--primary) 12%, var(--background));
+}
+
+.source-row[data-selected='true'] .source-line-number {
+  color: var(--primary);
+  font-weight: var(--fw-semibold);
+  opacity: 1;
+}
+
+.source-row[data-selection-edge='first'],
+.source-row[data-selection-edge='first'] .source-lead {
+  box-shadow: inset 0 1px 0 var(--primary-border);
+}
+
+.source-row[data-selection-edge='last'],
+.source-row[data-selection-edge='last'] .source-lead {
+  box-shadow: inset 0 -1px 0 var(--primary-border);
+}
+
+.source-row[data-selection-edge='only'],
+.source-row[data-selection-edge='only'] .source-lead {
+  box-shadow:
+    inset 0 1px 0 var(--primary-border),
+    inset 0 -1px 0 var(--primary-border);
+}
+
+/* Landing on a line: a 1.4 s fade from the accent, none when the reader asks for reduced motion. */
+.source-row[data-source-hit='true'] {
+  animation: source-hit-flash 1.4s ease-out;
+}
+
+@keyframes source-hit-flash {
+  from {
+    background: var(--primary-flash);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .source-row[data-source-hit='true'] {
+    animation: none;
+  }
+}
+
+/* Under 42rem: icon-only copy buttons, 4ch numbers, and the bar stacks (the presets wrap above the actions). */
+@container source (max-width: 42rem) {
+  .source-copy-label {
+    display: none;
+  }
+
+  .source-line-number {
+    width: 4ch;
+    padding-right: 1ch;
+  }
+
+  .source-actions {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}
+
+/* On a touch screen the line numbers and fold toggles take a 40px hit area (the box stays as drawn). */
+@media (pointer: coarse) {
+  .source-line-number::after {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    width: max(100%, var(--space-10));
+    height: var(--space-10);
+    content: '';
+    transform: translateY(-50%);
+  }
+
+  .source-fold-toggle::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--space-10);
+    height: var(--space-10);
+    content: '';
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* The notice Source shows in place of the reader (an image, a binary, a listed or over-cap file, an empty file): the
+   shared quiet dashed box, a 40px dashed glyph box beside the sentence, its second line, a facts row and the actions.
+   Nothing failed, so there is no warning or destructive look. */
+.notice.source-notice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-6);
+  border: 1px dashed var(--muted-foreground);
+  background: transparent;
+}
+
+.notice.source-notice > * {
+  grid-column: 2;
+  margin: 0;
+}
+
+.notice.source-notice > .source-notice-glyph {
+  display: grid;
+  grid-column: 1;
+  grid-row: 1 / span 4;
+  place-items: center;
+  width: var(--space-10);
+  height: var(--space-10);
+  border: 1px dashed var(--muted-foreground);
+  color: var(--muted-foreground);
+}
+
+.source-notice-glyph svg {
+  width: var(--space-5);
+  height: var(--space-5);
+}
+
+.notice.source-notice > .source-notice-lead {
+  color: var(--foreground);
+  font-weight: var(--fw-semibold);
+}
+
+.notice.source-notice > .source-notice-facts {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  line-height: var(--lh-normal);
+  text-transform: uppercase;
+}
+
+.source-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.source-notice-actions button {
+  border-color: var(--border);
+}
+/* phase-12-source:end */
