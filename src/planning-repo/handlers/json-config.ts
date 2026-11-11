@@ -21,7 +21,11 @@ const JSON_ARTIFACT_NAMES = new Set(['config.json', 'HANDOFF.json', 'estimation-
 
 export const JsonConfigHandler: ArtifactHandler = {
   kind: 'json-config',
-  match: (ref) => ref.location === 'root' && JSON_ARTIFACT_NAMES.has(basename(ref.path)),
+  // Every config.json is claimed wherever it sits (a workstream's or a codebase folder's included): the secret
+  // masking is keyed on the file name, so a config.json the generic handler read would be served raw. The other
+  // two names stay root-only.
+  match: (ref) =>
+    JSON_ARTIFACT_NAMES.has(basename(ref.path)) && (ref.location === 'root' || basename(ref.path) === 'config.json'),
   parse(raw: RawArtifact, ref: ArtifactRef) {
     const result = tryParseJson(raw.content);
     let frontmatter = result.data;

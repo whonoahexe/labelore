@@ -124,6 +124,10 @@ const memoryFiles: Record<string, string | Uint8Array> = {
   '.planning/notes/blob.bin': Uint8Array.from([0, 1, 2, 3, 0, 0, 255, 254, 0, 1]),
 };
 
+const WORKSTREAM_SECRET = 'sk-madeup-workstream-1234567';
+memoryFiles['.planning/workstreams/alpha/config.json'] = `{\n  "brave_search": "${WORKSTREAM_SECRET}"\n}\n`;
+memoryFiles['.planning/codebase/config.json'] = `{\n  "firecrawl": "${WORKSTREAM_SECRET}"\n}\n`;
+
 const memory = await appOver(new InMemoryPlanningFilesystem(memoryFiles), '/project');
 
 describe('GET /api/source?route= over a made-up in-memory project', () => {
@@ -134,6 +138,17 @@ describe('GET /api/source?route= over a made-up in-memory project', () => {
     expect(text).not.toContain(PLANTED_SEARCH_VALUE);
     expect((JSON.parse(text) as SourceTextResponse).masked).toBe(true);
   });
+
+  it.each(['.planning/workstreams/alpha/config.json', '.planning/codebase/config.json'])(
+    'masks a secret in a config.json that is not the root one (%s)',
+    async (path) => {
+      const res = await memory.app.request(sourceUrl(await keyOf(memory.app, path)));
+      expect(res.status).toBe(200);
+      const text = await res.text();
+      expect(text).not.toContain(WORKSTREAM_SECRET);
+      expect(text).toContain('****4567');
+    },
+  );
 
   it('masks a user-setup frontmatter value and keeps the line count', async () => {
     const path = '.planning/phases/01-first/01-USER-SETUP.md';
