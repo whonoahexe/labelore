@@ -136,6 +136,50 @@ describe('the settings address (Phase 12, D-09, D-12)', () => {
   });
 });
 
+describe('?source=1 through an alias redirect (Phase 12, D-05, Pitfall 11)', () => {
+  const aliased = (target: string): ProjectPresentation => ({
+    ...shapes,
+    routeAliases: { '/v1.1/roadmap': target },
+  });
+
+  it('keeps ?source=1 on the alias target', () => {
+    expect(resolveProjectRoute('/v1.1/roadmap', '?source=1', shapes)).toEqual({
+      kind: 'redirect',
+      to: '/roadmap?source=1',
+    });
+  });
+
+  it('appends &source=1 when the target already holds a query', () => {
+    expect(resolveProjectRoute('/v1.1/roadmap', '?source=1', aliased('/search?q=kiln'))).toEqual({
+      kind: 'redirect',
+      to: '/search?q=kiln&source=1',
+    });
+  });
+
+  it('puts the flag before a fragment the target carries', () => {
+    expect(resolveProjectRoute('/v1.1/roadmap', '?source=1', aliased('/roadmap#history'))).toEqual({
+      kind: 'redirect',
+      to: '/roadmap?source=1#history',
+    });
+  });
+
+  it('leaves the redirect target exactly the alias target without the flag', () => {
+    expect(resolveProjectRoute('/v1.1/roadmap', '', shapes)).toEqual({ kind: 'redirect', to: '/roadmap' });
+    expect(resolveProjectRoute('/v1.1/roadmap', '?source=0', shapes)).toEqual({
+      kind: 'redirect',
+      to: '/roadmap',
+    });
+  });
+
+  it('still refuses a hostile alias target when the flag is set (T-12-14)', () => {
+    for (const target of ['//evil.example/x', '/\\evil.example', 'https://evil.example']) {
+      expect(resolveProjectRoute('/v1.1/roadmap', '?source=1', aliased(target))).toEqual({
+        kind: 'not-found',
+      });
+    }
+  });
+});
+
 describe('resolveProjectRoute over the Lendshed payload', () => {
   it('opens a phase file as a document and redirects both live aliases', () => {
     expect(resolve('/v1.1/phase-1/context', lendshed)).toMatchObject({
