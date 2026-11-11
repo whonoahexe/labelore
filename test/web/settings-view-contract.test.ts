@@ -389,6 +389,7 @@ describe('the unreadable config.json (12-09 Task 3)', () => {
 describe('rows that share one path (WR-05)', () => {
   it('composes two Not recognised rows for a flat dotted key and the nested key of the same path', () => {
     const model = ready({ 'workflow.foo': 1, workflow: { foo: 2 } });
+    if (model.state !== 'ready') throw new Error('expected a ready settings model');
     const unknown = model.panels.find((panel) => panel.kind === 'not-recognised');
     expect(unknown?.rows.map((row) => row.key)).toEqual(['workflow.foo', 'workflow.foo']);
   });
