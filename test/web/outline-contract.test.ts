@@ -98,3 +98,53 @@ describe('outline component contract', () => {
     expect(contents).not.toMatch(/pushState|replaceState|location\.hash|useNavigate/);
   });
 });
+
+/** Every rule block whose selector line names the trigger, the narrow media block's included. */
+function triggerBlocks(css: string): string[] {
+  const blocks: string[] = [];
+  const lines = css.split('\n');
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index].trim();
+    if (!line.endsWith(' {') || line.startsWith('/') || line.startsWith('*')) continue;
+    if (!line.includes('.document-outline-trigger')) continue;
+    const body: string[] = [];
+    let cursor = index + 1;
+    while (cursor < lines.length && lines[cursor].trim() !== '}') {
+      body.push(lines[cursor]);
+      cursor += 1;
+    }
+    blocks.push(body.join('\n'));
+  }
+  return blocks;
+}
+
+// UI-07 and UI-09 (Phase 12, 12-UI-SPEC "UI-review polish"): the narrow trigger is opaque and its
+// chevron is primary, so a sticky trigger hides the text scrolling under it and reads as a control.
+describe('outline trigger polish (UI-07, UI-09)', () => {
+  it('the trigger paints an opaque --card surface, keeps its frame and its muted label colour', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const block = ruleBlock(css, '.document-outline-trigger {');
+    expect(block).toBeDefined();
+    expect(block).toContain('background: var(--card);');
+    expect(block).toContain('border: 1px solid var(--border);');
+    expect(block).toContain('color: var(--muted-foreground);');
+  });
+
+  it('no rule that targets the trigger sets a background through the translucent veil token', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const blocks = triggerBlocks(css);
+    expect(blocks.length).toBeGreaterThanOrEqual(4);
+    for (const block of blocks) expect(block).not.toContain('--card-veil');
+  });
+
+  it('the chevron svg takes --primary while the open state only rotates it', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const svg = ruleBlock(css, '.document-outline-trigger svg {');
+    expect(svg).toBeDefined();
+    expect(svg).toContain('color: var(--primary);');
+    const open = ruleBlock(css, '.document-outline-trigger[data-popup-open] svg {');
+    expect(open).toBeDefined();
+    expect(open).toContain('transform: rotate(180deg);');
+    expect(open).not.toContain('color:');
+  });
+});
