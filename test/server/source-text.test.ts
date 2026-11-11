@@ -416,6 +416,18 @@ describe('GET /api/source?route= never serves a frontmatter value a masking hand
     expect(lines[7]).toBe('body line');
   });
 
+  it('serves a list under a variable-name key, indented or at the key column, as the marker (WR-03)', () => {
+    const raw = `---\nSTRIPE_KEYS:\n  - ${PLANTED.inline}\nOTHER_KEYS:\n- ${PLANTED.nextLine}\nservice: Made-up mail\n---\nbody\n`;
+    const frontmatter = handlerFrontmatter('user-setup', raw);
+    expect(JSON.stringify(frontmatter)).not.toContain(PLANTED.inline);
+    expect(JSON.stringify(frontmatter)).not.toContain(PLANTED.nextLine);
+    const out = sourceTextOf({ kind: 'user-setup', path: USER_SETUP_PATH, body: 'body\n', frontmatter }, raw);
+    expect(out.text).not.toContain(PLANTED.inline);
+    expect(out.text).not.toContain(PLANTED.nextLine);
+    expect(out.text).toContain('service: Made-up mail');
+    expect(out.text.split('\n').length).toBe(raw.split('\n').length);
+  });
+
   it('does not fail closed for a file whose frontmatter the line mask covers', () => {
     const raw = `---\nDB_PASSWORD: ${PLANTED.inline}\nservice: Made-up mail\n---\nbody\n`;
     const out = sourceTextOf(

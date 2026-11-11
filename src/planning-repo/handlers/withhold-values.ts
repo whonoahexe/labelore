@@ -562,10 +562,26 @@ function keyHoldsValue(key: string, options: MaskOptions): boolean {
 }
 
 /** A string or number under a value-holding key: the marker, except an empty string or a placeholder (`[your key]`), kept
- * as written. Lists and maps under the key are walked by `maskData` instead. */
+ * as written. Lists and maps under the key are walked by `withholdAll` instead. */
 function withheldScalar(item: string | number | bigint): string {
   if (typeof item !== 'string') return VALUE_NOT_SHOWN_MARK;
   return isPlaceholder(item) ? item : VALUE_NOT_SHOWN_MARK;
+}
+
+/** The list or map under a value-holding key: every string and number in it is withheld (a bare token in a list is no
+ * assignment for `maskValues` to see, `STRIPE_KEYS:\n  - sk_live_abc`), placeholders and empty strings kept. Map keys pass
+ * through `maskValues`; a value nested deeper than FRONTMATTER_DEPTH is dropped. */
+function withholdAll(value: unknown, depth: number, options: MaskOptions): unknown {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'bigint') return withheldScalar(value);
+  if (Array.isArray(value)) return depth >= FRONTMATTER_DEPTH ? [] : value.map((item) => withholdAll(item, depth + 1, options));
+  if (value instanceof Date) return value;
+  if (typeof value === 'object' && value !== null) {
+    if (depth >= FRONTMATTER_DEPTH) return {};
+    const out: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value)) out[maskValues(key, options)] = withholdAll(item, depth + 1, options);
+    return out;
+  }
+  return value;
 }
 
 /** A lifted or frontmatter value with every string in it (keys included) passed through `maskValues`: a pasted value can
@@ -582,7 +598,9 @@ export function maskData(value: unknown, depth: number, options: MaskOptions = {
     const out: Record<string, unknown> = {};
     for (const [key, item] of Object.entries(value)) {
       const scalar = typeof item === 'string' || typeof item === 'number' || typeof item === 'bigint';
-      out[maskValues(key, options)] = scalar && keyHoldsValue(key, options) ? withheldScalar(item) : maskData(item, depth + 1, options);
+      const holds = keyHoldsValue(key, options);
+      out[maskValues(key, options)] =
+        scalar && holds ? withheldScalar(item) : holds ? withholdAll(item, depth + 1, options) : maskData(item, depth + 1, options);
     }
     return out;
   }
@@ -594,6 +612,11 @@ function leadingBlanks(line: string): number {
   let at = 0;
   while (at < line.length && isBlank(line.charCodeAt(at))) at += 1;
   return at;
+}
+
+/** True when the line's first character after `indent` blanks is a list dash followed by a blank or the end of the line. */
+function isListItem(line: string, indent: number): boolean {
+  return line.charCodeAt(indent) === 45 && (indent + 1 >= line.length || isBlank(line.charCodeAt(indent + 1)));
 }
 
 /** The key of a `key:` line (an optional indentation, any number of `- ` list dashes, a bare or quoted key, a colon
@@ -644,7 +667,8 @@ export function maskFrontmatterLines(lines: readonly string[], options: MaskOpti
         out.push(line);
         continue;
       }
-      if (indent > holdColumn) {
+      // A list item written at the key's own column (`KEY:\n- value`) still belongs to the key.
+      if (indent > holdColumn || (indent === holdColumn && isListItem(line, indent))) {
         out.push(line.slice(0, indent) + VALUE_NOT_SHOWN_MARK);
         continue;
       }

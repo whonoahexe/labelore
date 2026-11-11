@@ -443,12 +443,27 @@ describe('maskData - a value under a variable-name key', () => {
     });
   });
 
-  it('still walks a list under a secret key', () => {
-    expect(maskData({ API_KEYS: ['TOKEN=abc123', 'kept'] }, 0, { prose: true })).toEqual({ API_KEYS: ['TOKEN=[Value not shown]', 'kept'] });
+  it('withholds every string of a list or map under a secret key, a bare token included (WR-03)', () => {
+    expect(maskData({ API_KEYS: ['TOKEN=abc123', 'sk_live_bare', '[your key]'] }, 0, { prose: true })).toEqual({
+      API_KEYS: [VALUE_NOT_SHOWN_MARK, VALUE_NOT_SHOWN_MARK, '[your key]'],
+    });
+    expect(maskData({ API_KEY: { primary: 'sk_live_bare', spare: ['sk_live_two'] } }, 0, { prose: true })).toEqual({
+      API_KEY: { primary: VALUE_NOT_SHOWN_MARK, spare: [VALUE_NOT_SHOWN_MARK] },
+    });
   });
 });
 
 describe('maskFrontmatterLines (12-06): raw frontmatter text through the shared mask, line count kept', () => {
+  it('masks a list item written at the key\'s own column (WR-03)', () => {
+    expect(maskFrontmatterLines(['STRIPE_KEYS:', '- madeup-sk-live-1', '- madeup-sk-live-2', 'phase: 01-first'])).toEqual([
+      'STRIPE_KEYS:',
+      VALUE_NOT_SHOWN_MARK,
+      VALUE_NOT_SHOWN_MARK,
+      'phase: 01-first',
+    ]);
+    expect(maskFrontmatterLines(['STRIPE_KEYS:', '- a', 'other:', '- kept'])).toEqual(['STRIPE_KEYS:', VALUE_NOT_SHOWN_MARK, 'other:', '- kept']);
+  });
+
   it('masks an inline value and keeps the key', () => {
     const out = maskFrontmatterLines(['DB_PASSWORD: madeup-hunter2', 'service: Made-up mail']);
     expect(out).toEqual([`DB_PASSWORD: ${VALUE_NOT_SHOWN_MARK}`, 'service: Made-up mail']);
