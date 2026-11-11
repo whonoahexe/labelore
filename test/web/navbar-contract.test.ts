@@ -306,7 +306,9 @@ describe('Strata mark, brand lockup and tabs (D-01, D-02, NAV-01..03)', () => {
 
   it('takes NavLink from nav.tsx, so every tab and the brand carry the project slug (NAV-09)', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
-    expect(shell).toContain("import { NavLink, useProjectScope } from '../nav.tsx';");
+    expect(shell).toContain(
+      "import { NavLink, UnscopedLink, useProjectLocation, useProjectScope } from '../nav.tsx';",
+    );
     expect(shell).not.toMatch(/\bNavLink\b[^;]*from 'react-router'/);
   });
 
@@ -502,6 +504,21 @@ describe('search dialog (NAV-04)', () => {
     const field = await source('src/web/components/search-field.tsx');
     expect(field).toContain('presentationRoutePatterns.search');
     expect(field).not.toMatch(/['"]\/search\?q=/);
+  });
+
+  it('app-shell.tsx puts the Project settings gear between SearchDialog and ThemeToggle (Phase 12, D-09, D-11)', async () => {
+    const shell = await source('src/web/components/app-shell.tsx');
+    const start = shell.indexOf('<div className="shell-controls">');
+    const controls = shell.slice(start, shell.indexOf('</div>', start));
+    expect(controls).toContain('<UnscopedLink to="/settings"');
+    expect(controls).toContain('aria-label="Project settings"');
+    expect(controls).toContain('<span className="sr-only">Project settings</span>');
+    const search = controls.indexOf('<SearchDialog');
+    const gear = controls.indexOf('<UnscopedLink to="/settings"');
+    const theme = controls.indexOf('<ThemeToggle');
+    expect(search).toBeGreaterThan(-1);
+    expect(gear).toBeGreaterThan(search);
+    expect(theme).toBeGreaterThan(gear);
   });
 
   it('app-shell.tsx renders SearchDialog in .shell-controls', async () => {

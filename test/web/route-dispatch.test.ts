@@ -114,6 +114,28 @@ describe('resolveProjectRoute over the Shapes payload', () => {
   });
 });
 
+describe('the settings address (Phase 12, D-09, D-12)', () => {
+  const withoutConfig: ProjectPresentation = {
+    ...shapes,
+    artifacts: shapes.artifacts.filter((artifact) => artifact.key !== '/settings'),
+  };
+
+  it('opens config.json as a document when an artifact carries /settings', () => {
+    expect(resolve('/settings')).toMatchObject({ kind: 'document', url: '/settings' });
+  });
+
+  it('answers the settings-missing outcome when no artifact carries /settings', () => {
+    expect(withoutConfig.artifacts.length).toBeLessThan(shapes.artifacts.length);
+    expect(resolve('/settings', withoutConfig)).toEqual({ kind: 'settings-missing' });
+  });
+
+  it('keeps every other unknown address not-found, so the outcome reveals no file (T-12-15)', () => {
+    for (const path of ['/settingsx', '/settings/extra', '/setting']) {
+      expect(resolve(path, withoutConfig), path).toEqual({ kind: 'not-found' });
+    }
+  });
+});
+
 describe('resolveProjectRoute over the Lendshed payload', () => {
   it('opens a phase file as a document and redirects both live aliases', () => {
     expect(resolve('/v1.1/phase-1/context', lendshed)).toMatchObject({

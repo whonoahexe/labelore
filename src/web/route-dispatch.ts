@@ -34,6 +34,7 @@ export type RouteOutcome =
   | { kind: 'plan-pair'; planUrl: string; active: 'plan' | 'summary' }
   | { kind: 'document'; url: string; artifactPath: string }
   | { kind: 'archive-block'; page: 'roadmap' | 'traceability'; version: string }
+  | { kind: 'settings-missing' }
   | { kind: 'redirect'; to: string }
   | { kind: 'not-found' };
 
@@ -220,6 +221,12 @@ export function resolveProjectRoute(
       if (route.url === '/indexes') {
         const key = indexesLandingKey(presentation);
         return key === null ? NOT_FOUND : redirectTo(key);
+      }
+      // Phase 12 (D-09, D-12): the header gear always leads to /settings, config.json's one address. A project with no
+      // root config.json has no artifact there, so the address answers its own honest page instead of the one
+      // not-found; every other miss stays not-found, so this reveals no file (T-12-15).
+      if (route.url === '/settings' && documentOutcome(route.url, presentation) === null) {
+        return { kind: 'settings-missing' };
       }
       // D-03: a live alias has one address, the file's own.
       const alias = Object.hasOwn(presentation.routeAliases, route.url)
