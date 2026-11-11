@@ -4,10 +4,11 @@
 // presets, Wrap, the copy buttons and the "Here" path. The text comes from the read-only /source route; every
 // line is a list of React text children, so file text can never become markup (T-12-05, T-12-22). A line
 // fragment on the page's URL marks its rows when the text first loads; a SourceTarget from the page marks and
-// scrolls to a row the same way. The reader only reads window.location.hash; it never writes the URL
-// (selection by click arrives in 12-08).
+// scrolls to a row the same way. Clicks on line numbers select a line or a range (D-05); the selection reaches the
+// URL only through writeSelectionHash in src/web/source/source-selection.ts, which replaces the current history
+// entry, so this file never touches history itself.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Copy, WrapText } from 'lucide-react';
+import { Check, Copy, WrapText, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import type { FileClass } from '../../planning-repo/file-class.ts';
 import { filePageKindOf } from '../../presentation/file-facts.ts';
@@ -18,6 +19,8 @@ import { fetchSource, sourceKey } from '../source/source-api.ts';
 import type { SourceTarget } from '../source/source-api.ts';
 import { highlightLine, lineContextsOf } from '../source/source-highlight.ts';
 import type { ToneToken } from '../source/source-highlight.ts';
+import { selectionAfter, selectionLabel, selectionLinkOf, selectionOf, writeSelectionHash } from '../source/source-selection.ts';
+import type { Selection, SelectionEvent } from '../source/source-selection.ts';
 import {
   buildSourceModel,
   chainAt,
@@ -52,10 +55,26 @@ export function resolveTargetLine(text: string, _bodyStart: number, target: Sour
   return 1;
 }
 
+/** How long a landed row flashes (the stylesheet's keyframe runs the same 1.4 s). */
+const FLASH_MS = 1400;
+
+/**
+ * Scrolls a row to just under the sticky bar: the row's scroll margin is the bar's pinned top plus its height, so
+ * the same call works under the 60px shell header on a wide screen and at the top of the page on a phone.
+ */
 function scrollRowIntoView(line: number): void {
+  const row = window.document.getElementById(`L${line}`);
+  if (row === null) return;
+  const bar = window.document.querySelector<HTMLElement>('.source-bar');
+  let offset = 0;
+  if (bar !== null) {
+    const pinned = Number.parseFloat(window.getComputedStyle(bar).top);
+    offset = (Number.isFinite(pinned) ? pinned : 0) + bar.offsetHeight;
+  }
+  row.style.scrollMarginTop = `${offset + 4}px`;
   const reducedMotion =
     typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  window.document.getElementById(`L${line}`)?.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
+  row.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
 }
 
 /** Every line's tone tokens, from one pass over the model (the reader holds them, memoised, for the text's life). */
@@ -157,7 +176,9 @@ export function SourceRows({
   folded,
   selected,
   hit,
+  hitToken,
   onToggle,
+  onNumber,
 }: {
   model: SourceModel;
   gutter: Gutter;
@@ -165,7 +186,11 @@ export function SourceRows({
   folded: ReadonlySet<number>;
   selected: LineRange | null;
   hit: number | null;
+  /** Changes with every landing; it keys the landed row so the flash replays when the same line lands twice. */
+  hitToken?: number;
   onToggle: (blockId: number) => void;
+  /** A plain click on a line number (shift extends); without it the number is just a link to `#L{n}`. */
+  onNumber?: (line: number, shift: boolean) => void;
 }): React.JSX.Element {
   const hidden = useMemo(() => hiddenLinesOf(model, folded), [model, folded]);
   // The blocks that start on each line, shallowest first, so the folded one that shapes a row is found without a search.
@@ -216,6 +241,7 @@ export function SourceRows({
   const rows: React.JSX.Element[] = [];
   for (let number = 1; number <= model.lines.length; number += 1) {
     if (hidden[number] === 1) continue;
+    const rowNumber = number;
     const starting = startsAt.get(number);
     const foldedHere = starting?.find((block) => folded.has(block.id)) ?? null;
     const cells: React.JSX.Element[] = [];
@@ -265,7 +291,7 @@ export function SourceRows({
         : undefined;
     rows.push(
       <div
-        key={number}
+        key={hit === number && hitToken !== undefined ? `${number}-${hitToken}` : number}
         id={`L${number}`}
         className="source-row"
         data-selected={isSelected ? 'true' : undefined}
@@ -274,7 +300,21 @@ export function SourceRows({
         data-frontmatter={model.frontmatter !== null && number <= model.frontmatter.to ? 'true' : undefined}
       >
         <span className="source-lead">
-          <a className="source-line-number" href={`#L${number}`} aria-label={`Line ${number}`}>
+          <a
+            className="source-line-number"
+            href={`#L${number}`}
+            aria-label={`Line ${number}`}
+            onClick={
+              onNumber === undefined
+                ? undefined
+                : (event) => {
+                    // A modified click keeps the browser's own link behaviour (open in a new tab).
+                    if (event.button !== 0 || event.metaKey || event.ctrlKey) return;
+                    event.preventDefault();
+                    onNumber(rowNumber, event.shiftKey);
+                  }
+            }
+          >
             {number}
           </a>
           {model.maxDepth > 0 ? <span className="source-gutter">{cells}</span> : null}
@@ -314,8 +354,54 @@ export function SourceRows({
   );
 }
 
-/** The "Here" path: the chain of blocks around a line, each crumb a button that jumps to its block's first row. */
-export function SourceHere({ model, line }: { model: SourceModel; line: number }): React.JSX.Element {
+/** The selection chip: "L33" or "L33–L40", Copy link (the absolute link, "Copied" for 1.5 s) and a clear button. */
+function SelectionChip({ range, onClear }: { range: LineRange; onClear: () => void }): React.JSX.Element {
+  const [copied, setCopied] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
+  async function handleCopy(): Promise<void> {
+    const link = selectionLinkOf(window.location.origin, window.location.pathname, range);
+    if (!(await copyText(link))) return;
+    setCopied(true);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setCopied(false), 1500);
+  }
+  return (
+    <span className="source-selection status-chip" data-tone="active">
+      <span>{selectionLabel(range)}</span>
+      <button type="button" className="source-selection-link" onClick={handleCopy}>
+        {copied ? 'Copied' : 'Copy link'}
+      </button>
+      <button type="button" className="source-selection-clear" aria-label="Clear selection" onClick={onClear}>
+        <X aria-hidden="true" />
+      </button>
+    </span>
+  );
+}
+
+/**
+ * The "Here" path: the chain of blocks around a line, each crumb a button that jumps to its block's first row,
+ * then the line number and, while a range is selected, the selection chip. A navigation landmark with no live
+ * region, so the position is never announced as it changes.
+ */
+export function SourceHere({
+  model,
+  line,
+  selection = null,
+  onGo,
+  onClear,
+}: {
+  model: SourceModel;
+  line: number;
+  selection?: LineRange | null;
+  onGo?: (line: number) => void;
+  onClear?: () => void;
+}): React.JSX.Element {
   const chain = chainAt(model, line);
   return (
     <nav className="source-here" aria-label="Position in file">
@@ -335,7 +421,7 @@ export function SourceHere({ model, line }: { model: SourceModel; line: number }
               className="source-here-crumb"
               title={`L${block.from}–L${block.to}`}
               data-current={index === chain.length - 1 ? 'true' : undefined}
-              onClick={() => scrollRowIntoView(block.from)}
+              onClick={() => onGo?.(block.from)}
             >
               {blockNameOf(block)}
             </button>
@@ -343,6 +429,7 @@ export function SourceHere({ model, line }: { model: SourceModel; line: number }
         ))
       )}
       <span className="source-here-line">L{line}</span>
+      {selection === null ? null : <SelectionChip range={selection} onClear={() => onClear?.()} />}
     </nav>
   );
 }
@@ -373,7 +460,7 @@ function CopyContentsButton({ text }: { text: string }): React.JSX.Element {
 
 /**
  * The sticky bar: row 1 holds the "Fold" label with the segmented presets, then Wrap and the two copy buttons
- * pushed right; row 2 is the Here path (12-08 makes it follow the scroll). With no block to fold the label and
+ * pushed right; row 2 is the Here path, which follows the scroll. With no block to fold the label and
  * presets are left out, so a plain text file's bar is just the actions.
  */
 export function SourceBar({
@@ -385,8 +472,11 @@ export function SourceBar({
   realPath,
   presets,
   hereLine,
+  selection = null,
   onPreset,
   onWrap,
+  onGo,
+  onClear,
 }: {
   model: SourceModel;
   folded: ReadonlySet<number>;
@@ -396,8 +486,11 @@ export function SourceBar({
   realPath: string | undefined;
   presets: readonly FoldPreset[];
   hereLine: number;
+  selection?: LineRange | null;
   onPreset: (preset: FoldPreset) => void;
   onWrap: () => void;
+  onGo?: (line: number) => void;
+  onClear?: () => void;
 }): React.JSX.Element {
   return (
     <div className="source-bar">
@@ -430,7 +523,13 @@ export function SourceBar({
           <CopyContentsButton text={text} />
         </div>
       </div>
-      <SourceHere model={model} line={hereLine} />
+      <SourceHere
+        model={model}
+        line={hereLine}
+        selection={selection}
+        {...(onGo === undefined ? {} : { onGo })}
+        {...(onClear === undefined ? {} : { onClear })}
+      />
     </div>
   );
 }
@@ -469,34 +568,50 @@ function SourceBody({
   const gutter = useMemo(() => gutterOf(model), [model]);
   const tokens = useMemo(() => highlightAll(model, masked), [model, masked]);
   const presets = useMemo(() => foldPresetsOf(model), [model]);
-  const [selected, setSelected] = useState<LineRange | null>(() =>
-    parseLineHash(window.location.hash, Math.max(model.lines.length, 1)),
-  );
-  const [folded, setFolded] = useState<ReadonlySet<number>>(() => initialFolds(model, selected));
+  const [selection, setSelection] = useState<Selection | null>(() => {
+    const range = parseLineHash(window.location.hash, Math.max(model.lines.length, 1));
+    return range === null ? null : selectionOf(range);
+  });
+  const [folded, setFolded] = useState<ReadonlySet<number>>(() => initialFolds(model, selection));
   const [wrap, setWrap] = useState(false);
-  const [hit, setHit] = useState<number | null>(null);
+  // The row that last landed and whether its flash is still running; the token keys the row so the flash replays.
   const [landing, setLanding] = useState<Landing | null>(() =>
-    selected === null ? null : { line: selected.from, token: 0 },
+    selection === null ? null : { line: selection.from, token: 1 },
   );
+  const [flashing, setFlashing] = useState(selection !== null);
   const [appliedSeq, setAppliedSeq] = useState<number | null>(null);
+
+  /** Opens any fold that hides the range, then scrolls to and flashes the line (applied by the effect below). */
+  function land(line: number, range: LineRange = { from: line, to: line }): void {
+    setFolded((current) => foldsOpenedFor(model, current, range));
+    setLanding((previous) => ({ line, token: (previous?.token ?? 0) + 1 }));
+    setFlashing(true);
+  }
 
   // A new target lands once (adjusting state while rendering, keyed on the target's own seq).
   if (target !== null && target.seq !== appliedSeq) {
     setAppliedSeq(target.seq);
     const line = resolveTargetLine(text, bodyStart, target);
-    setHit(line);
     let range: LineRange = { from: line, to: line };
     if (target.kind === 'line' && target.select) {
       range = parseLineHash(window.location.hash, Math.max(model.lines.length, 1)) ?? range;
-      setSelected(range);
+      setSelection(selectionOf(range));
     }
-    setFolded(foldsOpenedFor(model, folded, range));
-    setLanding({ line, token: target.seq + 1 });
+    land(line, range);
   }
 
   useEffect(() => {
-    if (landing !== null) scrollRowIntoView(landing.line);
+    if (landing === null) return undefined;
+    scrollRowIntoView(landing.line);
+    const timer = setTimeout(() => setFlashing(false), FLASH_MS);
+    return () => clearTimeout(timer);
   }, [landing]);
+
+  function select(event: SelectionEvent): void {
+    const next = selectionAfter(selection, event);
+    setSelection(next);
+    writeSelectionHash(next);
+  }
 
   function toggle(blockId: number): void {
     setFolded((current) => {
@@ -517,8 +632,11 @@ function SourceBody({
         realPath={realPath}
         presets={presets}
         hereLine={1}
+        selection={selection}
         onPreset={(preset) => setFolded(foldsAfterPreset(model, preset))}
         onWrap={() => setWrap(!wrap)}
+        onGo={(line) => land(line)}
+        onClear={() => select({ kind: 'clear' })}
       />
       <div className="source-pane" data-wrap={wrap ? 'true' : undefined}>
         <SourceRows
@@ -526,9 +644,11 @@ function SourceBody({
           gutter={gutter}
           tokens={tokens}
           folded={folded}
-          selected={selected}
-          hit={hit}
+          selected={selection}
+          hit={flashing && landing !== null ? landing.line : null}
+          {...(landing === null ? {} : { hitToken: landing.token })}
           onToggle={toggle}
+          onNumber={(line, shift) => select({ kind: 'number', line, shift })}
         />
       </div>
     </section>
