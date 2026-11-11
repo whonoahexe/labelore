@@ -5647,7 +5647,8 @@ a.todo-title:hover {
 }
 
 .view-plan-task-index li[data-depth='2'] {
-  padding-left: var(--space-4);
+  padding-left: var(--space-6);
+  border-left: 1px solid var(--border);
 }
 
 .view-plan-task-ordinal {

@@ -99,6 +99,26 @@ describe('outline component contract', () => {
   });
 });
 
+// UI-08 (Phase 12): a depth-2 row of the plan task index sits further in and carries a hairline
+// on its left; depth-1 rows carry none because the marker is scoped to data-depth='2'.
+describe('plan task index depth marker (UI-08)', () => {
+  it('the depth-2 row indents by --space-6 and draws a 1px --border left rule', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const block = ruleBlock(css, ".view-plan-task-index li[data-depth='2'] {");
+    expect(block).toBeDefined();
+    expect(block).toContain('padding-left: var(--space-6);');
+    expect(block).toContain('border-left: 1px solid var(--border);');
+  });
+
+  it('the plain row rule carries no left rule, so depth-1 rows stay unmarked', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const block = ruleBlock(css, '.view-plan-task-index li {');
+    expect(block).toBeDefined();
+    expect(block).not.toContain('border-left');
+    expect(block).not.toContain('padding-left');
+  });
+});
+
 /** Every rule block whose selector line names the trigger, the narrow media block's included. */
 function triggerBlocks(css: string): string[] {
   const blocks: string[] = [];
