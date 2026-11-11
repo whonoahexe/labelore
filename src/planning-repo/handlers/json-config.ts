@@ -35,8 +35,13 @@ export const JsonConfigHandler: ArtifactHandler = {
         const masked = maskConfig(result.data);
         if (masked.masked) {
           frontmatter = masked.data as Record<string, unknown>;
-          // A re-formatted view: the masked object, two-space indented, with a trailing newline.
-          body = `${JSON.stringify(masked.data, null, 2)}\n`;
+          // Source is the file as written (12-06, D-01): the redacted text (same lines, secret values masked in place)
+          // stays the body when it parses back to exactly the masked data. The re-formatted view (the masked object,
+          // two-space indented, with a trailing newline) is the fail-closed fallback for a secret value
+          // `redactSecretText` cannot reach in place (one nested in an object or array).
+          const reread = tryParseJson(body);
+          const sameAsMasked = !reread.warning && JSON.stringify(reread.data) === JSON.stringify(masked.data);
+          if (!sameAsMasked) body = `${JSON.stringify(masked.data, null, 2)}\n`;
         }
       }
     }

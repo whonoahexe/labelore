@@ -525,6 +525,63 @@ describe('JsonConfigHandler', () => {
     expect(result.body).not.toContain('SECRETSECRET1234');
   });
 
+  describe('a masked config.json keeps its layout as written (D-01, 12-06)', () => {
+    const parseConfig = (content: string) =>
+      JsonConfigHandler.parse(raw('.planning/config.json', content), ref('.planning/config.json', { kind: 'config' }));
+
+    it('keeps every line of the file, with the secret masked in place on its own line', () => {
+      const content = [
+        '{',
+        '    "mode": "interactive",',
+        '    "workflow": { "research": true, "tags": ["a", "b"] },',
+        '',
+        '    "parallelization": true,',
+        '    "brave_search":   "SECRETSECRET1234",',
+        '    "exa_search": false',
+        '}',
+        '',
+      ].join('\n');
+      const result = parseConfig(content);
+      const lines = result.body.split('\n');
+      expect(lines).toHaveLength(content.split('\n').length);
+      expect(lines[5]).toBe('    "brave_search":   "****1234",');
+      expect(lines.filter((_line, index) => index !== 5)).toEqual(content.split('\n').filter((_line, index) => index !== 5));
+      expect(result.body).not.toContain('SECRETSECRET1234');
+      expect((result.frontmatter as { brave_search: string }).brave_search).toBe('****1234');
+    });
+
+    it('falls back to the two-space re-formatted masked JSON for a secret nested in an object', () => {
+      const content = '{"mode":"interactive","brave_search":{"token":"NESTEDSECRET9999"},"other":1}';
+      const result = parseConfig(content);
+      expect(result.body).not.toContain('NESTEDSECRET9999');
+      expect(result.body).toBe(`${JSON.stringify(result.frontmatter, null, 2)}\n`);
+      expect(JSON.stringify(result.frontmatter)).not.toContain('NESTEDSECRET9999');
+    });
+
+    it('falls back for a secret nested in an array', () => {
+      const content = '{"firecrawl":["NESTEDSECRET9999","second-one-8888"],"mode":"x"}';
+      const result = parseConfig(content);
+      expect(result.body).not.toContain('NESTEDSECRET9999');
+      expect(result.body).not.toContain('second-one-8888');
+      expect(result.body).toBe(`${JSON.stringify(result.frontmatter, null, 2)}\n`);
+    });
+
+    it('masks every copy of a duplicated secret key in the as-written body', () => {
+      const content = '{\n  "brave_search": "FIRSTSECRET1111",\n  "mode": "x",\n  "brave_search": "SECONDSECRET2222"\n}\n';
+      const result = parseConfig(content);
+      expect(result.body).not.toContain('FIRSTSECRET1111');
+      expect(result.body).not.toContain('SECONDSECRET2222');
+      expect(result.body.split('\n')).toHaveLength(content.split('\n').length);
+      expect(result.body).toContain('"brave_search": "****1111"');
+      expect(result.body).toContain('"brave_search": "****2222"');
+    });
+
+    it('leaves a config with no secret byte-identical to the file', () => {
+      const content = '{\n  "mode":   "interactive" ,\n\t"firecrawl": true\n}\n';
+      expect(parseConfig(content).body).toBe(content);
+    });
+  });
+
   it('a HANDOFF.json with a trailing comma yields a structured-extraction warning, retains the raw text, and never throws', () => {
     const content = '{"version": "1.0", "phase": "01",}';
     expect(() =>

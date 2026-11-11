@@ -3,7 +3,9 @@
 // run command before it reaches a copy row (T-10-26).
 import { describe, expect, it } from 'vitest';
 import {
+  maskFrontmatterLines,
   maskProse,
+  PROSE_MASK,
   VALUE_NOT_SHOWN_MARK,
   maskData,
   maskValues,
@@ -443,5 +445,60 @@ describe('maskData - a value under a variable-name key', () => {
 
   it('still walks a list under a secret key', () => {
     expect(maskData({ API_KEYS: ['TOKEN=abc123', 'kept'] }, 0, { prose: true })).toEqual({ API_KEYS: ['TOKEN=[Value not shown]', 'kept'] });
+  });
+});
+
+describe('maskFrontmatterLines (12-06): raw frontmatter text through the shared mask, line count kept', () => {
+  it('masks an inline value and keeps the key', () => {
+    const out = maskFrontmatterLines(['DB_PASSWORD: madeup-hunter2', 'service: Made-up mail']);
+    expect(out).toEqual([`DB_PASSWORD: ${VALUE_NOT_SHOWN_MARK}`, 'service: Made-up mail']);
+  });
+
+  it('masks the indented continuation of a key whose value starts on the next line', () => {
+    const out = maskFrontmatterLines(['API_TOKEN:', '  madeup-next-line-value', '  second-line', 'phase: 01-first']);
+    expect(out).toEqual(['API_TOKEN:', `  ${VALUE_NOT_SHOWN_MARK}`, `  ${VALUE_NOT_SHOWN_MARK}`, 'phase: 01-first']);
+  });
+
+  it.each(['|', '>', '|-', '>-', '|+', '>2', '|2-'])('masks the body of a %s block scalar and stops at the next key', (indicator) => {
+    const out = maskFrontmatterLines([`DB_PASSWORD: ${indicator}`, '  line one madeup', '', '    line two madeup', 'next: kept']);
+    expect(out).toEqual([
+      `DB_PASSWORD: ${VALUE_NOT_SHOWN_MARK}`,
+      `  ${VALUE_NOT_SHOWN_MARK}`,
+      '',
+      `    ${VALUE_NOT_SHOWN_MARK}`,
+      'next: kept',
+    ]);
+  });
+
+  it('keeps the line count for every shape', () => {
+    const lines = ['A_KEY: |', '  x', '  y', 'b: 1', '- SECRET_VALUE:', '    z', ''];
+    expect(maskFrontmatterLines(lines)).toHaveLength(lines.length);
+  });
+
+  it('reads a quoted key, a list item key and a flow map', () => {
+    expect(maskFrontmatterLines(['"DB_PASSWORD":', '  madeup-quoted'])).toEqual(['"DB_PASSWORD":', `  ${VALUE_NOT_SHOWN_MARK}`]);
+    expect(maskFrontmatterLines(['- API_TOKEN: madeup-item'])).toEqual([`- API_TOKEN: ${VALUE_NOT_SHOWN_MARK}`]);
+    expect(maskFrontmatterLines(['vars: { DB_PASSWORD: madeup-flow, port: 5432 }'])[0]).not.toContain('madeup-flow');
+  });
+
+  it('does not touch the continuation of a key that is not a variable name', () => {
+    const lines = ['description: |', '  plain text', 'tags:', '  - one'];
+    expect(maskFrontmatterLines(lines)).toEqual(lines);
+  });
+
+  it('in prose mode keeps NOTE: and REQ: lines, masks a secret-named key and its continuation', () => {
+    const out = maskFrontmatterLines(
+      ['NOTE: revisit later', 'REQ: AUTH-01', 'STRIPE_KEY: madeup-sk', 'API_TOKEN: |', '  madeup-block', 'OTHER_NAME:', '  kept words'],
+      PROSE_MASK,
+    );
+    expect(out).toEqual([
+      'NOTE: revisit later',
+      'REQ: AUTH-01',
+      `STRIPE_KEY: ${VALUE_NOT_SHOWN_MARK}`,
+      `API_TOKEN: ${VALUE_NOT_SHOWN_MARK}`,
+      `  ${VALUE_NOT_SHOWN_MARK}`,
+      'OTHER_NAME:',
+      '  kept words',
+    ]);
   });
 });
