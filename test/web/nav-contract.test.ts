@@ -70,10 +70,11 @@ function hrefSites(source: string): HrefKind[] {
   return kinds;
 }
 
-/** The three sanctioned bare-anchor sites, plus the one that reads useProjectHref. */
+/** The sanctioned bare-anchor sites (same-page hashes and new tabs), plus the one that reads useProjectHref. */
 const HREF_ALLOWED: Array<{ file: string; kinds: HrefKind[] }> = [
   { file: 'src/web/components/document-outline.tsx', kinds: ['hash'] },
   { file: 'src/web/components/reference-preview.tsx', kinds: ['project-href'] },
+  { file: 'src/web/components/source-reader.tsx', kinds: ['hash'] },
   { file: 'src/web/pages/sketches-page.tsx', kinds: ['new-tab', 'new-tab'] },
   { file: 'src/web/views/research-briefing-components.tsx', kinds: ['new-tab'] },
 ];
