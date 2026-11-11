@@ -69,6 +69,7 @@ test.describe('Root document addresses on Lendshed', () => {
     const source = await projectUrl(FIXTURE_BASE_URL, '/state?source=1');
     await page.goto(source);
     await expect(page.locator('.artifact-page')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Source of STATE.md' })).toBeVisible();
     await expect(page.locator('.view-unrecognized-notice')).toHaveCount(0);
     await expect(page.getByText('dedicated view')).toHaveCount(0);
   });
