@@ -145,7 +145,8 @@ describe('plan navigator view contract', () => {
     expect(page).toContain('manifest.planNavigator?.(viewInput)');
     expect(page).toContain('<PlanNavigatorView');
     expect(page).toContain('findPlanContext(');
-    expect(page).toContain('data-source-hit');
+    // 12-01: the source-hit mark moved with the raw-text reader, which now owns Source mode.
+    expect(await source('src/web/components/source-reader.tsx')).toContain('data-source-hit');
     expect(page).toMatch(/if \(planNavigator && mode === 'view'\)/);
     // The early return shows the shared warning chip and adds no tone mapping of its own.
     const start = page.indexOf("if (planNavigator && mode === 'view')");

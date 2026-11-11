@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CopyPathButton } from '../../src/web/components/copy-path-button.tsx';
 import { SourceNotice } from '../../src/web/components/source-notice.tsx';
 import type { SourceNoticeKind } from '../../src/web/components/source-notice.tsx';
-import { SourceReader } from '../../src/web/components/source-reader.tsx';
+import { SourceReader, resolveTargetLine, sourceLinesOf } from '../../src/web/components/source-reader.tsx';
 
 const PAGE = readFileSync(new URL('../../src/web/pages/artifact-page.tsx', import.meta.url), 'utf8');
 
@@ -152,5 +152,49 @@ describe('artifact-page.tsx Source chrome (source-text contract)', () => {
 
   it('keeps the ArtifactReader JSX in place', () => {
     expect(PAGE).toContain('<ArtifactReader\n          title={artifact.title}');
+  });
+});
+
+describe('resolveTargetLine', () => {
+  const TEXT = 'one\ntwo\nthree\n';
+
+  it('lands a heading target with no id on line 1', () => {
+    expect(resolveTargetLine(TEXT, 0, { kind: 'heading', id: null, seq: 1 })).toBe(1);
+  });
+
+  it('lands a heading id on line 1 until the heading-to-line mapper arrives', () => {
+    expect(resolveTargetLine(TEXT, 0, { kind: 'heading', id: 'some-heading', seq: 2 })).toBe(1);
+  });
+
+  it('lands a line target on its line and clamps one past the end', () => {
+    expect(resolveTargetLine(TEXT, 0, { kind: 'line', line: 2, select: true, seq: 3 })).toBe(2);
+    expect(resolveTargetLine(TEXT, 0, { kind: 'line', line: 99, select: true, seq: 4 })).toBe(3);
+    expect(resolveTargetLine(TEXT, 0, { kind: 'line', line: 0, select: false, seq: 5 })).toBe(1);
+  });
+});
+
+describe('sourceLinesOf', () => {
+  it('adds no row for a final newline and draws no trailing carriage return', () => {
+    expect(sourceLinesOf('a\r\nb\r\n')).toEqual(['a', 'b']);
+    expect(sourceLinesOf('a\n\nb')).toEqual(['a', '', 'b']);
+    expect(sourceLinesOf('')).toEqual([]);
+  });
+});
+
+describe('artifact-page.tsx Source targets (source-text contract)', () => {
+  it('hands the reader a heading target from showSource and drops the old pending-id scroll', () => {
+    expect(PAGE).not.toContain('pendingSourceId');
+    expect(PAGE).toContain("kind: 'heading'");
+    expect(PAGE).toContain('target={sourceTarget}');
+  });
+
+  it('re-opens Source from a same-page link through an effect on the router location key, without writing the URL', () => {
+    const effect = PAGE.indexOf('locationKey');
+    expect(effect).toBeGreaterThan(0);
+    const body = PAGE.slice(effect, effect + 1500);
+    expect(body).toContain("setMode('source')");
+    expect(body).toContain('hasLineHash(');
+    expect(body).toContain('hasSourceFlag(');
+    expect(PAGE.match(/replaceState\(/g)?.length).toBe(1);
   });
 });
