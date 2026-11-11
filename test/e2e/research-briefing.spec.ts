@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
+import { expectLandedOn, watchSourceHits } from './source-landing.ts';
 import { SCREENSHOT_ROOT } from './pages.ts';
 
 interface PresentationLite {
@@ -86,20 +87,14 @@ test.describe('RESEARCH briefing', () => {
     expect(signatures.length).toBeGreaterThan(10);
     expect(new Set(signatures).size).toBe(1);
 
-    // The source-only strip: 7 buttons; one lands in Source mode at its heading.
+    // The source-only strip: 7 buttons; one lands in the raw Source reader on its heading row.
     const strip = page.locator('#research-source-only');
     await expect(strip.getByRole('button')).toHaveCount(7);
+    await watchSourceHits(page);
     await strip.getByRole('button', { name: 'Security Domain', exact: true }).click();
-    await expect(page.locator('.artifact-document')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Source of 02-RESEARCH.md' })).toBeVisible();
     await expect(page.locator('.view-block')).toHaveCount(0);
-    const heading = page.locator('.artifact-document h2', { hasText: 'Security Domain' });
-    await expect
-      .poll(async () => {
-        const box = await heading.boundingBox();
-        const height = page.viewportSize()?.height ?? 0;
-        return box !== null && box.y >= 0 && box.y < height;
-      })
-      .toBe(true);
+    await expectLandedOn(page, '## Security Domain');
 
     // Back to View restores the chapters.
     await page.getByRole('button', { name: 'View', exact: true }).click();

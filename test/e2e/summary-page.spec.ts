@@ -9,6 +9,7 @@ import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
+import { expectLandedOn, watchSourceHits } from './source-landing.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -98,13 +99,13 @@ test.describe('Summary page', () => {
     await page.keyboard.press('Escape');
     await expect(page.locator('.view-summary-modal')).toHaveCount(0);
 
-    // "In the source only": Performance lands in Source mode with its heading in view; View restores.
+    // "In the source only": Performance lands in the raw Source reader on its heading row, in view; View restores.
     const strip = page.locator('#summary-source-only');
+    await watchSourceHits(page);
     await strip.getByRole('button', { name: 'Performance', exact: true }).click();
-    await expect(page.locator('.artifact-document')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Source of 05-01-SUMMARY.md' })).toBeVisible();
     await expect(page.locator('.view-summary-head')).toHaveCount(0);
-    const heading = page.locator('.artifact-document h2', { hasText: 'Performance' });
-    await expect.poll(() => inViewport(page, heading)).toBe(true);
+    await expectLandedOn(page, '## Performance');
     await page.getByRole('button', { name: 'View', exact: true }).click();
     await expect(page.locator('.view-summary-row')).toHaveCount(5);
 

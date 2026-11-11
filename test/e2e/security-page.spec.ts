@@ -11,6 +11,7 @@ import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
+import { expectLandedOn, watchSourceHits } from './source-landing.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -115,9 +116,11 @@ test.describe('SECURITY page', () => {
     // The source-only strip: Frontmatter lands in Source mode; View restores the console.
     const strip = page.locator('#security-source-only');
     await expect(strip.getByRole('button', { name: 'Frontmatter', exact: true })).toBeVisible();
+    await watchSourceHits(page);
     await strip.getByRole('button', { name: 'Frontmatter', exact: true }).click();
-    await expect(page.locator('.artifact-document')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Source of 05-SECURITY.md' })).toBeVisible();
     await expect(page.locator('.artifact-heading h1')).toHaveCount(1);
+    await expectLandedOn(page, '---');
     await expect(page.locator('.view-security-console')).toHaveCount(0);
     await page.getByRole('button', { name: 'View', exact: true }).click();
     await expect(page.locator('.view-security-square')).toHaveCount(19);

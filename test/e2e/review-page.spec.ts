@@ -6,6 +6,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { BASE_URL, artifactUrl, exactUrl, projectApiUrl } from './app-url.ts';
+import { expectLandedOn, watchSourceHits } from './source-landing.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -82,12 +83,12 @@ test.describe('Review page', () => {
     await page.keyboard.press('Escape');
     await expect(modal).toHaveCount(0);
 
-    // Full summary opens Source at the Summary heading; View returns.
+    // Full summary opens the raw Source reader at the Summary heading's row; View returns.
+    await watchSourceHits(page);
     await page.getByRole('button', { name: 'Full summary ↗' }).click();
     await expect(page.locator('.view-review-page')).toHaveCount(0);
-    const hit = page.locator('[data-source-hit="true"]');
-    await expect(hit).toHaveCount(1);
-    await expect(hit).toContainText('Summary');
+    await expect(page.getByRole('region', { name: 'Source of 01-REVIEW.md' })).toBeVisible();
+    await expectLandedOn(page, '## Summary');
     await page.getByRole('button', { name: 'View', exact: true }).click();
     await expect(page.locator('.view-review-page')).toBeVisible();
 

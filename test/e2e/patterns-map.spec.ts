@@ -9,6 +9,7 @@
 import { expect, test } from '@playwright/test';
 import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
+import { expectLandedOn, watchSourceHits } from './source-landing.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -92,20 +93,14 @@ test.describe('PATTERNS pattern map', () => {
       expect(radii.every((r) => r === '0px'), selector).toBe(true);
     }
 
-    // The source-only strip: four buttons; Metadata lands in Source mode at its heading.
+    // The source-only strip: four buttons; Metadata lands in the raw Source reader on its heading row.
     const strip = page.locator('#pattern-source-only');
     await expect(strip.getByRole('button')).toHaveCount(4);
+    await watchSourceHits(page);
     await strip.getByRole('button', { name: 'Metadata', exact: true }).click();
-    await expect(page.locator('.artifact-document')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Source of 05-PATTERNS.md' })).toBeVisible();
     await expect(page.locator('.view-patterns-row')).toHaveCount(0);
-    const heading = page.locator('.artifact-document h2', { hasText: 'Metadata' });
-    await expect
-      .poll(async () => {
-        const box = await heading.boundingBox();
-        const height = page.viewportSize()?.height ?? 0;
-        return box !== null && box.y >= 0 && box.y < height;
-      })
-      .toBe(true);
+    await expectLandedOn(page, '## Metadata');
 
     // Back to View restores the map.
     await page.getByRole('button', { name: 'View', exact: true }).click();
