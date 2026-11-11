@@ -150,7 +150,9 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
   it('fills every status chip as a shape, with active/complete reading more clearly on', async () => {
     const css = await source('src/web/styles/globals.css');
     const [block] = ruleBlocks(css, '.status-chip {');
-    expect(block).toContain('color-mix(in oklch, var(--muted) 55%, transparent)');
+    // Phase 12 (12-07) names the recipe once as --veil (the token guard forbids a token and a usage site sharing a recipe).
+    expect(block).toContain('background: var(--veil);');
+    expect(css).toContain('--veil: color-mix(in oklch, var(--muted) 55%, transparent);');
     const [svgBlock] = ruleBlocks(css, '.status-chip svg {');
     expect(svgBlock).toContain('stroke-width: 2.25;');
     expect(css).toContain('color-mix(in oklch, var(--primary) 65%, var(--border))');

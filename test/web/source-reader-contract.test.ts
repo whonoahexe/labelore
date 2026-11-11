@@ -10,7 +10,19 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CopyPathButton } from '../../src/web/components/copy-path-button.tsx';
 import { SourceNotice } from '../../src/web/components/source-notice.tsx';
 import type { SourceNoticeKind } from '../../src/web/components/source-notice.tsx';
-import { SourceReader, resolveTargetLine, sourceLinesOf } from '../../src/web/components/source-reader.tsx';
+import {
+  SourceBar,
+  SourceHere,
+  SourceReader,
+  SourceRows,
+  foldsAfterPreset,
+  highlightAll,
+  presetPressed,
+  resolveTargetLine,
+  sourceLinesOf,
+} from '../../src/web/components/source-reader.tsx';
+import { buildSourceModel, defaultFolds, foldPresetsOf, gutterOf, languageOf } from '../../src/web/source/source-model.ts';
+import type { SourceModel } from '../../src/web/source/source-model.ts';
 
 const PAGE = readFileSync(new URL('../../src/web/pages/artifact-page.tsx', import.meta.url), 'utf8');
 
@@ -199,5 +211,374 @@ describe('artifact-page.tsx Source targets (source-text contract)', () => {
     expect(body).toContain('hasLineHash(');
     expect(body).toContain('hasSourceFlag(');
     expect(PAGE.match(/replaceState\(/g)?.length).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------
+// 12-07: the structure reader (sketch 062 E): bracket gutter, folds, presets, Wrap, Here, tones, stylesheet.
+// ---------------------------------------------------------------------------------------------------------------
+
+const CSS = readFileSync(new URL('../../src/web/styles/globals.css', import.meta.url), 'utf8');
+const READER = readFileSync(new URL('../../src/web/components/source-reader.tsx', import.meta.url), 'utf8');
+const PLAN_06 = readFileSync(
+  new URL('../fixtures/lendshed/.planning/phases/01-member-sign-in-sessions/01-06-PLAN.md', import.meta.url),
+  'utf8',
+);
+
+/** The phase-12-source block of the stylesheet. */
+function sourceBlock(): string {
+  const start = CSS.indexOf('/* phase-12-source:start */');
+  const end = CSS.indexOf('/* phase-12-source:end */');
+  return CSS.slice(start, end);
+}
+
+/** Server-rendered markup without the comment markers React puts between adjacent text nodes, and with attribute entities read back. */
+function plain(html: string): string {
+  return html.replace(/<!-- -->/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+}
+
+function rowsOf(text: string, path: string, folded?: ReadonlySet<number>, masked = false): { html: string; model: SourceModel } {
+  const model = buildSourceModel(text, languageOf(path));
+  const html = renderToStaticMarkup(
+    createElement(SourceRows, {
+      model,
+      gutter: gutterOf(model),
+      tokens: highlightAll(model, masked),
+      folded: folded ?? defaultFolds(model),
+      selected: null,
+      hit: null,
+      onToggle: () => undefined,
+    }),
+  );
+  return { html: plain(html), model };
+}
+
+function barOf(
+  text: string,
+  path: string,
+  options: { folded?: ReadonlySet<number>; wrap?: boolean } = {},
+): { html: string; model: SourceModel } {
+  const model = buildSourceModel(text, languageOf(path));
+  const html = renderToStaticMarkup(
+    createElement(SourceBar, {
+      model,
+      folded: options.folded ?? defaultFolds(model),
+      wrap: options.wrap ?? false,
+      text,
+      path,
+      realPath: undefined,
+      presets: foldPresetsOf(model),
+      hereLine: 1,
+      onPreset: () => undefined,
+      onWrap: () => undefined,
+    }),
+  );
+  return { html: plain(html), model };
+}
+
+const PLAN_PATH = '.planning/phases/01-member-sign-in-sessions/01-06-PLAN.md';
+
+describe('SourceRows on a deep plan (plan-06)', () => {
+  it('folds the frontmatter to its first line and a dashed chip, and the numbers jump over the run', () => {
+    const { html, model } = rowsOf(PLAN_06, PLAN_PATH);
+    expect(model.frontmatter).not.toBeNull();
+    const to = model.frontmatter?.to ?? 0;
+    expect(html).toContain('id="L1"');
+    expect(html).not.toContain('id="L2"');
+    expect(html).toContain(`id="L${to + 1}"`);
+    expect(html).toContain(`aria-label="Unfold frontmatter · ${model.frontmatter?.keyCount} keys"`);
+    expect(html).toContain(`▸ <strong>${model.frontmatter?.keyCount} keys</strong> · ${to} lines`);
+    expect(html.match(/class="source-fold-chip"/g)).toHaveLength(1);
+  });
+
+  it("draws the frontmatter's toggle as a real button that says it is collapsed", () => {
+    const { html } = rowsOf(PLAN_06, PLAN_PATH);
+    const toggle = html.match(/<button[^>]*class="source-fold-toggle"[^>]*>/);
+    expect(toggle?.[0]).toContain('aria-label="Unfold frontmatter');
+    expect(toggle?.[0]).toContain('aria-expanded="false"');
+    expect(toggle?.[0]).toContain('type="button"');
+  });
+
+  it('shows every frontmatter row, with Fold on the toggle, once the fold set is empty', () => {
+    const { html } = rowsOf(PLAN_06, PLAN_PATH, new Set());
+    expect(html).toContain('id="L2"');
+    const toggle = html.match(/<button[^>]*class="source-fold-toggle"[^>]*aria-label="Fold frontmatter[^>]*>/);
+    expect(toggle?.[0]).toContain('aria-expanded="true"');
+    expect(html).not.toContain('source-fold-chip');
+    expect(html).toContain('data-frontmatter="true"');
+  });
+
+  it('draws the task brackets: a start cell with a toggle, mid cells and an end tick per task', () => {
+    const { html, model } = rowsOf(PLAN_06, PLAN_PATH);
+    const tasks = model.blocks.filter((block) => block.kind === 'xml' && block.tag === 'task');
+    expect(tasks.length).toBeGreaterThanOrEqual(3);
+    for (const task of tasks) {
+      expect(html).toContain(`data-block="${task.id}" data-state="start"`);
+      expect(html).toContain(`data-block="${task.id}" data-state="end"`);
+      expect(html).toContain(`data-block="${task.id}" data-state="mid"`);
+    }
+    expect(html).toContain('aria-label="Fold <task>');
+  });
+
+  it('puts the line number link, the pinned lead and the text in each row', () => {
+    const { html } = rowsOf(PLAN_06, PLAN_PATH);
+    expect(html).toContain('<span class="source-lead"><a class="source-line-number" href="#L1" aria-label="Line 1">1</a>');
+    expect(html).toContain('<span class="source-line-text">');
+  });
+
+  it('renders file text as text only: no markup sink exists in the reader', () => {
+    const html = renderToStaticMarkup(
+      createElement(SourceRows, {
+        model: buildSourceModel('<script>alert(1)</script> **bold** `code`\n', 'markdown'),
+        gutter: [[]],
+        tokens: highlightAll(buildSourceModel('<script>alert(1)</script> **bold** `code`\n', 'markdown'), false),
+        folded: new Set<number>(),
+        selected: null,
+        hit: null,
+        onToggle: () => undefined,
+      }),
+    );
+    expect(html).not.toContain('<script>');
+    expect(html).toContain('&lt;script&gt;');
+    expect(READER).not.toContain('dangerouslySetInnerHTML');
+    expect(READER).not.toMatch(/\.innerHTML|insertAdjacentHTML|outerHTML/);
+  });
+
+  it('draws tones as the documented source-t-* spans', () => {
+    const { html } = rowsOf('## Heading\n\n**bold** and `code`\n', '.planning/notes/x.md');
+    expect(html).toContain('class="source-t-h"');
+    expect(html).toContain('class="source-t-b"');
+    expect(html).toContain('class="source-t-c"');
+    expect(html).toContain('class="source-t-p"');
+  });
+
+  it('marks a masked value in a dashed quiet box with its title', () => {
+    const { html } = rowsOf('{\n  "brave_search": "****7c2e"\n}\n', '.planning/config.json', undefined, true);
+    expect(html).toContain('class="source-t-mask"');
+    expect(html).toContain('title="Masked by Labelore; the file holds the real value"');
+    expect(html).toContain('class="source-t-key"');
+  });
+
+  it('draws numbers and text only for a file that is not structured', () => {
+    const { html } = rowsOf('plain one\nplain two\n', '.planning/notes/x.txt');
+    expect(html).not.toContain('source-gutter');
+    expect(html).not.toContain('source-fold-toggle');
+    expect(html).toContain('>plain two<');
+  });
+
+  it('marks the selected rows with their edges and the landed row', () => {
+    const model = buildSourceModel('a\nb\nc\nd\n', 'text');
+    const html = renderToStaticMarkup(
+      createElement(SourceRows, {
+        model,
+        gutter: gutterOf(model),
+        tokens: highlightAll(model, false),
+        folded: new Set<number>(),
+        selected: { from: 2, to: 3 },
+        hit: 4,
+        onToggle: () => undefined,
+      }),
+    );
+    expect(html).toMatch(/id="L2"[^>]*data-selected="true"[^>]*data-selection-edge="first"/);
+    expect(html).toMatch(/id="L3"[^>]*data-selected="true"[^>]*data-selection-edge="last"/);
+    expect(html).toMatch(/id="L4"[^>]*data-source-hit="true"/);
+    expect(html).not.toMatch(/id="L1"[^>]*data-selected/);
+  });
+});
+
+describe('SourceBar', () => {
+  it('row 1 has the Fold label, the preset group and the actions; row 2 is the Here path', () => {
+    const { html } = barOf(PLAN_06, PLAN_PATH);
+    expect(html).toContain('<span class="source-fold-label">Fold</span>');
+    expect(html).toContain('role="group" aria-label="Fold blocks"');
+    expect(html).toContain('aria-label="Wrap lines"');
+    expect(html).toContain('aria-label="Copy path"');
+    expect(html).toContain('aria-label="Copy contents"');
+    expect(html).toContain('<nav class="source-here" aria-label="Position in file">');
+    expect(html.indexOf('source-tools')).toBeLessThan(html.indexOf('source-here'));
+  });
+
+  it('lists a preset only when the file holds a block of its kind, with None first', () => {
+    const { model } = barOf(PLAN_06, PLAN_PATH);
+    const ids = foldPresetsOf(model).map((preset) => preset.id);
+    expect(ids[0]).toBe('none');
+    expect(ids).toContain('frontmatter');
+    expect(ids).toContain('tasks');
+    expect(ids).toContain('tables');
+    expect(ids).not.toContain('objects');
+    const notes = barOf('# Title\n\nplain text, no tables\n', '.planning/notes/x.md').model;
+    expect(foldPresetsOf(notes).map((preset) => preset.id)).not.toContain('tasks');
+    expect(foldPresetsOf(notes).map((preset) => preset.id)).not.toContain('tables');
+  });
+
+  it('gives JSON files Objects instead of Tasks and Sections', () => {
+    const json = '{\n  "a": {\n    "x": 1,\n    "y": 2\n  },\n  "b": {\n    "z": 3\n  }\n}\n';
+    const { html, model } = barOf(json, '.planning/config.json');
+    const ids = foldPresetsOf(model).map((preset) => preset.id);
+    expect(ids).toContain('objects');
+    expect(ids).not.toContain('tasks');
+    expect(ids).not.toContain('sections');
+    expect(html).toContain('>Objects<');
+  });
+
+  it('reads a preset as pressed when the fold set equals its set: the default is Frontmatter, not None', () => {
+    const { html, model } = barOf(PLAN_06, PLAN_PATH);
+    const presets = foldPresetsOf(model);
+    const frontmatter = presets.find((preset) => preset.id === 'frontmatter');
+    const none = presets.find((preset) => preset.id === 'none');
+    if (!frontmatter || !none) throw new Error('presets missing');
+    expect(presetPressed(model, defaultFolds(model), frontmatter)).toBe(true);
+    expect(presetPressed(model, defaultFolds(model), none)).toBe(false);
+    expect(html).toMatch(/aria-pressed="true"[^>]*>Frontmatter</);
+    expect(html).toMatch(/aria-pressed="false"[^>]*>None</);
+  });
+
+  it('None empties the fold set and Tasks folds exactly the task blocks', () => {
+    const { model } = barOf(PLAN_06, PLAN_PATH);
+    const presets = foldPresetsOf(model);
+    const none = presets.find((preset) => preset.id === 'none');
+    const tasks = presets.find((preset) => preset.id === 'tasks');
+    if (!none || !tasks) throw new Error('presets missing');
+    expect(foldsAfterPreset(model, none).size).toBe(0);
+    const folded = foldsAfterPreset(model, tasks);
+    const taskIds = model.blocks.filter((block) => block.kind === 'xml' && block.tag === 'task').map((block) => block.id);
+    expect([...folded].sort((a, b) => a - b)).toEqual(taskIds);
+    expect(presetPressed(model, folded, tasks)).toBe(true);
+    expect(presetPressed(model, new Set(), none)).toBe(true);
+  });
+
+  it('shows Wrap pressed only while wrapping, and keeps the URL out of it', () => {
+    const wrapButton = (html: string): string => html.match(/<button[^>]*aria-label="Wrap lines"[^>]*>/)?.[0] ?? '';
+    expect(wrapButton(barOf(PLAN_06, PLAN_PATH, { wrap: true }).html)).toContain('aria-pressed="true"');
+    expect(wrapButton(barOf(PLAN_06, PLAN_PATH, { wrap: false }).html)).toContain('aria-pressed="false"');
+    expect(READER).toContain("data-wrap={wrap ? 'true' : undefined}");
+    expect(READER).not.toMatch(/replaceState|pushState|navigate\(/);
+  });
+
+  it("wraps the labelled copy buttons' word in source-copy-label and keeps their aria-labels", () => {
+    const { html } = barOf(PLAN_06, PLAN_PATH);
+    expect(html).toContain('<span class="source-copy-label">Copy path</span>');
+    expect(html).toContain('<span class="source-copy-label">Copy contents</span>');
+  });
+
+  it('leaves the Fold label and presets out of a file with no block to fold', () => {
+    const { html } = barOf('just\nplain text\n', '.planning/notes/x.txt');
+    expect(html).not.toContain('Fold');
+    expect(html).toContain('aria-label="Wrap lines"');
+  });
+});
+
+describe('SourceHere', () => {
+  it('names the blocks around the line as crumbs, the last one current, then the line', () => {
+    const model = buildSourceModel(PLAN_06, 'markdown');
+    const html = plain(renderToStaticMarkup(createElement(SourceHere, { model, line: 1 })));
+    expect(html).toContain('<span class="source-here-label">Here</span>');
+    expect(html).toContain('data-current="true"');
+    expect(html).toContain('frontmatter · ');
+    expect(html).toContain('<span class="source-here-line">L1</span>');
+  });
+
+  it('says "top of file" when no block holds the line', () => {
+    const model = buildSourceModel('no blocks here\n', 'text');
+    const html = renderToStaticMarkup(createElement(SourceHere, { model, line: 1 }));
+    expect(html).toContain('top of file');
+    expect(html).not.toContain('source-here-crumb');
+  });
+});
+
+describe('SourceNotice tone', () => {
+  it('is quiet for every kind: no destructive or warning modifier and no tone attribute other than quiet', () => {
+    for (const kind of ['image', 'image-over-cap', 'binary', 'large', 'listed', 'empty'] as const) {
+      const html = noticeOf(kind);
+      // The button utilities carry `aria-invalid:border-destructive`; what matters is the notice's own classes.
+      expect(html.match(/<aside[^>]*>/)?.[0], kind).not.toMatch(/destructive|warning/);
+      expect(html, kind).not.toMatch(/class="[^"]*(?:^|\s)(?:destructive|warning)(?:\s|")/);
+      expect(html, kind).not.toMatch(/data-tone="(?!quiet")/);
+    }
+  });
+});
+
+describe('the phase-12-source stylesheet block', () => {
+  it('exists once, between its start and end markers', () => {
+    expect(CSS.match(/phase-12-source:start/g)).toHaveLength(1);
+    expect(CSS.match(/phase-12-source:end/g)).toHaveLength(1);
+    expect(CSS.indexOf('phase-12-source:start')).toBeLessThan(CSS.indexOf('phase-12-source:end'));
+  });
+
+  it('declares the five sketch-local tokens once in :root, and the dark key tone in .dark', () => {
+    const block = sourceBlock();
+    const root = block.slice(block.indexOf(':root {'), block.indexOf('}', block.indexOf(':root {')));
+    for (const token of ['--t-key', '--sel', '--veil', '--hatch', '--source-row-height']) {
+      expect(root, token).toContain(`${token}:`);
+      // Declared once in :root; --t-key is declared once more in .dark.
+      expect(CSS.match(new RegExp(`^\\s*${token}:`, 'gm')), `${token} declared`).toHaveLength(token === '--t-key' ? 2 : 1);
+    }
+    expect(block).toMatch(/\.dark \{\s*--t-key: color-mix\(in oklch, var\(--primary\) 60%, var\(--foreground\)\);/);
+  });
+
+  it('sets rows in --source-row-height and uses no destructive or warning colour', () => {
+    const block = sourceBlock();
+    expect(block).toContain('line-height: var(--source-row-height)');
+    expect(block).not.toContain('--destructive');
+    expect(block).not.toMatch(/--warning|--missing|--in-flight/);
+  });
+
+  it('pins the number and gutter, draws the 1.6ch cells and the 6ch number column', () => {
+    const block = sourceBlock();
+    expect(block).toMatch(/\.source-lead \{[^}]*position: sticky;[^}]*left: 0;[^}]*background: var\(--background\)/);
+    expect(block).toMatch(/\.source-gutter-cell \{[^}]*width: 1\.6ch/);
+    expect(block).toMatch(/\.source-line-number \{[^}]*width: 6ch/);
+    expect(block).toMatch(/\.source-gutter-cell\[data-state\]::before \{[^}]*border-left: 1px solid var\(--border\)/);
+  });
+
+  it('keeps the bar sticky under the shell header on a --background ground with a hairline', () => {
+    expect(sourceBlock()).toMatch(
+      /\.source-bar \{[^}]*position: sticky;[^}]*top: var\(--space-22\);[^}]*border-bottom: 1px solid var\(--border\);[^}]*background: var\(--background\)/,
+    );
+  });
+
+  it('holds the selection, hit, hot, Here and chip rules, with the flash switched off under reduced motion', () => {
+    const block = sourceBlock();
+    for (const needle of [
+      "data-selected='true'",
+      "data-selection-edge='first'",
+      "data-selection-edge='last'",
+      "data-selection-edge='only'",
+      "data-source-hit='true'",
+      "data-hot='true'",
+      '.source-here-crumb',
+      "[data-current='true']",
+      '.source-selection',
+      '@keyframes source-hit-flash',
+    ]) {
+      expect(block, needle).toContain(needle);
+    }
+    expect(block).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.source-row\[data-source-hit='true'\] \{\s*animation: none;/);
+    expect(block).toContain('max-width: 28ch');
+  });
+
+  it('wraps with a hanging indent and does not wrap by default', () => {
+    const block = sourceBlock();
+    expect(block).toMatch(/\.source-line-text \{[^}]*white-space: pre;/);
+    expect(block).toMatch(/\[data-wrap='true'\] \.source-line-text \{[^}]*white-space: pre-wrap;[^}]*\}/);
+    expect(block).toContain('text-indent: -2ch');
+  });
+
+  it('lays rows below the fold out lazily, in no-wrap mode', () => {
+    expect(sourceBlock()).toMatch(/:not\(\[data-wrap='true'\]\) \.source-row \{[^}]*content-visibility: auto;[^}]*contain-intrinsic-size:/);
+  });
+
+  it("narrows at 42rem on the reader's own container: icon-only copy, 4ch numbers, stacked bar; 40px hit areas on touch", () => {
+    const block = sourceBlock();
+    expect(block).toContain('container-type: inline-size');
+    expect(block).toMatch(/@container source \(max-width: 42rem\) \{[\s\S]*?\.source-copy-label \{\s*display: none;/);
+    expect(block).toMatch(/@container source \(max-width: 42rem\) \{[\s\S]*?\.source-line-number \{\s*width: 4ch;/);
+    expect(block).toMatch(/@media \(pointer: coarse\) \{[\s\S]*?\.source-fold-toggle::after \{[\s\S]*?width: var\(--space-10\);/);
+  });
+
+  it('draws the notice as the quiet dashed box with a 40px dashed glyph box', () => {
+    const block = sourceBlock();
+    expect(block).toMatch(/\.notice\.source-notice \{[^}]*border: 1px dashed var\(--muted-foreground\)/);
+    expect(block).toMatch(/\.notice\.source-notice > \.source-notice-glyph \{[^}]*width: var\(--space-10\);[^}]*height: var\(--space-10\);[^}]*border: 1px dashed var\(--muted-foreground\)/);
   });
 });

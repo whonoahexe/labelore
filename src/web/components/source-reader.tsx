@@ -1,10 +1,13 @@
-// Source mode's reader (Phase 12: SRC-02, D-01, D-05): a text file as written, one row per line, each with a
-// line-number link to #L{n}. The text comes from the read-only /source route; every line is a React text
-// child, so file text can never become markup (T-12-05). A line fragment on the page's URL marks its rows when
-// the text first loads; a SourceTarget from the page marks and scrolls to a row the same way. The reader only
-// reads window.location.hash; it never writes the URL (selection by click arrives in 12-08).
+// Source mode's structure reader (Phase 12: SRC-01, SRC-02, D-01, D-03, D-04, D-05; sketch 062 variant E): a text
+// file as written, one row per line, each row [line number | bracket gutter | tone-highlighted text]. The gutter
+// draws the file's nested blocks as brackets and every block folds to one line; the sticky bar holds the fold
+// presets, Wrap, the copy buttons and the "Here" path. The text comes from the read-only /source route; every
+// line is a list of React text children, so file text can never become markup (T-12-05, T-12-22). A line
+// fragment on the page's URL marks its rows when the text first loads; a SourceTarget from the page marks and
+// scrolls to a row the same way. The reader only reads window.location.hash; it never writes the URL
+// (selection by click arrives in 12-08).
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy, WrapText } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import type { FileClass } from '../../planning-repo/file-class.ts';
 import { filePageKindOf } from '../../presentation/file-facts.ts';
@@ -13,6 +16,20 @@ import type { LineRange } from '../../presentation/source-link.ts';
 import { useProjectScope, useProjectSlug } from '../nav.tsx';
 import { fetchSource, sourceKey } from '../source/source-api.ts';
 import type { SourceTarget } from '../source/source-api.ts';
+import { highlightLine, lineContextsOf } from '../source/source-highlight.ts';
+import type { ToneToken } from '../source/source-highlight.ts';
+import {
+  buildSourceModel,
+  chainAt,
+  defaultFolds,
+  foldIdsOf,
+  foldPresetsOf,
+  gutterOf,
+  hiddenLinesOf,
+  languageOf,
+  unfoldFor,
+} from '../source/source-model.ts';
+import type { FoldPreset, Gutter, SourceBlock, SourceModel } from '../source/source-model.ts';
 import { CopyPathButton, copyText } from './copy-path-button.tsx';
 import { SourceNotice } from './source-notice.tsx';
 import { Button } from './ui/button.tsx';
@@ -41,6 +58,295 @@ function scrollRowIntoView(line: number): void {
   window.document.getElementById(`L${line}`)?.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
 }
 
+/** Every line's tone tokens, from one pass over the model (the reader holds them, memoised, for the text's life). */
+export function highlightAll(model: SourceModel, masked: boolean): ToneToken[][] {
+  const contexts = lineContextsOf(model);
+  return model.lines.map((line, index) =>
+    highlightLine(line, { language: model.language, masked, ...(contexts[index] ?? { inFrontmatter: false, inFence: false }) }),
+  );
+}
+
+/** The fold set a preset button produces: None empties it, any other preset folds exactly its blocks. */
+export function foldsAfterPreset(model: SourceModel, preset: FoldPreset): Set<number> {
+  return foldIdsOf(model, preset);
+}
+
+/** A preset reads as pressed when the fold set equals the set that preset would produce. */
+export function presetPressed(model: SourceModel, folded: ReadonlySet<number>, preset: FoldPreset): boolean {
+  const ids = foldIdsOf(model, preset);
+  if (ids.size !== folded.size) return false;
+  for (const id of ids) if (!folded.has(id)) return false;
+  return true;
+}
+
+/** The fold set with every folded block that hides a line of the range taken out (landing inside a fold opens it). */
+export function foldsOpenedFor(model: SourceModel, folded: ReadonlySet<number>, range: LineRange): ReadonlySet<number> {
+  const open = unfoldFor(model, folded, range);
+  if (open.length === 0) return folded;
+  const next = new Set(folded);
+  for (const id of open) next.delete(id);
+  return next;
+}
+
+/** Characters a row holds besides its text: the 6ch number column, the 1ch gutter padding and the text's 2ch end padding. */
+const ROW_CHROME_CH = 9;
+/** A folded row's first line is followed by its chip ("▸ name · 123 lines"), so a row is never narrower than this many characters of text. */
+const MIN_TEXT_CH = 48;
+/** The gutter's 1.6ch column per depth, rounded up to a whole character. */
+const GUTTER_CELL_CH = 1.6;
+
+const MASK_TITLE = 'Masked by Labelore; the file holds the real value';
+
+function ToneText({ tokens }: { tokens: readonly ToneToken[] }): React.JSX.Element {
+  return (
+    <>
+      {tokens.map((token, index) =>
+        token.tone === null ? (
+          token.text
+        ) : (
+          <span
+            key={index}
+            className={`source-t-${token.tone}`}
+            {...(token.tone === 'mask' ? { title: MASK_TITLE } : {})}
+          >
+            {token.text}
+          </span>
+        ),
+      )}
+    </>
+  );
+}
+
+/** A block's name as the toggle, chip and crumb say it: its label, then the `<name>` of an element that has one. */
+function blockNameOf(block: SourceBlock): string {
+  return block.name === null ? block.label : `${block.label} ${block.name}`;
+}
+
+/** "▸ {name} · {n} lines" (frontmatter: "▸ {k} keys · {n} lines"); a section or table keeps its own first line, so just the count. */
+function FoldChipText({ block, model }: { block: SourceBlock; model: SourceModel }): React.JSX.Element {
+  const count = block.to - block.from + 1;
+  const lead =
+    block.kind === 'xml' && block.name !== null
+      ? block.name
+      : block.kind === 'frontmatter' && model.frontmatter !== null
+        ? `${model.frontmatter.keyCount} keys`
+        : null;
+  return (
+    <>
+      {'▸ '}
+      {lead === null ? null : (
+        <>
+          <strong>{lead}</strong>
+          {' · '}
+        </>
+      )}
+      {count} lines
+    </>
+  );
+}
+
+/**
+ * The reader's rows, drawn without any query or state of their own so the markup can be rendered on its own:
+ * hidden rows (inside a folded block) are skipped, so the numbers jump over a folded run. Hovering a bracket
+ * lights that block's cells by setting `data-hot` straight on the elements (no React state per hover).
+ */
+export function SourceRows({
+  model,
+  gutter,
+  tokens,
+  folded,
+  selected,
+  hit,
+  onToggle,
+}: {
+  model: SourceModel;
+  gutter: Gutter;
+  tokens: readonly (readonly ToneToken[])[];
+  folded: ReadonlySet<number>;
+  selected: LineRange | null;
+  hit: number | null;
+  onToggle: (blockId: number) => void;
+}): React.JSX.Element {
+  const hidden = useMemo(() => hiddenLinesOf(model, folded), [model, folded]);
+  // The blocks that start on each line, shallowest first, so the folded one that shapes a row is found without a search.
+  const startsAt = useMemo(() => {
+    const map = new Map<number, SourceBlock[]>();
+    for (const block of model.blocks) {
+      if (block.to <= block.from) continue;
+      const list = map.get(block.from);
+      if (list) list.push(block);
+      else map.set(block.from, [block]);
+    }
+    for (const list of map.values()) list.sort((a, b) => a.depth - b.depth);
+    return map;
+  }, [model]);
+  // The widest line, in characters: the sideways-scrolling code box takes this width itself, so rows that
+  // content-visibility has not laid out cannot make the scroll width jump as the file scrolls.
+  const codeWidthCh = useMemo(() => {
+    const widest = model.lines.reduce((width, line) => Math.max(width, line.length), MIN_TEXT_CH);
+    return Math.ceil(ROW_CHROME_CH + model.maxDepth * GUTTER_CELL_CH + widest);
+  }, [model]);
+  const codeRef = useRef<HTMLDivElement>(null);
+  const hot = useRef<number | null>(null);
+
+  function setHot(next: number | null): void {
+    const code = codeRef.current;
+    if (code === null || hot.current === next) return;
+    const lightCells = (id: number, on: boolean): void => {
+      // The id is a number read back from a data attribute and re-checked as an integer, never file text.
+      if (!Number.isInteger(id)) return;
+      for (const cell of code.querySelectorAll<HTMLElement>(`[data-block="${id}"]`)) {
+        if (on) cell.dataset.hot = 'true';
+        else delete cell.dataset.hot;
+      }
+    };
+    if (hot.current !== null) lightCells(hot.current, false);
+    hot.current = next;
+    if (next !== null) lightCells(next, true);
+  }
+
+  function blockOf(target: EventTarget): number | null {
+    if (!(target instanceof Element)) return null;
+    const cell = target.closest<HTMLElement>('.source-gutter-cell[data-block]');
+    if (cell === null) return null;
+    const id = Number(cell.dataset.block);
+    return Number.isInteger(id) ? id : null;
+  }
+
+  const rows: React.JSX.Element[] = [];
+  for (let number = 1; number <= model.lines.length; number += 1) {
+    if (hidden[number] === 1) continue;
+    const starting = startsAt.get(number);
+    const foldedHere = starting?.find((block) => folded.has(block.id)) ?? null;
+    const cells: React.JSX.Element[] = [];
+    const row = gutter[number - 1] ?? [];
+    for (let depth = 0; depth < model.maxDepth; depth += 1) {
+      const cell = row[depth] ?? null;
+      const block = cell === null ? null : (model.blocks[cell.blockId] ?? null);
+      if (cell === null || block === null || (foldedHere !== null && block !== foldedHere && block.depth > foldedHere.depth)) {
+        cells.push(<span key={depth} className="source-gutter-cell" />);
+        continue;
+      }
+      const isFolded = folded.has(block.id);
+      const state = number === block.from && isFolded ? 'one' : cell.state;
+      const foldable = number === block.from && block.to > block.from;
+      cells.push(
+        <span
+          key={depth}
+          className="source-gutter-cell"
+          data-block={block.id}
+          data-state={state}
+          title={`${blockNameOf(block)} · L${block.from}–L${block.to}`}
+        >
+          {foldable ? (
+            <button
+              type="button"
+              className="source-fold-toggle"
+              aria-label={`${isFolded ? 'Unfold' : 'Fold'} ${blockNameOf(block)}`}
+              aria-expanded={!isFolded}
+              onClick={() => onToggle(block.id)}
+            >
+              {isFolded ? '+' : '−'}
+            </button>
+          ) : null}
+        </span>,
+      );
+    }
+    const isSelected = selected !== null && number >= selected.from && number <= selected.to;
+    const edge =
+      isSelected && selected !== null
+        ? selected.from === selected.to
+          ? 'only'
+          : number === selected.from
+            ? 'first'
+            : number === selected.to
+              ? 'last'
+              : undefined
+        : undefined;
+    rows.push(
+      <div
+        key={number}
+        id={`L${number}`}
+        className="source-row"
+        data-selected={isSelected ? 'true' : undefined}
+        data-selection-edge={edge}
+        data-source-hit={hit === number ? 'true' : undefined}
+        data-frontmatter={model.frontmatter !== null && number <= model.frontmatter.to ? 'true' : undefined}
+      >
+        <span className="source-lead">
+          <a className="source-line-number" href={`#L${number}`} aria-label={`Line ${number}`}>
+            {number}
+          </a>
+          {model.maxDepth > 0 ? <span className="source-gutter">{cells}</span> : null}
+        </span>
+        <span className="source-line-text">
+          <ToneText tokens={tokens[number - 1] ?? []} />
+          {foldedHere === null ? null : (
+            <>
+              {' '}
+              <button
+                type="button"
+                className="source-fold-chip"
+                aria-label={`Unfold ${blockNameOf(foldedHere)}`}
+                onClick={() => onToggle(foldedHere.id)}
+              >
+                <FoldChipText block={foldedHere} model={model} />
+              </button>
+            </>
+          )}
+        </span>
+      </div>,
+    );
+  }
+
+  return (
+    <div
+      ref={codeRef}
+      className="source-code"
+      style={{ '--source-code-width': `${codeWidthCh}ch` } as React.CSSProperties}
+      onMouseOver={(event) => setHot(blockOf(event.target))}
+      onMouseLeave={() => setHot(null)}
+      onFocus={(event) => setHot(blockOf(event.target))}
+      onBlur={() => setHot(null)}
+    >
+      {rows}
+    </div>
+  );
+}
+
+/** The "Here" path: the chain of blocks around a line, each crumb a button that jumps to its block's first row. */
+export function SourceHere({ model, line }: { model: SourceModel; line: number }): React.JSX.Element {
+  const chain = chainAt(model, line);
+  return (
+    <nav className="source-here" aria-label="Position in file">
+      <span className="source-here-label">Here</span>
+      {chain.length === 0 ? (
+        <span className="source-here-line">top of file</span>
+      ) : (
+        chain.map((block, index) => (
+          <span key={block.id} className="source-here-step">
+            {index > 0 ? (
+              <span className="source-here-sep" aria-hidden="true">
+                ›
+              </span>
+            ) : null}
+            <button
+              type="button"
+              className="source-here-crumb"
+              title={`L${block.from}–L${block.to}`}
+              data-current={index === chain.length - 1 ? 'true' : undefined}
+              onClick={() => scrollRowIntoView(block.from)}
+            >
+              {blockNameOf(block)}
+            </button>
+          </span>
+        ))
+      )}
+      <span className="source-here-line">L{line}</span>
+    </nav>
+  );
+}
+
 /** Copies exactly the served (masked) text; the label becomes "Copied" for 1.5 s, silent when the clipboard refuses. */
 function CopyContentsButton({ text }: { text: string }): React.JSX.Element {
   const [copied, setCopied] = useState(false);
@@ -60,8 +366,72 @@ function CopyContentsButton({ text }: { text: string }): React.JSX.Element {
   return (
     <Button type="button" size="xs" variant="ghost" aria-label="Copy contents" data-copied={copied ? 'true' : 'false'} onClick={handleCopy}>
       {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-      <span>{copied ? 'Copied' : 'Copy contents'}</span>
+      <span className="source-copy-label">{copied ? 'Copied' : 'Copy contents'}</span>
     </Button>
+  );
+}
+
+/**
+ * The sticky bar: row 1 holds the "Fold" label with the segmented presets, then Wrap and the two copy buttons
+ * pushed right; row 2 is the Here path (12-08 makes it follow the scroll). With no block to fold the label and
+ * presets are left out, so a plain text file's bar is just the actions.
+ */
+export function SourceBar({
+  model,
+  folded,
+  wrap,
+  text,
+  path,
+  realPath,
+  presets,
+  hereLine,
+  onPreset,
+  onWrap,
+}: {
+  model: SourceModel;
+  folded: ReadonlySet<number>;
+  wrap: boolean;
+  text: string;
+  path: string;
+  realPath: string | undefined;
+  presets: readonly FoldPreset[];
+  hereLine: number;
+  onPreset: (preset: FoldPreset) => void;
+  onWrap: () => void;
+}): React.JSX.Element {
+  return (
+    <div className="source-bar">
+      <div className="source-tools" role="toolbar" aria-label="Source tools">
+        {presets.length > 1 ? (
+          <>
+            <span className="source-fold-label">Fold</span>
+            <div className="source-presets" role="group" aria-label="Fold blocks">
+              {presets.map((preset) => (
+                <Button
+                  key={preset.id}
+                  type="button"
+                  size="xs"
+                  variant="outline"
+                  aria-pressed={presetPressed(model, folded, preset)}
+                  onClick={() => onPreset(preset)}
+                >
+                  {preset.label}
+                </Button>
+              ))}
+            </div>
+          </>
+        ) : null}
+        <div className="source-actions">
+          <Button type="button" size="xs" variant="ghost" aria-label="Wrap lines" aria-pressed={wrap} onClick={onWrap}>
+            <WrapText aria-hidden="true" />
+            <span>Wrap</span>
+          </Button>
+          <CopyPathButton path={path} {...(realPath === undefined ? {} : { realPath })} label="Copy path" />
+          <CopyContentsButton text={text} />
+        </div>
+      </div>
+      <SourceHere model={model} line={hereLine} />
+    </div>
   );
 }
 
@@ -72,8 +442,15 @@ interface Landing {
   token: number;
 }
 
-function SourceRows({
+/** The fold set a file opens with: its frontmatter folded, unless the line fragment names a line inside it. */
+function initialFolds(model: SourceModel, selected: LineRange | null): ReadonlySet<number> {
+  const folds = defaultFolds(model);
+  return selected === null ? folds : foldsOpenedFor(model, folds, selected);
+}
+
+function SourceBody({
   text,
+  masked,
   bodyStart,
   name,
   path,
@@ -81,16 +458,22 @@ function SourceRows({
   target,
 }: {
   text: string;
+  masked: boolean;
   bodyStart: number;
   name: string;
   path: string;
   realPath: string | undefined;
   target: SourceTarget | null;
 }): React.JSX.Element {
-  const lines = useMemo(() => sourceLinesOf(text), [text]);
+  const model = useMemo(() => buildSourceModel(text, languageOf(path)), [text, path]);
+  const gutter = useMemo(() => gutterOf(model), [model]);
+  const tokens = useMemo(() => highlightAll(model, masked), [model, masked]);
+  const presets = useMemo(() => foldPresetsOf(model), [model]);
   const [selected, setSelected] = useState<LineRange | null>(() =>
-    parseLineHash(window.location.hash, Math.max(lines.length, 1)),
+    parseLineHash(window.location.hash, Math.max(model.lines.length, 1)),
   );
+  const [folded, setFolded] = useState<ReadonlySet<number>>(() => initialFolds(model, selected));
+  const [wrap, setWrap] = useState(false);
   const [hit, setHit] = useState<number | null>(null);
   const [landing, setLanding] = useState<Landing | null>(() =>
     selected === null ? null : { line: selected.from, token: 0 },
@@ -102,9 +485,12 @@ function SourceRows({
     setAppliedSeq(target.seq);
     const line = resolveTargetLine(text, bodyStart, target);
     setHit(line);
+    let range: LineRange = { from: line, to: line };
     if (target.kind === 'line' && target.select) {
-      setSelected(parseLineHash(window.location.hash, Math.max(lines.length, 1)) ?? { from: line, to: line });
+      range = parseLineHash(window.location.hash, Math.max(model.lines.length, 1)) ?? range;
+      setSelected(range);
     }
+    setFolded(foldsOpenedFor(model, folded, range));
     setLanding({ line, token: target.seq + 1 });
   }
 
@@ -112,33 +498,38 @@ function SourceRows({
     if (landing !== null) scrollRowIntoView(landing.line);
   }, [landing]);
 
+  function toggle(blockId: number): void {
+    setFolded((current) => {
+      const next = new Set(current);
+      if (!next.delete(blockId)) next.add(blockId);
+      return next;
+    });
+  }
+
   return (
     <section className="source-reader" role="region" aria-label={`Source of ${name}`}>
-      <div className="source-bar" role="toolbar" aria-label="Source tools">
-        <CopyPathButton path={path} {...(realPath === undefined ? {} : { realPath })} label="Copy path" />
-        <CopyContentsButton text={text} />
-      </div>
-      <div className="source-pane">
-        <div className="source-code">
-          {lines.map((line, index) => {
-            const number = index + 1;
-            const isSelected = selected !== null && number >= selected.from && number <= selected.to;
-            return (
-              <div
-                key={number}
-                id={`L${number}`}
-                className="source-row"
-                data-selected={isSelected ? 'true' : undefined}
-                data-source-hit={hit === number ? 'true' : undefined}
-              >
-                <a className="source-line-number" href={`#L${number}`} aria-label={`Line ${number}`}>
-                  {number}
-                </a>
-                <span className="source-line-text">{line}</span>
-              </div>
-            );
-          })}
-        </div>
+      <SourceBar
+        model={model}
+        folded={folded}
+        wrap={wrap}
+        text={text}
+        path={path}
+        realPath={realPath}
+        presets={presets}
+        hereLine={1}
+        onPreset={(preset) => setFolded(foldsAfterPreset(model, preset))}
+        onWrap={() => setWrap(!wrap)}
+      />
+      <div className="source-pane" data-wrap={wrap ? 'true' : undefined}>
+        <SourceRows
+          model={model}
+          gutter={gutter}
+          tokens={tokens}
+          folded={folded}
+          selected={selected}
+          hit={hit}
+          onToggle={toggle}
+        />
       </div>
     </section>
   );
@@ -210,8 +601,9 @@ export function SourceReader({
   }
   if (query.data.text === '') return notice('empty');
   return (
-    <SourceRows
+    <SourceBody
       text={query.data.text}
+      masked={query.data.masked}
       bodyStart={query.data.bodyStart}
       name={name}
       path={path}
