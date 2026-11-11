@@ -134,6 +134,34 @@ test.describe('Source reader selection on Lendshed', () => {
     expect(new URL(page.url()).hash).toBe('');
   });
 
+  test('the Here path follows the scroll, and a crumb jumps to its block with a flash', async ({ page }) => {
+    await openSource(page, PLAN_06);
+    await expect(page.locator('.source-here')).toHaveAttribute('aria-label', 'Position in file');
+    await expect(page.locator('.source-here-line')).toHaveText('L1');
+    await expect(page.locator('.source-here [aria-live]')).toHaveCount(0);
+
+    // Scroll to the middle of the first task: the chain names <tasks> then <task>, the line is one near the top.
+    await page.evaluate(() => window.document.getElementById('L100')?.scrollIntoView({ block: 'start', behavior: 'instant' }));
+    await expect.poll(async () => Number((await page.locator('.source-here-line').first().textContent())?.slice(1))).toBeGreaterThan(80);
+    const crumbs = page.locator('.source-here-crumb');
+    await expect.poll(() => crumbs.count()).toBeGreaterThanOrEqual(2);
+    await expect(crumbs.first()).toContainText('<tasks>');
+    await expect(page.locator('.source-here-crumb', { hasText: '<task>' })).toHaveCount(1);
+    await expect(page.locator('.source-here-crumb[data-current="true"]')).toHaveCount(1);
+    await expect(crumbs.last()).toHaveAttribute('data-current', 'true');
+    // The crumbs stay on one line: the Here row is no taller than a single line of text with its padding.
+    const here = await page.locator('.source-here').boundingBox();
+    expect(here?.height ?? 999).toBeLessThan(40);
+
+    // The outer crumb jumps to its block's first line and flashes it.
+    await crumbs.first().click();
+    const target = Number(/L(\d+)–/.exec((await crumbs.first().getAttribute('title')) ?? '')?.[1]);
+    await expect(page.locator(`#L${target}`)).toHaveAttribute('data-source-hit', 'true');
+    await expect.poll(() => rowBelowBar(page, target)).toBe(true);
+    await expect.poll(async () => (await page.locator('.source-here-line').first().textContent()) ?? '').toBe(`L${target}`);
+    await expect(page.locator('.source-selection')).toHaveCount(0);
+  });
+
   test('an "In the source only" link lands on its heading line: flashed, not selected, no fragment', async ({ page }) => {
     const path = await pathOf('phases/04-bulk-loan-export/04-VERIFICATION.md');
     await page.goto(await artifactUrl(FIXTURE_BASE_URL, path));

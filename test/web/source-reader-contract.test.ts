@@ -640,6 +640,19 @@ describe('the Here path is a plain landmark', () => {
     expect(html).not.toContain('role="alert"');
   });
 
+  it('follows the scroll with a passive, frame-throttled listener that is cleaned up', () => {
+    expect(READER).toContain("addEventListener('scroll'");
+    expect(READER).toContain('passive: true');
+    expect(READER).toContain("removeEventListener('scroll'");
+    expect(READER).toContain('requestAnimationFrame');
+    expect(READER).toContain('cancelAnimationFrame');
+    expect(READER).toContain('elementFromPoint');
+    // The line is kept in state only when it changes.
+    expect(READER).toContain('previous === line ? previous : line');
+    // The reader reads the position; the active-section seam stays free of the URL and of the reader.
+    expect(READER).not.toContain('use-active-section');
+  });
+
   it('has no live region anywhere in the reader', () => {
     expect(READER).not.toContain('aria-live="assertive"');
     expect(READER.match(/aria-live/g)?.length).toBe(1); // the loading backstop's polite status, outside the Here path

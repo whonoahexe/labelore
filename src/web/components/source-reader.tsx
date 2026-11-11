@@ -78,6 +78,29 @@ function scrollRowIntoView(line: number): void {
   row.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
 }
 
+/** Points below the sticky bar's edge that are tried in turn; the first inside a row names the top visible line. */
+const HERE_PROBES = [8, 14, 20];
+
+/**
+ * The 1-based line of the row just under the sticky bar, read by hit-testing the pane's left edge (the pinned line
+ * numbers), so it holds with or without wrapping and needs no per-row observer. The probes start a few pixels below
+ * the bar so a row the bar scrolled to (its margin leaves 4px) is the one found; at the very top they step past the
+ * pane's top padding. Null when nothing is found (the bottom padding, or the reader is not mounted).
+ */
+function topVisibleLine(): number | null {
+  const bar = window.document.querySelector<HTMLElement>('.source-bar');
+  const pane = window.document.querySelector<HTMLElement>('.source-pane');
+  if (bar === null || pane === null) return null;
+  const x = pane.getBoundingClientRect().left + 4;
+  const edge = bar.getBoundingClientRect().bottom;
+  for (const probe of HERE_PROBES) {
+    const row = window.document.elementFromPoint(x, edge + probe)?.closest('.source-row');
+    const match = row === null || row === undefined ? null : /^L(\d+)$/.exec(row.id);
+    if (match !== null) return Number(match[1]);
+  }
+  return null;
+}
+
 /** Every line's tone tokens, from one pass over the model (the reader holds them, memoised, for the text's life). */
 export function highlightAll(model: SourceModel, masked: boolean): ToneToken[][] {
   const contexts = lineContextsOf(model);
@@ -620,6 +643,31 @@ function SourceBody({
     return () => clearTimeout(timer);
   }, [landing]);
 
+  // The Here path follows the scroll: a passive listener, throttled to one read per frame, keeps the top visible
+  // line in state only when it changes. A fold, wrap or text change moves rows without a scroll event, so those
+  // re-read once as well.
+  const [hereLine, setHereLine] = useState(1);
+  useEffect(() => {
+    let frame = 0;
+    const measure = (): void => {
+      frame = 0;
+      const line = topVisibleLine();
+      if (line !== null) setHereLine((previous) => (previous === line ? previous : line));
+    };
+    const schedule = (): void => {
+      if (frame === 0) frame = window.requestAnimationFrame(measure);
+    };
+    // Capture, so a scroll in any scroller under the window is seen (scroll events do not bubble).
+    window.addEventListener('scroll', schedule, { passive: true, capture: true });
+    window.addEventListener('resize', schedule);
+    schedule();
+    return () => {
+      window.removeEventListener('scroll', schedule, { capture: true });
+      window.removeEventListener('resize', schedule);
+      if (frame !== 0) window.cancelAnimationFrame(frame);
+    };
+  }, [folded, wrap, model]);
+
   function select(event: SelectionEvent): void {
     const next = selectionAfter(selection, event);
     setSelection(next);
@@ -652,7 +700,7 @@ function SourceBody({
         path={path}
         realPath={realPath}
         presets={presets}
-        hereLine={1}
+        hereLine={hereLine}
         selection={selection}
         onPreset={(preset) => setFolded(foldsAfterPreset(model, preset))}
         onWrap={() => setWrap(!wrap)}
