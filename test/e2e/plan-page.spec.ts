@@ -11,6 +11,7 @@ import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
+import { expectLandedOn, watchSourceHits } from './source-landing.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string; structured: Record<string, unknown> }[];
@@ -152,13 +153,11 @@ test.describe('Plan page', () => {
     }
 
     // The strip: Threat model lands in the raw Source reader on its <threat_model> row; View restores the navigator.
+    await watchSourceHits(page);
     await page.locator('#plan-source-only').getByRole('button', { name: 'Threat model', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Source of 05-01-PLAN.md' })).toBeVisible();
     await expect(page.locator('#plan-task-workspace')).toHaveCount(0);
-    const hit = page.locator('.source-row[data-source-hit="true"]');
-    await expect(hit).toHaveCount(1);
-    await expect(hit).toContainText('<threat_model>');
-    await expect.poll(() => inViewport(page, hit)).toBe(true);
+    await expectLandedOn(page, '<threat_model>');
     await page.getByRole('button', { name: 'View', exact: true }).click();
     await expect(page.locator('#plan-task-workspace')).toBeVisible();
 
