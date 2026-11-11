@@ -19,6 +19,7 @@ import { fetchSource, sourceKey } from '../source/source-api.ts';
 import type { SourceTarget } from '../source/source-api.ts';
 import { highlightLine, lineContextsOf } from '../source/source-highlight.ts';
 import type { ToneToken } from '../source/source-highlight.ts';
+import { targetLineOf } from '../source/source-lines.ts';
 import { selectionAfter, selectionLabel, selectionLinkOf, selectionOf, writeSelectionHash } from '../source/source-selection.ts';
 import type { Selection, SelectionEvent } from '../source/source-selection.ts';
 import {
@@ -46,13 +47,13 @@ export function sourceLinesOf(text: string): string[] {
 }
 
 /**
- * The 1-based line a target lands on. A heading target with no id lands on line 1; a line target lands on its
- * line clamped to the file; any other heading id lands on line 1 until 12-08 maps headings to lines.
+ * The 1-based line a target lands on. A heading target lands where the rendered heading id (or `plan-at-N`
+ * offset) points, through targetLineOf, and on line 1 when it has no id or the id cannot be mapped; a line
+ * target lands on its line clamped to the file.
  */
-export function resolveTargetLine(text: string, _bodyStart: number, target: SourceTarget): number {
-  const lineCount = Math.max(sourceLinesOf(text).length, 1);
-  if (target.kind === 'line') return Math.min(Math.max(Math.floor(target.line), 1), lineCount);
-  return 1;
+export function landingLineOf(model: SourceModel, text: string, bodyStart: number, target: SourceTarget): number {
+  if (target.kind === 'heading') return targetLineOf(model, text, bodyStart, target.id);
+  return Math.min(Math.max(Math.floor(target.line), 1), Math.max(model.lines.length, 1));
 }
 
 /** How long a landed row flashes (the stylesheet's keyframe runs the same 1.4 s). */
@@ -179,6 +180,7 @@ export function SourceRows({
   hitToken,
   onToggle,
   onNumber,
+  onBlock,
 }: {
   model: SourceModel;
   gutter: Gutter;
@@ -191,6 +193,8 @@ export function SourceRows({
   onToggle: (blockId: number) => void;
   /** A plain click on a line number (shift extends); without it the number is just a link to `#L{n}`. */
   onNumber?: (line: number, shift: boolean) => void;
+  /** A click anywhere on a block's bracket cells (the fold toggle excepted) selects the whole block. */
+  onBlock?: (from: number, to: number) => void;
 }): React.JSX.Element {
   const hidden = useMemo(() => hiddenLinesOf(model, folded), [model, folded]);
   // The blocks that start on each line, shallowest first, so the folded one that shapes a row is found without a search.
@@ -263,6 +267,15 @@ export function SourceRows({
           data-block={block.id}
           data-state={state}
           title={`${blockNameOf(block)} · L${block.from}–L${block.to}`}
+          onClick={
+            onBlock === undefined
+              ? undefined
+              : (event) => {
+                  // The toggle folds; every other part of the bracket selects the block.
+                  if (event.target instanceof Element && event.target.closest('.source-fold-toggle') !== null) return;
+                  onBlock(block.from, block.to);
+                }
+          }
         >
           {foldable ? (
             <button
@@ -591,7 +604,7 @@ function SourceBody({
   // A new target lands once (adjusting state while rendering, keyed on the target's own seq).
   if (target !== null && target.seq !== appliedSeq) {
     setAppliedSeq(target.seq);
-    const line = resolveTargetLine(text, bodyStart, target);
+    const line = landingLineOf(model, text, bodyStart, target);
     let range: LineRange = { from: line, to: line };
     if (target.kind === 'line' && target.select) {
       range = parseLineHash(window.location.hash, Math.max(model.lines.length, 1)) ?? range;
@@ -622,7 +635,15 @@ function SourceBody({
   }
 
   return (
-    <section className="source-reader" role="region" aria-label={`Source of ${name}`}>
+    <section
+      className="source-reader"
+      role="region"
+      aria-label={`Source of ${name}`}
+      onKeyDown={(event) => {
+        // Escape clears the selection and the fragment while focus is anywhere inside the reader.
+        if (event.key === 'Escape' && selection !== null) select({ kind: 'clear' });
+      }}
+    >
       <SourceBar
         model={model}
         folded={folded}
@@ -649,6 +670,7 @@ function SourceBody({
           {...(landing === null ? {} : { hitToken: landing.token })}
           onToggle={toggle}
           onNumber={(line, shift) => select({ kind: 'number', line, shift })}
+          onBlock={(from, to) => select({ kind: 'block', from, to })}
         />
       </div>
     </section>
