@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Link2 } from 'lucide-react';
+import { Check, Copy, Link2 } from 'lucide-react';
 import { Button } from './ui/button.tsx';
 
 /** `navigator.clipboard` only exists in secure contexts; over plain http fall back to execCommand. */
@@ -76,7 +76,16 @@ export function RealPathProvider({
  * there, inert. `path` is always the project-relative artifact path; never the project root. Inside a workstream scope the
  * button copies the file's real path instead (`realPath`, or the one the scope's presentation maps `path` to).
  */
-export function CopyPathButton({ path, realPath }: { path: string; realPath?: string }): React.JSX.Element {
+export function CopyPathButton({
+  path,
+  realPath,
+  label,
+}: {
+  path: string;
+  realPath?: string;
+  /** Phase 12 (D-06): with a label the button shows the word beside the icon ("Copy path", then "Copied" for 1.5 s). */
+  label?: string;
+}): React.JSX.Element {
   const [copied, setCopied] = useState(false);
   const text = copyPathText(path, useContext(RealPathContext), realPath);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -94,6 +103,23 @@ export function CopyPathButton({ path, realPath }: { path: string; realPath?: st
     setCopied(true);
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => setCopied(false), 1500);
+  }
+
+  if (label !== undefined) {
+    return (
+      <Button
+        aria-label={label}
+        data-copied={copied ? 'true' : 'false'}
+        onClick={handleCopy}
+        size="xs"
+        title={text}
+        type="button"
+        variant="ghost"
+      >
+        {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+        <span>{copied ? 'Copied' : label}</span>
+      </Button>
+    );
   }
 
   return (

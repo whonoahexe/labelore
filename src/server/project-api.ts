@@ -44,6 +44,7 @@ import { buildTreeViewModel } from '../presentation/tree.ts';
 import { createArtifactRenderer } from '../rendering/markdown.ts';
 import { applyCommitTimes } from './commit-times.ts';
 import { createFileBytesHandler } from './file-bytes.ts';
+import { createSourceHandler } from './source-text.ts';
 import { jsonRecord } from './project-presentation.ts';
 import type { DerivedViews, ProjectRuntime } from './project-runtime.ts';
 import { searchIndex } from './search-index.ts';
@@ -444,6 +445,14 @@ export function createProjectApi(
   api.all('/files', (c, next) => {
     const runtime = c.get('runtime');
     return createFileBytesHandler(
+      () => runtime.derived,
+      () => runtime.planningFilesystem(),
+    )(c, next);
+  });
+  // Phase 12: the raw-text route behind Source mode; same capture rules as /files above.
+  api.all('/source', (c, next) => {
+    const runtime = c.get('runtime');
+    return createSourceHandler(
       () => runtime.derived,
       () => runtime.planningFilesystem(),
     )(c, next);
