@@ -39145,4 +39145,8 @@ a.view-workstreams-file:hover {
   align-items: center;
   gap: var(--space-1-5);
 }
+
+.source-notice-actions button {
+  border-color: var(--border);
+}
 /* phase-12-source:end */
