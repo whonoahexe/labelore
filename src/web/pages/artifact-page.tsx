@@ -13,7 +13,8 @@ import {
 import { artifactWarningSummary } from '../../presentation/artifact-warning-summary.ts';
 import { hasSourceFlag } from '../../presentation/root-redirects.ts';
 import { fileNameOf } from '../../presentation/file-facts.ts';
-import { hasLineHash } from '../../presentation/source-link.ts';
+import { hasLineHash, parseLineHash } from '../../presentation/source-link.ts';
+import type { SourceTarget } from '../source/source-api.ts';
 import { SourceReader } from '../components/source-reader.tsx';
 import {
   presentationRoutePatterns,
@@ -720,7 +721,7 @@ export function ArtifactPage({
   route: routeOverride,
   switcher: pairSwitcher = null,
 }: { route?: string; switcher?: React.ReactNode } = {}): React.JSX.Element {
-  const { pathname: locationPath, search, hash } = useProjectLocation();
+  const { pathname: locationPath, search, hash, key: locationKey } = useProjectLocation();
   const route = routeOverride ?? locationPath;
   const slug = useProjectSlug() ?? '';
   const scope = useProjectScope();
@@ -1102,34 +1103,36 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.reviewsPage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
-  // "In the source only" entries switch to Source mode, then scroll to the named heading once the
-  // source document has mounted. The pending id lives in a ref and is cleared only when the frame
-  // callback fires, so a re-run of the effect (StrictMode) still lands on it.
-  const pendingSourceId = useRef<string | null>(null);
+  // "In the source only" entries switch to Source mode and hand the raw-text reader a heading target (null lands
+  // on line 1); the reader lands on the row and marks it `data-source-hit` (D-05). `seq` is fresh per request, so
+  // asking twice lands twice.
+  const [sourceTarget, setSourceTarget] = useState<SourceTarget | null>(null);
   const showSource = useCallback((id: string | null) => {
-    pendingSourceId.current = id;
+    setSourceTarget((previous) => ({ kind: 'heading', id, seq: (previous?.seq ?? 0) + 1 }));
     setMode('source');
   }, []);
-  useEffect(() => {
-    if (mode !== 'source' || pendingSourceId.current === null) return;
-    const frame = window.requestAnimationFrame(() => {
-      const id = pendingSourceId.current;
-      pendingSourceId.current = null;
-      if (id === null) return;
-      const reducedMotion =
-        typeof window.matchMedia === 'function' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      // quick-261006-iz6 (T-iz6-08): the target section is marked `data-source-hit` (and any earlier
-      // mark cleared) — only an attribute is set on an existing element, nothing is injected.
-      const target = window.document.getElementById(id);
-      for (const previous of window.document.querySelectorAll('[data-source-hit]')) {
-        previous.removeAttribute('data-source-hit');
+  // A target belongs to one stay in Source: leaving for View drops it, so the next Source opens clean.
+  if (mode === 'view' && sourceTarget !== null) setSourceTarget(null);
+  // Pitfall 2: a same-page link that adds ?source=1 or #L.. to the open document changes the router location
+  // but never remounts this page (history.replaceState elsewhere is invisible to the router), so a new router
+  // location key re-opens Source here. State is adjusted while rendering, keyed on the location key (the
+  // react-hooks rules forbid setState in an effect); the address is only read, never written.
+  const [seenLocationKey, setSeenLocationKey] = useState(locationKey);
+  if (seenLocationKey !== locationKey) {
+    setSeenLocationKey(locationKey);
+    const lineRange = hasLineHash(hash) ? parseLineHash(hash, Number.MAX_SAFE_INTEGER) : null;
+    if (hasSourceFlag(search) || lineRange !== null) {
+      setMode('source');
+      if (lineRange !== null) {
+        setSourceTarget((previous) => ({
+          kind: 'line',
+          line: lineRange.from,
+          select: true,
+          seq: (previous?.seq ?? 0) + 1,
+        }));
       }
-      target?.setAttribute('data-source-hit', 'true');
-      target?.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [mode]);
+    }
+  }
   const onRequireView = useCallback(() => setMode('view'), []);
   const folds = useChapterFolds(layout, { onRequireView });
   const renderHtml = useCallback(
@@ -1653,11 +1656,12 @@ export function ArtifactPage({
         <DocumentViewToggle mode={mode} onChange={setMode} />
       </ArtifactHeader>
 
-      {panels.length > 0 && mode === 'view' ? (
+      {panels.length > 0 ? (
         // The UI-SPEC page's cover and shadcn card already carry the frontmatter facts, and the
-        // Winner lists the frontmatter as source-only — View mode hides the disclosure (Source
-        // mode keeps it). The UAT page's cover carries its facts and its "In the source only"
+        // Winner lists the frontmatter as source-only — View mode hides the disclosure. Source mode
+        // (Phase 12, D-06) draws the file itself, so it hides the disclosure too. The UAT page's cover carries its facts and its "In the source only"
         // strip names the frontmatter, so it hides the disclosure the same way.
+        mode !== 'view' ||
         specCover ||
         uatCover ||
         windowsCover ||
@@ -1753,7 +1757,7 @@ export function ArtifactPage({
           {...(shownFile?.realPath === undefined ? {} : { realPath: shownFile.realPath })}
           fileClass={shownFile?.fileClass ?? null}
           sizeBytes={shownFile?.sizeBytes ?? null}
-          target={null}
+          target={sourceTarget}
           onOpenView={() => setMode('view')}
         />
       ) : layout && mode === 'view' ? (

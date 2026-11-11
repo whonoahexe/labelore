@@ -147,7 +147,10 @@ describe('artifact-page.tsx Source chrome (source-text contract)', () => {
 
   it('draws the Document metadata disclosure and the unrecognised-type notice in View only', () => {
     expect(PAGE).toContain("{!recognized && mode === 'view' ? <UnrecognizedNotice");
-    expect(PAGE).toContain("{panels.length > 0 && mode === 'view' ? (");
+    // The disclosure's own condition list opens with the mode gate (empty-state-contract pins the outer ternary).
+    const disclosure = PAGE.indexOf('{panels.length > 0 ? (');
+    expect(disclosure).toBeGreaterThan(0);
+    expect(PAGE.slice(disclosure, disclosure + 700)).toContain("mode !== 'view' ||");
   });
 
   it('keeps the ArtifactReader JSX in place', () => {
@@ -188,8 +191,8 @@ describe('artifact-page.tsx Source targets (source-text contract)', () => {
     expect(PAGE).toContain('target={sourceTarget}');
   });
 
-  it('re-opens Source from a same-page link through an effect on the router location key, without writing the URL', () => {
-    const effect = PAGE.indexOf('locationKey');
+  it('re-opens Source from a same-page link on a new router location key, without writing the URL', () => {
+    const effect = PAGE.indexOf('seenLocationKey');
     expect(effect).toBeGreaterThan(0);
     const body = PAGE.slice(effect, effect + 1500);
     expect(body).toContain("setMode('source')");
