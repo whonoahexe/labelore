@@ -4,7 +4,7 @@
 // This spec asserts the foundation sweep's key invariants itself (one h1, an eyebrow, squared corners,
 // one chip signature, no 420px overflow), since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { BASE_URL, artifactUrl, exactUrl, projectApiUrl } from './app-url.ts';
 
 interface PresentationLite {
@@ -18,6 +18,13 @@ async function resolveFixturePath(baseURL: string, pathIncludes: string): Promis
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`review-page.spec: no artifact with path including "${pathIncludes}"`);
   return artifact.path;
+}
+
+/** True once the locator's box sits inside the current viewport (polled by the caller). */
+async function inViewport(page: Page, locator: Locator): Promise<boolean> {
+  const box = await locator.boundingBox();
+  const height = page.viewportSize()?.height ?? 0;
+  return box !== null && box.y >= 0 && box.y < height;
 }
 
 async function openPage(page: Page, base: string, path: string, theme: 'light' | 'dark'): Promise<void> {
@@ -82,12 +89,14 @@ test.describe('Review page', () => {
     await page.keyboard.press('Escape');
     await expect(modal).toHaveCount(0);
 
-    // Full summary opens Source at the Summary heading; View returns.
+    // Full summary opens the raw Source reader at the Summary heading's row; View returns.
     await page.getByRole('button', { name: 'Full summary ↗' }).click();
     await expect(page.locator('.view-review-page')).toHaveCount(0);
-    const hit = page.locator('[data-source-hit="true"]');
+    await expect(page.getByRole('region', { name: 'Source of 01-REVIEW.md' })).toBeVisible();
+    const hit = page.locator('.source-row[data-source-hit="true"]');
     await expect(hit).toHaveCount(1);
-    await expect(hit).toContainText('Summary');
+    await expect(hit).toContainText('## Summary');
+    await expect.poll(() => inViewport(page, hit)).toBe(true);
     await page.getByRole('button', { name: 'View', exact: true }).click();
     await expect(page.locator('.view-review-page')).toBeVisible();
 

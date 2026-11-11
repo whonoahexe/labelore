@@ -151,12 +151,13 @@ test.describe('Plan page', () => {
       expect(radii.every((r) => r === '0px'), selector).toBe(true);
     }
 
-    // The strip: Threat model lands in Source mode on a marked section; View restores the navigator.
+    // The strip: Threat model lands in the raw Source reader on its <threat_model> row; View restores the navigator.
     await page.locator('#plan-source-only').getByRole('button', { name: 'Threat model', exact: true }).click();
-    await expect(page.locator('.artifact-document')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Source of 05-01-PLAN.md' })).toBeVisible();
     await expect(page.locator('#plan-task-workspace')).toHaveCount(0);
-    const hit = page.locator('.plan-section[data-source-hit="true"]');
+    const hit = page.locator('.source-row[data-source-hit="true"]');
     await expect(hit).toHaveCount(1);
+    await expect(hit).toContainText('<threat_model>');
     await expect.poll(() => inViewport(page, hit)).toBe(true);
     await page.getByRole('button', { name: 'View', exact: true }).click();
     await expect(page.locator('#plan-task-workspace')).toBeVisible();

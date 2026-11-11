@@ -87,15 +87,16 @@ test.describe('Verification page', () => {
       'TOC tracks position, legible at every width',
     );
 
-    // Also in this report: a chip opens its heading in Source mode; View returns to the rail.
+    // Also in this report: a chip opens its heading's row in the raw Source reader; View returns to the rail.
     await page.locator('#verification-also').getByRole('button', { name: 'Required Artifacts', exact: true }).click();
-    await expect(page.locator('.artifact-document')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Source of 05-VERIFICATION.md' })).toBeVisible();
     await expect(page.locator('.view-verification-rail')).toHaveCount(0);
     await expect(page.locator('.document-cover')).toHaveCount(0);
     await expect(page.locator('main h1')).toHaveCount(1);
-    const hit = page.locator('[data-source-hit]');
+    const hit = page.locator('.source-row[data-source-hit="true"]');
     await expect(hit).toHaveCount(1);
-    await expect(hit).toContainText('Required Artifacts');
+    await expect(hit).toContainText('### Required Artifacts');
+    await expect.poll(() => inViewport(page, hit)).toBe(true);
     await page.getByRole('button', { name: 'View', exact: true }).click();
     await expect(page.locator('.view-verification-rail')).toBeVisible();
 
