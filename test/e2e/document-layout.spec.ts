@@ -79,8 +79,8 @@ async function waitForCover(page: Page): Promise<void> {
  * `fixture.glance`; the first fold toggles; Expand all/Collapse all; the pinned chapter bar's
  * appear/disappear and offset; the last index entry opens the Also chapter and scrolls it into
  * view; the glance action (when present) opens its target; the header toggle to Source removes
- * every fold but keeps the cover, and an index click from Source returns to View with that
- * chapter open; finally, at 420px in both themes with everything expanded, no horizontal overflow.
+ * every fold and the cover, View returns to the designed page, and an index click there opens that
+ * chapter; finally, at 420px in both themes with everything expanded, no horizontal overflow.
  */
 async function runFullBehaviorChecks(
   page: Page,
@@ -217,13 +217,17 @@ async function runFullBehaviorChecks(
     }
   }
 
-  // Header toggle to Source removes folds but keeps .document-cover.
+  // Header toggle to Source opens the raw reader (region "Source of {file}"): the folds and the cover are gone.
   const headerToggle = page.locator('.artifact-heading .document-view-toggle');
   await headerToggle.getByRole('button', { name: 'Source' }).click();
+  const fileName = fixture.pathIncludes.split('/').pop() ?? fixture.pathIncludes;
+  await expect(page.getByRole('region', { name: `Source of ${fileName}` })).toBeVisible();
   expect(await page.locator('.document-fold').count()).toBe(0);
-  await expect(page.locator('.document-cover')).toBeVisible();
+  await expect(page.locator('.document-cover')).toHaveCount(0);
 
-  // An index click returns to View with that chapter open.
+  // View returns to the designed page, and an index click there opens that chapter.
+  await headerToggle.getByRole('button', { name: 'View' }).click();
+  await waitForCover(page);
   await page.locator('.document-chapter-index li button').first().click();
   const firstFoldAfterReturn = page.locator('.document-fold').first();
   await expect(firstFoldAfterReturn).toBeVisible();
@@ -480,10 +484,13 @@ test.describe('rendered figures (quick-261024-o3h)', () => {
     await expect(treeHost.locator('> pre')).toBeHidden();
     await expect(diagramHost.locator('> pre')).toBeHidden();
 
+    // Source is the raw reader: the fences are plain lines, one .source-row each, with no figure frame.
     await page.locator('.artifact-heading .document-view-toggle').getByRole('button', { name: 'Source' }).click();
-    await expect(page.locator('.artifact-document [data-figure] .figure-frame')).toHaveCount(0);
-    const sourceTree = page.locator('.artifact-document [data-figure="tree"] > pre').first();
-    await expect(sourceTree).toBeVisible();
-    await expect(sourceTree).toContainText('├──');
+    const reader = page.getByRole('region', { name: 'Source of ARCHITECTURE.md' });
+    await expect(reader).toBeVisible();
+    await expect(page.locator('[data-figure]')).toHaveCount(0);
+    await expect(page.locator('.figure-frame')).toHaveCount(0);
+    await expect(reader.locator('.source-row', { hasText: '├──' }).first()).toBeVisible();
+    await expect(reader.locator('.source-row', { hasText: '```' }).first()).toBeVisible();
   });
 });
