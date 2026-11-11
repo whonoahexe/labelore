@@ -5,14 +5,16 @@
 //
 // How the walk goes (sketch 063's flatten, tightened): descend into a plain object only when some catalogue key starts with that
 // path plus a dot; otherwise the whole value is one entry. A catalogue key is Set (null counts as set), an absent one is Not set, and
-// every leftover entry is Not recognised by its full path with its value as written. An absent key carries no value at all: the
+// every leftover entry is Not recognised by its full path with its value as written. A key whose own name holds a dot is never
+// matched ('workflow.research' written flat stays Not recognised), and a key under a catalogue pattern (features.<name>) is shown
+// set in the pattern's group. An absent key carries no value at all: the
 // unset row type has no value field, so no default, guess or documented default can reach the page.
 //
 // Pure: no DOM, no filesystem, no clock, no module-level mutable state, and nothing sorted except by the catalogue's own order, so
 // equal inputs give identical output. 12-09 renders it.
 import { SECRET_CONFIG_KEYS } from '../../planning-repo/secret-mask.ts';
 import { SETTINGS_CATALOGUE, SETTINGS_GROUPS, SETTINGS_PATTERNS } from '../../presentation/settings-catalogue.ts';
-import type { CatalogueKey, SettingsGroupId } from '../../presentation/settings-catalogue.ts';
+import type { CatalogueKey, SettingsGroupId, SettingsPattern } from '../../presentation/settings-catalogue.ts';
 
 /** A value in the shape it arrives in. */
 export type SettingsValue =
@@ -76,6 +78,10 @@ interface Entry {
   /** The top-level key the entry sits under, for the masking rule. */
   top: string;
   value: unknown;
+  /** True when the entry is a fixed catalogue key reached through plain nested segments (never a flat dotted name). */
+  catalogued: boolean;
+  /** The pattern the path falls under (`features.<name>`), when it is not a fixed catalogue key. */
+  pattern: SettingsPattern | null;
 }
 
 const CATALOGUE_BY_KEY: ReadonlyMap<string, CatalogueKey> = new Map(SETTINGS_CATALOGUE.map((entry) => [entry.key, entry]));
@@ -99,6 +105,19 @@ function holdsString(value: unknown): boolean {
   return false;
 }
 
+/** The pattern a path falls under: its prefix, then exactly one non-empty segment. */
+function patternOf(path: string): SettingsPattern | null {
+  for (const pattern of SETTINGS_PATTERNS) {
+    if (path.startsWith(pattern.prefix) && path.length > pattern.prefix.length) return pattern;
+  }
+  return null;
+}
+
+/**
+ * Walks the object into entries, in the order the parsed object lists them. A key whose own name contains a dot is never matched
+ * against the catalogue, whether it sits at the top or inside a nested object: it stays a leftover entry under its literal path,
+ * so a flat 'workflow.research' and a nested workflow.research are both shown, never merged. Only own keys are read.
+ */
 function flatten(root: Record<string, unknown>): Entry[] {
   const out: Entry[] = [];
   const walk = (object: Record<string, unknown>, prefix: string, top: string | null): void => {
@@ -107,9 +126,11 @@ function flatten(root: Record<string, unknown>): Entry[] {
       const value = object[name];
       const path = prefix + name;
       const topKey = top ?? name;
-      if (CATALOGUE_BY_KEY.has(path)) out.push({ path, top: topKey, value });
+      if (name.includes('.')) out.push({ path, top: topKey, value, catalogued: false, pattern: null });
+      else if (CATALOGUE_BY_KEY.has(path)) out.push({ path, top: topKey, value, catalogued: true, pattern: null });
+      else if (patternOf(path) !== null) out.push({ path, top: topKey, value, catalogued: false, pattern: patternOf(path) });
       else if (isPlainObject(value) && DESCEND_PATHS.has(path)) walk(value, `${path}.`, topKey);
-      else out.push({ path, top: topKey, value });
+      else out.push({ path, top: topKey, value, catalogued: false, pattern: null });
     }
   };
   walk(root, '', null);
@@ -162,9 +183,11 @@ export function composeSettings(frontmatter: unknown, options: ComposeSettingsOp
 
   const entries = flatten(frontmatter);
   const known = new Map<string, Entry>();
+  const patterned: Entry[] = [];
   const unknown: Entry[] = [];
   for (const entry of entries) {
-    if (CATALOGUE_BY_KEY.has(entry.path)) known.set(entry.path, entry);
+    if (entry.catalogued) known.set(entry.path, entry);
+    else if (entry.pattern !== null) patterned.push(entry);
     else unknown.push(entry);
   }
 
@@ -177,13 +200,21 @@ export function composeSettings(frontmatter: unknown, options: ComposeSettingsOp
       if (entry === undefined) unset.push({ key: catalogueKey.key, label: catalogueKey.label });
       else rows.push(rowOf(entry, catalogueKey.label, catalogueKey.options));
     }
+    // A pattern entry is shown set in its group after the fixed keys, labelled with the key it names. It adds one to the panel's
+    // total and never leaves a not-set row, since the family has no fixed list of members.
+    let patternRows = 0;
+    for (const entry of patterned) {
+      if (entry.pattern === null || entry.pattern.group !== group.id) continue;
+      rows.push(rowOf(entry, `${entry.pattern.label}: ${entry.path.slice(entry.pattern.prefix.length)}`, undefined));
+      patternRows += 1;
+    }
     const nothingSet = rows.length === 0;
     return {
       id: group.id satisfies SettingsGroupId,
       name: group.name,
       kind: 'group',
       setCount: rows.length,
-      total: keys.length,
+      total: keys.length + patternRows,
       rows,
       unset,
       openUnset: nothingSet,
