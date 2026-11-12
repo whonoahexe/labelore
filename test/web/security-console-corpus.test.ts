@@ -106,9 +106,9 @@ const PINNED: Record<string, Pinned> = {
   // 79 is what is counted), the 7 Trust Boundaries rows (none has an arrow, so all 7 are at-rest), the 6 `| AR-` rows,
   // the 2 dated audit rows and the 4 checked Sign-Off lines.
   'LB:phases/12-project-settings-source-mode-and-reading-polish/12-SECURITY.md': {
-    rows: 35, open: 3, openLow: 0, closed: 32, severity: { high: 11, medium: 12, low: 12 },
-    disposition: { mitigate: 32, accept: 3 }, columns: { S: 1, T: 10, R: 3, I: 13, D: 6, E: 2 }, boundaries: 5,
-    destinations: 0, singles: 0, stores: 5, risks: 3, audit: 2, signoff: [2, 4], extras: [], grouped: false, status: 'open',
+    rows: 36, open: 0, openLow: 0, closed: 36, severity: { high: 12, medium: 12, low: 12 },
+    disposition: { mitigate: 33, accept: 3 }, columns: { S: 1, T: 10, R: 3, I: 13, D: 6, E: 3 }, boundaries: 5,
+    destinations: 0, singles: 0, stores: 5, risks: 11, audit: 5, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
   'LB:phases/11-exploration-handoff-report-and-workstream-pages/11-SECURITY.md': {
     rows: 79, open: 0, openLow: 0, closed: 79, severity: { high: 8, medium: 35, low: 36 },
