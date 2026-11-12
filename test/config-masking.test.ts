@@ -161,6 +161,7 @@ describe('config.json masking edge cases (SEC-04)', () => {
     ['a duplicate key behind a string that misaligns the redactor', `{"arr": ["a", ": 'x"], "brave_search": "${SECRET}", "z": "'", "brave_search": true}\n`],
     ['a digit-led unquoted value in a file that does not parse', `{"brave_search": 9${SECRET},}\n`],
     ['a unicode-escaped unquoted key in a file that does not parse', `{\\u0062rave_search: "${SECRET}",}\n`],
+    ['a JSON5 line continuation inside a key in a file that does not parse', `{"brave_\\\nsearch": "${SECRET}",}\n`],
   ])('ships no planted value for %s (T-12-01 audit)', async (_name, text) => {
     const { app, repo } = await appFor({ '.planning/config.json': text });
 

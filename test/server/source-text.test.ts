@@ -305,6 +305,18 @@ describe('GET /api/source?route= masks what the parsing handler masks (T-12-02, 
     expect(body.masked).toBe(true);
   });
 
+  it.each(['0x5F5E0FF', '98_765_432', '01234567', '123456789012345678'])(
+    'serves no withheld number written as %s after a spaced colon',
+    async (written) => {
+      const files = { '.planning/PROJECT.md': PROJECT, '.planning/phases/03-third/03-USER-SETUP.md': `---\nDB_PIN : ${written}\n---\n\n# User Setup\n` };
+      const { app } = await appOver(new InMemoryPlanningFilesystem(files), '/project');
+      const res = await app.request(sourceUrl(await keyOf(app, '.planning/phases/03-third/03-USER-SETUP.md')));
+      const body = (await res.json()) as SourceTextResponse;
+      expect(body.text).not.toContain(written);
+      expect(body.masked).toBe(true);
+    },
+  );
+
   it('serves no withheld number after a spaced colon', async () => {
     const res = await audit.app.request(sourceUrl(await keyOf(audit.app, '.planning/phases/02-second/02-USER-SETUP.md')));
     const body = (await res.json()) as SourceTextResponse;

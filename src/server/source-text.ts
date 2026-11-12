@@ -9,7 +9,7 @@
 // frontmatter lines of a user-setup, seed or thread file run through the same shared mask their handler
 // applies to its own frontmatter.
 //
-// This file deliberately imports no Node module.
+// This file imports no Node module directly (the handler registry it re-matches against uses node:path).
 import type { Handler } from 'hono';
 import type { Artifact, ArtifactLocation } from '../domain/model.ts';
 import { PathEscapeError } from '../planning-fs/types.ts';
@@ -138,7 +138,20 @@ function collapseWhitespace(text: string): string {
  * raw frontmatter does (four characters or longer) still reads in the masked frontmatter text, whitespace-collapsed
  * so a value folded across lines is found too. The line mask then missed a shape and the frontmatter is not served.
  */
+/** How many values of a parsed frontmatter value are the marker, to the depth `maskData` walks. */
+function countMarks(value: unknown, depth: number): number {
+  if (value === VALUE_NOT_SHOWN_MARK) return 1;
+  if (depth >= FRONTMATTER_DEPTH || typeof value !== 'object' || value === null || value instanceof Date) return 0;
+  let count = 0;
+  for (const item of Array.isArray(value) ? value : Object.values(value)) count += countMarks(item, depth + 1);
+  return count;
+}
+
 function withheldValueSurvives(raw: string, maskedFrontmatter: Record<string, unknown>, maskedLines: readonly string[]): boolean {
+  // A value the handler withheld in a spelling the string search below cannot know (a YAML number written as
+  // `0x5F5E0FF`, `98_765_432`, `01234567`, or past 2^53): the handler then holds more markers than the masked lines do.
+  const servedMarks = maskedLines.join('\n').split(VALUE_NOT_SHOWN_MARK).length - 1;
+  if (countMarks(maskedFrontmatter, 0) > servedMarks) return true;
   const rawStrings = new Set<string>();
   collectStrings(tryParseFrontmatter(raw).data, 0, rawStrings);
   const keptStrings = new Set<string>();

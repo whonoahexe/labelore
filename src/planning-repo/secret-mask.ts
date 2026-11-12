@@ -137,7 +137,10 @@ const ACCOUNT_WINDOW = 64;
  * a comment between the key and its colon, or a value that is an object or array. */
 export function hasUnmaskedSecretKey(redacted: string): boolean {
   // `\uXXXX` escapes are decoded first, so an escaped spelling of a key name written unquoted is still found.
-  const text = redacted.replace(/\\u([0-9a-fA-F]{4})/g, (_match: string, hex: string) => String.fromCharCode(parseInt(hex, 16)));
+  // A JSON5 line continuation (a backslash before a line break) is joined first, so a key name split across it is too.
+  const text = redacted
+    .replace(/\\\r?\n|\\\r/g, '')
+    .replace(/\\u([0-9a-fA-F]{4})/g, (_match: string, hex: string) => String.fromCharCode(parseInt(hex, 16)));
   for (const match of text.matchAll(SECRET_KEY_NAME)) {
     const from = match.index + match[0].length;
     const to = from + ACCOUNT_WINDOW;
