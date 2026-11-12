@@ -278,6 +278,41 @@ describe('sourceTextOf', () => {
   });
 });
 
+const AUDIT_PIN = '98765432';
+const auditFiles: Record<string, string> = {
+  '.planning/PROJECT.md': PROJECT,
+  // A quick-named user-setup file under milestones/ but outside a vX.Y-quick folder: the user-setup handler parses
+  // it while its wire kind is `unknown`.
+  '.planning/milestones/260101-abc-USER-SETUP.md': `---\nDB_PASSWORD: ${PLANTED_PASSWORD}\n---\n\n# User Setup\n`,
+  '.planning/milestones/archive/260101-abd/260101-abd-USER-SETUP.md': `---\nDB_PASSWORD: ${PLANTED_PASSWORD}\n---\n\n# User Setup\n`,
+  // CR-only line endings.
+  '.planning/phases/01-first/01-USER-SETUP.md': `---\rDB_PASSWORD: ${PLANTED_PASSWORD}\r---\rbody\r`,
+  // A number after a spaced colon, which the line mask does not read as an assignment.
+  '.planning/phases/02-second/02-USER-SETUP.md': `---\nDB_PIN : ${AUDIT_PIN}\n---\n\n# User Setup\n`,
+};
+const audit = await appOver(new InMemoryPlanningFilesystem(auditFiles), '/project');
+
+describe('GET /api/source?route= masks what the parsing handler masks (T-12-02, T-12-17 audit)', () => {
+  it.each([
+    '.planning/milestones/260101-abc-USER-SETUP.md',
+    '.planning/milestones/archive/260101-abd/260101-abd-USER-SETUP.md',
+    '.planning/phases/01-first/01-USER-SETUP.md',
+  ])('serves no planted password for %s', async (path) => {
+    const res = await audit.app.request(sourceUrl(await keyOf(audit.app, path)));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as SourceTextResponse;
+    expect(body.text).not.toContain(PLANTED_PASSWORD);
+    expect(body.masked).toBe(true);
+  });
+
+  it('serves no withheld number after a spaced colon', async () => {
+    const res = await audit.app.request(sourceUrl(await keyOf(audit.app, '.planning/phases/02-second/02-USER-SETUP.md')));
+    const body = (await res.json()) as SourceTextResponse;
+    expect(body.text).not.toContain(AUDIT_PIN);
+    expect(body.masked).toBe(true);
+  });
+});
+
 describe('bodyStartOf', () => {
   it('finds the body at the tail, else the first match, else 0', () => {
     expect(bodyStartOf('---\na: 1\n---\nbody\n', 'body\n')).toBe(13);

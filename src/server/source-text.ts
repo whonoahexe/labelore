@@ -11,7 +11,7 @@
 //
 // This file deliberately imports no Node module.
 import type { Handler } from 'hono';
-import type { Artifact } from '../domain/model.ts';
+import type { Artifact, ArtifactLocation } from '../domain/model.ts';
 import { PathEscapeError } from '../planning-fs/types.ts';
 import type { PlanningFilesystem } from '../planning-fs/types.ts';
 import { MAX_TEXT_BYTES } from '../planning-repo/file-class.ts';
@@ -23,6 +23,8 @@ import {
   maskFrontmatterLines,
 } from '../planning-repo/handlers/withhold-values.ts';
 import type { MaskOptions } from '../planning-repo/handlers/withhold-values.ts';
+import { HANDLERS } from '../planning-repo/handlers/index.ts';
+import type { ArtifactRef } from '../planning-repo/types.ts';
 import { parseRoutePath } from '../presentation/routes.ts';
 import type { ArtifactIndex } from './artifact-index.ts';
 
@@ -55,6 +57,33 @@ export const FRONTMATTER_MASK_BY_KIND: ReadonlyMap<string, MaskOptions> = new Ma
   ['thread', PROSE_MASK],
 ]);
 
+/**
+ * The kind of the handler that parsed the artifact. Handlers match on the path, location and wire kind only, so the
+ * same choice the registry made is remade here. The wire kind alone can disagree with it: a quick-named
+ * `<id>-USER-SETUP.md` under `milestones/` outside a `vX.Y-quick` folder is parsed (and masked) by the user-setup
+ * handler but carries the wire kind `unknown`, and keyed on that it would be served raw (T-12-02).
+ */
+function parsingHandlerKind(artifact: { kind: string; path: string; location?: ArtifactLocation }): string | null {
+  if (artifact.location === undefined) return null;
+  const ref: ArtifactRef = {
+    path: artifact.path,
+    kind: artifact.kind,
+    location: artifact.location,
+    phaseIdentity: null,
+    milestoneVersion: null,
+    quickTaskId: null,
+    fileClass: 'text',
+    sizeBytes: 0,
+  };
+  return HANDLERS.find((handler) => handler.match(ref))?.kind ?? null;
+}
+
+/** The frontmatter mask for an artifact: the parsing handler's, else its wire kind's. */
+function maskOptionsOf(artifact: { kind: string; path: string; location?: ArtifactLocation }): MaskOptions | undefined {
+  const byHandler = parsingHandlerKind(artifact);
+  return (byHandler === null ? undefined : FRONTMATTER_MASK_BY_KIND.get(byHandler)) ?? FRONTMATTER_MASK_BY_KIND.get(artifact.kind);
+}
+
 const FENCE = '---';
 const BOM = '\uFEFF';
 
@@ -81,10 +110,13 @@ function markEveryLine(text: string): string {
 /** The shortest raw string the residual check looks for (a shorter one would match ordinary text). */
 const RESIDUAL_MIN_LENGTH = 4;
 
-/** Every string of a parsed frontmatter value (keys included), to the depth `maskData` walks. */
+/** Every string and number (as written in decimal) of a parsed frontmatter value (keys included), to the depth
+ * `maskData` walks. Numbers count because the handler withholds them too (`DB_PIN : 98765432`). */
 function collectStrings(value: unknown, depth: number, into: Set<string>): void {
   if (typeof value === 'string') {
     into.add(value);
+  } else if (typeof value === 'number' && Number.isFinite(value)) {
+    into.add(String(value));
   } else if (Array.isArray(value)) {
     if (depth >= FRONTMATTER_DEPTH) return;
     for (const item of value) collectStrings(item, depth + 1, into);
@@ -127,18 +159,23 @@ function withheldValueSurvives(raw: string, maskedFrontmatter: Record<string, un
  * withheld still reads in the result, every frontmatter line is served as its indentation plus the marker.
  */
 export function sourceTextOf(
-  artifact: Pick<Artifact, 'kind' | 'path' | 'body' | 'frontmatter'>,
+  artifact: Pick<Artifact, 'kind' | 'path' | 'body' | 'frontmatter'> & { location?: ArtifactLocation },
   raw: string,
 ): { text: string; masked: boolean } {
   if (lastSegment(artifact.path) === 'config.json') return { text: artifact.body, masked: true };
-  const options = FRONTMATTER_MASK_BY_KIND.get(artifact.kind);
+  const options = maskOptionsOf(artifact);
   if (options === undefined) return { text: raw, masked: false };
   const lines = raw.split('\n');
   // The handler's parser accepts a leading byte-order mark before the fence, so this scan must too.
   const firstLine = lines[0] ?? '';
   if (lines.length === 0 || !isFence(firstLine.startsWith(BOM) ? firstLine.slice(BOM.length) : firstLine)) {
-    if (Object.keys(artifact.frontmatter).length === 0) return { text: raw, masked: false };
-    // Fail closed: the handler read frontmatter that this fence scan did not find, so no line before the body is trusted.
+    // Nothing to mask only when the handler kept the whole file as its body. Otherwise it read (or held back) text
+    // before the body that this fence scan did not find, as with CR-only line endings, so no line before the body is
+    // trusted and every one is served as the marker.
+    const unprefixed = raw.startsWith(BOM) ? raw.slice(BOM.length) : raw;
+    if (Object.keys(artifact.frontmatter).length === 0 && (unprefixed === artifact.body || raw === artifact.body)) {
+      return { text: raw, masked: false };
+    }
     const bodyAt = raw.endsWith(artifact.body) ? raw.length - artifact.body.length : raw.length;
     return { text: markEveryLine(raw.slice(0, bodyAt)) + raw.slice(bodyAt), masked: true };
   }

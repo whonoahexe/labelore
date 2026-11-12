@@ -15,7 +15,7 @@
 import { basename } from 'node:path';
 import type { ArtifactHandler, RawArtifact, ArtifactRef } from '../types.ts';
 import { tryParseJson } from '../frontmatter.ts';
-import { hasCompoundSecretEntry, hasUnmaskedSecretKey, maskConfig, redactSecretText } from '../secret-mask.ts';
+import { hasCompoundSecretEntry, hasUnmaskedSecretKey, maskConfig, maskConfigDeep, redactSecretText } from '../secret-mask.ts';
 import { VALUE_NOT_SHOWN_MARK } from './withhold-values.ts';
 
 const JSON_ARTIFACT_NAMES = new Set(['config.json', 'HANDOFF.json', 'estimation-calibration.json']);
@@ -49,9 +49,16 @@ export const JsonConfigHandler: ArtifactHandler = {
         // two-space indented, with a trailing newline) is the fail-closed fallback for a secret value
         // `redactSecretText` cannot reach in place (one nested in an object or array), and for a text that holds a
         // secret object or array that a later duplicate key shadows (it is in the text but in no parsed data).
+        // The body is compared with, and falls back to, the data masked at every depth (T-12-01): the top-level-only
+        // `masked.data` would put a nested secret key's value back in the body. The fallback is also taken when a secret
+        // key name in the redacted text is not followed by a masked value or a plain literal: the redactor's regex is
+        // not a JSON tokenizer and can lose its alignment inside an earlier string.
+        const deepMasked = maskConfigDeep(result.data);
         const reread = tryParseJson(body);
-        const sameAsMasked = !reread.warning && JSON.stringify(reread.data) === JSON.stringify(masked.data);
-        if (!sameAsMasked || hasCompoundSecretEntry(raw.content)) body = `${JSON.stringify(masked.data, null, 2)}\n`;
+        const sameAsMasked = !reread.warning && JSON.stringify(reread.data) === JSON.stringify(deepMasked);
+        if (!sameAsMasked || hasCompoundSecretEntry(raw.content) || hasUnmaskedSecretKey(body)) {
+          body = `${JSON.stringify(deepMasked, null, 2)}\n`;
+        }
       }
     }
     return {

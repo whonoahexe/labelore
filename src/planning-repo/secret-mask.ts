@@ -54,6 +54,19 @@ export function maskConfig(data: unknown): { data: unknown; masked: boolean } {
   return { data: out, masked };
 }
 
+/** Masks the secret keys at every depth of a parsed config.json, inside arrays included. The settings data keeps the
+ * top-level-only rule (D-09, maskConfig); this form is for the body Source and search read, which must hold no secret
+ * value wherever it sits (T-12-01). */
+export function maskConfigDeep(data: unknown): unknown {
+  if (Array.isArray(data)) return data.map(maskConfigDeep);
+  if (!isPlainObject(data)) return data;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    out[key] = SECRET_CONFIG_KEYS.has(key) ? maskValue(value) : maskConfigDeep(value);
+  }
+  return out;
+}
+
 // A quoted key, a colon, then a quoted string, in either quote style (hand-edited, broken files are
 // where JSON5-style single quotes turn up). The key is matched as any quoted string and decoded
 // before it is compared with the secret key names, so an escaped spelling such as "brave_search"
@@ -110,8 +123,12 @@ export function redactSecretText(raw: string): string {
 
 const SECRET_KEY_NAME = new RegExp(String.raw`\b(?:${[...SECRET_CONFIG_KEYS].join('|')})\b`, 'gi');
 // What may follow a secret key name once `redactSecretText` has run: the closing quote, a colon, then a masked
-// string ("****..." or "(unset)") or a plain literal (a boolean, null or a number is a setting, not a secret).
-const ACCOUNTED_FOR = /^["']?\s*:\s*(?:["'](?:\*{4}|\(unset\))|true\b|false\b|null\b|-?\d)/;
+// string ("****..." or "(unset)") or a plain literal (a boolean, null or a number is a setting, not a secret). A literal
+// counts only when a delimiter (or the end of the text) follows it, so `9sk-...` is not read as a number.
+const ACCOUNTED_FOR =
+  /^["']?\s*:\s*(?:["'](?:\*{4}|\(unset\))|(?:true|false|null|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*(?:[,}\]]|$))/;
+/** Stands in for the rest of the text when the window stops short of its end, so `$` above means the true end only. */
+const CUT = '\u0000';
 /** How far past a key name the accounted-for form is looked for; a longer gap is treated as not accounted for. */
 const ACCOUNT_WINDOW = 64;
 
@@ -119,9 +136,13 @@ const ACCOUNT_WINDOW = 64;
  * written in a way that left its value unmasked and not a plain literal, as in an unquoted key (`brave_search: "..."`),
  * a comment between the key and its colon, or a value that is an object or array. */
 export function hasUnmaskedSecretKey(redacted: string): boolean {
-  for (const match of redacted.matchAll(SECRET_KEY_NAME)) {
+  // `\uXXXX` escapes are decoded first, so an escaped spelling of a key name written unquoted is still found.
+  const text = redacted.replace(/\\u([0-9a-fA-F]{4})/g, (_match: string, hex: string) => String.fromCharCode(parseInt(hex, 16)));
+  for (const match of text.matchAll(SECRET_KEY_NAME)) {
     const from = match.index + match[0].length;
-    if (!ACCOUNTED_FOR.test(redacted.slice(from, from + ACCOUNT_WINDOW))) return true;
+    const to = from + ACCOUNT_WINDOW;
+    const window = text.slice(from, to) + (to < text.length ? CUT : '');
+    if (!ACCOUNTED_FOR.test(window)) return true;
   }
   return false;
 }

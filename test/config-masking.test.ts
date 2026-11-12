@@ -157,6 +157,34 @@ describe('config.json masking edge cases (SEC-04)', () => {
     }
   });
 
+  it.each([
+    ['a duplicate key behind a string that misaligns the redactor', `{"arr": ["a", ": 'x"], "brave_search": "${SECRET}", "z": "'", "brave_search": true}\n`],
+    ['a digit-led unquoted value in a file that does not parse', `{"brave_search": 9${SECRET},}\n`],
+    ['a unicode-escaped unquoted key in a file that does not parse', `{\\u0062rave_search: "${SECRET}",}\n`],
+  ])('ships no planted value for %s (T-12-01 audit)', async (_name, text) => {
+    const { app, repo } = await appFor({ '.planning/config.json': text });
+
+    expect(repo.getSnapshot().project?.artifacts['.planning/config.json'].body).not.toContain(FRAGMENT);
+    const key = await keyFor(app, '.planning/config.json');
+    expect(await pagePayload(app, key)).not.toContain(FRAGMENT);
+    expect(await textOf(app, `/api/source?route=${encodeURIComponent(key)}`)).not.toContain(FRAGMENT);
+    expect(await search(app, FRAGMENT)).not.toContain(FRAGMENT);
+  });
+
+  it.each([
+    ['nested below the top level', `{\n  "tools": {\n    "brave_search": "${SECRET}"\n  }\n}\n`],
+    ['inside a top-level array', `[{"brave_search": "${SECRET}"}]\n`],
+  ])('keeps a secret key %s out of the body, Source and search (T-12-01 audit)', async (_name, text) => {
+    const { app, repo } = await appFor({ '.planning/config.json': text });
+
+    const body = repo.getSnapshot().project?.artifacts['.planning/config.json'].body ?? '';
+    expect(body).not.toContain(FRAGMENT);
+    expect(body).toContain(MASKED);
+    const key = await keyFor(app, '.planning/config.json');
+    expect(await textOf(app, `/api/source?route=${encodeURIComponent(key)}`)).not.toContain(FRAGMENT);
+    expect(await search(app, FRAGMENT)).not.toContain(FRAGMENT);
+  });
+
   it('returns HANDOFF.json exactly as before (D-09 scopes masking to config.json) and keeps the GSD-internal estimation-calibration.json out of the index (D-11)', async () => {
     const handoff = `{"brave_search": "${SECRET}", "note": "handoff"}\n`;
     const calibration = `{"firecrawl": "${SECRET}"}\n`;

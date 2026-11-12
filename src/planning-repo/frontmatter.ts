@@ -10,6 +10,17 @@ export interface FrontmatterResult {
   warning?: Omit<ParseWarning, 'path'>;
 }
 
+// T-12-35: gray-matter picks a parser from the text after the opening fence, and its built-in `javascript` engine
+// (reached by `---js`, `---JS`, `---javascript`, ...: every spelling is lower-cased onto that one key) runs the
+// frontmatter through `eval`. A target `.planning/` file must never run code in this process, so that engine is
+// replaced by one that refuses; the refusal is caught below and the file reads as malformed frontmatter.
+const REFUSE_CODE_ENGINE = {
+  parse: (): never => {
+    throw new Error('executable frontmatter is not read');
+  },
+};
+const MATTER_OPTIONS = { engines: { javascript: REFUSE_CODE_ENGINE, js: REFUSE_CODE_ENGINE } };
+
 export const tryParseFrontmatter = (content: string): FrontmatterResult => {
   try {
     // gray-matter caches its internal `file` object by raw content string BEFORE attempting the
@@ -23,10 +34,10 @@ export const tryParseFrontmatter = (content: string): FrontmatterResult => {
     // object WITHOUT re-throwing, silently dropping the warning. This directly violates this
     // project's own refresh-seam guarantee (DATA-04: refresh() must be safe to call repeatedly and
     // produce byte-identical output for an unchanged tree) and D-11/D-12's "every parse is
-    // wrapped, every failure produces a warning" contract. Passing a (behaviorally identical, per
-    // gray-matter's own defaults()) empty options object bypasses the cache path entirely — see
+    // wrapped, every failure produces a warning" contract. Passing any options object (here
+    // MATTER_OPTIONS, which also refuses the code engine) bypasses the cache path entirely — see
     // node_modules/gray-matter/index.js's `if (!options)` guard — so every call re-parses fresh.
-    const parsed = matter(content, {});
+    const parsed = matter(content, MATTER_OPTIONS);
     return { data: parsed.data as Record<string, unknown>, body: parsed.content };
   } catch {
     // D-11: stage = 'frontmatter', salvage = 'body intact, frontmatter unavailable'
