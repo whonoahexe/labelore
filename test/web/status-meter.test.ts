@@ -144,6 +144,40 @@ describe('the status-meter CSS block', () => {
   });
 });
 
+describe('the shared status-square CSS block (quick-261114-3gq)', () => {
+  async function load(): Promise<{ css: string; block: string }> {
+    const css = await readFile(new URL('../../src/web/styles/globals.css', import.meta.url), 'utf8');
+    const start = css.indexOf('/* status-square:start */');
+    const end = css.indexOf('/* status-square:end */');
+    return { css, block: css.slice(start, end) };
+  }
+
+  const stripped = (text: string): string => text.replace(/\/\*[\s\S]*?\*\//g, '');
+
+  it('has one start and one end marker, the end after the start', async () => {
+    const { css } = await load();
+    expect(css.split('/* status-square:start */').length - 1).toBe(1);
+    expect(css.split('/* status-square:end */').length - 1).toBe(1);
+    expect(css.indexOf('/* status-square:end */')).toBeGreaterThan(css.indexOf('/* status-square:start */'));
+  });
+
+  it('holds the base rule and exactly the four tones: complete, in-flight, missing and quiet', async () => {
+    const block = stripped((await load()).block);
+    expect(block).toContain('.status-square {');
+    const tones = [...block.matchAll(/\.status-square\[data-tone='([a-z-]+)'\]/g)].map((m) => m[1]);
+    expect([...new Set(tones)].sort()).toEqual(['complete', 'in-flight', 'missing', 'quiet']);
+  });
+
+  it('is the only place a .status-square selector lives', async () => {
+    const { css, block } = await load();
+    expect(stripped(css.replace(block, ''))).not.toMatch(/\.status-square/);
+  });
+
+  it('has no transition, animation or keyframes', async () => {
+    expect(stripped((await load()).block)).not.toMatch(/transition|animation|@keyframes/);
+  });
+});
+
 describe('statusMeterCells', () => {
   it('is one cell per item up to the cap', () => {
     expect(statusMeterCells(6, 16)).toEqual({ cells: 16, filledCells: 6 });
