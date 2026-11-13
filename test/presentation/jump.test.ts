@@ -14,8 +14,11 @@ import {
 } from '../../src/presentation/jump.ts';
 import type { JumpResult, JumpRow } from '../../src/presentation/jump.ts';
 import { decisionAnchor, findingAnchor, isJumpAnchor, requirementAnchor } from '../../src/presentation/jump-anchors.ts';
+import { extractSnippets, foldCase } from '../../src/presentation/search.ts';
+import { rootDocumentRedirect } from '../../src/presentation/root-redirects.ts';
 import { createApp } from '../../src/server/index.ts';
-import type { JumpApiResponse } from '../../src/server/search-index.ts';
+import { createSearchIndexState, isReady, searchIndex } from '../../src/server/search-index.ts';
+import type { JumpApiResponse, SearchHit } from '../../src/server/search-index.ts';
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { composeContextBrief } from '../../src/web/views/context-brief.ts';
 import { composeReviewThreads } from '../../src/web/views/review-threads.ts';
@@ -298,5 +301,88 @@ describe('GET /api/jump', () => {
       const body = (await response.json()) as JumpApiResponse;
       expect(body.status).toBe('ready');
     }
+  });
+});
+
+describe('buildJumpGroups: content matches', () => {
+  let state: ReturnType<ReturnType<typeof createSearchIndexState>['state']>;
+  const bodyOf = (path: string): string | null => (isReady(state) ? (state.documents.get(path)?.body ?? null) : null);
+
+  beforeAll(async () => {
+    const built = createSearchIndexState();
+    built.buildFrom(snapshot);
+    await new Promise((resolve) => setImmediate(resolve));
+    await new Promise((resolve) => setImmediate(resolve));
+    state = built.state();
+    expect(state.status).toBe('ready');
+  });
+
+  function withHits(query: string, from = '/'): { result: JumpResult; hits: SearchHit[] } {
+    const hits = searchIndex(state, query);
+    const result = buildJumpGroups({ query, presentation, documents: [], contentHits: hits, bodyOf, from });
+    return { result, hits };
+  }
+
+  it('ends with a Content group of at most 5 rows and counts every hit, and is the only group with no Exact match', () => {
+    const { result, hits } = withHits('session');
+    expect(hits.length).toBeGreaterThan(JUMP_GROUP_CAPS.content);
+    expect(result.groups.map((group) => group.key)).toEqual(['content']);
+    expect(result.groups[0]!.rows).toHaveLength(JUMP_GROUP_CAPS.content);
+    expect(result.contentTotal).toBe(hits.length);
+    expect(result.notFoundId).toBeNull();
+  });
+
+  it('puts the Exact group first and the Content group last', () => {
+    const { result } = withHits('D-01');
+    const keys = result.groups.map((group) => group.key);
+    expect(keys[0]).toBe('exact');
+    expect(keys[keys.length - 1]).toBe('content');
+  });
+
+  it('builds each content row from its hit: title, path, address, kind, phase and the first snippet', () => {
+    const { result, hits } = withHits('session');
+    const rows = result.groups.find((group) => group.key === 'content')!.rows;
+    rows.forEach((row, index) => {
+      const hit = hits[index]!;
+      const artifact = presentation.artifacts.find((candidate) => candidate.path === hit.path);
+      expect(row.kind).toBe('content');
+      expect(row.title).toBe(hit.title);
+      expect(row.subtitle).toBe(hit.path);
+      expect(row.url).toBe(rootDocumentRedirect(artifact) ?? hit.url);
+      expect(row.artifactKind).toBe(hit.kind);
+      expect(row.phaseKey).toBe(hit.phaseKey);
+      expect(row.anchor).toBeNull();
+      expect(row.id).toBeNull();
+      const expected = extractSnippets(bodyOf(hit.path) ?? '', hit.matchedTerms).snippets[0] ?? null;
+      expect(row.snippet).toEqual(expected);
+    });
+    expect(rows.some((row) => row.snippet !== null)).toBe(true);
+  });
+
+  it('gives a null snippet when the body is unavailable, and carries no markup in any field', () => {
+    const hits = searchIndex(state, 'session');
+    const result = buildJumpGroups({
+      query: 'session',
+      presentation,
+      documents: [],
+      contentHits: hits,
+      bodyOf: () => null,
+      from: '/',
+    });
+    expect(result.groups[0]!.rows.every((row) => row.snippet === null)).toBe(true);
+    for (const row of withHits('session').result.groups[0]!.rows) {
+      expect(JSON.stringify([row.title, row.subtitle, row.url, row.chips])).not.toMatch(/<mark|<\/|<script/i);
+      for (const range of row.snippet?.highlights ?? []) {
+        expect(range.start).toBeLessThan(range.end);
+        expect(range.end).toBeLessThanOrEqual(row.snippet!.text.length);
+      }
+    }
+  });
+});
+
+describe('foldCase', () => {
+  it('is exported and folds case without changing length', () => {
+    expect(foldCase('Session İDX')).toHaveLength('Session İDX'.length);
+    expect(foldCase('SESSION')).toBe('session');
   });
 });

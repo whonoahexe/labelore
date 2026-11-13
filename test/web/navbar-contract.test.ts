@@ -505,6 +505,15 @@ describe('search dialog (NAV-04)', () => {
     expect(field).toContain('autoHighlight');
   });
 
+  it('renders a See all results row for the query only when there are content matches, and marks snippets as text and mark nodes', async () => {
+    const field = await source('src/web/components/search-field.tsx');
+    expect(field).toContain('See all results for');
+    expect(field).toContain('contentTotal > 0');
+    expect(field).toContain('presentationRoutePatterns.search}?q=${encodeURIComponent(trimmed)}');
+    expect(field).toContain('<mark>');
+    expect(field).not.toContain('dangerouslySetInnerHTML');
+  });
+
   it('builds the search-page navigation from presentationRoutePatterns.search, never a literal path', async () => {
     const field = await source('src/web/components/search-field.tsx');
     expect(field).toContain('presentationRoutePatterns.search');
