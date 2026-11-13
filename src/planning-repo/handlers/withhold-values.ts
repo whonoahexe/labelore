@@ -555,7 +555,7 @@ export const FRONTMATTER_DEPTH = 8;
 /** True when a frontmatter key is itself a variable name whose value must not be shown (`API_KEY: sk_live_x` parses to
  * the key `API_KEY` and the value `sk_live_x`, two strings no text scan sees together, T-11-70): any upper-snake name in
  * the default mode, a secret name (`isSecretName`) in prose mode. */
-function keyHoldsValue(key: string, options: MaskOptions): boolean {
+export function keyHoldsValue(key: string, options: MaskOptions): boolean {
   const token = tokenAt(key, 0);
   if (token === null || token.end !== key.length) return false;
   return options.prose !== true || isSecretName(token.name);
@@ -620,8 +620,9 @@ function isListItem(line: string, indent: number): boolean {
 }
 
 /** The key of a `key:` line (an optional indentation, any number of `- ` list dashes, a bare or quoted key, a colon
- * followed by a blank or the end of the line), and the column the key starts at; null for any other line. */
-function keyLineOf(line: string): { key: string; column: number } | null {
+ * followed by a blank or the end of the line), the column the key starts at, and the index where the value after the
+ * colon starts (past blanks; the line length when none follows); null for any other line. */
+function keyLineOf(line: string): { key: string; column: number; valueAt: number } | null {
   let at = leadingBlanks(line);
   while (line.charCodeAt(at) === 45 && at + 1 < line.length && isBlank(line.charCodeAt(at + 1))) {
     at += 1;
@@ -646,14 +647,17 @@ function keyLineOf(line: string): { key: string; column: number } | null {
   if (line.charCodeAt(after) !== 58) return null;
   const next = after + 1;
   if (next < line.length && !isBlank(line.charCodeAt(next))) return null;
-  return { key, column };
+  let valueAt = next;
+  while (valueAt < line.length && isBlank(line.charCodeAt(valueAt))) valueAt += 1;
+  return { key, column, valueAt };
 }
 
 /**
  * Raw frontmatter lines (the text between the fences, as written) through the shared mask (12-06, T-10-33, T-11-70).
  * Every line passes through `maskValues`; a line that is `key:` for a key `maskData` also treats as holding a value
  * (`keyHoldsValue`) additionally masks every following line that is more indented than the key, whatever follows the
- * colon: the value on the next line, a `|` or `>` block scalar, or the continuation of a plain scalar. Each such line
+ * colon: the value on the next line, a `|` or `>` block scalar, or the continuation of a plain scalar. A flow list or
+ * map written after such a key (`KEYS: [a, b]`) is masked to the end of the line as one value. Each such line
  * becomes its own indentation plus VALUE_NOT_SHOWN_MARK; a blank line stays blank. The result has as many lines as the
  * input. One pass, linear, no regular expression.
  */
@@ -674,9 +678,17 @@ export function maskFrontmatterLines(lines: readonly string[], options: MaskOpti
       }
       holdColumn = -1;
     }
-    out.push(maskValues(line, options));
     const keyLine = keyLineOf(line);
-    if (keyLine !== null && keyHoldsValue(keyLine.key, options)) holdColumn = keyLine.column;
+    const holds = keyLine !== null && keyHoldsValue(keyLine.key, options);
+    const opener = keyLine === null ? 0 : line.charCodeAt(keyLine.valueAt);
+    if (keyLine !== null && holds && (opener === 91 || opener === 123) && !isPlaceholder(line.slice(keyLine.valueAt))) {
+      // A flow list or map under a value-holding key (`KEYS: [a, b]`, WR-01): the whole collection is the value. The clause
+      // scan in `maskValues` would stop at the first comma and leave the rest of the items showing.
+      out.push(line.slice(0, keyLine.valueAt) + VALUE_NOT_SHOWN_MARK);
+    } else {
+      out.push(maskValues(line, options));
+    }
+    if (keyLine !== null && holds) holdColumn = keyLine.column;
   }
   return out;
 }

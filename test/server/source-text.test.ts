@@ -325,6 +325,43 @@ describe('GET /api/source?route= masks what the parsing handler masks (T-12-02, 
   });
 });
 
+// WR-01: a flow list or map under a value-holding key is one line and one marker in the served text, however many items the
+// handler withheld, so it is no reason to withhold the whole frontmatter.
+describe('GET /api/source?route= with a flow list or map under a value-holding key (WR-01)', () => {
+  it.each([
+    ['a list of long values', 'STRIPE_KEYS: [a1234567, b1234567]', ['a1234567', 'b1234567']],
+    ['a list of short values', 'STRIPE_KEYS: [a, b]', []],
+    ['a list of numbers', 'DB_PINS: [98765432, 87654321]', ['98765432', '87654321']],
+    ['a map', 'STRIPE_KEYS: {live: a1234567, test: b1234567}', ['a1234567', 'b1234567']],
+    ['a nested list', 'STRIPE_KEYS: [[a1234567, b1234567], [c1234567]]', ['a1234567', 'b1234567', 'c1234567']],
+  ])('masks %s as one value and keeps the other lines', async (_label, line, planted) => {
+    const files = {
+      '.planning/PROJECT.md': PROJECT,
+      '.planning/phases/03-third/03-USER-SETUP.md': `---\n${line}\nservice: Mail\n---\n\n# User Setup\n`,
+    };
+    const { app } = await appOver(new InMemoryPlanningFilesystem(files), '/project');
+    const res = await app.request(sourceUrl(await keyOf(app, '.planning/phases/03-third/03-USER-SETUP.md')));
+    const body = (await res.json()) as SourceTextResponse;
+    for (const value of planted) expect(body.text).not.toContain(value);
+    expect(body.text).toContain('service: Mail');
+    expect(body.text).toContain(`${line.slice(0, line.indexOf(':') + 2)}${VALUE_NOT_SHOWN_MARK}`);
+    expect(body.masked).toBe(true);
+  });
+
+  it('still withholds the whole frontmatter when a number after a spaced colon is missed beside a masked list', async () => {
+    const files = {
+      '.planning/PROJECT.md': PROJECT,
+      '.planning/phases/03-third/03-USER-SETUP.md': `---\nSTRIPE_KEYS: [a1234567, b1234567]\nDB_PIN : 0x5F5E0FF\nservice: Mail\n---\n\n# User Setup\n`,
+    };
+    const { app } = await appOver(new InMemoryPlanningFilesystem(files), '/project');
+    const res = await app.request(sourceUrl(await keyOf(app, '.planning/phases/03-third/03-USER-SETUP.md')));
+    const body = (await res.json()) as SourceTextResponse;
+    expect(body.text).not.toContain('0x5F5E0FF');
+    expect(body.text).not.toContain('a1234567');
+    expect(body.masked).toBe(true);
+  });
+});
+
 describe('bodyStartOf', () => {
   it('finds the body at the tail, else the first match, else 0', () => {
     expect(bodyStartOf('---\na: 1\n---\nbody\n', 'body\n')).toBe(13);

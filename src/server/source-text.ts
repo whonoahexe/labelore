@@ -20,6 +20,7 @@ import {
   FRONTMATTER_DEPTH,
   PROSE_MASK,
   VALUE_NOT_SHOWN_MARK,
+  keyHoldsValue,
   maskFrontmatterLines,
 } from '../planning-repo/handlers/withhold-values.ts';
 import type { MaskOptions } from '../planning-repo/handlers/withhold-values.ts';
@@ -134,24 +135,49 @@ function collapseWhitespace(text: string): string {
 }
 
 /**
+ * The least number of marker lines the line mask must serve for the markers a parsed frontmatter value holds (WR-01). A
+ * list or map under a value-holding key that is withheld whole counts once, not once per item: written in flow style
+ * (`KEYS: [a, b]`) it is one line, and the line mask serves one marker for it, however many items the handler withheld.
+ * Everything else counts one per marker. The count is a floor, so a flow collection never reads as a leak.
+ */
+function countMarks(value: unknown, depth: number, options: MaskOptions): number {
+  if (value === VALUE_NOT_SHOWN_MARK) return 1;
+  if (depth >= FRONTMATTER_DEPTH || typeof value !== 'object' || value === null || value instanceof Date) return 0;
+  let count = 0;
+  if (Array.isArray(value)) {
+    for (const item of value) count += countMarks(item, depth + 1, options);
+    return count;
+  }
+  for (const [key, item] of Object.entries(value)) {
+    const whole = keyHoldsValue(key, options) && typeof item === 'object' && item !== null && onlyMarks(item, depth + 1);
+    count += whole ? 1 : countMarks(item, depth + 1, options);
+  }
+  return count;
+}
+
+/** True when a parsed list or map holds at least one marker and nothing else, nested lists and maps included. */
+function onlyMarks(value: unknown, depth: number): boolean {
+  if (value === VALUE_NOT_SHOWN_MARK) return true;
+  if (depth >= FRONTMATTER_DEPTH || typeof value !== 'object' || value === null || value instanceof Date) return false;
+  const items = Array.isArray(value) ? value : Object.values(value);
+  return items.length > 0 && items.every((item) => onlyMarks(item, depth + 1));
+}
+
+/**
  * Fail-closed residual check (T-12-17): true when a string the handler's masked frontmatter no longer holds but the
  * raw frontmatter does (four characters or longer) still reads in the masked frontmatter text, whitespace-collapsed
  * so a value folded across lines is found too. The line mask then missed a shape and the frontmatter is not served.
  */
-/** How many values of a parsed frontmatter value are the marker, to the depth `maskData` walks. */
-function countMarks(value: unknown, depth: number): number {
-  if (value === VALUE_NOT_SHOWN_MARK) return 1;
-  if (depth >= FRONTMATTER_DEPTH || typeof value !== 'object' || value === null || value instanceof Date) return 0;
-  let count = 0;
-  for (const item of Array.isArray(value) ? value : Object.values(value)) count += countMarks(item, depth + 1);
-  return count;
-}
-
-function withheldValueSurvives(raw: string, maskedFrontmatter: Record<string, unknown>, maskedLines: readonly string[]): boolean {
+function withheldValueSurvives(
+  raw: string,
+  maskedFrontmatter: Record<string, unknown>,
+  maskedLines: readonly string[],
+  options: MaskOptions,
+): boolean {
   // A value the handler withheld in a spelling the string search below cannot know (a YAML number written as
   // `0x5F5E0FF`, `98_765_432`, `01234567`, or past 2^53): the handler then holds more markers than the masked lines do.
   const servedMarks = maskedLines.join('\n').split(VALUE_NOT_SHOWN_MARK).length - 1;
-  if (countMarks(maskedFrontmatter, 0) > servedMarks) return true;
+  if (countMarks(maskedFrontmatter, 0, options) > servedMarks) return true;
   const rawStrings = new Set<string>();
   collectStrings(tryParseFrontmatter(raw).data, 0, rawStrings);
   const keptStrings = new Set<string>();
@@ -197,7 +223,7 @@ export function sourceTextOf(
   const original = lines.slice(1, end);
   const contents = original.map((line) => (line.endsWith('\r') ? line.slice(0, -1) : line));
   let masked = maskFrontmatterLines(contents, options);
-  if (withheldValueSurvives(raw, artifact.frontmatter, masked)) {
+  if (withheldValueSurvives(raw, artifact.frontmatter, masked, options)) {
     masked = contents.map((line) => line.slice(0, line.length - line.trimStart().length) + VALUE_NOT_SHOWN_MARK);
   }
   let changed = false;
