@@ -18,8 +18,8 @@
 // always stopped, however the run ends.
 //
 // --jump (repeatable) drives the quick-jump palette on every --address, after its normal shots: at 1280x800 in
-// the light theme it opens the address, presses Control+K, types the text, waits up to 5 s for an option row
-// (or the indexing status), saves {name}-{address-slug}-jump-{text-slug}.png, presses Enter and waits up to 5 s
+// the light theme it opens the address, presses Control+K, types the text, waits up to 5 s for the typed answer to settle
+// (the live region's result count, or the Indexing… status row), saves {name}-{address-slug}-jump-{text-slug}.png, presses Enter and waits up to 5 s
 // for the address to change. It then prints one line:
 //   JUMP {address} "{text}" -> {where it went}{search}{hash} target=found|missing|none landed=yes|no brand="{name}"
 // where it went is the pathname with the project's slug segment removed (the full pathname when it left the
@@ -235,10 +235,21 @@ async function jumpFrom(
     const input = page.locator('.search-dialog-input');
     await input.waitFor({ timeout: 5000 });
     await input.fill(text);
+    // The empty palette already offers option rows (Key pages), so an option row alone does not say the typed
+    // answer has landed. The polite live region does: it holds the result count once the answer has settled.
+    // While the index is still building the Indexing… status row stands in for it.
     await page
-      .locator('[role="option"], .search-dialog-status')
-      .first()
-      .waitFor({ timeout: 5000 })
+      .waitForFunction(
+        () => {
+          const live = document.querySelector('.search-dialog .sr-only[aria-live="polite"]');
+          return (
+            (live?.textContent ?? '').trim() !== '' ||
+            (document.querySelector('.search-dialog .palette-status')?.textContent ?? '').includes('Indexing')
+          );
+        },
+        undefined,
+        { timeout: 5000 },
+      )
       .catch(() => undefined);
     // Let the highlight settle on the first row before Enter reads it.
     await page.waitForTimeout(200);

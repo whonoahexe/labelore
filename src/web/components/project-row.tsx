@@ -31,6 +31,22 @@ function failureText(error: unknown): string {
   return error instanceof ApiError ? error.message : UNREACHABLE_COPY;
 }
 
+/** The path icon every project row shares (the landing page, the switcher, the quick-jump palette): a server
+ * for an ssh target, a folder otherwise. Decorative. */
+export function ProjectPathIcon({
+  kind,
+  className,
+}: {
+  kind: ProjectListEntry['kind'];
+  className?: string;
+}): React.JSX.Element {
+  return kind === 'ssh' ? (
+    <Server aria-hidden="true" className={className} />
+  ) : (
+    <Folder aria-hidden="true" className={className} />
+  );
+}
+
 /** `landing` adds the last-opened time, which needs the page's clock; `switcher` is the compact row. */
 export type ProjectRowVariant = { variant: 'switcher'; now?: undefined } | { variant: 'landing'; now: number };
 
@@ -132,7 +148,6 @@ export function ProjectRowConfirm({
 }
 
 export function ProjectRow({ entry, current = false, variant, now, onForgotten }: ProjectRowProps): React.JSX.Element {
-  const PathIcon = entry.kind === 'ssh' ? Server : Folder;
   const [confirming, setConfirming] = useState(false);
   const forgetRef = useRef<HTMLButtonElement | null>(null);
   const returnFocus = useRef(false);
@@ -192,7 +207,7 @@ export function ProjectRow({ entry, current = false, variant, now, onForgotten }
         </>
       ) : null}
       <span className="project-row-path" title={entry.target}>
-        <PathIcon aria-hidden="true" />
+        <ProjectPathIcon kind={entry.kind} />
         <span>{entry.displayPath}</span>
       </span>
       {variant === 'landing' ? (

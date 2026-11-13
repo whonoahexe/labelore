@@ -78,7 +78,7 @@ describe('PaletteRowBody (UI-SPEC row anatomy)', () => {
         title: 'Notes',
         anchor: null,
         artifactKind: 'context',
-        snippet: { text: 'retry the session cleanly', highlights: [{ start: 0, end: 5 }, { start: 10, end: 17 }] },
+        snippet: { text: 'retry the session cleanly', highlights: [{ start: 0, end: 5 }, { start: 10, end: 17 }], bodyOffset: 0, anchor: null },
       }),
     );
     expect(html).toContain('lucide-text-search');
@@ -92,7 +92,7 @@ describe('PaletteRowBody (UI-SPEC row anatomy)', () => {
       jump({
         title: hostile,
         subtitle: hostile,
-        snippet: { text: hostile, highlights: [] },
+        snippet: { text: hostile, highlights: [], bodyOffset: 0, anchor: null },
       }),
     );
     expect(html).not.toContain('<img');
@@ -116,8 +116,8 @@ describe('PaletteRowBody (UI-SPEC row anatomy)', () => {
 
   it('puts the full path in the path span\'s title attribute and highlights inside it as marks', () => {
     const path = '.planning/phases/05-session-hardening/05-CONTEXT.md';
-    const html = render(jump({ kind: 'file', id: null, anchor: null, artifactKind: 'context', subtitle: path, subtitleHighlights: [{ start: 17, end: 24 }] }));
-    expect(html).toContain(`<span class="palette-row-path" title="${path}">`);
+    const html = render(jump({ kind: 'file', id: null, anchor: null, artifactKind: 'context', subtitle: path, subtitleHighlights: [{ start: 20, end: 27 }] }));
+    expect(html).toContain(`<span class="palette-row-path" title="${path}"><bdi>`);
     expect(html).toContain('<mark>session</mark>');
   });
 
@@ -135,7 +135,7 @@ describe('PaletteRowBody for a project row', () => {
     const html = render({ type: 'project', key: 'p', entry: project(), current: false });
     expect(html).toContain('lucide-folder');
     expect(html).toContain('<span class="palette-row-title" title="Kilnrow">Kilnrow</span>');
-    expect(html).toContain('<span class="palette-row-path" title="~/work/kilnrow">~/work/kilnrow</span>');
+    expect(html).toContain('<span class="palette-row-path" title="~/work/kilnrow"><bdi>~/work/kilnrow</bdi></span>');
     expect(html).not.toContain('Current');
     expect(html).not.toContain('destructive');
   });
@@ -190,7 +190,11 @@ describe('search-field.tsx (the palette host)', () => {
     expect(field).toContain("status === 'building'");
     expect(field).toContain('refreshing === true');
     expect(field).toContain('refetchInterval');
-    expect(field).toContain('keepPreviousData');
+    // The app never uses TanStack Query's previous-data option (query-keys.test.ts); the palette keeps its
+    // last answer itself, tagged with the project that produced it.
+    expect(field).not.toContain('keepPreviousData');
+    expect(field).toContain('lastAnswer');
+    expect(field).toContain('lastAnswer?.owner === owner');
   });
 
   it('says Updating index… and Index updated', () => {
@@ -242,7 +246,8 @@ describe('palette CSS', () => {
   });
 
   it('scrolls the list inside the shipped results height', () => {
-    const [block] = blocks('.search-dialog-results');
+    // The scrollbar rule also lists this class inside :is(...); the sizing rule is the one with a max-height.
+    const block = blocks('.search-dialog-results').find((candidate) => candidate.includes('max-height'));
     expect(block).toBeDefined();
     expect(block).toMatch(/max-height:\s*min\(/);
     expect(block).toContain('overflow-y: auto;');
