@@ -256,6 +256,10 @@ element is actually written, regardless of class name:
   tested as non-interactive — no `<button>`, no jump target.
   (Phase 10, 10-08) The Codebase page's "Not mapped" panel entry (`.view-codebase-entry[data-ghost="true"]`) carries it
   too: a dashed, quiet entry for a map document the folder lacks, with no link and no button.
+- **Landing flash.** (Phase 13, 13-02) `data-landed="true"` marks the item a palette jump lands on, for 1.4 s:
+  the page scrolls it to the centre, focuses it and the stylesheet flashes it once from `--primary-flash`
+  (accent use 6 of the Phase 13 UI-SPEC). No new class and no new tone; the attribute is set by
+  `src/web/landing.ts`, never authored.
 - **Light + dark parity.** Every new rule is checked against both `:root` and `.dark` — both
   palettes are fully declared in `globals.css`.
 - **`EMPTY_STATE_MESSAGE` reused verbatim.** The shared string `'Nothing here yet.'` is the only

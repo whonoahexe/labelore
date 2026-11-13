@@ -39112,6 +39112,17 @@ a.view-workstreams-file:hover {
   }
 }
 
+/* Landing on the item a palette jump opened (13-02, D-05): the landing helper marks it data-landed for 1.4 s. */
+[data-landed='true'] {
+  animation: jump-landing-flash 1.4s ease-out;
+}
+
+@keyframes jump-landing-flash {
+  from {
+    background: var(--primary-flash);
+  }
+}
+
 /* Under 42rem: icon-only copy buttons, 4ch numbers, and the bar stacks (the presets wrap above the actions). */
 @container source (max-width: 42rem) {
   .source-copy-label {
