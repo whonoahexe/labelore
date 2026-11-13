@@ -402,6 +402,56 @@ describe('(f) a disposed runtime', () => {
     expect(runtime.derived.searchIndexState.state().status).toBe('building');
   });
 
+  it('keeps its earlier ready index answering as refreshing through a refresh, then lands its own (D-11)', async () => {
+    const source = await lendshedSource();
+    const runtime = new ProjectRuntime(source, 'project');
+    await flushImmediates();
+    const before = runtime.derived.searchIndexState.state();
+    expect(before.status).toBe('ready');
+    if (before.status !== 'ready') throw new Error('first index never landed');
+    expect((await runtime.refresh()).kind).toBe('refreshed');
+    const during = runtime.derived.searchIndexState.state();
+    expect(during.status).toBe('ready');
+    if (during.status !== 'ready') throw new Error('refresh dropped the index');
+    expect(during.refreshing).toBe(true);
+    expect(during.builtAt).toBe(before.builtAt);
+    expect(during.presentation).toBe(before.presentation);
+    await flushImmediates();
+    await flushImmediates();
+    const after = runtime.derived.searchIndexState.state();
+    expect(after.status).toBe('ready');
+    if (after.status !== 'ready') throw new Error('new index never landed');
+    expect(after.refreshing).toBe(false);
+    expect(after.presentation).not.toBe(before.presentation);
+    runtime.dispose();
+  });
+
+  it('two refreshes in a row before any build lands keep serving the original ready state', async () => {
+    const source = await lendshedSource();
+    const runtime = new ProjectRuntime(source, 'project');
+    await flushImmediates();
+    const original = runtime.derived.searchIndexState.state();
+    if (original.status !== 'ready') throw new Error('first index never landed');
+    await runtime.refresh();
+    await runtime.refresh();
+    const during = runtime.derived.searchIndexState.state();
+    expect(during.status).toBe('ready');
+    if (during.status !== 'ready') throw new Error('second refresh dropped the index');
+    expect(during.refreshing).toBe(true);
+    expect(during.builtAt).toBe(original.builtAt);
+    expect(during.presentation).toBe(original.presentation);
+    expect(runtime.derived.searchIndexState.lastReady()).toBe(original);
+    runtime.dispose();
+  });
+
+  it('a runtime with no earlier index still answers building during its first build', async () => {
+    const source = await lendshedSource();
+    const runtime = new ProjectRuntime(source, 'project');
+    expect(runtime.derived.searchIndexState.state().status).toBe('building');
+    expect(runtime.derived.searchIndexState.lastReady()).toBeNull();
+    runtime.dispose();
+  });
+
   it('control: a runtime that is not disposed finishes its build', async () => {
     const source = await lendshedSource();
     const runtime = new ProjectRuntime(source, 'project');

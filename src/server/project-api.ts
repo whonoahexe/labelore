@@ -362,7 +362,7 @@ export function createProjectApi(
     // Answers HTTP 200 in every readiness state — never a 5xx, never a hang, and this handler
     // never blocks /dashboard or any other route while the index is still building (FIND-05).
     if (state.status !== 'ready') {
-      return c.json({ status: state.status, query, total: 0, fileCount: 0, results: [], groups: [] });
+      return c.json({ status: state.status, refreshing: false, builtAt: null, query, total: 0, fileCount: 0, results: [], groups: [] });
     }
     const results = searchIndex(state, query);
     const groups = buildSearchGroups(results, activeDerived.presentation);
@@ -379,6 +379,8 @@ export function createProjectApi(
     const fileCount = new Set(results.map((hit) => hit.path)).size;
     return c.json({
       status: 'ready' as const,
+      refreshing: state.refreshing,
+      builtAt: state.builtAt,
       query,
       total: results.length,
       fileCount,
@@ -398,6 +400,8 @@ export function createProjectApi(
     if (state.status !== 'ready') {
       const pending: JumpApiResponse = {
         status: state.status,
+        refreshing: false,
+        builtAt: null,
         query,
         groups: [],
         contentTotal: 0,
@@ -418,7 +422,13 @@ export function createProjectApi(
       bodyOf: (path) => state.documents.get(path)?.body ?? null,
       from,
     });
-    const ready: JumpApiResponse = { status: 'ready', query, ...result };
+    const ready: JumpApiResponse = {
+      status: 'ready',
+      refreshing: state.refreshing,
+      builtAt: state.builtAt,
+      query,
+      ...result,
+    };
     return c.json(ready);
   });
   api.get('/documents', async (c) => {

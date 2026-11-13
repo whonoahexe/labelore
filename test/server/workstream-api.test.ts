@@ -276,6 +276,33 @@ describe('the workstream scope mount (11-29)', () => {
     }
   });
 
+  it("serves a rebuilt workstream scope's previous index as refreshing until its own build lands (D-11)", async () => {
+    const { registry } = await registryApp([BRINKWATER]);
+    try {
+      const parent = await registry.runtime('brinkwater');
+      const first = await parent!.workstreamRuntime('intake');
+      await new Promise((done) => setImmediate(done));
+      const before = first!.derived.searchIndexState.state();
+      expect(before.status).toBe('ready');
+      if (before.status !== 'ready') throw new Error('the intake index never landed');
+      expect((await parent!.refresh()).kind).toBe('refreshed');
+      const second = await parent!.workstreamRuntime('intake');
+      expect(second).not.toBe(first);
+      const during = second!.derived.searchIndexState.state();
+      expect(during.status).toBe('ready');
+      if (during.status !== 'ready') throw new Error('the rebuilt scope dropped its index');
+      expect(during.refreshing).toBe(true);
+      expect(during.builtAt).toBe(before.builtAt);
+      await new Promise((done) => setImmediate(done));
+      await new Promise((done) => setImmediate(done));
+      const after = second!.derived.searchIndexState.state();
+      expect(after.status).toBe('ready');
+      expect(after.status === 'ready' && after.refreshing).toBe(false);
+    } finally {
+      registry.dispose();
+    }
+  });
+
   it('keeps a parent unevictable while one of its workstream runtimes answers a request', async () => {
     const { registry } = await registryApp([BRINKWATER]);
     try {

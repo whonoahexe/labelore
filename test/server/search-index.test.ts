@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Artifact, Phase, PhaseIdentity, Project } from '../../src/domain/model.ts';
 import type { ProjectSnapshot } from '../../src/planning-repo/types.ts';
+import { buildRouteTable } from '../../src/presentation/route-table.ts';
 import { createApp } from '../../src/server/index.ts';
 import {
   buildSearchDocuments,
@@ -326,5 +327,125 @@ describe('createApp — /api/search readiness integration (Task 3)', () => {
     expect(dashboard.status).toBe(200);
     const searchBody = (await search.json()) as { status: string };
     expect(searchBody.status).toBe('building');
+  });
+});
+
+describe('createSearchIndexState - a refresh keeps the previous index answering (D-11, FIND-09)', () => {
+  async function readyState() {
+    const plan = makeArtifact({ path: '.planning/phases/01-x/01-01-PLAN.md', kind: 'plan', title: 'First plan', body: 'carry-marker' });
+    const search = createSearchIndexState();
+    search.buildFrom(makeSnapshot(makeProject([], [makePhase([plan])])));
+    await waitForBuild();
+    const ready = search.lastReady();
+    if (!ready) throw new Error('first build did not land');
+    return { ready, plan };
+  }
+
+  it('serves the previous state as ready and refreshing until its own build lands', async () => {
+    const { ready } = await readyState();
+    expect(ready.refreshing).toBe(false);
+    const next = createSearchIndexState(ready);
+    const carried = next.state();
+    expect(carried.status).toBe('ready');
+    if (carried.status !== 'ready') return;
+    expect(carried.refreshing).toBe(true);
+    expect(carried.builtAt).toBe(ready.builtAt);
+    expect(carried.presentation).toBe(ready.presentation);
+    expect(next.lastReady()).toBe(ready);
+    expect(ready.refreshing).toBe(false);
+
+    next.buildFrom(makeSnapshot(makeProject([], [])));
+    expect(next.state()).toBe(carried);
+    await waitForBuild();
+    const landed = next.state();
+    expect(landed.status).toBe('ready');
+    if (landed.status !== 'ready') return;
+    expect(landed.refreshing).toBe(false);
+    expect(landed.presentation).not.toBe(ready.presentation);
+    expect(next.lastReady()).toBe(landed);
+  });
+
+  it('starts at building with nothing to carry, and cancel keeps it building', () => {
+    const fresh = createSearchIndexState();
+    expect(fresh.state().status).toBe('building');
+    expect(fresh.lastReady()).toBeNull();
+    fresh.buildFrom(makeSnapshot(makeProject([], [])));
+    fresh.cancel();
+    expect(fresh.state().status).toBe('building');
+  });
+
+  it('a cancelled carried build keeps serving the previous index, flagged refreshing', async () => {
+    const { ready } = await readyState();
+    const next = createSearchIndexState(ready);
+    next.buildFrom(makeSnapshot(makeProject([], [])));
+    next.cancel();
+    await waitForBuild();
+    const state = next.state();
+    expect(state.status).toBe('ready');
+    expect(state.status === 'ready' && state.refreshing).toBe(true);
+  });
+
+  it('a build that throws replaces the served state with error but keeps lastReady for a later refresh', async () => {
+    const { ready } = await readyState();
+    const next = createSearchIndexState(ready);
+    const broken = {
+      ...makeSnapshot(makeProject([], [])),
+      get project(): Project {
+        throw new Error('walk failed');
+      },
+    } as unknown as ProjectSnapshot;
+    // An explicit route table keeps the throw inside the scheduled build, where the project is first read.
+    next.buildFrom(broken, buildRouteTable(null));
+    await waitForBuild();
+    expect(next.state()).toEqual({ status: 'error', message: 'walk failed' });
+    expect(next.lastReady()).toBe(ready);
+  });
+
+  it('a second refresh before the first build lands carries the original, never a copy of a copy', async () => {
+    const { ready } = await readyState();
+    const first = createSearchIndexState(ready);
+    first.buildFrom(makeSnapshot(makeProject([], [])));
+    const second = createSearchIndexState(first.lastReady());
+    const state = second.state();
+    expect(state.status).toBe('ready');
+    if (state.status !== 'ready') return;
+    expect(state.builtAt).toBe(ready.builtAt);
+    expect(state.refreshing).toBe(true);
+    expect(second.lastReady()).toBe(ready);
+    expect(ready.refreshing).toBe(false);
+  });
+
+  it('searches the carried index, with its own documents', async () => {
+    const { ready, plan } = await readyState();
+    const next = createSearchIndexState(ready);
+    expect(searchIndex(next.state(), 'carry-marker').map((hit) => hit.path)).toEqual([plan.path]);
+  });
+});
+
+describe('createApp - refreshing and builtAt on /api/search and /api/jump (D-11)', () => {
+  function appOver(project: Project | null) {
+    const snapshot = makeSnapshot(project);
+    return createApp({ getSnapshot: () => snapshot });
+  }
+
+  it('answers refreshing false and builtAt null while building, on both endpoints', async () => {
+    const app = appOver(makeProject([], []));
+    for (const path of ['/api/search?q=x', '/api/jump?q=x']) {
+      const body = (await (await app.request(path)).json()) as { status: string; refreshing: boolean; builtAt: string | null };
+      expect(body.status, path).toBe('building');
+      expect(body.refreshing, path).toBe(false);
+      expect(body.builtAt, path).toBeNull();
+    }
+  });
+
+  it('answers refreshing false and a builtAt once ready, on both endpoints', async () => {
+    const app = appOver(makeProject([], []));
+    await waitForBuild();
+    for (const path of ['/api/search?q=x', '/api/jump?q=x']) {
+      const body = (await (await app.request(path)).json()) as { status: string; refreshing: boolean; builtAt: string | null };
+      expect(body.status, path).toBe('ready');
+      expect(body.refreshing, path).toBe(false);
+      expect(typeof body.builtAt, path).toBe('string');
+    }
   });
 });
