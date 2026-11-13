@@ -18,7 +18,6 @@ import { composeLearningsRetro } from './learnings-retro.ts';
 import { composeDebugCase } from './debug-case.ts';
 import { composeTodoLifecycle } from './todo-lifecycle.ts';
 import { composeNotePage } from './note-page.ts';
-import { composeProjectPage } from './project-page.ts';
 import { composeWindowsLedger } from './windows-ledger.ts';
 import { composeMilestoneAudit } from './milestone-audit.ts';
 import { composeCoverage } from './coverage-matrix.ts';
@@ -400,18 +399,13 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     // nothing (quick-261023-61l).
     notePage: composeNotePage,
   },
+  // PROJECT.md has no designed view (quick-261114-3gq). The empty promote list composes nothing, so the page
+  // opens in Source with no View / Source toggle, the way a file with no designed view does. The kind stays
+  // registered, so the header shows no Unrecognized type chip.
   project: {
     kind: 'project',
     lead: 'What the project is, what it values, and the decisions that shaped it.',
-    // The sections the charter page draws from, the fallback when the page composes nothing.
-    promote: [
-      { type: 'section', heading: /^what this is\b/i },
-      { type: 'section', heading: /^core value\b/i },
-      { type: 'section', heading: /^key decisions\b/i },
-    ],
-    // The charter page is the View-mode render path; `promote` above is the fallback when it composes
-    // nothing (Phase 9, 09-07, sketch-041 B).
-    projectPage: composeProjectPage,
+    promote: [],
   },
   windows: {
     kind: 'windows',

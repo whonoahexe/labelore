@@ -69,9 +69,7 @@ import { DebugCaseView } from '../views/debug-case-components.tsx';
 import type { ComposedTodoLifecycle } from '../views/todo-lifecycle.ts';
 import { TodoLifecycleView } from '../views/todo-lifecycle-components.tsx';
 import type { ComposedNotePage } from '../views/note-page.ts';
-import type { ComposedProjectPage } from '../views/project-page.ts';
 import { NotePageView } from '../views/note-page-components.tsx';
-import { ProjectPageView } from '../views/project-page-components.tsx';
 import type { ComposedWindowsLedger } from '../views/windows-ledger.ts';
 import { WindowsLedgerView, windowsHeaderProps } from '../views/windows-ledger-components.tsx';
 import type { ComposedMilestoneAudit } from '../views/milestone-audit.ts';
@@ -133,7 +131,6 @@ import type { ComposedReviewLedger } from '../views/review-ledger.ts';
 import { LedgerTabView, ledgerHeaderProps, ledgerSwitcher } from '../views/review-ledger-components.tsx';
 import type { TodoContext } from '../../presentation/todo-context.ts';
 import type { NoteContext } from '../../presentation/note-context.ts';
-import type { ProjectContext } from '../../presentation/project-context.ts';
 import type { CodebaseContext } from '../../presentation/codebase-map.ts';
 import type { PauseContextPayload } from '../views/manifest.ts';
 import type { SpikesContext } from '../../presentation/spikes-context.ts';
@@ -271,8 +268,6 @@ export interface ArtifactDocumentResponse {
   todoContext?: TodoContext | null;
   /** quick-261023-61l: the todos a note became or is related to (null for every other document). */
   noteContext?: NoteContext | null;
-  /** Phase 9 (09-07): the project page's name, lead, core value and requirement counts (null for every other document). */
-  projectContext?: ProjectContext | null;
   /** Phase 10 (10-08): a map document's seven-panel list, readiness and stamp (null for every other document). */
   codebaseContext?: CodebaseContext | null;
   /** Phase 11 (11-10): a pause file's pairing, date, stop, gates and disagreements (null for every other document). */
@@ -812,7 +807,6 @@ export function ArtifactPage({
       manualChecks: query.data.manualChecks ?? null,
       todoContext: query.data.todoContext ?? null,
       noteContext: query.data.noteContext ?? null,
-      projectContext: query.data.projectContext ?? null,
       codebaseContext: query.data.codebaseContext ?? null,
       pauseContext: query.data.pauseContext ?? null,
       spikesContext: query.data.spikesContext ?? null,
@@ -967,13 +961,6 @@ export function ArtifactPage({
   const notePage = useMemo<ComposedNotePage | null>(() => {
     if (!manifest || !viewInput) return null;
     return manifest.notePage?.(viewInput) ?? null;
-  }, [manifest, viewInput]);
-  // Phase 9 (09-07, sketch 041 B): the PROJECT.md charter page, when the resolved manifest opts into one -
-  // `null` for every other kind, for a file with no recognised section and for a payload from a server
-  // that predates `projectContext` (the promoted-block view then renders).
-  const projectPage = useMemo<ComposedProjectPage | null>(() => {
-    if (!manifest || !viewInput) return null;
-    return manifest.projectPage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
   // Phase 9 (09-10): the WINDOWS.md broken-windows ledger, when the resolved manifest opts into one - `null`
   // for every other kind, for a file with neither rows nor stated counts and for a payload from a server
@@ -1184,7 +1171,6 @@ export function ArtifactPage({
     debugCase !== null ||
     todoLifecycle !== null ||
     notePage !== null ||
-    projectPage !== null ||
     windowsLedger !== null ||
     milestoneAudit !== null ||
     coverage !== null ||
@@ -1352,25 +1338,6 @@ export function ArtifactPage({
           mode={mode}
           onModeChange={setMode}
           onShowSource={showSource}
-          chip={<WarningChip tone={warningTone} />}
-        />
-      </main>
-    );
-  }
-  // Phase 9 (09-07): the PROJECT page opens on its own masthead (eyebrow, the project name, what it is, the
-  // core value card and the requirement counts) with no breadcrumb row, manifest lead or Document metadata
-  // disclosure in View mode - the toggle and copy path sit in the masthead, and a parse warning shows as its
-  // chip there. Source mode falls through to the unchanged page below.
-  if (projectPage && mode === 'view') {
-    return (
-      <main className="artifact-page page-stack">
-        {switcher}
-        <ProjectPageView
-          key={artifact.path}
-          model={projectPage}
-          path={artifact.path}
-          mode={mode}
-          onModeChange={setMode}
           chip={<WarningChip tone={warningTone} />}
         />
       </main>

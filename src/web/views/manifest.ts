@@ -50,10 +50,6 @@ import type { LedgerContext } from '../../presentation/review-ledger.ts';
 import type { TodoContext } from '../../presentation/todo-context.ts';
 // Type-only import — the note context is built server-side (quick-261023-61l).
 import type { NoteContext } from '../../presentation/note-context.ts';
-// Type-only import — same reason as `brief` above (Phase 9, 09-07, sketch-041 winner B).
-import type { ComposedProjectPage } from './project-page.ts';
-// Type-only import — the project context is built server-side (Phase 9, 09-07).
-import type { ProjectContext } from '../../presentation/project-context.ts';
 // Type-only import — same reason as `brief` above (Phase 9, 09-10, the windows ledger).
 import type { ComposedWindowsLedger } from './windows-ledger.ts';
 // Type-only import — same reason as `brief` above (Phase 9, 09-14, the milestone audit).
@@ -172,11 +168,6 @@ export interface ViewManifest {
    * with no text), and the page falls back to the promoted-block view, which the manifest keeps as
    * `promote`. */
   notePage?: (input: ViewInput) => ComposedNotePage | null;
-  /** Phase 9 (09-07, sketch-041 B): the PROJECT.md charter page a manifest opts into in View mode -
-   * currently only `project`. Returns `null` when the input can't compose one (no `projectContext`, or a
-   * file with no recognised section), and the page falls back to the promoted-block view, which the
-   * manifest keeps as `promote`. */
-  projectPage?: (input: ViewInput) => ComposedProjectPage | null;
   /** Phase 9 (09-10): the WINDOWS.md broken-windows ledger a manifest opts into in View mode - currently
    * only `windows`. Returns `null` when the input can't compose one (no `structured.windows`, or a file
    * with neither rows nor stated counts), and the page falls back to the generic document view, which the
@@ -382,10 +373,6 @@ export interface ViewInput {
    * the notes batched into the same todo), built server-side and passed through from the document
    * response - `null`/absent when the artifact is not a note. */
   noteContext?: NoteContext | null;
-  /** Phase 9 (09-07): the root PROJECT.md's name, lead, core value and requirement-state counts, built
-   * server-side and passed through from the document response - `null`/absent when the artifact is not
-   * the root PROJECT.md. */
-  projectContext?: ProjectContext | null;
   /** Phase 10 (10-08): a codebase map document's seven-panel list, readiness, stamp and active panel, built
    * server-side and passed through from the document response - `null`/absent when the artifact is not a map
    * document. */

@@ -4,11 +4,13 @@
 // and check kinds, and Phase 11's `pause`, `spikes`, `indexes` and `seed`) must have a registered `VIEW_MANIFESTS` entry with a non-empty `lead` and at least one
 // `promote` entry — and no manifest may exist for a kind that isn't a `VIEW_KINDS` member. Both
 // directions are asserted via a single sorted-keys `toEqual`, so a new kind added to either list
-// without a matching update on the other fails this suite immediately.
+// without a matching update on the other fails this suite immediately. `project` is the one registered kind with an
+// empty promote list (quick-261114-3gq), so PROJECT.md opens in Source.
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { VIEW_KINDS, viewKindOf, viewOwnsLargeFile } from '../../src/web/views/kinds.ts';
 import { VIEW_MANIFESTS, documentHtmlAllowedInView, resolveView, resolveViewFor } from '../../src/web/views/manifests.ts';
+import { composeView } from '../../src/web/views/manifest.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import type { BlockComponentKey } from '../../src/web/views/manifest.ts';
 
@@ -48,9 +50,15 @@ describe('view registry completeness (VIEW-05)', () => {
         expect(manifest?.lead.trim().endsWith('.')).toBe(true);
       });
 
-      it('has at least one promote entry', () => {
-        expect(manifest?.promote.length).toBeGreaterThanOrEqual(1);
-      });
+      if (kind === 'project') {
+        it('composes nothing: an empty promote list (quick-261114-3gq)', () => {
+          expect(manifest?.promote).toEqual([]);
+        });
+      } else {
+        it('has at least one promote entry', () => {
+          expect(manifest?.promote.length).toBeGreaterThanOrEqual(1);
+        });
+      }
 
       it('every section entry has a string or RegExp heading', () => {
         for (const entry of manifest?.promote ?? []) {
@@ -285,6 +293,36 @@ describe('view registry completeness (VIEW-05)', () => {
         (kind) => viewOwnsLargeFile(kind),
       );
       expect([...new Set(owners)].sort()).toEqual(['graph', 'intel']);
+    });
+  });
+
+  describe('quick-261114-3gq: PROJECT.md opens in Source', () => {
+    const input: ViewInput = {
+      kind: 'project',
+      frontmatter: {},
+      structured: {},
+      groups: [
+        { id: 'what-this-is', heading: 'What This Is', html: '<p>A dashboard.</p>' },
+        { id: 'core-value', heading: 'Core Value', html: '<p>Know where the work stands.</p>' },
+        { id: 'key-decisions', heading: 'Key Decisions', html: '<p>A table.</p>' },
+        { id: 'constraints', heading: 'Constraints', html: '<p>Read-only.</p>' },
+      ],
+      planSegments: [],
+    };
+
+    it('the project manifest has exactly the keys kind, lead and promote (no page hook)', () => {
+      expect(Object.keys(VIEW_MANIFESTS.project ?? {}).sort()).toEqual(['kind', 'lead', 'promote']);
+    });
+
+    it('resolveViewFor gives project its own manifest, recognised', () => {
+      const resolved = resolveViewFor('project', input);
+      expect(resolved.recognized).toBe(true);
+      expect(resolved.manifest).toBe(VIEW_MANIFESTS.project);
+    });
+
+    it('the project manifest composes zero blocks', () => {
+      const resolved = resolveViewFor('project', input);
+      expect(composeView(resolved.manifest, input).blocks).toEqual([]);
     });
   });
 });
