@@ -26154,7 +26154,6 @@ button.research-step-chip:hover {
   border: 1px solid var(--border);
   background: var(--popover);
   color: var(--foreground);
-  box-shadow: var(--shadow-popover);
 }
 
 .project-switcher-popup > header {
