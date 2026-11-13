@@ -628,7 +628,7 @@ export function composeSettingsReference(
     return {
       key: hit.path,
       id: `u-${hit.path}`,
-      label: null,
+      label: labelOf(hit.path),
       tier: 'unknown',
       type: '',
       defaultText: '',

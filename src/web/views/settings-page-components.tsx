@@ -94,7 +94,7 @@ export function useSettingsModel(
 ): SettingsPageModel {
   const wantsText = subject !== null && subject.state !== 'missing';
   const reference = useQuery({
-    queryKey: projectKey(slug, null, 'gsd-config-reference'),
+    queryKey: projectKey(slug, scope, 'gsd-config-reference'),
     queryFn: () => fetchGsdConfigReference(slug),
     staleTime: Number.POSITIVE_INFINITY,
     enabled: subject !== null,
@@ -418,14 +418,12 @@ function AcceptedFold({
   hasConfig,
   open,
   onToggle,
-  onOpenSourceAt,
 }: {
   filtered: FilteredSection;
   query: string;
   hasConfig: boolean;
   open: boolean;
   onToggle: (open: boolean) => void;
-  onOpenSourceAt: (line: number | null) => void;
 }): React.JSX.Element | null {
   if (filtered.accepted.length === 0) return null;
   const count = filtered.accepted.length;
@@ -453,7 +451,7 @@ function AcceptedFold({
             </span>
             <span className="view-settings-also-default">default {entry.defaultText === '' ? '—' : <Marked text={entry.defaultText} query={query} />}</span>
             <span className="view-settings-also-value">
-              {hasConfig ? <EntryValue entry={entry} onOpenSourceAt={onOpenSourceAt} lineLabel="L" /> : null}
+              {hasConfig ? <Value value={entry.value} set={entry.set} /> : null}
             </span>
           </li>
         ))}
@@ -667,7 +665,6 @@ function ReferenceBody({
               hasConfig={hasConfig}
               open={folds.has(entry.section.id)}
               onToggle={(open) => setFold(entry.section.id, open)}
-              onOpenSourceAt={onOpenSourceAt}
             />
           </section>
         ))}

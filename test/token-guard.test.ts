@@ -584,6 +584,12 @@ export const ALLOWLIST: AllowlistEntry[] = [
     reason: 'em-relative inline-code chip in a UI-review finding — scales with its host line, the same idiom as .view-research-audit :not(td) > code',
   },
   {
+    selector: '.view-settings-main :is(.view-settings-sec, .view-settings-lede, .notice) code',
+    property: 'font-size',
+    value: '0.92em',
+    reason: 'em-relative inline-code chip in GSD\'s own text on the settings page (sketch 065) — scales with its host line, the same idiom as .artifact-document :not(pre) > code',
+  },
+  {
     selector: '.view-plan-nav-checks li::before',
     property: 'margin-top',
     value: '0.42rem',
