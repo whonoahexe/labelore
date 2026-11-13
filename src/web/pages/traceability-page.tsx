@@ -4,6 +4,7 @@ import { ChevronRight, History } from 'lucide-react';
 import { Link, useProjectLocation, useProjectScope, useProjectSlug } from '../nav.tsx';
 import { apiFetch, projectUrl } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
+import { requirementAnchor } from '../../presentation/jump-anchors.ts';
 import { EmptyState } from '../components/empty-state.tsx';
 import { LeadText } from '../components/lead-tokens.tsx';
 import {
@@ -153,17 +154,27 @@ function TraceabilityRowList({
   rows,
   labelledBy,
   variant = 'default',
+  landing = false,
 }: {
   rows: TraceabilityRow[];
   labelledBy: string;
   variant?: 'default' | 'deferred';
+  /** True for the active tier only: each row then carries `requirement-{id}` and tabIndex -1, the element a
+   * palette jump lands on (13-04, D-05). The deferred tiers and the previous milestones repeat requirement ids,
+   * so they never carry it - an id must be unique on the page. */
+  landing?: boolean;
 }): React.JSX.Element {
   return (
     <ul className="trace-rows" aria-labelledby={labelledBy}>
       {rows.map((row) => {
         const rollup = row.uncovered ? null : coveringRollup(row.coveringPhases);
         return (
-          <li key={row.id} className="trace-row">
+          <li
+            key={row.id}
+            className="trace-row"
+            id={landing ? requirementAnchor(row.id) : undefined}
+            tabIndex={landing ? -1 : undefined}
+          >
             <div className="trace-row-rail">
               <span className="sr-only">Covering phase</span>
               {variant === 'deferred' && row.uncovered ? (
@@ -588,7 +599,7 @@ export function TraceabilityPage({ archiveVersion }: { archiveVersion?: string }
                   {group.coverage.completePhase}/{group.coverage.total} complete
                 </span>
               </div>
-              <TraceabilityRowList rows={group.rows} labelledBy={headingId} />
+              <TraceabilityRowList rows={group.rows} labelledBy={headingId} landing />
             </section>
           );
         })

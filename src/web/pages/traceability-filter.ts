@@ -59,11 +59,28 @@ export function matchesTraceabilityFilter(
   return requirementStateOf(row) === filter.state;
 }
 
-/** D-05: the filter a page opens on, read once from the address (`?state=` and `?milestone=`).
+/** The longest `?q=` seed the page accepts (T-13-12). */
+export const MAX_SEED_QUERY_LENGTH = 64;
+
+// A control character in an address is never one the palette built.
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHARACTER = /[\u0000-\u001f\u007f-\u009f]/;
+
+/** The `?q=` seed (13-04, D-05): trimmed, 1 to MAX_SEED_QUERY_LENGTH characters, no control character; else ''.
+ * It becomes only the filter's query text, which React renders and the field shows - never written back. */
+function seedQueryOf(params: URLSearchParams): string {
+  const raw = params.get('q');
+  if (raw === null || CONTROL_CHARACTER.test(raw)) return '';
+  const query = raw.trim();
+  return query.length >= 1 && query.length <= MAX_SEED_QUERY_LENGTH ? query : '';
+}
+
+/** D-05: the filter a page opens on, read once from the address (`?state=`, `?milestone=` and `?q=`).
  * A value outside the fixed state list, or a milestone the project does not have, is ignored and
  * the page opens unfiltered. `complete` and `pending` describe the active tier, so a milestone other
- * than the current one cannot narrow them; `out-of-scope` takes no milestone. Pure, never throws,
- * and nothing from the address is rendered or written back (T-09-03). */
+ * than the current one cannot narrow them; `out-of-scope` takes no milestone. The query seed is merged
+ * into whichever filter that logic returns, the default included. Pure, never throws, and nothing
+ * from the address is rendered or written back (T-09-03). */
 export function seedTraceabilityFilter(
   search: string,
   view: Pick<TraceabilityViewModel, 'currentMilestone' | 'archivedMilestones'>,
@@ -74,6 +91,15 @@ export function seedTraceabilityFilter(
   } catch {
     return DEFAULT_TRACEABILITY_FILTER;
   }
+  const base = seedStateAxis(params, view);
+  const query = seedQueryOf(params);
+  return query === '' ? base : { ...base, query };
+}
+
+function seedStateAxis(
+  params: URLSearchParams,
+  view: Pick<TraceabilityViewModel, 'currentMilestone' | 'archivedMilestones'>,
+): TraceabilityFilterState {
   const state = parseRequirementState(params.get('state'));
   if (state === null) return DEFAULT_TRACEABILITY_FILTER;
 
