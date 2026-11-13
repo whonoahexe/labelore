@@ -13,26 +13,10 @@ import type { ProjectListEntry } from '../../presentation/project-list.ts';
 import { fetchProjects } from '../api.ts';
 import { AppLink } from '../nav.tsx';
 import { projectsKey } from '../query-keys.ts';
+import { consumeMainFocusRequest, focusMainContent, mainContent, requestMainFocusOnNextMount } from './main-focus.ts';
 import { ProjectAddDialog } from './project-add-dialog.tsx';
 import { ProjectList, forgottenAnnouncement } from './project-row.tsx';
 import { Button } from './ui/button.tsx';
-
-/** Set when a row of another project is chosen: the switcher that mounts in that project's shell
- * focuses the main content once, then clears it. The whole shell is keyed by slug, so the switcher
- * that was clicked is gone by then and cannot do it itself. */
-let focusMainOnNextMount = false;
-
-/** The main content landmark, made focusable on demand: it is a plain region, so it takes focus only
- * when asked to, and never joins the tab order (tabindex -1). */
-function mainContent(): HTMLElement | null {
-  const main = document.getElementById('main-content');
-  if (main && !main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
-  return main;
-}
-
-function focusMainContent(): void {
-  mainContent()?.focus({ preventScroll: true });
-}
 
 /** What the person chose in the list: a project row, 'All projects', the add dialog, or nothing yet. */
 type Choice = 'project' | 'all' | 'add' | null;
@@ -111,9 +95,7 @@ export function ProjectSwitcher({
   const choice = useRef<Choice>(null);
 
   useEffect(() => {
-    if (!focusMainOnNextMount) return;
-    focusMainOnNextMount = false;
-    focusMainContent();
+    if (consumeMainFocusRequest()) focusMainContent();
   }, []);
 
   const onOpenChange = useCallback((next: boolean) => {
@@ -137,7 +119,7 @@ export function ProjectSwitcher({
       if (!link) return;
       const toAnotherProject = link.getAttribute('href') !== '/' && link.getAttribute('href') !== `/${current.slug}`;
       choice.current = link.getAttribute('href') === '/' ? 'all' : 'project';
-      if (toAnotherProject) focusMainOnNextMount = true;
+      if (toAnotherProject) requestMainFocusOnNextMount();
       setOpen(false);
     },
     [current.slug],

@@ -507,10 +507,11 @@ describe('search dialog (NAV-04)', () => {
 
   it('renders a See all results row for the query only when there are content matches, and marks snippets as text and mark nodes', async () => {
     const field = await source('src/web/components/search-field.tsx');
+    const model = await source('src/web/palette/palette-model.ts');
     expect(field).toContain('See all results for');
-    expect(field).toContain('contentTotal > 0');
-    expect(field).toContain('presentationRoutePatterns.search}?q=${encodeURIComponent(trimmed)}');
-    expect(field).toContain('<mark key={index}>{snippet.text.slice(range.start, range.end)}</mark>');
+    expect(model).toContain('contentTotal > 0');
+    expect(model).toContain('presentationRoutePatterns.search}?q=${encodeURIComponent(query)}');
+    expect(field).toContain('<mark key={start}>{text.slice(start, end)}</mark>');
     expect(field).not.toContain('dangerouslySetInnerHTML');
   });
 
@@ -545,6 +546,17 @@ describe('search dialog (NAV-04)', () => {
     expect(field).not.toContain('dangerouslySetInnerHTML');
   });
 
+  it('a project row in the palette goes through AppLink and the shared main-focus request, like the switcher (Phase 13, D-15)', async () => {
+    const field = await source('src/web/components/search-field.tsx');
+    const switcher = await source('src/web/components/project-switcher.tsx');
+    expect(field).toContain("from './project-row.tsx'");
+    expect(field).toContain('AppLink');
+    expect(field).toContain('useAppNavigate');
+    expect(field).toContain('requestMainFocusOnNextMount()');
+    expect(switcher).toContain("from './main-focus.ts'");
+    expect(switcher).not.toContain('let focusMainOnNextMount');
+  });
+
   it('CSS: --overlay-scrim is declared in both :root and .dark with different values', async () => {
     const css = await source('src/web/styles/globals.css');
     const rootMatch = css.match(/:root\s*\{[^}]*--overlay-scrim:\s*([^;]+);/s);
@@ -563,9 +575,9 @@ describe('search dialog (NAV-04)', () => {
     expect(block).toContain('overflow-y: auto;');
   });
 
-  it('CSS: the dialog item path keeps head-truncation via rtl + ellipsis', async () => {
+  it('CSS: the palette row path keeps head-truncation via rtl + ellipsis', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [block] = ruleBlocks(css, '.search-dialog-item .search-result-path {');
+    const [block] = ruleBlocks(css, '.palette-row-path {');
     expect(block).toBeDefined();
     expect(block).toContain('direction: rtl;');
     expect(block).toContain('text-overflow: ellipsis;');

@@ -529,7 +529,7 @@ describe('header search dialog — navigating surface (03-02 Task 3, D-01; quick
 
   it('truncates the dropdown path from the head via CSS, keeping the filename tail visible (Test 4)', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [block] = ruleBlocks(css, '.search-dialog-item .search-result-path {');
+    const [block] = ruleBlocks(css, '.palette-row-path {');
     expect(block).toBeDefined();
     expect(block).toContain('direction: rtl;');
     expect(block).toContain('text-overflow: ellipsis;');

@@ -3,7 +3,7 @@
 //
 //   node test/helpers/shoot-pages.ts --root <project folder> --out <folder> --name <prefix> \
 //        --address / --address /codebase [--sketch <path to a sketch's index.html>[#variant]] \
-//        [--jump <text>]...
+//        [--jump <text>]... [--project <project folder>]...
 //
 // It serves the built ./dist (run `npm run build` first) with NODE_ENV=production on the first free port
 // of 4191-4194, on an isolated settings directory (LABELORE_CONFIG_DIR), so it never reads or writes the
@@ -18,14 +18,18 @@
 // always stopped, however the run ends.
 //
 // --jump (repeatable) drives the quick-jump palette on every --address, after its normal shots: at 1280x800 in
-// the light theme it opens the address, presses Control+K, types the text, waits up to 5 s for an option row
-// (or the indexing status), saves {name}-{address-slug}-jump-{text-slug}.png, presses Enter and waits up to 5 s
+// the light theme it opens the address, presses Control+K, types the text, waits up to 5 s for the typed answer to settle
+// (the live region's result count, or the Indexing… status row), saves {name}-{address-slug}-jump-{text-slug}.png, presses Enter and waits up to 5 s
 // for the address to change. It then prints one line:
 //   JUMP {address} "{text}" -> {where it went}{search}{hash} target=found|missing|none landed=yes|no brand="{name}"
 // where it went is the pathname with the project's slug segment removed (the full pathname when it left the
 // project). target is none when the address has no hash, found when an element with that id exists within 3 s,
 // else missing; landed is yes when an element with data-landed="true" appears within 3 s. brand is the
 // aria-label of the .brand element. A missing target prints a FAIL line and makes the run exit 1.
+//
+// --project (repeatable) registers another project folder with the running server before anything is shot, the
+// way the add dialog does (POST /api/projects with the server's own Origin), so a palette jump can switch to it.
+// It prints "PROJECT {folder} slug={slug}"; an answer that is not 2xx is a FAIL and the run exits 1.
 //
 // A sketch with no #variant opens the variant its README's `winner:` names (matched against the sketch's
 // own `data-variant` tabs); with no winner, or a winner that matches no tab (a synthesis, "none"), every
@@ -59,10 +63,11 @@ interface Options {
   addresses: string[];
   sketches: string[];
   jumps: string[];
+  projects: string[];
 }
 
 function parseArgs(argv: string[]): Options {
-  const options: Options = { root: '', out: '', name: 'shot', addresses: [], sketches: [], jumps: [] };
+  const options: Options = { root: '', out: '', name: 'shot', addresses: [], sketches: [], jumps: [], projects: [] };
   for (let index = 0; index < argv.length; index++) {
     const flag = argv[index];
     const value = argv[index + 1];
@@ -74,6 +79,7 @@ function parseArgs(argv: string[]): Options {
     else if (flag === '--address') options.addresses.push(value.startsWith('/') ? value : `/${value}`);
     else if (flag === '--sketch') options.sketches.push(value);
     else if (flag === '--jump') options.jumps.push(value);
+    else if (flag === '--project') options.projects.push(resolve(value));
     else throw new Error(`unknown option ${flag}`);
   }
   if (options.root === '') throw new Error('--root is required');
@@ -156,6 +162,25 @@ async function startServer(root: string): Promise<RunningServer> {
   return { base, slug, stop };
 }
 
+/** Adds `root` to the running server's project list, as the add dialog does. Returns the failure, or null. */
+async function registerProject(server: RunningServer, root: string): Promise<string | null> {
+  try {
+    const response = await fetch(`${server.base}/api/projects`, {
+      method: 'POST',
+      headers: { Origin: server.base, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target: root }),
+    });
+    if (response.status < 200 || response.status >= 300) {
+      return `--project ${root}: the server answered ${response.status}`;
+    }
+    const body = (await response.json()) as { slug?: string };
+    console.log(`PROJECT ${root} slug=${body.slug ?? ''}`);
+    return null;
+  } catch (error) {
+    return `--project ${root}: ${error instanceof Error ? error.message : String(error)}`;
+  }
+}
+
 const addressSlug = (address: string): string => address.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'home';
 
 async function newPage(browser: Browser, width: number, height: number, theme: Theme): Promise<Page> {
@@ -235,10 +260,21 @@ async function jumpFrom(
     const input = page.locator('.search-dialog-input');
     await input.waitFor({ timeout: 5000 });
     await input.fill(text);
+    // The empty palette already offers option rows (Key pages), so an option row alone does not say the typed
+    // answer has landed. The polite live region does: it holds the result count once the answer has settled.
+    // While the index is still building the Indexing… status row stands in for it.
     await page
-      .locator('[role="option"], .search-dialog-status')
-      .first()
-      .waitFor({ timeout: 5000 })
+      .waitForFunction(
+        () => {
+          const live = document.querySelector('.search-dialog .sr-only[aria-live="polite"]');
+          return (
+            (live?.textContent ?? '').trim() !== '' ||
+            (document.querySelector('.search-dialog .palette-status')?.textContent ?? '').includes('Indexing')
+          );
+        },
+        undefined,
+        { timeout: 5000 },
+      )
       .catch(() => undefined);
     // Let the highlight settle on the first row before Enter reads it.
     await page.waitForTimeout(200);
@@ -355,6 +391,12 @@ async function main(): Promise<number> {
   let browser: Browser | null = null;
   try {
     if (options.addresses.length > 0) server = await startServer(options.root);
+    if (server !== null) {
+      for (const project of options.projects) {
+        const failure = await registerProject(server, project);
+        if (failure !== null) failures.push(failure);
+      }
+    }
     browser = await chromium.launch({ executablePath, headless: true, args: ['--headless=new'] });
     for (const { width, height } of SIZES) {
       for (const theme of THEMES) {

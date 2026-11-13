@@ -6101,7 +6101,7 @@ a.todo-title:hover {
   gap: var(--space-3);
   align-items: center;
   border-bottom: 1px solid var(--border);
-  padding: var(--space-3-5) var(--space-4);
+  padding: var(--space-3) var(--space-4);
   color: var(--muted-foreground);
 }
 
@@ -6117,7 +6117,7 @@ a.todo-title:hover {
   background: transparent;
   color: inherit;
   font-family: var(--font-sans);
-  font-size: var(--fs-fluid-1);
+  font-size: var(--fs-4);
 }
 
 .search-dialog-input:focus {
@@ -6128,9 +6128,18 @@ a.todo-title:hover {
   color: var(--muted-foreground);
 }
 
+/* The "Updating index…" chip sits at the right of the input row while a refresh runs (D-11). */
+.search-dialog-field > .status-chip {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  line-height: var(--lh-snug);
+  white-space: nowrap;
+}
+
 .search-dialog-esc-hint {
   flex: none;
-  padding: var(--space-0-5) var(--space-1);
+  padding: var(--space-1);
   border: 1px solid var(--border);
   color: var(--muted-foreground);
   font-family: var(--font-mono);
@@ -6146,48 +6155,33 @@ a.todo-title:hover {
   overflow-y: auto;
 }
 
-.search-dialog-notice,
-.search-dialog-status,
-.search-dialog-empty,
-.search-dialog-hint {
+/* The one genuine failure (the index could not be built): the shared notice, fitted to the palette. */
+.search-dialog-notice {
+  margin: 0;
   padding: var(--space-3) var(--space-4);
   font-size: var(--fs-3);
 }
 
-.search-dialog-status p {
-  margin: 0 0 var(--space-1);
-  color: var(--foreground);
+.search-dialog-notice p {
+  margin: 0;
 }
 
-.search-dialog-status small {
-  color: var(--muted-foreground);
+.search-dialog-notice p:first-child {
+  color: var(--foreground);
+  font-weight: var(--fw-semibold);
 }
 
 .search-dialog-legend {
-  display: flex;
-  gap: var(--space-3);
-  margin: var(--space-2) 0 0;
-  padding: 0;
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--border);
   color: var(--muted-foreground);
   font-family: var(--font-mono);
-  font-size: var(--fs-1);
-  list-style: none;
+  font-size: var(--fs-2);
 }
 
 .search-dialog-list {
   display: grid;
-}
-
-.search-dialog-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: var(--space-3);
-  row-gap: var(--space-0-5);
-  border-top: 1px solid var(--border);
-  padding: var(--space-2-5) var(--space-4);
-  color: inherit;
-  text-decoration: none;
-  cursor: pointer;
 }
 
 /* Phase 13 palette: the list holds labelled groups; a group's first row carries no rule of its own. */
@@ -6210,52 +6204,191 @@ a.todo-title:hover {
   border-top: 0;
 }
 
-.palette-group-label + .search-dialog-item {
+/* A quiet status line: Indexing…, Loading projects…, Projects could not be listed., and the two no-match lines. */
+.palette-status {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--fs-3);
+}
+
+.palette-status p {
+  margin: 0;
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.palette-status small {
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.palette-status > .status-chip {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  line-height: var(--lh-snug);
+  white-space: nowrap;
+}
+
+.search-dialog-field > .status-chip svg,
+.palette-status > .status-chip svg {
+  animation: project-row-spin 1s linear infinite;
+}
+
+/* A palette row is a two-line grid: the icon, the title and the chips on line 1, the path on line 2. */
+.palette-row {
+  display: grid;
+  grid-template-columns: var(--space-4) minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-2);
+  align-items: center;
+  min-height: var(--space-10);
+  border-top: 1px solid var(--border-faint);
+  padding: var(--space-3) var(--space-4);
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.palette-group-label + .palette-row {
   border-top: 0;
 }
 
-/* A row's trailing chips sit on its first line, right-aligned; the path line spans both columns. */
+/* The project the address names: the same 2px accent rule the switcher draws. */
+.palette-row[data-current='true'] {
+  box-shadow: inset 2px 0 var(--primary);
+}
+
+.palette-row[data-highlighted] {
+  background: var(--state-active);
+  box-shadow: inset 3px 0 var(--primary);
+}
+
+.palette-row-icon {
+  grid-column: 1;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--muted-foreground);
+}
+
+.palette-row-title {
+  grid-column: 2;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-normal);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette-row-id {
+  margin-right: var(--space-2);
+  font-family: var(--font-mono);
+}
+
+/* A row's trailing chips sit on its first line, at the end. */
 .palette-row-chips {
+  grid-column: 3;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  margin-left: auto;
+  white-space: nowrap;
 }
 
-.search-dialog-item > .search-result-path,
-.search-dialog-item > .palette-row-snippet {
-  grid-column: 1 / -1;
+.palette-row-chips > .status-chip {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  line-height: var(--lh-snug);
+  white-space: nowrap;
+}
+
+.palette-row-chips > svg {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--primary);
+}
+
+.palette-row-chips > .status-chip[data-tone='quiet'] svg {
+  animation: project-row-spin 1s linear infinite;
+}
+
+/* File paths truncate head-first with a leading ellipsis, keeping the filename tail (the identifying part)
+   always visible: the block is rtl and the path sits in a bdi, so it still reads left to right. */
+.palette-row-path {
+  grid-column: 2 / -1;
+  min-width: 0;
+  overflow: hidden;
+  direction: rtl;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-normal);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette-row > .source-note {
+  grid-column: 2 / -1;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-3);
 }
 
 /* A content row's snippet: the matched words are marked, the rest is plain text. */
 .palette-row-snippet {
+  grid-column: 2 / -1;
   display: -webkit-box;
   overflow: hidden;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   color: var(--foreground);
-  font-size: var(--fs-3);
-  line-height: var(--fs-3--lh);
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
 }
 
-.palette-row-snippet mark {
+.palette-row-snippet mark,
+.palette-row-title mark,
+.palette-row-path mark {
   background: var(--primary-tint);
   color: var(--primary);
   padding: 0;
 }
 
-.search-dialog-item[data-highlighted] {
-  background: var(--state-active);
-  box-shadow: inset 3px 0 var(--primary);
+@media (prefers-reduced-motion: reduce) {
+  .search-dialog-field > .status-chip svg,
+  .palette-status > .status-chip svg,
+  .palette-row-chips > .status-chip[data-tone='quiet'] svg {
+    animation: none;
+  }
 }
 
-.search-result-title {
-  overflow: hidden;
-  font-size: var(--fs-4);
-  font-weight: var(--fw-semibold);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+@media (pointer: coarse) {
+  .palette-row {
+    min-height: calc(var(--space-6) * 2);
+  }
+}
+
+/* At or below the shell's narrow breakpoint the chips drop under the title onto the path line. */
+@media (max-width: 42rem) {
+  .palette-row {
+    grid-template-columns: var(--space-4) minmax(0, 1fr) auto;
+  }
+
+  .palette-row-title {
+    grid-column: 2 / -1;
+  }
+
+  .palette-row-chips {
+    grid-row: 2;
+  }
+
+  .palette-row-path {
+    grid-column: 2;
+  }
 }
 
 .search-result-path {
@@ -6263,23 +6396,6 @@ a.todo-title:hover {
   color: var(--muted-foreground);
   font-family: var(--font-heading);
   font-size: var(--fs-1);
-}
-
-/* File paths truncate head-first with a leading ellipsis inside the dialog list, keeping the
-   filename tail (the identifying part) always visible. */
-.search-dialog-item .search-result-path {
-  overflow: hidden;
-  direction: rtl;
-  text-align: left;
-  text-overflow: ellipsis;
-  unicode-bidi: plaintext;
-  white-space: nowrap;
-}
-
-.search-dialog-footer {
-  justify-content: center;
-  border-top: 1px solid var(--border);
-  padding: var(--space-2-5) var(--space-4);
 }
 
 /* /search results page — grouped surface (D-07 location+kind taxonomy, D-08 snippets). */

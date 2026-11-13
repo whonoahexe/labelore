@@ -1,17 +1,38 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Combobox } from '@base-ui/react/combobox';
 import { Dialog } from '@base-ui/react/dialog';
-import { Search } from 'lucide-react';
-import { Link, useProjectLocation, useProjectNavigate, useProjectScope, useProjectSlug } from '../nav.tsx';
-import { apiFetch, projectUrl } from '../api.ts';
-import { projectKey } from '../query-keys.ts';
+import { Check, Clock, FileText, Hash, Loader, PanelsTopLeft, Search, TextSearch } from 'lucide-react';
+import {
+  AppLink,
+  Link,
+  useAppNavigate,
+  useProjectLocation,
+  useProjectNavigate,
+  useProjectScope,
+  useProjectSlug,
+} from '../nav.tsx';
+import { apiFetch, fetchPresentation, fetchProjects, projectUrl } from '../api.ts';
+import { projectKey, projectsKey } from '../query-keys.ts';
+import { projectRootPath } from '../project-path.ts';
 import { isEditableTarget, isSearchShortcut, shortcutHintFor } from '../../presentation/shell-header.ts';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
-import { JUMP_GROUP_LABELS } from '../../presentation/jump.ts';
-import type { JumpRow } from '../../presentation/jump.ts';
-import type { SearchSnippet } from '../../presentation/search.ts';
+import type { SearchHighlightRange } from '../../presentation/search.ts';
 import type { JumpApiResponse } from '../../server/search-index.ts';
+import type { ProjectListEntry } from '../../presentation/project-list.ts';
+import type { ProjectPresentation } from '../../server/project-presentation.ts';
+import { humanizeKind } from '../views/kinds.ts';
+import {
+  buildPaletteModel,
+  hrefOfRow,
+  keyPagesOf,
+  rowIconOf,
+  titleForPath,
+} from '../palette/palette-model.ts';
+import type { KeyPage, PaletteGroup, PaletteNotice, PaletteRow } from '../palette/palette-model.ts';
+import { browserStorage, readRecent, recentKey, recordRecent } from '../palette/recent-pages.ts';
+import { requestMainFocusOnNextMount } from './main-focus.ts';
+import { ProjectPathIcon } from './project-row.tsx';
 import { buttonVariants } from './ui/button.tsx';
 
 // D-02: the debounce band the UI contract specifies (120-200ms), landed at the midpoint.
@@ -24,11 +45,23 @@ const DEBOUNCE_MS = 160;
 // appear; the type just does not admit it, hence the cast.
 const AUTO_HIGHLIGHT = 'always' as unknown as boolean;
 
+/** What the list shows before the project's presentation has loaded: the one page that always exists. */
+const FALLBACK_KEY_PAGES: readonly KeyPage[] = [
+  { key: 'key-page:dashboard', title: 'Dashboard', path: presentationRoutePatterns.dashboard },
+];
+
 /** One labelled group of the palette's list, in the shape Base UI's grouped Combobox reads: `value` is the
- * group's label, `items` its rows. The server caps every group (JUMP_GROUP_CAPS), so the host slices nothing. */
-interface PaletteGroup {
+ * group's key, `items` its rows. The label and notice ride along for the renderer. The server caps every group
+ * (JUMP_GROUP_CAPS) and the model caps Projects, so the host slices nothing. */
+interface ListGroup {
   value: string;
-  items: JumpRow[];
+  label: string | null;
+  notice: PaletteNotice | null;
+  items: PaletteRow[];
+}
+
+function listGroupOf(group: PaletteGroup): ListGroup {
+  return { value: group.key, label: group.label, notice: group.notice, items: group.rows };
 }
 
 function fetchJump(
@@ -44,70 +77,262 @@ function fetchJump(
   );
 }
 
-/** Where a row opens: its address, plus the anchor of the item it names when it has one (D-05). */
-function hrefOf(row: JumpRow): string {
-  return row.anchor === null ? row.url : `${row.url}#${row.anchor}`;
-}
-
 /** The search page for a query: the address is built from the route patterns, never written out. */
 function searchPageHref(trimmed: string): string {
   return `${presentationRoutePatterns.search}?q=${encodeURIComponent(trimmed)}`;
 }
 
-/** A snippet's text split at its highlight ranges into text nodes and `mark` nodes: corpus text never becomes
- * an HTML string (T-03-02-01, T-13-01). The ranges come merged and non-overlapping from extractSnippets. */
-function snippetNodes(snippet: SearchSnippet): React.ReactNode[] {
+/** A text split at its highlight ranges into text nodes and `mark` nodes: corpus text never becomes an HTML
+ * string (T-03-02-01, T-13-01). Ranges come from the server as plain offsets; anything out of order or out of
+ * bounds is clamped away rather than trusted. */
+function markedText(text: string, ranges: readonly SearchHighlightRange[]): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   let cursor = 0;
-  snippet.highlights.forEach((range, index) => {
-    if (range.start > cursor) nodes.push(snippet.text.slice(cursor, range.start));
-    nodes.push(<mark key={index}>{snippet.text.slice(range.start, range.end)}</mark>);
-    cursor = range.end;
-  });
-  if (cursor < snippet.text.length) nodes.push(snippet.text.slice(cursor));
+  for (const range of ranges) {
+    const start = Math.max(range.start, cursor);
+    const end = Math.min(range.end, text.length);
+    if (end <= start) continue;
+    if (start > cursor) nodes.push(text.slice(cursor, start));
+    nodes.push(<mark key={start}>{text.slice(start, end)}</mark>);
+    cursor = end;
+  }
+  if (cursor < text.length) nodes.push(text.slice(cursor));
   return nodes;
 }
 
-/** The last row: opens the search page with the query, so every match is one Enter away. */
-function seeAllRow(trimmed: string): JumpRow {
-  return {
-    key: 'see-all',
-    kind: 'page',
-    id: null,
-    title: `See all results for "${trimmed}"`,
-    subtitle: '',
-    url: searchPageHref(trimmed),
-    anchor: null,
-    chips: [],
-    artifactKind: null,
-    phaseKey: null,
-    titleHighlights: [],
-    subtitleHighlights: [],
-    snippet: null,
-  };
+const ROW_ICONS = {
+  hash: Hash,
+  page: PanelsTopLeft,
+  file: FileText,
+  content: TextSearch,
+  recent: Clock,
+  search: Search,
+} as const;
+
+/** What a row prints, whatever its kind: line 1 is the icon, the title (an ID first) and the chips; line 2 is
+ * the path in mono. Every string stays a React text node. */
+interface RowView {
+  id: string | null;
+  title: string;
+  titleNodes: React.ReactNode;
+  chips: React.ReactNode;
+  path: string | null;
+  pathNodes: React.ReactNode;
+  snippet: React.ReactNode;
+  note: React.ReactNode;
 }
 
-/** An ID row prints its ID, then its title. */
-function titleOf(row: JumpRow): string {
-  return row.id === null ? row.title : `${row.id} ${row.title}`;
+function Chip({ label, tone }: { label: string; tone: string }): React.JSX.Element {
+  return (
+    <span className="status-chip" data-tone={tone}>
+      {label}
+    </span>
+  );
 }
 
-/** NAV-04 (quick-260911-243), Phase 13: the quick-jump palette. The header trigger opens a large centred
- * @base-ui/react Dialog over a full-screen scrim, wrapping an inline grouped Combobox fed by /jump: an exact
- * decision or finding ID first (the current phase's copy highlighted, so Enter opens it), then the other
- * groups the server returns. Keeps the Phase-3 query behaviour: debounce, abort signal, polling while the
- * index builds. */
-export function SearchDialog(): React.JSX.Element {
+function viewOf(row: PaletteRow): RowView {
+  switch (row.type) {
+    case 'jump': {
+      const jump = row.row;
+      const kindLabel =
+        (jump.kind === 'file' || jump.kind === 'content') && jump.artifactKind !== null
+          ? humanizeKind(jump.artifactKind)
+          : null;
+      return {
+        id: jump.id,
+        title: jump.title,
+        titleNodes: markedText(jump.title, jump.titleHighlights),
+        chips: (
+          <>
+            {jump.chips.map((chip) => (
+              <Chip key={chip.label} label={chip.label} tone={chip.tone} />
+            ))}
+            {kindLabel === null ? null : <Chip label={kindLabel} tone="quiet" />}
+          </>
+        ),
+        path: jump.subtitle === '' ? null : jump.subtitle,
+        pathNodes: markedText(jump.subtitle, jump.subtitleHighlights),
+        snippet:
+          jump.snippet === null ? null : (
+            <span className="palette-row-snippet">{markedText(jump.snippet.text, jump.snippet.highlights)}</span>
+          ),
+        note: null,
+      };
+    }
+    case 'project': {
+      const { entry } = row;
+      return {
+        id: null,
+        title: entry.name,
+        titleNodes: entry.name,
+        chips: (
+          <>
+            {row.current ? (
+              <>
+                <Check aria-hidden="true" />
+                <span className="sr-only">Current</span>
+              </>
+            ) : null}
+            {entry.state === 'loading' ? (
+              <span className="status-chip" data-tone="quiet">
+                <Loader aria-hidden="true" />
+                Opening…
+              </span>
+            ) : null}
+            {entry.state === 'unavailable' ? <Chip label="Unavailable" tone="missing" /> : null}
+          </>
+        ),
+        path: entry.displayPath,
+        pathNodes: entry.displayPath,
+        snippet: null,
+        note:
+          entry.state === 'unavailable' && entry.reason ? <span className="source-note">{entry.reason}</span> : null,
+      };
+    }
+    case 'recent':
+    case 'key-page':
+      return {
+        id: null,
+        title: row.title,
+        titleNodes: row.title,
+        chips: null,
+        path: row.path,
+        pathNodes: row.path,
+        snippet: null,
+        note: null,
+      };
+    case 'see-all':
+      return {
+        id: null,
+        title: `See all results for "${row.query}"`,
+        titleNodes: `See all results for "${row.query}"`,
+        chips: (
+          <kbd className="search-dialog-esc-hint" aria-hidden="true">
+            ↵
+          </kbd>
+        ),
+        path: null,
+        pathNodes: null,
+        snippet: null,
+        note: null,
+      };
+  }
+}
+
+/** The inside of one palette row (UI-SPEC row anatomy). A plain component so a test can render it without the
+ * dialog: the row element around it is the Combobox item, a link. */
+export function PaletteRowBody({ row }: { row: PaletteRow }): React.JSX.Element {
+  const icon = rowIconOf(row);
+  const view = viewOf(row);
+  return (
+    <>
+      {icon === 'project' && row.type === 'project' ? (
+        <ProjectPathIcon kind={row.entry.kind} className="palette-row-icon" />
+      ) : icon === 'project' ? null : (
+        (() => {
+          const Icon = ROW_ICONS[icon];
+          return <Icon className="palette-row-icon" aria-hidden="true" />;
+        })()
+      )}
+      <span className="palette-row-title" title={view.id === null ? view.title : `${view.id} ${view.title}`}>
+        {view.id === null ? null : <span className="palette-row-id">{view.id}</span>}
+        {view.titleNodes}
+      </span>
+      <span className="palette-row-chips">{view.chips}</span>
+      {view.path === null ? null : (
+        <span className="palette-row-path" title={view.path}>
+          {/* The block is rtl so the ellipsis lands on the head; bdi keeps the path itself reading left to right. */}
+          <bdi>{view.pathNodes}</bdi>
+        </span>
+      )}
+      {view.snippet}
+      {view.note}
+    </>
+  );
+}
+
+/** A quiet status line (or, for the one genuine failure, the shared destructive notice). */
+function PaletteStatus({ notice, bare = false }: { notice: PaletteNotice; bare?: boolean }): React.JSX.Element {
+  if (notice.role === 'alert') {
+    return (
+      <div className="notice destructive search-dialog-notice" role="alert">
+        <p>{notice.heading}</p>
+        {notice.body === null ? null : <p>{notice.body}</p>}
+      </div>
+    );
+  }
+  const working = notice.kind === 'indexing' || notice.kind === 'projects-loading';
+  return (
+    <div className="palette-status" role={bare ? undefined : 'status'}>
+      {working ? (
+        <span className="status-chip" data-tone="quiet">
+          <Loader aria-hidden="true" />
+          {notice.heading}
+        </span>
+      ) : (
+        <p>{notice.heading}</p>
+      )}
+      {notice.body === null ? null : <small>{notice.body}</small>}
+    </div>
+  );
+}
+
+/** One row of the list: a real link, so middle-click and "copy link address" keep working. A project row is an
+ * AppLink to that project's root; every other row is a project-scoped Link. */
+function PaletteItem({
+  row,
+  onChoose,
+}: {
+  row: PaletteRow;
+  onChoose(row: PaletteRow, event: React.MouseEvent): void;
+}): React.JSX.Element {
+  const href = hrefOfRow(row);
+  return (
+    <Combobox.Item
+      value={row}
+      render={row.type === 'project' ? <AppLink to={projectRootPath(row.entry.slug)} /> : <Link to={href} />}
+      className="palette-row"
+      data-current={row.type === 'project' && row.current ? 'true' : undefined}
+      onClick={(event: React.MouseEvent) => onChoose(row, event)}
+    >
+      <PaletteRowBody row={row} />
+    </Combobox.Item>
+  );
+}
+
+interface PaletteBodyProps {
+  slug: string;
+  scope: string | null;
+  pathname: string;
+  presentation: ProjectPresentation | undefined;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  /** Closes the palette (clearing everything: the body unmounts with the popup). */
+  onClose(): void;
+  /** A row of another project was chosen: the dialog must not hand focus back to a trigger that is about to go. */
+  onLeaveProject(): void;
+}
+
+/** Everything inside the popup. It mounts when the palette opens and unmounts when it closes, so its queries are
+ * observed - and the project list re-read (staleTime 0) - only while the palette is open (D-16), and a reopened
+ * palette starts empty with its Recent list read afresh (D-02). */
+function PaletteBody({
+  slug,
+  scope,
+  pathname,
+  presentation,
+  inputRef,
+  onClose,
+  onLeaveProject,
+}: PaletteBodyProps): React.JSX.Element {
   const navigate = useProjectNavigate();
-  const slug = useProjectSlug() ?? '';
-  const scope = useProjectScope();
-  const { pathname } = useProjectLocation();
-  const [open, setOpen] = useState(false);
+  const appNavigate = useAppNavigate();
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const popupRef = useRef<HTMLDivElement | null>(null);
-  const highlightedRef = useRef<JumpRow | null>(null);
+  const highlightedRef = useRef<PaletteRow | null>(null);
+  // Recent is read once per opening. The page you are on is where you already are, so it is left out.
+  const [recent] = useState(() =>
+    readRecent(browserStorage(), recentKey(slug, scope)).filter((entry) => entry.path !== pathname),
+  );
 
   useEffect(() => {
     const id = setTimeout(() => setDebounced(query), DEBOUNCE_MS);
@@ -123,35 +348,203 @@ export function SearchDialog(): React.JSX.Element {
     queryKey: projectKey(slug, scope, 'jump', trimmed, pathname),
     queryFn: ({ signal }) => fetchJump(slug, scope, trimmed, pathname, signal),
     enabled: trimmed.length > 0,
-    // D-04: while the index is building, poll until it resolves so a query typed mid-build
-    // resolves itself automatically — never a dropped query.
-    refetchInterval: (latest) => (latest.state.data?.status === 'building' ? 500 : false),
+    // D-04, D-11: while the index builds, or a refresh is running, poll until it resolves so a query typed
+    // mid-build resolves itself automatically - never a dropped query.
+    refetchInterval: (latest) =>
+      latest.state.data?.status === 'building' || latest.state.data?.refreshing === true ? 500 : false,
   });
+  // The last answer stays on screen while the next one is on its way. TanStack Query's previous-data option is
+  // never used in this app (query-keys.test.ts: it can show one project's data under another's address), so the
+  // palette keeps the last answer itself, in this mount's state, tagged with the project and scope it came from
+  // and shown only to that same project and scope. The body unmounts when the palette closes.
+  const owner = `${slug}|${scope ?? ''}`;
+  const [lastAnswer, setLastAnswer] = useState<{ owner: string; data: JumpApiResponse } | null>(null);
+  if (jump.data !== undefined && jump.data !== lastAnswer?.data) setLastAnswer({ owner, data: jump.data });
+  const answer = jump.data ?? (lastAnswer?.owner === owner ? lastAnswer.data : undefined);
+  const jumpState = trimmed.length === 0 ? 'idle' : jump.isError ? 'error' : jump.data === undefined ? 'pending' : 'ready';
 
-  const ready = jump.data?.status === 'ready';
-  const groups: PaletteGroup[] =
-    ready && jump.data
-      ? jump.data.groups.map((group) => ({ value: JUMP_GROUP_LABELS[group.key], items: group.rows }))
-      : [];
-  // The last group has no label and holds one row, so Enter on it opens the full results for the query.
-  if (ready && jump.data && jump.data.contentTotal > 0) groups.push({ value: '', items: [seeAllRow(trimmed)] });
-  const isIndexing = trimmed.length > 0 && jump.data?.status === 'building';
-  const isEmpty = trimmed.length > 0 && ready && groups.length === 0;
-  const notFoundId = ready && jump.data ? jump.data.notFoundId : null;
+  // D-16: the project list is read every time the palette opens; the body mounting with the popup is what makes
+  // the query observed (and refetched, staleTime 0) only while the palette is open.
+  const projects = useQuery({ queryKey: projectsKey, queryFn: fetchProjects, staleTime: 0 });
+  const projectsState = projects.data ? 'ready' : projects.isPending ? 'pending' : 'error';
 
-  function handleOpenChange(next: boolean): void {
-    setOpen(next);
-    if (!next) {
-      setQuery('');
-      setDebounced('');
-      highlightedRef.current = null;
-    }
+  const keyPages = useMemo(() => (presentation === undefined ? FALLBACK_KEY_PAGES : keyPagesOf(presentation)), [presentation]);
+  const model = useMemo(
+    () =>
+      buildPaletteModel({
+        query: trimmed,
+        jump: { state: jumpState, data: answer },
+        projects: { state: projectsState, entries: projects.data?.projects ?? [] },
+        currentSlug: slug,
+        recent,
+        keyPages,
+      }),
+    [trimmed, jumpState, answer, projectsState, projects.data, slug, recent, keyPages],
+  );
+  const items = useMemo(() => model.groups.map(listGroupOf), [model.groups]);
+
+  // D-11: "Index updated" is said once when a refresh lands while the palette is open. Tracked during render
+  // (the documented pattern for state derived from a changing value), not in an effect.
+  const builtAt = answer?.builtAt ?? null;
+  const [track, setTrack] = useState<{ query: string; builtAt: string | null; updated: boolean }>({
+    query: '',
+    builtAt: null,
+    updated: false,
+  });
+  if (track.query !== trimmed || (builtAt !== null && builtAt !== track.builtAt)) {
+    setTrack({
+      query: trimmed,
+      builtAt: builtAt ?? track.builtAt,
+      updated: builtAt !== null && track.builtAt !== null && builtAt !== track.builtAt,
+    });
   }
 
   function commitToSearchPage(): void {
     const submitted = query.trim();
     if (submitted.length === 0) return;
     navigate(searchPageHref(submitted));
+  }
+
+  // D-15: choosing another project is the header switcher's own move. The whole shell is keyed by slug, so the
+  // palette and its trigger are gone once the new project mounts; the shared request tells that shell to put focus
+  // on the main content, and the dialog is told not to return focus to a trigger that no longer exists.
+  function chooseProject(entry: ProjectListEntry): void {
+    if (entry.slug !== slug) {
+      requestMainFocusOnNextMount();
+      onLeaveProject();
+    }
+  }
+
+  function openRow(row: PaletteRow): void {
+    if (row.type === 'project') {
+      chooseProject(row.entry);
+      onClose();
+      // useAppNavigate flushes synchronously, so the old project's text never shows under the new address.
+      appNavigate(projectRootPath(row.entry.slug));
+      return;
+    }
+    onClose();
+    navigate(hrefOfRow(row));
+  }
+
+  function chooseWithClick(row: PaletteRow, event: React.MouseEvent): void {
+    // A modified click opens a new tab and leaves the palette where it is; a plain one closes it. A project row
+    // is an AppLink, which navigates (with flushSync) right after this runs.
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (row.type === 'project') chooseProject(row.entry);
+    onClose();
+  }
+
+  return (
+    <Combobox.Root
+      inline
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+      items={items}
+      filteredItems={items}
+      filter={null}
+      // D-03: the first row (the Exact row when there is one) is highlighted whenever the rows change.
+      autoHighlight={AUTO_HIGHLIGHT}
+      onInputValueChange={(value) => setQuery(value)}
+      onItemHighlighted={(row) => {
+        highlightedRef.current = (row as PaletteRow | undefined) ?? null;
+      }}
+    >
+      <Combobox.InputGroup className="search-dialog-field">
+        <Search aria-hidden="true" />
+        <Combobox.Input
+          ref={inputRef}
+          placeholder="Jump to a page, ID or project…"
+          aria-label="Quick jump"
+          className="search-dialog-input"
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            event.preventBaseUIHandler();
+            const highlighted = highlightedRef.current;
+            if (highlighted) {
+              openRow(highlighted);
+              return;
+            }
+            commitToSearchPage();
+            onClose();
+          }}
+        />
+        {model.refreshing ? (
+          <span className="status-chip" data-tone="quiet" role="status">
+            <Loader aria-hidden="true" />
+            Updating index…
+          </span>
+        ) : null}
+        <kbd className="search-dialog-esc-hint" aria-hidden="true">
+          Esc
+        </kbd>
+      </Combobox.InputGroup>
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {track.updated ? 'Index updated' : model.announcement}
+      </p>
+      <div className="search-dialog-results">
+        <Combobox.Empty>{model.empty === null ? null : <PaletteStatus notice={model.empty} bare />}</Combobox.Empty>
+        <Combobox.List className="search-dialog-list">
+          {(group: ListGroup) =>
+            group.items.length === 0 ? (
+              <div key={group.value} className="palette-group">
+                {group.label === null ? null : <div className="palette-group-label">{group.label}</div>}
+                {group.notice === null ? null : <PaletteStatus notice={group.notice} />}
+              </div>
+            ) : (
+              <Combobox.Group key={group.value} items={group.items} className="palette-group">
+                {group.label === null ? null : (
+                  <Combobox.GroupLabel className="palette-group-label">{group.label}</Combobox.GroupLabel>
+                )}
+                <Combobox.Collection>
+                  {(row: PaletteRow) => <PaletteItem key={row.key} row={row} onChoose={chooseWithClick} />}
+                </Combobox.Collection>
+              </Combobox.Group>
+            )
+          }
+        </Combobox.List>
+      </div>
+      <p className="search-dialog-legend">↑↓ move · Enter open · Esc close</p>
+    </Combobox.Root>
+  );
+}
+
+/** NAV-04 (quick-260911-243), Phase 13: the quick-jump palette. The header trigger opens a large centred
+ * @base-ui/react Dialog over a full-screen scrim, wrapping an inline grouped Combobox fed by /jump: an exact
+ * decision, finding, requirement, plan or quick-task ID first (the current phase's copy highlighted, so Enter
+ * opens it), then pages, files, projects and content matches. With nothing typed it offers Recent, Key pages
+ * and Projects. Keeps the Phase-3 query behaviour: debounce, abort signal, polling while the index builds.
+ * It also records each page the viewer opens into the per-browser Recent list (D-02). */
+export function SearchDialog(): React.JSX.Element {
+  const slug = useProjectSlug() ?? '';
+  const scope = useProjectScope();
+  const { pathname } = useProjectLocation();
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const popupRef = useRef<HTMLDivElement | null>(null);
+  // Set when a row of another project is chosen: the shell is keyed by slug, so the trigger focus would return
+  // to is about to unmount, and the next shell's switcher focuses the main content instead (main-focus.ts).
+  const leavingProject = useRef(false);
+  // The shell reads the same entry, so this shares its cache and costs no extra request.
+  const presentation = useQuery({
+    queryKey: projectKey(slug, scope, 'presentation'),
+    queryFn: () => fetchPresentation(slug, scope),
+  }).data;
+
+  // D-02: remember the page being viewed. Only this browser's localStorage is touched, never the project.
+  useEffect(() => {
+    if (presentation === undefined) return;
+    const title = titleForPath(pathname, presentation);
+    if (title === null) return;
+    recordRecent(browserStorage(), recentKey(slug, scope), { path: pathname, title, at: Date.now() });
+  }, [pathname, presentation, slug, scope]);
+
+  function handleOpenChange(next: boolean): void {
+    if (next) leavingProject.current = false;
+    setOpen(next);
   }
 
   // Global ⌘K/Ctrl+K: registered in an effect, removed in its cleanup, so there is exactly one
@@ -196,107 +589,24 @@ export function SearchDialog(): React.JSX.Element {
       <Dialog.Portal>
         <Dialog.Backdrop className="search-dialog-backdrop" />
         <Dialog.Viewport className="search-dialog-viewport">
-          <Dialog.Popup ref={popupRef} className="search-dialog" initialFocus={inputRef}>
+          <Dialog.Popup
+            ref={popupRef}
+            className="search-dialog"
+            initialFocus={inputRef}
+            finalFocus={() => !leavingProject.current}
+          >
             <Dialog.Title className="sr-only">Quick jump</Dialog.Title>
-            <Combobox.Root
-              inline
-              open={open}
-              onOpenChange={handleOpenChange}
-              items={groups}
-              filteredItems={groups}
-              filter={null}
-              // D-03: the first row (the Exact row when there is one) is highlighted whenever the rows change.
-              autoHighlight={AUTO_HIGHLIGHT}
-              onInputValueChange={(value) => setQuery(value)}
-              onItemHighlighted={(row) => {
-                highlightedRef.current = (row as JumpRow | undefined) ?? null;
+            <PaletteBody
+              slug={slug}
+              scope={scope}
+              pathname={pathname}
+              presentation={presentation}
+              inputRef={inputRef}
+              onClose={() => handleOpenChange(false)}
+              onLeaveProject={() => {
+                leavingProject.current = true;
               }}
-            >
-              <Combobox.InputGroup className="search-dialog-field">
-                <Search aria-hidden="true" />
-                <Combobox.Input
-                  ref={inputRef}
-                  placeholder="Jump to a page, ID or project…"
-                  aria-label="Quick jump"
-                  className="search-dialog-input"
-                  onKeyDown={(event) => {
-                    if (event.key !== 'Enter') return;
-                    event.preventDefault();
-                    event.preventBaseUIHandler();
-                    const highlighted = highlightedRef.current;
-                    if (highlighted) {
-                      handleOpenChange(false);
-                      navigate(hrefOf(highlighted));
-                      return;
-                    }
-                    commitToSearchPage();
-                    handleOpenChange(false);
-                  }}
-                />
-                <kbd className="search-dialog-esc-hint" aria-hidden="true">
-                  Esc
-                </kbd>
-              </Combobox.InputGroup>
-              <div className="search-dialog-results">
-                {jump.isError ? (
-                  <div className="notice destructive search-dialog-notice" role="alert">
-                    Search is unavailable.
-                  </div>
-                ) : isIndexing ? (
-                  <div className="search-dialog-status" aria-live="polite">
-                    <p>Indexing…</p>
-                    <small>Results will appear automatically once the index finishes.</small>
-                  </div>
-                ) : isEmpty ? (
-                  <Combobox.Empty className="search-dialog-empty">
-                    {notFoundId === null ? `Nothing matches "${trimmed}".` : `No ${notFoundId} in this project.`}
-                  </Combobox.Empty>
-                ) : trimmed.length === 0 ? (
-                  <div className="search-dialog-hint">
-                    <p>Jump to a page or an ID like D-12 or WR-03, or search the planning corpus.</p>
-                    <ul className="search-dialog-legend">
-                      <li>↑↓ move</li>
-                      <li>Enter open</li>
-                      <li>Esc close</li>
-                    </ul>
-                  </div>
-                ) : (
-                  <Combobox.List className="search-dialog-list">
-                    {(group: PaletteGroup) => (
-                      <Combobox.Group key={group.value} items={group.items} className="palette-group">
-                        {group.value === '' ? null : (
-                          <Combobox.GroupLabel className="palette-group-label">{group.value}</Combobox.GroupLabel>
-                        )}
-                        <Combobox.Collection>
-                          {(row: JumpRow) => (
-                            <Combobox.Item
-                              key={row.key}
-                              value={row}
-                              render={<Link to={hrefOf(row)} />}
-                              className="search-dialog-item"
-                              onClick={() => handleOpenChange(false)}
-                            >
-                              <span className="search-result-title">{titleOf(row)}</span>
-                              <span className="palette-row-chips">
-                                {row.chips.map((chip) => (
-                                  <span key={chip.label} className="status-chip" data-tone={chip.tone}>
-                                    {chip.label}
-                                  </span>
-                                ))}
-                              </span>
-                              {row.subtitle === '' ? null : <span className="search-result-path">{row.subtitle}</span>}
-                              {row.snippet === null ? null : (
-                                <span className="palette-row-snippet">{snippetNodes(row.snippet)}</span>
-                              )}
-                            </Combobox.Item>
-                          )}
-                        </Combobox.Collection>
-                      </Combobox.Group>
-                    )}
-                  </Combobox.List>
-                )}
-              </div>
-            </Combobox.Root>
+            />
           </Dialog.Popup>
         </Dialog.Viewport>
       </Dialog.Portal>
