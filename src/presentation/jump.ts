@@ -19,8 +19,11 @@ import type {
 import { decisionAnchor, findingAnchor, requirementAnchor } from './jump-anchors.ts';
 import { headPhaseOf, displayPhaseNumber } from './dashboard-head.ts';
 import { rootDocumentRedirect } from './root-redirects.ts';
-import { buildPhaseUrl } from './routes.ts';
-import { extractSnippets } from './search.ts';
+import { buildPhaseUrl, presentationRoutePatterns } from './routes.ts';
+import { projectMapState } from './project-map-state.ts';
+import { projectHasResearch } from './project-research-files.ts';
+import { projectHasSketches } from './sketches.ts';
+import { extractSnippets, foldCase } from './search.ts';
 import { compareNatural } from './search-facets.ts';
 import type { SearchHighlightRange, SearchHitLike, SearchSnippet } from './search.ts';
 
@@ -738,6 +741,159 @@ function idShapeOf(query: string): string | null {
   return requirement !== null && requirement.length === 1 && requirement[0] === upper ? upper : null;
 }
 
+// ---------------------------------------------------------------------------------------------------------
+// Pages and Files by name (13-04, D-01, NAV-08). Matching is indexOf over length-preserving folded strings,
+// never a regex built from the query, so a highlight range indexes the original string exactly (T-13-11).
+
+const SETTINGS_URL = '/settings';
+
+export interface PageTarget {
+  title: string;
+  url: string;
+  /** The phase a phase page belongs to, so "the phase you are viewing" can lead ties; else null. */
+  phaseKey: string | null;
+}
+
+/**
+ * Every page the palette may open by name, in a fixed order. It mirrors the header's own predicates
+ * (app-shell.tsx): Roadmap and Traceability are absent from a map-only project, Research and Sketches appear
+ * only when the project has them, so the palette never offers a page the tabs hide (T-13-13). The
+ * /codebase, /spikes and /indexes landings redirect to a file and are left to the Files group.
+ */
+export function pageTargetsOf(presentation: ProjectPresentation): PageTarget[] {
+  const targets: PageTarget[] = [{ title: 'Dashboard', url: presentationRoutePatterns.dashboard, phaseKey: null }];
+  if (!projectMapState(presentation.artifacts).mapOnly) {
+    targets.push({ title: 'Roadmap', url: presentationRoutePatterns.roadmap, phaseKey: null });
+    targets.push({ title: 'Traceability', url: presentationRoutePatterns.traceability, phaseKey: null });
+  }
+  targets.push({ title: 'Search', url: presentationRoutePatterns.search, phaseKey: null });
+  targets.push({ title: 'Settings', url: SETTINGS_URL, phaseKey: null });
+  if (projectHasResearch(presentation.artifacts)) {
+    targets.push({ title: 'Research', url: presentationRoutePatterns.research, phaseKey: null });
+  }
+  if (projectHasSketches(presentation.artifacts)) {
+    targets.push({ title: 'Sketches', url: presentationRoutePatterns.sketches, phaseKey: null });
+  }
+  for (const milestone of presentation.milestones) {
+    targets.push({ title: `${milestone.name} overview`, url: milestone.overviewUrl, phaseKey: null });
+    for (const phase of milestone.phases) {
+      targets.push({
+        title: `${phaseLabelOf(phase, milestone)} · ${phase.name}`,
+        url: buildPhaseUrl(phase.identity),
+        phaseKey: phase.key,
+      });
+    }
+  }
+  return targets;
+}
+
+const WORD_CHARACTER = /[\p{L}\p{N}]/u;
+
+interface NameMatch {
+  /** 0 the whole text, 1 its start, 2 the start of a word inside it, 3 anywhere inside it. */
+  rank: 0 | 1 | 2 | 3;
+  start: number;
+  end: number;
+}
+
+/** Where `needle` sits in `text` (both already folded), best kind of match first; null when it does not. */
+function matchName(text: string, needle: string): NameMatch | null {
+  if (needle.length === 0) return null;
+  if (text === needle) return { rank: 0, start: 0, end: needle.length };
+  if (text.startsWith(needle)) return { rank: 1, start: 0, end: needle.length };
+  let first = -1;
+  let cursor = 0;
+  for (;;) {
+    const at = text.indexOf(needle, cursor);
+    if (at < 0) break;
+    if (first < 0) first = at;
+    if (!WORD_CHARACTER.test(text.charAt(at - 1))) return { rank: 2, start: at, end: at + needle.length };
+    cursor = at + 1;
+  }
+  return first < 0 ? null : { rank: 3, start: first, end: first + needle.length };
+}
+
+function pageRows(input: JumpInput, needle: string, current: string | null): JumpRow[] {
+  return pageTargetsOf(input.presentation)
+    .map((target, index) => ({ target, index, match: matchName(foldCase(target.title), needle) }))
+    .filter((entry): entry is typeof entry & { match: NameMatch } => entry.match !== null)
+    .sort(
+      (left, right) =>
+        left.match.rank - right.match.rank ||
+        Number(!(current !== null && left.target.phaseKey === current)) -
+          Number(!(current !== null && right.target.phaseKey === current)) ||
+        left.index - right.index,
+    )
+    .slice(0, JUMP_GROUP_CAPS.pages)
+    .map<JumpRow>(({ target, match }) => ({
+      key: `pages:${target.url}`,
+      kind: 'page',
+      id: null,
+      title: target.title,
+      subtitle: target.url,
+      url: target.url,
+      anchor: null,
+      chips: [{ label: 'Page', tone: 'quiet' }],
+      artifactKind: null,
+      phaseKey: target.phaseKey,
+      titleHighlights: [{ start: match.start, end: match.end }],
+      subtitleHighlights: [],
+      snippet: null,
+    }));
+}
+
+function lastSegment(path: string): string {
+  return path.slice(path.lastIndexOf('/') + 1);
+}
+
+function fileRows(input: JumpInput, needle: string, current: string | null): JumpRow[] {
+  const artifactsByPath = new Map(input.presentation.artifacts.map((artifact) => [artifact.path, artifact]));
+  const found: { document: JumpDocument; rank: 0 | 1 | 2; phaseKey: string | null; titleFold: string; pathFold: string }[] = [];
+  for (const document of input.documents) {
+    const name = foldCase(lastSegment(document.path));
+    const stem = name.endsWith('.md') ? name.slice(0, -3) : name;
+    const titleFold = foldCase(document.title);
+    const pathFold = foldCase(document.path);
+    let rank: 0 | 1 | 2;
+    if (name === needle || stem === needle) rank = 0;
+    else if (name.startsWith(needle) || titleFold.startsWith(needle)) rank = 1;
+    else if (name.includes(needle) || titleFold.includes(needle) || pathFold.includes(needle)) rank = 2;
+    else continue;
+    found.push({ document, rank, phaseKey: artifactsByPath.get(document.path)?.phaseKey ?? null, titleFold, pathFold });
+  }
+  return found
+    .sort(
+      (left, right) =>
+        left.rank - right.rank ||
+        Number(!(current !== null && left.phaseKey === current)) -
+          Number(!(current !== null && right.phaseKey === current)) ||
+        compareText(left.document.path, right.document.path),
+    )
+    .slice(0, JUMP_GROUP_CAPS.files)
+    .map<JumpRow>(({ document, phaseKey, titleFold, pathFold }) => {
+      const inTitle = titleFold.indexOf(needle);
+      // A match in the path but not in the title marks the path, preferring the file name's own slice.
+      const nameStart = document.path.length - lastSegment(document.path).length;
+      const inName = pathFold.indexOf(needle, nameStart);
+      const inPath = inName >= 0 ? inName : pathFold.indexOf(needle);
+      return {
+        key: `files:${document.path}`,
+        kind: 'file',
+        id: null,
+        title: document.title,
+        subtitle: document.path,
+        url: rootDocumentRedirect(artifactsByPath.get(document.path)) ?? document.url,
+        anchor: null,
+        chips: [],
+        artifactKind: document.kind,
+        phaseKey,
+        titleHighlights: inTitle >= 0 ? [{ start: inTitle, end: inTitle + needle.length }] : [],
+        subtitleHighlights: inTitle < 0 && inPath >= 0 ? [{ start: inPath, end: inPath + needle.length }] : [],
+        snippet: null,
+      };
+    });
+}
+
 /** The Content group: the first JUMP_GROUP_CAPS.content search hits, each with its first snippet drawn from the
  * indexed body (highlight ranges into plain text, never markup). A root document that has a designed page opens
  * there, the rule search.ts applies to its own rows. */
@@ -773,22 +929,27 @@ export function buildJumpGroups(input: JumpInput): JumpResult {
   const query = input.query.trim();
   const byGroup: Partial<Record<JumpGroupKey, JumpRow[]>> = {};
 
-  const idQuery = query.length > 0 && query.length <= MAX_ID_LENGTH;
-  if (idQuery) {
+  if (query.length > 0) {
     const ordering: Ordering = {
       places: phasePlaces(input.presentation),
       current: currentPhaseKey(input.presentation, input.from),
     };
-    // Decision and finding ids first: a finding id that also looks like a requirement id is a finding.
-    const marked = exactRows(input, query, ordering);
-    const exact = [
-      ...marked,
-      ...(marked.length === 0 ? requirementRows(input, query, ordering) : []),
-      ...planRows(input, query, ordering),
-      ...quickRows(input, query),
-    ].slice(0, JUMP_GROUP_CAPS.exact);
-    byGroup.exact = exact;
-    if (exact.length === 0) byGroup.ids = idsRows(input, query, ordering);
+    if (query.length <= MAX_ID_LENGTH) {
+      // Decision and finding ids first: a finding id that also looks like a requirement id is a finding.
+      const marked = exactRows(input, query, ordering);
+      const exact = [
+        ...marked,
+        ...(marked.length === 0 ? requirementRows(input, query, ordering) : []),
+        ...planRows(input, query, ordering),
+        ...quickRows(input, query),
+      ].slice(0, JUMP_GROUP_CAPS.exact);
+      byGroup.exact = exact;
+      if (exact.length === 0) byGroup.ids = idsRows(input, query, ordering);
+    }
+    // Names match for any query that has text, however long: a path fragment can exceed an ID.
+    const needle = foldCase(query);
+    byGroup.pages = pageRows(input, needle, ordering.current);
+    byGroup.files = fileRows(input, needle, ordering.current);
   }
   byGroup.content = contentRows(input);
 

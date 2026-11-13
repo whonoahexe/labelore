@@ -328,11 +328,12 @@ describe('buildJumpGroups: content matches', () => {
     return { result, hits };
   }
 
-  it('ends with a Content group of at most 5 rows and counts every hit, and is the only group with no Exact match', () => {
+  it('ends with a Content group of at most 5 rows and counts every hit, and has no Exact or IDs group', () => {
     const { result, hits } = withHits('session');
     expect(hits.length).toBeGreaterThan(JUMP_GROUP_CAPS.content);
-    expect(result.groups.map((group) => group.key)).toEqual(['content']);
-    expect(result.groups[0]!.rows).toHaveLength(JUMP_GROUP_CAPS.content);
+    // 13-04: a phase page named "... Sessions" legitimately matches by name, so Pages precedes Content.
+    expect(result.groups.map((group) => group.key)).toEqual(['pages', 'content']);
+    expect(result.groups[result.groups.length - 1]!.rows).toHaveLength(JUMP_GROUP_CAPS.content);
     expect(result.contentTotal).toBe(hits.length);
     expect(result.notFoundId).toBeNull();
   });
