@@ -1842,53 +1842,6 @@
   color: var(--foreground);
 }
 
-.milestone-record {
-  display: grid;
-  gap: var(--space-6);
-  padding: var(--space-5) var(--space-6) var(--space-6);
-  border-top: 1px solid var(--border);
-}
-
-.milestone-record-facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: 1px;
-  margin: 0;
-  border: 1px solid var(--border);
-  background: var(--border);
-}
-
-.milestone-record-facts > div {
-  min-width: 0;
-  padding: var(--space-3-5) var(--space-5);
-  background: var(--background);
-}
-
-.milestone-record-facts dt {
-  margin-bottom: var(--space-1);
-  color: var(--muted-foreground);
-  font-family: var(--font-heading);
-  font-size: var(--font-size-micro-label);
-  letter-spacing: var(--ls-wider);
-  text-transform: uppercase;
-}
-
-.milestone-record-facts dd {
-  max-width: 72ch;
-  margin: 0;
-  overflow-wrap: anywhere;
-  font-size: var(--fs-3);
-  line-height: var(--fs-3--lh);
-}
-
-.milestone-record-facts dd ul {
-  display: grid;
-  gap: var(--space-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
 /* A History milestone's RETROSPECTIVE.md section (sketch 030, side rail). The button sits at the
  * summary's right edge, top-aligned with the title; the dialog is a head, a rail of the four
  * sections beside the open list, and a foot with the arrow-key hint and the Older / Newer walk. */
@@ -6025,10 +5978,6 @@ a.todo-title:hover {
   }
 
   .phase-facts > div {
-    padding-inline: var(--space-4);
-  }
-
-  .milestone-record {
     padding-inline: var(--space-4);
   }
 

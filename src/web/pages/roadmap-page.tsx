@@ -16,7 +16,6 @@ import { EmptyState } from '../components/empty-state.tsx';
 import { LeadText } from '../components/lead-tokens.tsx';
 import type {
   MilestoneFlow,
-  MilestoneRecord,
   RoadmapPhaseRow,
   RoadmapViewModel,
 } from '../../presentation/roadmap.ts';
@@ -327,54 +326,6 @@ function shippedChipText(milestone: MilestoneFlow, title: string): string {
   return milestone.record?.shipped ? `${label} · ${milestone.record.shipped}` : label;
 }
 
-function RecordText({ text, items }: { text: string; items: string[] }): React.JSX.Element {
-  return (
-    <>
-      {text ? <LeadText text={text} /> : null}
-      {items.length > 0 ? (
-        <ul>
-          {items.map((item, index) => (
-            <li key={index}>
-              <LeadText text={item} />
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </>
-  );
-}
-
-function MilestoneRecordPanel({ record }: { record: MilestoneRecord }): React.JSX.Element | null {
-  // Every field the entry holds, in the order the file reads: what shipped, the numbers, the phases, each
-  // other labelled field, then where it sits in git and what comes next. Empty fields are left out.
-  type Fact = { label: string; text: string; items: string[] };
-  const facts = [
-    { label: 'Accomplishments', text: '', items: record.accomplishments },
-    record.stats ? { label: 'Stats', text: record.stats.text, items: record.stats.items } : null,
-    record.phases ? { label: 'Phases', text: record.phases, items: [] } : null,
-    ...record.extra.map((field) => ({ label: field.label, text: field.text, items: field.items })),
-    record.gitRange ? { label: 'Git range', text: record.gitRange, items: [] } : null,
-    record.whatsNext ? { label: "What's next", text: record.whatsNext, items: [] } : null,
-  ].filter((fact): fact is Fact => fact !== null && (fact.text !== '' || fact.items.length > 0));
-  // An entry with only a Delivered line has nothing for the panel; Delivered sits in the summary.
-  if (facts.length === 0) return null;
-
-  return (
-    <div className="milestone-record">
-      <dl className="milestone-record-facts">
-        {facts.map((fact, index) => (
-          <div key={`${index}-${fact.label}`}>
-            <dt>{fact.label}</dt>
-            <dd>
-              <RecordText text={fact.text} items={fact.items} />
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  );
-}
-
 function HistoryMilestone({
   milestone,
   target,
@@ -428,7 +379,6 @@ function HistoryMilestone({
           <RetrospectiveButton milestone={milestone} onOpen={onOpenRetrospective} />
         ) : null}
       </summary>
-      {record ? <MilestoneRecordPanel record={record} /> : null}
       <div className="history-tree">
         <MilestoneTree milestone={milestone} target={target} />
       </div>
