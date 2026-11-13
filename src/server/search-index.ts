@@ -9,7 +9,8 @@ import type { Artifact, PhaseIdentity } from '../domain/model.ts';
 import type { ProjectSnapshot } from '../planning-repo/types.ts';
 import type { JumpGroup } from '../presentation/jump.ts';
 import { buildRequirementMap } from '../presentation/search-facets.ts';
-import type { SearchResultGroup } from '../presentation/search.ts';
+import type { FacetSelection, SearchFacets } from '../presentation/search-facets.ts';
+import type { SearchResultGroup, SearchSections } from '../presentation/search.ts';
 import { buildRouteTable, type RouteTable } from '../presentation/route-table.ts';
 import { buildArtifactUrl, milestoneKeyOf, phaseKeyOf } from '../presentation/routes.ts';
 import { segmentPlanBody } from '../rendering/plan-segments.ts';
@@ -110,10 +111,20 @@ export interface SearchApiResponse {
   /** When the served index was built; null while there is none. */
   builtAt: string | null;
   query: string;
+  /** The hits that pass the selected filters (the same rows as `results`). */
   total: number;
+  /** The hits before any filter was applied: tells 'filtered to zero' from 'no matches' (UI-SPEC States). */
+  unfilteredTotal: number;
   fileCount: number;
   results: SearchHit[];
+  /** The pre-Phase-13 grouping; 13-06 retires it with the old page. */
   groups: SearchResultGroup[];
+  /** The filtered hits grouped by milestone, then phase, with the outside-phase groups beside them (D-12). */
+  sections: SearchSections;
+  /** Per-facet disjunctive counts (D-09); null until the index is ready. */
+  facets: SearchFacets | null;
+  /** The filters that took effect: the request's values the project actually has (T-13-07). */
+  selection: FacetSelection;
 }
 
 // T-03-01-02 (DoS): anchored on the full token (^...$) with bounded quantifiers and no nested

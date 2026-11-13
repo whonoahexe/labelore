@@ -11,10 +11,15 @@ import { createApp } from '../../src/server/index.ts';
 import type { SearchApiResponse } from '../../src/server/search-index.ts';
 import {
   buildSearchGroups,
+  buildSearchSections,
   extractSnippets,
   type SearchHitLike,
 } from '../../src/presentation/search.ts';
 import { emptyLedger } from '../../src/server/dashboard-ledger.ts';
+import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
+import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
+import { FX_ROOT, loadFixtureProject } from '../helpers/fixture-project.ts';
+import { loadShapesProject } from '../helpers/shapes-project.ts';
 
 function phase(overrides: Partial<PhaseDto> & Pick<PhaseDto, 'key' | 'milestoneKey' | 'name'>): PhaseDto {
   return {
@@ -642,5 +647,296 @@ describe('GET /api/search — grouped response (Task 2)', () => {
     expect(payload.fileCount).toBe(new Set(payload.results.map((hit) => hit.path)).size);
     expect(payload.total).toBe(1);
     expect(payload.fileCount).toBe(1);
+  });
+});
+
+// --- buildSearchSections (Phase 13, 13-03) -----------------------------------------------------------------------
+
+function pathHit(path: string, overrides: Partial<SearchHitLike> = {}): SearchHitLike {
+  return hit({ path, ...overrides });
+}
+
+describe('buildSearchSections', () => {
+  const livePhase1 = phase({
+    key: 'p~live1',
+    milestoneKey: 'm~live',
+    name: 'Alpha',
+    identity: { milestoneVersion: 'v2.0', number: '01', projectCode: null, slug: 'alpha' },
+  });
+  const livePhase2 = phase({
+    key: 'p~live2',
+    milestoneKey: 'm~live',
+    name: 'Beta',
+    identity: { milestoneVersion: 'v2.0', number: '02', projectCode: null, slug: 'beta' },
+  });
+  const oldPhase = phase({
+    key: 'p~old1',
+    milestoneKey: 'm~v1.0',
+    name: 'Gamma',
+    archived: true,
+    identity: { milestoneVersion: 'v1.0', number: '01', projectCode: null, slug: 'gamma' },
+  });
+  const oldestPhase = phase({
+    key: 'p~oldest1',
+    milestoneKey: 'm~v0.9',
+    name: 'Delta',
+    archived: true,
+    identity: { milestoneVersion: 'v0.9', number: '01', projectCode: null, slug: 'delta' },
+  });
+  const milestones = [
+    milestone({ key: 'm~v0.9', version: 'v0.9', name: 'Oldest', archived: true, phases: [oldestPhase] }),
+    milestone({ key: 'm~v1.0', version: 'v1.0', name: 'First', archived: true, phases: [oldPhase] }),
+    milestone({ key: 'm~live', version: 'v2.0', name: 'Live', archived: false, phases: [livePhase1, livePhase2] }),
+  ];
+  const world = presentation({
+    milestones,
+    artifacts: [
+      artifact({ path: 'p/live1-b.md', location: 'phase', kind: 'summary', phaseKey: 'p~live1' }),
+      artifact({ path: 'p/live1-a.md', location: 'phase', kind: 'plan', phaseKey: 'p~live1' }),
+      artifact({ path: 'p/live2.md', location: 'phase', kind: 'plan', phaseKey: 'p~live2' }),
+      artifact({ path: 'p/old1.md', location: 'archived-phase', kind: 'plan', phaseKey: 'p~old1' }),
+      artifact({ path: 'p/oldest1.md', location: 'archived-phase', kind: 'plan', phaseKey: 'p~oldest1' }),
+      artifact({ path: '.planning/milestones/v1.0-ROADMAP.md', location: 'milestone-root', kind: 'roadmap' }),
+      artifact({ path: '.planning/milestones/v1.0-quick/260101-a/PLAN.md', location: 'milestone-root', kind: 'plan' }),
+      artifact({ path: '.planning/milestones/v0.9-audit/AUDIT.md', location: 'milestone-root', kind: 'milestone-audit' }),
+      artifact({ path: '.planning/milestones/v7.0-ROADMAP.md', location: 'milestone-root', kind: 'roadmap' }),
+      artifact({ path: '.planning/milestones/stray/NOTE.md', location: 'milestone-root', kind: 'note' }),
+      artifact({ path: '.planning/PROJECT.md', location: 'root', kind: 'project' }),
+      artifact({ path: '.planning/quick/x/PLAN.md', location: 'quick', kind: 'plan' }),
+      artifact({ path: '.planning/research/r.md', location: 'research', kind: 'research' }),
+      artifact({ path: '.planning/codebase/STACK.md', location: 'other', kind: 'codebase-stack' }),
+      artifact({ path: '.planning/debug/d.md', location: 'other', kind: 'debug' }),
+      artifact({ path: 'p/ghost.md', location: 'phase', kind: 'plan', phaseKey: 'p~ghost' }),
+    ],
+  });
+  const allHits = world.artifacts.map((entry) => pathHit(entry.path, { kind: entry.kind, phaseKey: entry.phaseKey }));
+
+  function groupPaths(groups: { rows: { path: string }[] }[]): string[][] {
+    return groups.map((group) => group.rows.map((row) => row.path));
+  }
+
+  it('puts the live milestone first and open, archived ones newest first and closed, with counts', () => {
+    const sections = buildSearchSections(allHits, world);
+    expect(sections.milestones.map((entry) => [entry.version, entry.open, entry.archived])).toEqual([
+      ['v2.0', true, false],
+      ['v1.0', false, true],
+      ['v0.9', false, true],
+    ]);
+    const live = sections.milestones[0];
+    expect(live.label).toBe('Live');
+    expect(live.count).toBe(3);
+    expect(live.groups.map((group) => group.count)).toEqual([2, 1]);
+    expect(sections.milestones[1].count).toBe(3);
+  });
+
+  it("follows the milestone's phase order and clusters plan before summary inside a phase group", () => {
+    const [live] = buildSearchSections(allHits, world).milestones;
+    expect(live.groups.map((group) => [group.kind, group.label, group.phaseNumber])).toEqual([
+      ['phase', 'Alpha', '01'],
+      ['phase', 'Beta', '02'],
+    ]);
+    expect(groupPaths(live.groups)).toEqual([['p/live1-a.md', 'p/live1-b.md'], ['p/live2.md']]);
+    const reversed = buildSearchSections([...allHits].reverse(), world).milestones[0];
+    expect(reversed.groups.map((group) => group.label)).toEqual(['Alpha', 'Beta']);
+  });
+
+  it("lands an archived-phase hit in its own milestone's phase group", () => {
+    const sections = buildSearchSections(allHits, world);
+    const archived = sections.milestones.find((entry) => entry.version === 'v1.0');
+    expect(archived?.groups[0]).toMatchObject({ kind: 'phase', label: 'Gamma' });
+    expect(groupPaths([archived!.groups[0]])).toEqual([['p/old1.md']]);
+  });
+
+  it('places milestone-root files by their path: milestone files, quick tasks, any other versioned folder', () => {
+    const sections = buildSearchSections(allHits, world);
+    const first = sections.milestones.find((entry) => entry.version === 'v1.0')!;
+    expect(first.groups.map((group) => [group.kind, group.label])).toEqual([
+      ['phase', 'Gamma'],
+      ['milestone-files', 'Milestone files'],
+      ['quick', 'Quick tasks'],
+    ]);
+    expect(groupPaths(first.groups).slice(1)).toEqual([
+      ['.planning/milestones/v1.0-ROADMAP.md'],
+      ['.planning/milestones/v1.0-quick/260101-a/PLAN.md'],
+    ]);
+    const oldest = sections.milestones.find((entry) => entry.version === 'v0.9')!;
+    expect(oldest.groups.map((group) => group.kind)).toEqual(['phase', 'milestone-files']);
+    expect(groupPaths(oldest.groups)[1]).toEqual(['.planning/milestones/v0.9-audit/AUDIT.md']);
+  });
+
+  it('puts root, live quick, research, codebase and unplaceable hits in the five outside groups, in order', () => {
+    const { outside } = buildSearchSections(allHits, world);
+    expect(outside.map((group) => [group.key, group.label, group.count])).toEqual([
+      ['project', 'Project', 1],
+      ['quick', 'Quick tasks', 1],
+      ['research', 'Research', 1],
+      ['codebase', 'Codebase', 1],
+      ['other', 'Other', 4],
+    ]);
+    expect(outside[4].rows.map((row) => row.path).sort()).toEqual([
+      '.planning/debug/d.md',
+      '.planning/milestones/stray/NOTE.md',
+      '.planning/milestones/v7.0-ROADMAP.md',
+      'p/ghost.md',
+    ]);
+  });
+
+  it('decides Codebase by kind, whatever the location', () => {
+    const odd = presentation({
+      milestones,
+      artifacts: [artifact({ path: 'p/c.md', location: 'phase', kind: 'codebase-arch', phaseKey: 'p~live1' })],
+    });
+    const { milestones: sections, outside } = buildSearchSections([pathHit('p/c.md', { kind: 'codebase-arch', phaseKey: 'p~live1' })], odd);
+    expect(sections).toEqual([]);
+    expect(outside.map((group) => group.key)).toEqual(['codebase']);
+  });
+
+  it('leaves out empty groups and milestones, and sends a hit with no artifact to Other', () => {
+    expect(buildSearchSections([], world)).toEqual({ milestones: [], outside: [] });
+    const { outside } = buildSearchSections([pathHit('missing.md')], world);
+    expect(outside.map((group) => group.key)).toEqual(['other']);
+  });
+
+  it('puts every hit in exactly one group', () => {
+    const sections = buildSearchSections(allHits, world);
+    const placed = [
+      ...sections.milestones.flatMap((entry) => entry.groups.flatMap((group) => group.rows)),
+      ...sections.outside.flatMap((group) => group.rows),
+    ].map((row) => row.path);
+    expect(placed.sort()).toEqual(allHits.map((entry) => entry.path).sort());
+    const counted =
+      sections.milestones.reduce((total, entry) => total + entry.count, 0) +
+      sections.outside.reduce((total, group) => total + group.count, 0);
+    expect(counted).toBe(allHits.length);
+  });
+
+  it.each([
+    ['Lendshed', loadFixtureProject],
+    ['Kilnrow', loadShapesProject],
+  ])('drops no hit on %s', async (_name, load) => {
+    const { presentation: real } = await load();
+    const hits = real.artifacts.map((entry) => pathHit(entry.path, { kind: entry.kind, phaseKey: entry.phaseKey }));
+    expect(hits.length).toBeGreaterThan(0);
+    const sections = buildSearchSections(hits, real);
+    const placed = [
+      ...sections.milestones.flatMap((entry) => entry.groups.flatMap((group) => group.rows)),
+      ...sections.outside.flatMap((group) => group.rows),
+    ].map((row) => row.path);
+    expect(placed).toHaveLength(hits.length);
+    expect(new Set(placed).size).toBe(hits.length);
+    for (const entry of sections.milestones) {
+      expect(entry.count).toBe(entry.groups.reduce((total, group) => total + group.count, 0));
+      for (const group of entry.groups) expect(group.count).toBe(group.rows.length);
+    }
+  });
+
+  it('puts an archived quick task under the milestone it was done in, on Kilnrow', async () => {
+    const { presentation: real } = await loadShapesProject();
+    const quick = real.artifacts.filter((entry) => /^\.planning\/milestones\/v[\d.]+-quick\//.test(entry.path));
+    expect(quick.length).toBeGreaterThan(0);
+    const sections = buildSearchSections(quick.map((entry) => pathHit(entry.path, { kind: entry.kind })), real);
+    expect(sections.outside).toEqual([]);
+    for (const entry of sections.milestones) {
+      expect(entry.groups.map((group) => group.kind)).toEqual(['quick']);
+      for (const row of entry.groups[0].rows) expect(row.path).toContain(`milestones/${entry.version}-quick/`);
+    }
+  });
+});
+
+describe('GET /api/search - filters, facets and sections (13-03)', () => {
+  async function lendshedApp() {
+    const repository = new PlanningRepository(new LocalFsPlanningFilesystem(FX_ROOT), FX_ROOT);
+    await repository.load();
+    const app = createApp(repository, false);
+    await waitForBuild();
+    await waitForBuild();
+    return app;
+  }
+
+  async function search(app: Awaited<ReturnType<typeof lendshedApp>>, query: string): Promise<SearchApiResponse> {
+    const response = await app.request(`/api/search?${query}`);
+    expect(response.status).toBe(200);
+    return (await response.json()) as SearchApiResponse;
+  }
+
+  it('filters by type, keeps unfilteredTotal and leaves the type counts alone', async () => {
+    const app = await lendshedApp();
+    const unfiltered = await search(app, 'q=session');
+    const filtered = await search(app, 'q=session&type=plan');
+    expect(unfiltered.total).toBeGreaterThan(filtered.total);
+    expect(filtered.total).toBeGreaterThan(0);
+    expect(filtered.results.every((entry) => entry.kind === 'plan')).toBe(true);
+    expect(filtered.unfilteredTotal).toBe(unfiltered.total);
+    expect(unfiltered.unfilteredTotal).toBe(unfiltered.total);
+    expect(filtered.selection).toEqual({ phase: [], type: ['plan'], req: [] });
+    expect(filtered.facets?.type.values).toEqual(unfiltered.facets?.type.values.map((value) => ({ ...value, selected: value.value === 'plan' })));
+    const sectionRows =
+      filtered.sections.milestones.reduce((total, entry) => total + entry.count, 0) +
+      filtered.sections.outside.reduce((total, group) => total + group.count, 0);
+    expect(sectionRows).toBe(filtered.total);
+    expect(filtered.groups.flatMap((group) => group.rows)).toHaveLength(filtered.total);
+  });
+
+  it('ORs repeated values inside a parameter and ANDs across parameters', async () => {
+    const app = await lendshedApp();
+    const both = await search(app, 'q=session&type=plan&type=summary');
+    const plans = await search(app, 'q=session&type=plan');
+    const summaries = await search(app, 'q=session&type=summary');
+    expect(both.total).toBe(plans.total + summaries.total);
+    const phased = await search(app, 'q=session&phase=v1.1/phase-1');
+    expect(phased.total).toBeGreaterThan(0);
+    expect(phased.facets?.phase.values.find((value) => value.value === 'v1.1/phase-1')?.selected).toBe(true);
+    const crossed = await search(app, 'q=session&phase=v1.1/phase-1&type=plan');
+    expect(crossed.total).toBeLessThanOrEqual(phased.total);
+    expect(crossed.results.every((entry) => entry.kind === 'plan')).toBe(true);
+    // each facet counts with the others applied: the phase counts ignore the phase selection itself
+    expect(crossed.facets?.phase.values.map((value) => value.value)).toEqual(phased.facets?.phase.values.map((value) => value.value));
+  });
+
+  it('keeps only traced files for a requirement filter', async () => {
+    const app = await lendshedApp();
+    const traced = await search(app, 'q=session&req=sign-05');
+    expect(traced.selection.req).toEqual(['SIGN-05']);
+    expect(traced.total).toBeGreaterThan(0);
+    for (const entry of traced.results) {
+      expect(['plan', 'summary', 'requirements', 'verification']).toContain(entry.kind);
+    }
+  });
+
+  it('ignores a phase token, kind and requirement the project does not have', async () => {
+    const app = await lendshedApp();
+    const plain = await search(app, 'q=session');
+    const ignored = await search(app, 'q=session&phase=v9.9/phase-9&type=%3Cscript%3E&req=NOPE-01&req=%00');
+    expect(ignored.selection).toEqual({ phase: [], type: [], req: [] });
+    expect(ignored.results).toEqual(plain.results);
+    expect(ignored.total).toBe(plain.total);
+    expect(JSON.stringify(ignored)).not.toContain('NOPE-01');
+    expect(JSON.stringify(ignored)).not.toContain('<script>');
+  });
+
+  it('keeps the groups field as it was for a request with no filters', async () => {
+    const app = await lendshedApp();
+    const plain = await search(app, 'q=session');
+    expect(plain.groups.flatMap((group) => group.rows).map((row) => row.path).sort()).toEqual(
+      plain.results.map((entry) => entry.path).sort(),
+    );
+    const rows = [
+      ...plain.sections.milestones.flatMap((entry) => entry.groups.flatMap((group) => group.rows)),
+      ...plain.sections.outside.flatMap((group) => group.rows),
+    ];
+    expect(rows).toHaveLength(plain.total);
+    expect(rows.some((row) => row.snippets.length > 0 && row.matchCount > 0)).toBe(true);
+  });
+
+  it('answers the pending shape with empty sections, no facets and an empty selection', async () => {
+    const repository = new PlanningRepository(new LocalFsPlanningFilesystem(FX_ROOT), FX_ROOT);
+    await repository.load();
+    const app = createApp(repository, false);
+    const body = (await (await app.request('/api/search?q=session&type=plan')).json()) as SearchApiResponse;
+    expect(body.status).toBe('building');
+    expect(body.sections).toEqual({ milestones: [], outside: [] });
+    expect(body.facets).toBeNull();
+    expect(body.selection).toEqual({ phase: [], type: [], req: [] });
+    expect(body.unfilteredTotal).toBe(0);
   });
 });

@@ -37,7 +37,15 @@ import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
 import { buildArtifactUrl, parseRoutePath } from '../presentation/routes.ts';
 import { buildJumpGroups, MAX_FROM_LENGTH } from '../presentation/jump.ts';
 import { buildTraceabilityViewModel } from '../presentation/traceability.ts';
-import { buildSearchGroups, extractSnippets } from '../presentation/search.ts';
+import { buildSearchGroups, buildSearchSections, extractSnippets } from '../presentation/search.ts';
+import type { SearchResultRow } from '../presentation/search.ts';
+import {
+  applyFacetSelection,
+  buildFacetContext,
+  computeFacets,
+  knownSelection,
+  parseFacetSelection,
+} from '../presentation/search-facets.ts';
 import { buildResearchViewModel } from '../presentation/project-research.ts';
 import { buildSketchesViewModel, SKETCH_MANIFEST_PATH } from '../presentation/sketches.ts';
 import { buildDrawerViewModel } from '../presentation/drawer.ts';
@@ -49,7 +57,7 @@ import { createSourceHandler } from './source-text.ts';
 import { jsonRecord } from './project-presentation.ts';
 import type { DerivedViews, ProjectRuntime } from './project-runtime.ts';
 import { MAX_QUERY_LENGTH, searchIndex } from './search-index.ts';
-import type { JumpApiResponse } from './search-index.ts';
+import type { JumpApiResponse, SearchApiResponse } from './search-index.ts';
 import { SKETCH_FILES_SEGMENT, createSketchFileMiddleware } from './sketch-files.ts';
 
 export type ProjectApiEnv = {
@@ -362,31 +370,67 @@ export function createProjectApi(
     // Answers HTTP 200 in every readiness state — never a 5xx, never a hang, and this handler
     // never blocks /dashboard or any other route while the index is still building (FIND-05).
     if (state.status !== 'ready') {
-      return c.json({ status: state.status, refreshing: false, builtAt: null, query, total: 0, fileCount: 0, results: [], groups: [] });
+      const pending: SearchApiResponse = {
+        status: state.status,
+        refreshing: false,
+        builtAt: null,
+        query,
+        total: 0,
+        unfilteredTotal: 0,
+        fileCount: 0,
+        results: [],
+        groups: [],
+        sections: { milestones: [], outside: [] },
+        facets: null,
+        selection: { phase: [], type: [], req: [] },
+      };
+      return c.json(pending);
     }
-    const results = searchIndex(state, query);
-    const groups = buildSearchGroups(results, activeDerived.presentation);
+    // Everything below reads this one ready state and its own presentation, so the counts, rows and
+    // sections of one response always come from the same index, even when a refresh lands mid-request (Pitfall 3).
+    const all = searchIndex(state, query);
+    const context = buildFacetContext(
+      state.presentation,
+      [...state.documents.values()].map((document) => document.kind),
+      state.requirementsByPath,
+    );
+    const selection = knownSelection(
+      parseFacetSelection((dimension) => c.req.queries(dimension) ?? []),
+      context,
+    );
+    const facets = computeFacets(all, selection, context);
+    const results = applyFacetSelection(all, selection, context);
+    const groups = buildSearchGroups(results, state.presentation);
+    const sections = buildSearchSections(results, state.presentation);
     // D-08: snippets are extracted from the artifact's raw indexed body — never rendered HTML,
     // never a second call through the artifact renderer — using each hit's own matched terms.
-    for (const group of groups) {
-      for (const row of group.rows) {
+    const fillSnippets = (rows: SearchResultRow[]): void => {
+      for (const row of rows) {
         const document = state.documents.get(row.path);
         const extracted = document ? extractSnippets(document.body, row.matchedTerms) : null;
         row.snippets = extracted?.snippets ?? [];
         row.matchCount = extracted?.matchCount ?? 0;
       }
-    }
+    };
+    for (const group of groups) fillSnippets(group.rows);
+    for (const milestone of sections.milestones) for (const group of milestone.groups) fillSnippets(group.rows);
+    for (const group of sections.outside) fillSnippets(group.rows);
     const fileCount = new Set(results.map((hit) => hit.path)).size;
-    return c.json({
-      status: 'ready' as const,
+    const ready: SearchApiResponse = {
+      status: 'ready',
       refreshing: state.refreshing,
       builtAt: state.builtAt,
       query,
       total: results.length,
+      unfilteredTotal: all.length,
       fileCount,
       results,
       groups,
-    });
+      sections,
+      facets,
+      selection,
+    };
+    return c.json(ready);
   });
   api.get('/jump', (c) => {
     // Same skeleton as /search: the bundle is captured first, so the whole response is built from this
