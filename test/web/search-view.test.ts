@@ -8,12 +8,17 @@ import type {
   SearchSectionGroup,
 } from '../../src/presentation/search.ts';
 import {
+  activeTypeTab,
   classifySearchState,
   countLineOf,
   crumbsOf,
+  dropdownLabelOf,
   readSearchUrl,
+  toggleFacetValue,
+  withTypeTab,
 } from '../../src/web/pages/search-view.ts';
 import type { SearchStateData } from '../../src/web/pages/search-view.ts';
+import type { FacetSelection, SearchFacetValue } from '../../src/presentation/search-facets.ts';
 
 function data(overrides: Partial<SearchStateData> = {}): SearchStateData {
   return { status: 'ready', total: 4, unfilteredTotal: 4, refreshing: false, ...overrides };
@@ -137,5 +142,68 @@ describe('crumbsOf', () => {
   it('lays an outside row out as the group label then kind', () => {
     const project = { key: 'project', label: 'Project', count: 2, rows: [] } as SearchOutsideGroup;
     expect(crumbsOf(project, null, row('requirements'))).toEqual(['Project', 'Requirements']);
+  });
+});
+
+describe('file type tabs (FIND-06; the user narrowed D-09 for this facet on 2026-11-13)', () => {
+  const selection: FacetSelection = { phase: ['v1.1/phase-5'], type: ['plan', 'summary'], req: ['FIND-06'] };
+
+  it('pressing a tab selects that one type and touches neither phase nor requirement', () => {
+    expect(withTypeTab(selection, 'context')).toEqual({ phase: ['v1.1/phase-5'], type: ['context'], req: ['FIND-06'] });
+  });
+
+  it('pressing All clears the type and nothing else', () => {
+    expect(withTypeTab(selection, null)).toEqual({ phase: ['v1.1/phase-5'], type: [], req: ['FIND-06'] });
+  });
+
+  it('is All for no type, the kind for exactly one, and no tab at all for a pasted OR link', () => {
+    expect(activeTypeTab({ phase: [], type: [], req: [] })).toBe('all');
+    expect(activeTypeTab({ phase: [], type: ['plan'], req: [] })).toBe('plan');
+    expect(activeTypeTab(selection)).toBeNull();
+  });
+});
+
+describe('toggleFacetValue (OR within a facet)', () => {
+  const selection: FacetSelection = { phase: ['v1.1/phase-5'], type: ['plan'], req: [] };
+
+  it('adds an absent token and keeps the others', () => {
+    expect(toggleFacetValue(selection, 'phase', 'v2.1/phase-13')).toEqual({
+      phase: ['v1.1/phase-5', 'v2.1/phase-13'],
+      type: ['plan'],
+      req: [],
+    });
+  });
+
+  it('removes a present token and keeps the others', () => {
+    expect(toggleFacetValue({ ...selection, phase: ['v1.1/phase-5', 'v2.1/phase-13'] }, 'phase', 'v1.1/phase-5')).toEqual({
+      phase: ['v2.1/phase-13'],
+      type: ['plan'],
+      req: [],
+    });
+  });
+
+  it('does the same for requirements and never mutates its input', () => {
+    const next = toggleFacetValue(selection, 'req', 'FIND-06');
+    expect(next.req).toEqual(['FIND-06']);
+    expect(selection.req).toEqual([]);
+  });
+});
+
+describe('dropdownLabelOf', () => {
+  const value = (label: string, selected: boolean): SearchFacetValue => ({ value: label, label, count: 3, selected });
+
+  it('reads the facet name with nothing selected', () => {
+    expect(dropdownLabelOf('phase', [value('05 File Watcher', false)])).toBe('Phase');
+    expect(dropdownLabelOf('req', [value('FIND-06', false)])).toBe('Requirement');
+  });
+
+  it("reads the selected value's label with one", () => {
+    expect(dropdownLabelOf('phase', [value('04 Search', false), value('05 File Watcher', true)])).toBe('05 File Watcher');
+    expect(dropdownLabelOf('req', [value('FIND-06', true)])).toBe('FIND-06');
+  });
+
+  it('reads the facet name and the number with two or more', () => {
+    expect(dropdownLabelOf('phase', [value('04 Search', true), value('05 File Watcher', true)])).toBe('Phase · 2');
+    expect(dropdownLabelOf('req', [value('A-1', true), value('A-2', true), value('A-3', true)])).toBe('Requirement · 3');
   });
 });

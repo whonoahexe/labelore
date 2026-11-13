@@ -6,7 +6,7 @@
 // the same bounded parser the server uses (`parseFacetSelection`) and written through the one writer
 // (`facetSearchParams`), so what a pasted link carries is exactly what the server filters by.
 import { parseFacetSelection, paddedNumber } from '../../presentation/search-facets.ts';
-import type { FacetSelection } from '../../presentation/search-facets.ts';
+import type { FacetDimension, FacetSelection, SearchFacetValue } from '../../presentation/search-facets.ts';
 import type { SearchMilestoneSection, SearchOutsideGroup, SearchResultRow, SearchSectionGroup } from '../../presentation/search.ts';
 import { humanizeKind } from '../views/kinds.ts';
 
@@ -93,4 +93,21 @@ export function crumbsOf(
   const place = group.phaseNumber === null ? group.label : `${paddedNumber(group.phaseNumber)} ${group.label}`;
   const milestone = 'version' in parent && parent.version !== null ? parent.version : parent.label;
   return [milestone, place, kind];
+}
+
+// Skeleton: the filter rules arrive with the filter row.
+export function withTypeTab(selection: FacetSelection, _kind: string | null): FacetSelection {
+  return selection;
+}
+
+export function activeTypeTab(_selection: FacetSelection): string | null {
+  return null;
+}
+
+export function toggleFacetValue(selection: FacetSelection, _dimension: FacetDimension, _token: string): FacetSelection {
+  return selection;
+}
+
+export function dropdownLabelOf(_dimension: 'phase' | 'req', _values: readonly SearchFacetValue[]): string {
+  return '';
 }

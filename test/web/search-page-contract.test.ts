@@ -162,3 +162,50 @@ describe('search page: corpus text is never HTML (T-13-20)', () => {
     expect(code(PAGE)).toMatch(/import \{[^}]*\bLink\b[^}]*\} from '\.\.\/nav\.tsx'/);
   });
 });
+
+describe('search page: filters and counts (FIND-06, D-09, D-10)', () => {
+  it('file types are single-select tabs: buttons in a labelled group with aria-pressed and the count in the name', () => {
+    const page = source(PAGE);
+    expect(page).toContain('role="group"');
+    expect(page).toContain('aria-label="File type"');
+    expect(page).toContain('aria-pressed');
+    expect(page).toContain('withTypeTab(');
+    expect(page).toContain('activeTypeTab(');
+    expect(page).toContain('facets.type.allCount');
+    expect(page).toMatch(/aria-label=\{`\$\{[^}]+\}, \$\{plural\([^)]*\)\}`\}|\$\{[^}]+\}, \$\{[^}]*results/);
+    expect(page).toContain('data-zero');
+  });
+
+  it('phase and requirement are Base UI menus of checkbox items that stay open while choosing', () => {
+    const page = source(PAGE);
+    expect(page).toContain("from '@base-ui/react/menu'");
+    expect(page).toContain('Menu.CheckboxItem');
+    expect(page).toContain('closeOnClick={false}');
+    expect(page).toContain('toggleFacetValue(');
+    expect(page).toContain('dropdownLabelOf(');
+    expect(page).toContain('search-filter-option');
+  });
+
+  it('a filter change replaces the history entry, in the tabs, the options and Clear filters', () => {
+    const page = code(PAGE);
+    expect((page.match(/replace: true/g) ?? []).length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('Clear filters renders only while a filter is active and clears all three facets, keeping the query', () => {
+    const page = source(PAGE);
+    expect(page).toContain('Clear filters');
+    expect(page).toContain('facetSearchParams(query, EMPTY_SELECTION)');
+    expect(page).toMatch(/filtered \? \(|\{filtered && /);
+  });
+
+  it('names the active types beside the count line when a pasted link carries several', () => {
+    expect(code(PAGE)).toMatch(/countLineOf\([^)]*activeTypeTab|activeTypes/);
+  });
+
+  it('shows the filter row only for results and filtered-zero, never while indexing for the first time', () => {
+    const page = code(PAGE);
+    const firstStart = page.slice(page.indexOf("state === 'first-start'"), page.indexOf("state === 'index-error'"));
+    expect(firstStart).not.toContain('SearchFilters');
+    expect(page).toContain('<SearchFilters');
+  });
+});
