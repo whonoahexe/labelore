@@ -17,7 +17,7 @@ import { createCommitLog, type CommitLog } from './commit-times.ts';
 import { createFileDates, createGitRunner, type FileDates, type GitRunner } from './file-dates.ts';
 import { createIndexSummary, type IndexSummary } from './index-summary.ts';
 import { toProjectPresentation } from './project-presentation.ts';
-import { createSearchIndexState } from './search-index.ts';
+import { createSearchIndexState, type ReadyIndexState } from './search-index.ts';
 import { flatInventory, isValidWorkstreamName, readWorkstreamInventory } from './workstreams.ts';
 import type { WorkstreamInventory } from './workstreams.ts';
 
@@ -93,20 +93,31 @@ export class ProjectRuntime {
   private readonly scoped: Map<string, Promise<ProjectRuntime | null>>;
   /** The workstream runtimes that finished loading, for isBusy(). */
   private readonly children: Set<ProjectRuntime>;
+  /** The ready search index each finished workstream runtime held when a refresh released it, by workstream
+   * name, so the runtime re-created for that name starts from it (D-11); taken on first use, cleared on dispose. */
+  private readonly carriedScopeIndexes: Map<string, ReadyIndexState | null>;
 
-  constructor(source: SnapshotSource, slug: string, commitLog?: CommitLog, runGit?: GitRunner, scope?: RuntimeScope) {
+  constructor(
+    source: SnapshotSource,
+    slug: string,
+    commitLog?: CommitLog,
+    runGit?: GitRunner,
+    scope?: RuntimeScope,
+    carriedIndex: ReadyIndexState | null = null,
+  ) {
     this.source = source;
     this.slug = slug;
     this.scope = scope ?? null;
     this.inventory = null;
     this.scoped = new Map();
     this.children = new Set();
+    this.carriedScopeIndexes = new Map();
     // The commits-behind figure of the graph summary: a short timeout and a small buffer, one number back.
     this.runGit = runGit ?? createGitRunner(3000, 64 * 1024);
     this.inFlightRequests = 0;
     this.disposed = false;
     this.inFlight = null;
-    this.derived = this.buildDerivedViews(source.getSnapshot());
+    this.derived = this.buildDerivedViews(source.getSnapshot(), carriedIndex);
     const dates = createFileDates(this.derived.presentation.rootPath);
     // A scoped file's date is the date of the file on disk, not of its virtual path.
     this.fileDates = scope ? { addedAt: (path) => dates.addedAt(scope.realPathOf(path)) } : dates;
@@ -116,7 +127,7 @@ export class ProjectRuntime {
 
   // D-05/WR-03: builds all derived views from one snapshot. This stays the file's only
   // presentation-building call site, whichever way `snapshot` was obtained.
-  private buildDerivedViews(snapshot: ProjectSnapshot): DerivedViews {
+  private buildDerivedViews(snapshot: ProjectSnapshot, previousIndex: ReadyIndexState | null): DerivedViews {
     const slug = this.slug;
     const routeTable = buildRouteTable(snapshot.project);
     const presentation = toProjectPresentation(snapshot, slug, routeTable, this.scope?.realPathOf.bind(this.scope));
@@ -125,7 +136,7 @@ export class ProjectRuntime {
     // D-04/FIND-05: constructing the state object is synchronous and cheap (just a status flag);
     // the actual MiniSearch build is scheduled off this path inside buildFrom - callers never wait
     // on index readiness.
-    const searchIndexState = createSearchIndexState();
+    const searchIndexState = createSearchIndexState(previousIndex);
     searchIndexState.buildFrom(snapshot, routeTable, presentation);
     // Creating the summary does no read: the graph is scanned only when the Indexes page asks (11-13, D-04).
     const indexSummary = createIndexSummary({
@@ -171,7 +182,7 @@ export class ProjectRuntime {
       if (this.disposed) return { kind: 'failed', error: 'Refresh failed' };
       // D-05: the atomic swap - every field the derived bundle carries replaces together in one
       // assignment, never mutated piecemeal. Only reached on an ok load status.
-      this.derived = this.buildDerivedViews(snapshot);
+      this.derived = this.buildDerivedViews(snapshot, this.derived.searchIndexState.lastReady());
       this.commits.reset();
       // The listing may have changed with the files: drop the inventory and every workstream runtime, which
       // the next request rebuilds from the new listing.
@@ -198,8 +209,12 @@ export class ProjectRuntime {
 
   private resetScopes(): void {
     const stale = [...this.scoped.values()];
-    // Finished runtimes are released now; one still loading is released as soon as it resolves.
-    for (const child of this.children) child.dispose();
+    // Finished runtimes are released now; one still loading is released as soon as it resolves. Each
+    // finished one hands its last ready index to the runtime that replaces it (D-11).
+    for (const child of this.children) {
+      if (child.scope) this.carriedScopeIndexes.set(child.scope.name, child.derived.searchIndexState.lastReady());
+      child.dispose();
+    }
     this.scoped.clear();
     this.inventory = null;
     this.children.clear();
@@ -241,10 +256,16 @@ export class ProjectRuntime {
     const repository = new PlanningRepository(scopedFs, this.derived.presentation.rootPath);
     await repository.load();
     if (this.disposed) return null;
-    const runtime = new ProjectRuntime(repository, this.slug, NO_COMMIT_HISTORY, this.runGit, {
-      name,
-      realPathOf: (virtualPath) => scopedFs.realPathOf(virtualPath),
-    });
+    const carried = this.carriedScopeIndexes.get(name) ?? null;
+    this.carriedScopeIndexes.delete(name);
+    const runtime = new ProjectRuntime(
+      repository,
+      this.slug,
+      NO_COMMIT_HISTORY,
+      this.runGit,
+      { name, realPathOf: (virtualPath) => scopedFs.realPathOf(virtualPath) },
+      carried,
+    );
     this.children.add(runtime);
     return runtime;
   }
@@ -255,6 +276,7 @@ export class ProjectRuntime {
     if (this.disposed) return;
     this.disposed = true;
     this.resetScopes();
+    this.carriedScopeIndexes.clear();
     this.derived.searchIndexState.cancel();
     this.source.dispose?.();
   }

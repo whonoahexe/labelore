@@ -8,7 +8,9 @@ import MiniSearch from 'minisearch';
 import type { Artifact, PhaseIdentity } from '../domain/model.ts';
 import type { ProjectSnapshot } from '../planning-repo/types.ts';
 import type { JumpGroup } from '../presentation/jump.ts';
-import type { SearchResultGroup } from '../presentation/search.ts';
+import { buildRequirementMap } from '../presentation/search-facets.ts';
+import type { FacetSelection, SearchFacets } from '../presentation/search-facets.ts';
+import type { SearchResultGroup, SearchSections } from '../presentation/search.ts';
 import { buildRouteTable, type RouteTable } from '../presentation/route-table.ts';
 import { buildArtifactUrl, milestoneKeyOf, phaseKeyOf } from '../presentation/routes.ts';
 import { segmentPlanBody } from '../rendering/plan-segments.ts';
@@ -50,21 +52,29 @@ interface ReachableArtifact {
   phaseIdentity: PhaseIdentity | null;
 }
 
-export type SearchIndexState =
-  | { status: 'building' }
-  | {
-      status: 'ready';
-      index: MiniSearch<SearchDocument>;
-      documents: Map<string, SearchDocument>;
-      owners: Map<string, PhaseIdentity | null>;
-      /** path -> the file's readable URL from the bundle's route table. */
-      urls: Map<string, string>;
-      /** The presentation this index was built from, so a carried-forward index groups its hits against
-       * its own presentation rather than a newer bundle's (Phase 13, 13-01). */
-      presentation: ProjectPresentation;
-      builtAt: string;
-    }
-  | { status: 'error'; message: string };
+/** The self-contained ready member of SearchIndexState: an index, its documents and the presentation it was
+ * built from travel together, so a carried-forward copy never mixes an old index with a new presentation
+ * (T-13-09). */
+export interface ReadyIndexState {
+  status: 'ready';
+  index: MiniSearch<SearchDocument>;
+  documents: Map<string, SearchDocument>;
+  owners: Map<string, PhaseIdentity | null>;
+  /** path -> the file's readable URL from the bundle's route table. */
+  urls: Map<string, string>;
+  /** The presentation this index was built from, so a carried-forward index groups its hits against
+   * its own presentation rather than a newer bundle's (Phase 13, 13-01). */
+  presentation: ProjectPresentation;
+  /** path -> the requirement ids the file is traced to (D-08), built once from `presentation` so a carried
+   * index keeps its own map (Phase 13, 13-03). */
+  requirementsByPath: Map<string, string[]>;
+  builtAt: string;
+  /** True while this is the PREVIOUS generation's index, served until the refresh's own build lands
+   * (D-11, FIND-09): search keeps answering instead of dropping to 'building'. */
+  refreshing: boolean;
+}
+
+export type SearchIndexState = { status: 'building' } | ReadyIndexState | { status: 'error'; message: string };
 
 /** Narrows SearchIndexState to its 'ready' member — a small, explicit convenience for route
  * handlers or future consumers that need the ready-only fields (index/documents/owners/builtAt)
@@ -79,6 +89,10 @@ export function isReady(
  * 'ready'. `contentTotal` is the full hit count behind the Content group's capped rows. */
 export interface JumpApiResponse {
   status: SearchIndexState['status'];
+  /** True while the ready index is the previous generation, served until a refresh's build lands (D-11). */
+  refreshing: boolean;
+  /** When the served index was built; null while there is none. */
+  builtAt: string | null;
   query: string;
   groups: JumpGroup[];
   contentTotal: number;
@@ -92,11 +106,25 @@ export interface JumpApiResponse {
  * the "N results across M files" half of the results-page copy, alongside `total`'s row count. */
 export interface SearchApiResponse {
   status: SearchIndexState['status'];
+  /** True while the ready index is the previous generation, served until a refresh's build lands (D-11). */
+  refreshing: boolean;
+  /** When the served index was built; null while there is none. */
+  builtAt: string | null;
   query: string;
+  /** The hits that pass the selected filters (the same rows as `results`). */
   total: number;
+  /** The hits before any filter was applied: tells 'filtered to zero' from 'no matches' (UI-SPEC States). */
+  unfilteredTotal: number;
   fileCount: number;
   results: SearchHit[];
+  /** The pre-Phase-13 grouping; 13-06 retires it with the old page. */
   groups: SearchResultGroup[];
+  /** The filtered hits grouped by milestone, then phase, with the outside-phase groups beside them (D-12). */
+  sections: SearchSections;
+  /** Per-facet disjunctive counts (D-09); null until the index is ready. */
+  facets: SearchFacets | null;
+  /** The filters that took effect: the request's values the project actually has (T-13-07). */
+  selection: FacetSelection;
 }
 
 // T-03-01-02 (DoS): anchored on the full token (^...$) with bounded quantifiers and no nested
@@ -251,24 +279,36 @@ function buildMiniSearchIndex(documents: SearchDocument[]): MiniSearch<SearchDoc
 }
 
 /**
- * Non-blocking index construction (D-04, FIND-05). `state()` starts at `{ status: 'building' }`;
- * `buildFrom` schedules the actual MiniSearch construction on a `setImmediate` callback so it never
- * runs synchronously inside `createApp` — the HTTP server has already started accepting connections
- * by the time this callback fires. `ready` is assigned in a single statement after `addAll`
- * returns, so no caller can ever observe a partially-populated index; a thrown build error is
- * captured as the `error` member rather than crashing the process.
+ * Non-blocking index construction (D-04, FIND-05). `state()` starts at `{ status: 'building' }` - or,
+ * when a previous ready state is carried in (a refresh, D-11), at that state flagged `refreshing`, so
+ * search keeps answering from the old index until the new one lands. `buildFrom` schedules the actual
+ * MiniSearch construction on a `setImmediate` callback so it never runs synchronously inside
+ * `createApp` - the HTTP server has already started accepting connections by the time this callback
+ * fires. `ready` is assigned in a single statement after `addAll` returns, so no caller can ever
+ * observe a partially-populated index; a thrown build error is captured as the `error` member rather
+ * than crashing the process.
+ *
+ * `lastReady()` is the state a following refresh should carry: the original previous state while this
+ * build is pending (never the `refreshing` copy of it, so carried states never chain - T-13-10), then
+ * the new ready state once the build lands.
  */
-export function createSearchIndexState(): {
+export function createSearchIndexState(previous: ReadyIndexState | null = null): {
   state(): SearchIndexState;
   buildFrom(snapshot: ProjectSnapshot, routeTable?: RouteTable, presentation?: ProjectPresentation): void;
-  /** Stops a scheduled build from ever running (a disposed runtime); `state()` stays 'building'. */
+  /** The newest ready state this generation holds (the carried one until its own build lands), or null. */
+  lastReady(): ReadyIndexState | null;
+  /** Stops a scheduled build from ever running (a disposed runtime); `state()` stays as it was. */
   cancel(): void;
 } {
-  let current: SearchIndexState = { status: 'building' };
+  let current: SearchIndexState = previous ? { ...previous, refreshing: true } : { status: 'building' };
+  let lastReady: ReadyIndexState | null = previous;
   let cancelled = false;
   return {
     state(): SearchIndexState {
       return current;
+    },
+    lastReady(): ReadyIndexState | null {
+      return lastReady;
     },
     cancel(): void {
       cancelled = true;
@@ -293,7 +333,8 @@ export function createSearchIndexState(): {
           }
           const index = buildMiniSearchIndex(documents);
           const documentsByPath = new Map(documents.map((doc) => [doc.path, doc]));
-          current = {
+          const readyPresentation = presentation ?? toProjectPresentation(snapshot, undefined, routeTable);
+          const ready: ReadyIndexState = {
             status: 'ready',
             index,
             documents: documentsByPath,
@@ -301,10 +342,16 @@ export function createSearchIndexState(): {
             urls,
             // Callers that already hold the bundle's presentation pass it; the default is built here,
             // inside the scheduled callback, so a test caller pays nothing on the request path.
-            presentation: presentation ?? toProjectPresentation(snapshot, undefined, routeTable),
+            presentation: readyPresentation,
+            requirementsByPath: buildRequirementMap(readyPresentation),
             builtAt: new Date().toISOString(),
+            refreshing: false,
           };
+          current = ready;
+          lastReady = ready;
         } catch (error) {
+          // A build that throws replaces whatever was served with the honest 'error' (RESEARCH A8);
+          // lastReady keeps pointing at the carried state so a later refresh can still carry it.
           current = { status: 'error', message: error instanceof Error ? error.message : String(error) };
         }
       });

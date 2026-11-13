@@ -9,8 +9,8 @@
 // the MiniSearch/index-construction layer. `SearchHitLike` below is a structural redeclaration of
 // search-index.ts's `SearchHit` shape for exactly that reason: TypeScript's structural typing means
 // a real `SearchHit[]` satisfies it without an import.
-import { parseMilestoneFileName } from '../planning-repo/naming.ts';
-import type { ArtifactDto, ProjectPresentation } from '../server/project-presentation.ts';
+import { parseMilestoneFileName, parseMilestoneQuickDirName } from '../planning-repo/naming.ts';
+import type { ArtifactDto, MilestoneDto, ProjectPresentation } from '../server/project-presentation.ts';
 import { artifactWarningTone, type ArtifactWarningTone } from './artifact-warning-tone.ts';
 import { rootDocumentRedirect, sourceUrlOf } from './root-redirects.ts';
 import { stableSlug } from '../rendering/slug.ts';
@@ -266,6 +266,218 @@ function resolveArchivedMilestone(
   const parsed = parseMilestoneFileName(basename);
   if (!parsed.matched) return null;
   return archivedMilestonesInOrder.find((milestone) => milestone.version === parsed.version) ?? null;
+}
+
+// --- Sections: milestone, then phase (Phase 13, D-12, D-13, FIND-07) ---------------------------------------------
+
+export type SearchSectionGroupKind = 'phase' | 'milestone-files' | 'quick';
+
+export interface SearchSectionGroup {
+  key: string;
+  kind: SearchSectionGroupKind;
+  /** The phase's name, 'Milestone files' or 'Quick tasks'. */
+  label: string;
+  /** The phase's number ('03', '2.1') for a phase group, else null. */
+  phaseNumber: string | null;
+  count: number;
+  rows: SearchResultRow[];
+}
+
+export interface SearchMilestoneSection {
+  key: string;
+  version: string | null;
+  /** The milestone's name. */
+  label: string;
+  archived: boolean;
+  /** True only for a live milestone: the one the page opens expanded. */
+  open: boolean;
+  count: number;
+  groups: SearchSectionGroup[];
+}
+
+export type SearchOutsideGroupKey = 'project' | 'quick' | 'research' | 'codebase' | 'other';
+
+export interface SearchOutsideGroup {
+  key: SearchOutsideGroupKey;
+  label: string;
+  count: number;
+  rows: SearchResultRow[];
+}
+
+export interface SearchSections {
+  milestones: SearchMilestoneSection[];
+  outside: SearchOutsideGroup[];
+}
+
+const OUTSIDE_ORDER: readonly SearchOutsideGroupKey[] = ['project', 'quick', 'research', 'codebase', 'other'];
+const OUTSIDE_LABELS: Record<SearchOutsideGroupKey, string> = {
+  project: 'Project',
+  quick: 'Quick tasks',
+  research: 'Research',
+  codebase: 'Codebase',
+  other: 'Other',
+};
+
+// A folder under milestones/ that starts with a GSD version and a hyphen belongs to that milestone.
+const MILESTONE_FOLDER_PREFIX = /^(v\d+\.\d+(?:\.\d+)?)-/i;
+
+type SectionPlace =
+  | { kind: 'phase'; milestoneKey: string; phaseKey: string }
+  | { kind: 'milestone-files'; milestoneKey: string }
+  | { kind: 'quick'; milestoneKey: string }
+  | { kind: 'outside'; key: SearchOutsideGroupKey };
+
+function milestoneByVersion(presentation: ProjectPresentation, version: string): MilestoneDto | null {
+  const wanted = version.toLowerCase();
+  return presentation.milestones.find((milestone) => milestone.version?.toLowerCase() === wanted) ?? null;
+}
+
+/** Where a milestone-root file lives, from the path segment after `milestones/`. */
+function milestoneRootPlace(artifactPath: string, presentation: ProjectPresentation): SectionPlace {
+  const segments = artifactPath.split('/');
+  const at = segments.indexOf('milestones');
+  const segment = at >= 0 ? segments[at + 1] : undefined;
+  if (segment === undefined) return { kind: 'outside', key: 'other' };
+  if (at + 2 === segments.length) {
+    const file = parseMilestoneFileName(segment);
+    const milestone = file.matched ? milestoneByVersion(presentation, file.version) : null;
+    return milestone ? { kind: 'milestone-files', milestoneKey: milestone.key } : { kind: 'outside', key: 'other' };
+  }
+  const quick = parseMilestoneQuickDirName(segment);
+  if (quick.matched) {
+    const milestone = milestoneByVersion(presentation, quick.version);
+    return milestone ? { kind: 'quick', milestoneKey: milestone.key } : { kind: 'outside', key: 'other' };
+  }
+  const prefixed = MILESTONE_FOLDER_PREFIX.exec(segment);
+  const milestone = prefixed ? milestoneByVersion(presentation, prefixed[1]) : null;
+  return milestone ? { kind: 'milestone-files', milestoneKey: milestone.key } : { kind: 'outside', key: 'other' };
+}
+
+/**
+ * Groups hits by milestone, then phase, with the files that sit outside any phase beside them (D-12, D-13).
+ * Every hit lands in exactly one group - anything unclassifiable goes to 'Other', never away (FIND-07). The
+ * classification reads each hit's artifact in `presentation` (the index's own, never a newer bundle's) and
+ * only recovers a version from a path where discovery leaves the artifact without one.
+ *
+ * Order: the live milestone first and open, archived milestones newest first and closed; inside one, its
+ * phases in roadmap order, then Milestone files, then Quick tasks; the outside groups in a fixed order. A
+ * group or milestone with no rows is left out.
+ */
+export function buildSearchSections(hits: readonly SearchHitLike[], presentation: ProjectPresentation): SearchSections {
+  const artifactsByPath = new Map(presentation.artifacts.map((artifact) => [artifact.path, artifact]));
+  const phaseOwner = new Map<string, MilestoneDto>();
+  for (const milestone of presentation.milestones) {
+    for (const phase of milestone.phases) phaseOwner.set(phase.key, milestone);
+  }
+
+  const phaseHits = new Map<string, SearchHitLike[]>();
+  const filesHits = new Map<string, SearchHitLike[]>();
+  const quickHits = new Map<string, SearchHitLike[]>();
+  const outsideHits = new Map<SearchOutsideGroupKey, SearchHitLike[]>();
+  const push = (map: Map<string, SearchHitLike[]>, key: string, hit: SearchHitLike): void => {
+    const list = map.get(key);
+    if (list) list.push(hit);
+    else map.set(key, [hit]);
+  };
+
+  for (const hit of hits) {
+    const artifact = artifactsByPath.get(hit.path);
+    let place: SectionPlace;
+    if (artifact === undefined) {
+      place = { kind: 'outside', key: 'other' };
+    } else if (artifact.kind.startsWith('codebase-')) {
+      place = { kind: 'outside', key: 'codebase' };
+    } else if (artifact.location === 'phase' || artifact.location === 'archived-phase') {
+      const owner = hit.phaseKey ? phaseOwner.get(hit.phaseKey) : undefined;
+      place = owner && hit.phaseKey
+        ? { kind: 'phase', milestoneKey: owner.key, phaseKey: hit.phaseKey }
+        : { kind: 'outside', key: 'other' };
+    } else if (artifact.location === 'milestone-root') {
+      place = milestoneRootPlace(artifact.path, presentation);
+    } else if (artifact.location === 'root') {
+      place = { kind: 'outside', key: 'project' };
+    } else if (artifact.location === 'quick') {
+      place = { kind: 'outside', key: 'quick' };
+    } else if (artifact.location === 'research') {
+      place = { kind: 'outside', key: 'research' };
+    } else {
+      place = { kind: 'outside', key: 'other' };
+    }
+
+    if (place.kind === 'phase') push(phaseHits, place.phaseKey, hit);
+    else if (place.kind === 'milestone-files') push(filesHits, place.milestoneKey, hit);
+    else if (place.kind === 'quick') push(quickHits, place.milestoneKey, hit);
+    else {
+      const list = outsideHits.get(place.key);
+      if (list) list.push(hit);
+      else outsideHits.set(place.key, [hit]);
+    }
+  }
+
+  const live = presentation.milestones.filter((milestone) => !milestone.archived);
+  // presentation.milestones carries the archived ones version-ascending, so reverse for newest first.
+  const archived = presentation.milestones.filter((milestone) => milestone.archived).reverse();
+
+  const milestones: SearchMilestoneSection[] = [];
+  for (const milestone of [...live, ...archived]) {
+    const groups: SearchSectionGroup[] = [];
+    for (const phase of milestone.phases) {
+      const found = phaseHits.get(phase.key);
+      if (!found) continue;
+      const rows = toRows(found, artifactsByPath);
+      groups.push({
+        key: phase.key,
+        kind: 'phase',
+        label: phase.name,
+        phaseNumber: phase.identity.number,
+        count: rows.length,
+        rows,
+      });
+    }
+    const files = filesHits.get(milestone.key);
+    if (files) {
+      const rows = toRows(files, artifactsByPath);
+      groups.push({
+        key: `${milestone.key}:files`,
+        kind: 'milestone-files',
+        label: 'Milestone files',
+        phaseNumber: null,
+        count: rows.length,
+        rows,
+      });
+    }
+    const quick = quickHits.get(milestone.key);
+    if (quick) {
+      const rows = toRows(quick, artifactsByPath);
+      groups.push({
+        key: `${milestone.key}:quick`,
+        kind: 'quick',
+        label: 'Quick tasks',
+        phaseNumber: null,
+        count: rows.length,
+        rows,
+      });
+    }
+    if (groups.length === 0) continue;
+    milestones.push({
+      key: milestone.key,
+      version: milestone.version,
+      label: milestone.name,
+      archived: milestone.archived,
+      open: !milestone.archived,
+      count: groups.reduce((total, group) => total + group.count, 0),
+      groups,
+    });
+  }
+
+  const outside: SearchOutsideGroup[] = [];
+  for (const key of OUTSIDE_ORDER) {
+    const found = outsideHits.get(key);
+    if (!found) continue;
+    const rows = toRows(found, artifactsByPath);
+    outside.push({ key, label: OUTSIDE_LABELS[key], count: rows.length, rows });
+  }
+  return { milestones, outside };
 }
 
 // --- Snippet extraction (D-08, D-06) ---------------------------------------------------------
