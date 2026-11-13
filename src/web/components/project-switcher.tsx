@@ -7,7 +7,7 @@
 // AppLink, which never takes the current slug (T-08-41).
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronsUpDown, Plus } from 'lucide-react';
+import { ArrowRight, ChevronsUpDown, Plus } from 'lucide-react';
 import { Popover } from '@base-ui/react/popover';
 import type { ProjectListEntry } from '../../presentation/project-list.ts';
 import { fetchProjects } from '../api.ts';
@@ -63,6 +63,7 @@ export function ProjectSwitcherPanel({
         <p>Projects</p>
         <AppLink className="text-link" to="/">
           All projects
+          <ArrowRight aria-hidden="true" />
         </AppLink>
       </header>
       <div>{body}</div>

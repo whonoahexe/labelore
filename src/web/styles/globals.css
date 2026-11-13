@@ -26177,6 +26177,15 @@ button.research-step-chip:hover {
   text-transform: uppercase;
 }
 
+/* 'All projects' reads as a link: accent text and a trailing arrow, as the dashboard's "About this project". */
+.project-switcher-popup > header .text-link {
+  color: var(--primary);
+}
+
+.project-switcher-popup > header .text-link:hover {
+  color: var(--foreground);
+}
+
 .project-switcher-popup > div:not(.project-switcher-footer) {
   flex: 1 1 auto;
   min-height: 0;
