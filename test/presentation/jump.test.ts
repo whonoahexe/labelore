@@ -9,11 +9,12 @@ import {
   MAX_FROM_LENGTH,
   MAX_ID_LENGTH,
   buildJumpGroups,
+  pageTargetsOf,
   currentPhaseKey,
   phaseLabelOf,
   viewingPhaseKey,
 } from '../../src/presentation/jump.ts';
-import type { JumpResult, JumpRow } from '../../src/presentation/jump.ts';
+import type { JumpDocument, JumpResult, JumpRow } from '../../src/presentation/jump.ts';
 import { decisionAnchor, findingAnchor, isJumpAnchor, requirementAnchor } from '../../src/presentation/jump-anchors.ts';
 import { extractSnippets, foldCase } from '../../src/presentation/search.ts';
 import { rootDocumentRedirect } from '../../src/presentation/root-redirects.ts';
@@ -23,7 +24,10 @@ import type { JumpApiResponse, SearchHit } from '../../src/server/search-index.t
 import type { ProjectPresentation, RequirementDto } from '../../src/server/project-presentation.ts';
 import { composeContextBrief } from '../../src/web/views/context-brief.ts';
 import { composeReviewThreads } from '../../src/web/views/review-threads.ts';
-import { loadFixtureProject } from '../helpers/fixture-project.ts';
+import { fileURLToPath } from 'node:url';
+import { projectMapState } from '../../src/presentation/project-map-state.ts';
+import { buildPhaseUrl } from '../../src/presentation/routes.ts';
+import { loadFixtureProject, loadProject } from '../helpers/fixture-project.ts';
 
 let presentation: ProjectPresentation;
 let snapshot: ProjectSnapshot;
@@ -606,5 +610,226 @@ describe('buildJumpGroups: an ID that resolves to nothing (13-04, UI-SPEC "ID no
       expect(groupRows(result, 'ids'), query).toEqual([]);
       expect(result.notFoundId, query).toBeNull();
     }
+  });
+});
+
+// Phase 13, 13-04 Task 2: pages and files by name.
+function documentsOf(over: ProjectPresentation = presentation): JumpDocument[] {
+  return over.artifacts.map((artifact) => ({
+    path: artifact.path,
+    title: artifact.title,
+    kind: artifact.kind,
+    url: artifact.key,
+  }));
+}
+
+function runWithDocuments(query: string, documents: JumpDocument[], from = '/'): JumpResult {
+  return buildJumpGroups({ query, presentation, documents, contentHits: [], bodyOf: () => null, from });
+}
+
+function artifactStub(path: string): Artifact {
+  return { ...presentation.artifacts[0]!, path, key: `/stub/${path}`, phaseKey: null };
+}
+
+describe('pageTargetsOf (13-04, NAV-08)', () => {
+  it('lists the fixed pages the header shows, one overview per milestone and one page per phase', () => {
+    const targets = pageTargetsOf(presentation);
+    const fixed = targets.slice(0, 5).map((target) => [target.title, target.url]);
+    expect(fixed).toEqual([
+      ['Dashboard', '/'],
+      ['Roadmap', '/roadmap'],
+      ['Traceability', '/traceability'],
+      ['Search', '/search'],
+      ['Settings', '/settings'],
+    ]);
+    const urls = targets.map((target) => target.url);
+    expect(urls).not.toContain('/research');
+    expect(urls).not.toContain('/sketches');
+    for (const milestone of presentation.milestones) {
+      expect(targets).toContainEqual({ title: `${milestone.name} overview`, url: milestone.overviewUrl, phaseKey: null });
+      for (const phase of milestone.phases) {
+        const target = targets.find((entry) => entry.phaseKey === phase.key)!;
+        expect(target.url).toBe(buildPhaseUrl(phase.identity));
+        expect(target.title).toBe(`${phaseLabelOf(phase, milestone)} · ${phase.name}`);
+      }
+    }
+    const live = presentation.milestones.find((milestone) => !milestone.archived)!;
+    const archived = presentation.milestones.find((milestone) => milestone.archived)!;
+    expect(targets.find((entry) => entry.phaseKey === live.phases[0]!.key)!.title).toMatch(/^Phase \d+ · /);
+    expect(targets.find((entry) => entry.phaseKey === archived.phases[0]!.key)!.title).toMatch(/^v1\.0 · Phase \d+ · /);
+  });
+
+  it('lists Research and Sketches only when the project has them', () => {
+    const rich: ProjectPresentation = {
+      ...presentation,
+      artifacts: [
+        ...presentation.artifacts,
+        artifactStub('.planning/research/SUMMARY.md'),
+        artifactStub('.planning/sketches/MANIFEST.md'),
+      ],
+    };
+    const urls = pageTargetsOf(rich).map((target) => target.url);
+    expect(urls).toContain('/research');
+    expect(urls).toContain('/sketches');
+    const onlyResearch: ProjectPresentation = { ...presentation, artifacts: [...presentation.artifacts, artifactStub('.planning/research/STACK.md')] };
+    const research = pageTargetsOf(onlyResearch).map((target) => target.url);
+    expect(research).toContain('/research');
+    expect(research).not.toContain('/sketches');
+  });
+
+  it('omits Roadmap and Traceability on a map-only project', async () => {
+    const tidemark = await loadProject(fileURLToPath(new URL('../fixtures/tidemark', import.meta.url)));
+    expect(projectMapState(tidemark.presentation.artifacts).mapOnly).toBe(true);
+    const urls = pageTargetsOf(tidemark.presentation).map((target) => target.url);
+    expect(urls).not.toContain('/roadmap');
+    expect(urls).not.toContain('/traceability');
+    expect(urls).toContain('/');
+    expect(urls).toContain('/search');
+    expect(urls).toContain('/settings');
+  });
+});
+
+describe('buildJumpGroups: the Pages group (13-04, D-01)', () => {
+  it('ranks Roadmap first for "road" and marks the matched letters', () => {
+    const rows = groupRows(run('road'), 'pages');
+    expect(rows[0]).toMatchObject({ kind: 'page', title: 'Roadmap', url: '/roadmap', subtitle: '/roadmap' });
+    expect(rows[0]!.chips).toEqual([{ label: 'Page', tone: 'quiet' }]);
+    expect(rows[0]!.titleHighlights).toEqual([{ start: 0, end: 4 }]);
+    expect(rows[0]!.anchor).toBeNull();
+  });
+
+  it('finds a word that starts inside a title and marks it', () => {
+    const rows = groupRows(run('overview'), 'pages');
+    expect(rows.length).toBe(presentation.milestones.length);
+    for (const row of rows) {
+      const start = row.title.toLowerCase().indexOf('overview');
+      expect(row.titleHighlights).toEqual([{ start, end: start + 'overview'.length }]);
+    }
+  });
+
+  it('lists phase 3 pages for "phase 3", the viewing phase\'s first', () => {
+    const live = presentation.milestones.find((milestone) => !milestone.archived)!;
+    const phase3 = live.phases.find((phase) => phase.identity.number === '03')!;
+    const rows = groupRows(run('phase 3'), 'pages');
+    expect(rows[0]!.phaseKey).toBe(phase3.key);
+    expect(rows.every((row) => row.title.toLowerCase().includes('phase 3'))).toBe(true);
+    expect(rows.length).toBe(2);
+  });
+
+  it('puts the viewing phase first among equally good matches, and caps at five', () => {
+    const live = presentation.milestones.find((milestone) => !milestone.archived)!;
+    const phase2 = live.phases.find((phase) => phase.identity.number === '02')!;
+    const phase4 = live.phases.find((phase) => phase.identity.number === '04')!;
+    const first = (from: string): string | null => groupRows(run('phase', from), 'pages')[0]!.phaseKey;
+    expect(first('/v1.1/phase-2/context')).toBe(phase2.key);
+    expect(first('/v1.1/phase-4')).toBe(phase4.key);
+    expect(groupRows(run('phase'), 'pages').length).toBeLessThanOrEqual(JUMP_GROUP_CAPS.pages);
+  });
+
+  it('never offers a page the header tabs hide', async () => {
+    const tidemark = await loadProject(fileURLToPath(new URL('../fixtures/tidemark', import.meta.url)));
+    const result = buildJumpGroups({
+      query: 'road',
+      presentation: tidemark.presentation,
+      documents: [],
+      contentHits: [],
+      bodyOf: () => null,
+      from: '/',
+    });
+    expect(groupRows(result, 'pages')).toEqual([]);
+    expect(groupRows(run('research'), 'pages')).toEqual([]);
+    expect(groupRows(run('sketch'), 'pages')).toEqual([]);
+  });
+});
+
+describe('buildJumpGroups: the Files group (13-04, D-01)', () => {
+  it('lists at most six CONTEXT files for "context", the viewing phase\'s first', () => {
+    const documents = documentsOf();
+    const rows = groupRows(runWithDocuments('context', documents, '/v1.1/phase-3/context'), 'files');
+    expect(rows).toHaveLength(JUMP_GROUP_CAPS.files);
+    expect(rows[0]!.url).toBe('/v1.1/phase-3/context');
+    expect(rows[0]!.kind).toBe('file');
+    expect(rows[0]!.artifactKind).toBe('context');
+    expect(rows[0]!.chips).toEqual([]);
+    expect(rows.every((row) => `${row.title} ${row.subtitle}`.toLowerCase().includes('context'))).toBe(true);
+  });
+
+  it('ranks the file named 01-01-PLAN.md before files that merely contain the text', () => {
+    const documents: JumpDocument[] = [
+      { path: '.planning/a/foo-01-01-PLAN-notes.md', title: 'Foo notes', kind: 'note', url: '/a/foo' },
+      { path: '.planning/b/prefix-01-01-PLAN.md', title: 'Prefix', kind: 'note', url: '/b/prefix' },
+      { path: '.planning/phases/x/01-01-PLAN.md', title: 'The plan', kind: 'plan', url: '/x/plan' },
+      { path: '.planning/c/01-01-PLAN-extra.md', title: 'Extra', kind: 'note', url: '/c/extra' },
+    ];
+    const rows = groupRows(runWithDocuments('01-01-PLAN', documents), 'files');
+    expect(rows.map((row) => row.url)).toEqual(['/x/plan', '/c/extra', '/a/foo', '/b/prefix']);
+  });
+
+  it('ranks a file name prefix before a substring, then path ascending', () => {
+    const documents: JumpDocument[] = [
+      { path: '.planning/z/session-log.md', title: 'Z log', kind: 'note', url: '/z' },
+      { path: '.planning/m/old-session.md', title: 'M old', kind: 'note', url: '/m' },
+      { path: '.planning/a/session-notes.md', title: 'A notes', kind: 'note', url: '/a' },
+    ];
+    expect(groupRows(runWithDocuments('session', documents), 'files').map((row) => row.url)).toEqual(['/a', '/z', '/m']);
+  });
+
+  it('marks the matched slice of the title, else of the path', () => {
+    const documents = documentsOf();
+    const wanted = 'account admin & sessions - context';
+    const byTitle = groupRows(runWithDocuments(wanted, documents, '/v1.1/phase-3/context'), 'files');
+    const row = byTitle.find((entry) => entry.url === '/v1.1/phase-3/context')!;
+    const start = row.title.toLowerCase().indexOf(wanted);
+    expect(row.titleHighlights).toEqual([{ start, end: start + wanted.length }]);
+    expect(row.subtitleHighlights).toEqual([]);
+
+    const byPath = groupRows(runWithDocuments('03-context', documents, '/v1.1/phase-3/context'), 'files');
+    const pathRow = byPath.find((entry) => entry.url === '/v1.1/phase-3/context')!;
+    expect(pathRow.titleHighlights).toEqual([]);
+    const at = pathRow.subtitle.toLowerCase().indexOf('03-context');
+    expect(pathRow.subtitleHighlights).toEqual([{ start: at, end: at + '03-context'.length }]);
+  });
+
+  it('folds case with the length-preserving fold, so highlights index the original string', () => {
+    const documents: JumpDocument[] = [
+      { path: '.planning/i/notes.md', title: 'İX match here', kind: 'note', url: '/i' },
+    ];
+    const rows = groupRows(runWithDocuments('MATCH', documents), 'files');
+    expect(rows).toHaveLength(1);
+    const start = 'İX match here'.indexOf('match');
+    expect(rows[0]!.titleHighlights).toEqual([{ start, end: start + 5 }]);
+  });
+
+  it('sends a root document that has a designed page to that page', () => {
+    const requirements = presentation.artifacts.find((artifact) => artifact.path === '.planning/REQUIREMENTS.md')!;
+    const documents: JumpDocument[] = [
+      { path: requirements.path, title: requirements.title, kind: requirements.kind, url: requirements.key },
+    ];
+    const rows = groupRows(runWithDocuments('REQUIREMENTS', documents), 'files');
+    expect(rows[0]!.url).toBe(rootDocumentRedirect(requirements) ?? requirements.key);
+  });
+});
+
+describe('buildJumpGroups: name matching in general (13-04)', () => {
+  it('gives no groups at all for an empty or whitespace query', () => {
+    expect(runWithDocuments('', documentsOf()).groups).toEqual([]);
+    expect(runWithDocuments('   ', documentsOf()).groups).toEqual([]);
+  });
+
+  it('keeps the group order exact, ids, pages, files, content', () => {
+    const result = runWithDocuments('d-0', documentsOf());
+    const keys = result.groups.map((group) => group.key);
+    const order = ['exact', 'ids', 'pages', 'files', 'content'];
+    expect(keys).toEqual([...keys].sort((a, b) => order.indexOf(a) - order.indexOf(b)));
+    const withBoth = runWithDocuments('phase', documentsOf());
+    expect(withBoth.groups.map((group) => group.key)).toEqual(['pages', 'files']);
+  });
+
+  it('runs the name producers for a long query without touching the ID producers', () => {
+    const long = `${'a'.repeat(MAX_ID_LENGTH)}b`;
+    const documents: JumpDocument[] = [{ path: `.planning/${long}.md`, title: 'Long', kind: 'note', url: '/long' }];
+    const result = runWithDocuments(long, documents);
+    expect(groupRows(result, 'files').map((row) => row.url)).toEqual(['/long']);
+    expect(result.notFoundId).toBeNull();
   });
 });
