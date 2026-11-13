@@ -7,6 +7,7 @@ import type { ProjectSnapshot } from '../../src/planning-repo/types.ts';
 import {
   JUMP_GROUP_CAPS,
   MAX_FROM_LENGTH,
+  MAX_ID_LENGTH,
   buildJumpGroups,
   currentPhaseKey,
   phaseLabelOf,
@@ -19,7 +20,7 @@ import { rootDocumentRedirect } from '../../src/presentation/root-redirects.ts';
 import { createApp } from '../../src/server/index.ts';
 import { createSearchIndexState, isReady, searchIndex } from '../../src/server/search-index.ts';
 import type { JumpApiResponse, SearchHit } from '../../src/server/search-index.ts';
-import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
+import type { ProjectPresentation, RequirementDto } from '../../src/server/project-presentation.ts';
 import { composeContextBrief } from '../../src/web/views/context-brief.ts';
 import { composeReviewThreads } from '../../src/web/views/review-threads.ts';
 import { loadFixtureProject } from '../helpers/fixture-project.ts';
@@ -35,8 +36,8 @@ beforeAll(async () => {
 
 type Artifact = ProjectPresentation['artifacts'][number];
 
-function run(query: string, from = '/'): JumpResult {
-  return buildJumpGroups({ query, presentation, documents: [], contentHits: [], bodyOf: () => null, from });
+function run(query: string, from = '/', over: ProjectPresentation = presentation): JumpResult {
+  return buildJumpGroups({ query, presentation: over, documents: [], contentHits: [], bodyOf: () => null, from });
 }
 
 function exactRows(result: JumpResult): JumpRow[] {
@@ -384,5 +385,226 @@ describe('foldCase', () => {
   it('is exported and folds case without changing length', () => {
     expect(foldCase('Session İDX')).toHaveLength('Session İDX'.length);
     expect(foldCase('SESSION')).toBe('session');
+  });
+});
+
+// Phase 13, 13-04 Task 1: every ID family, prefix completion and the honest not-found.
+function groupRows(result: JumpResult, key: 'exact' | 'ids' | 'pages' | 'files' | 'content'): JumpRow[] {
+  return result.groups.find((group) => group.key === key)?.rows ?? [];
+}
+
+function requirementDto(id: string, text: string, covered = true): RequirementDto {
+  return {
+    id,
+    category: 'Synthetic',
+    text,
+    tier: 'v1',
+    checked: null,
+    coveringPhases: covered ? [{ raw: 'Phase 1', targetPhaseKey: null }] : [],
+  };
+}
+
+function withRequirements(extra: RequirementDto[]): ProjectPresentation {
+  return { ...presentation, requirements: [...presentation.requirements, ...extra] };
+}
+
+describe('buildJumpGroups: requirement ids (13-04, D-06)', () => {
+  it('gives SIGN-01 a definition row to its traceability row, then Mentions rows, current phase first', () => {
+    const rows = groupRows(run('SIGN-01'), 'exact');
+    const requirement = presentation.requirements.find((entry) => entry.id === 'SIGN-01')!;
+    expect(rows[0]).toMatchObject({
+      kind: 'requirement',
+      id: 'SIGN-01',
+      title: requirement.text,
+      subtitle: 'Definition and traceability',
+      url: '/traceability?q=SIGN-01',
+      anchor: 'requirement-sign-01',
+      chips: [{ label: 'Covered', tone: 'complete' }],
+    });
+    expect(rows[0]!.chips.some((chip) => chip.label === 'Exact')).toBe(false);
+    expect(rows.length).toBeGreaterThan(1);
+    expect(rows.length).toBeLessThanOrEqual(JUMP_GROUP_CAPS.exact);
+    const mentions = rows.slice(1);
+    for (const row of mentions) {
+      expect(row.kind).toBe('mention');
+      expect(row.chips).toEqual([{ label: 'Mentions', tone: 'quiet' }]);
+      expect(row.subtitle).not.toBe('.planning/REQUIREMENTS.md');
+    }
+    expect(new Set(mentions.map((row) => row.subtitle)).size).toBe(mentions.length);
+    const current = currentPhaseKey(presentation, '/');
+    const flags = mentions.map((row) => (row.phaseKey === current ? 0 : 1));
+    expect(flags).toEqual([...flags].sort((a, b) => a - b));
+  });
+
+  it('reads the same rows for sign-01 and shows the canonical id', () => {
+    expect(groupRows(run('sign-01'), 'exact')).toEqual(groupRows(run('SIGN-01'), 'exact'));
+    expect(groupRows(run('sign-01'), 'exact')[0]!.id).toBe('SIGN-01');
+  });
+
+  it('puts a viewing phase\'s mentions first', () => {
+    const rows = groupRows(run('SIGN-01', '/v1.1/phase-1/context'), 'exact').slice(1);
+    const viewing = viewingPhaseKey(presentation, '/v1.1/phase-1/context');
+    expect(viewing).not.toBeNull();
+    expect(rows[0]!.phaseKey).toBe(viewing);
+  });
+
+  it('marks a requirement with no covering phase Not covered, quiet', () => {
+    const synthetic = withRequirements([requirementDto('ZQ-01', 'Nothing covers this', false)]);
+    const rows = groupRows(run('zq-01', '/', synthetic), 'exact');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.chips).toEqual([{ label: 'Not covered', tone: 'quiet' }]);
+  });
+});
+
+describe('buildJumpGroups: plan and quick-task ids (13-04, NAV-12)', () => {
+  it('gives 01-06 one plan row per phase holding it, with the plan\'s page', () => {
+    const rows = groupRows(run('01-06'), 'exact');
+    expect(rows.map((row) => row.url)).toEqual(['/v1.1/phase-1/plan-06']);
+    expect(rows[0]).toMatchObject({ kind: 'plan', id: '01-06', anchor: null });
+    expect(rows[0]!.chips).toEqual([{ label: 'Exact', tone: 'complete' }]);
+    expect(rows[0]!.subtitle).toBe('Phase 1 · Plan 6');
+  });
+
+  it('matches plan numbers numerically and rejects a query that is not the plan shape', () => {
+    expect(groupRows(run('01-01'), 'exact').map((row) => row.url)).toEqual(['/v1.1/phase-1/plan-01']);
+    const short = run('1-6');
+    expect(groupRows(short, 'exact')).toEqual([]);
+    expect(groupRows(short, 'ids')).toEqual([]);
+  });
+
+  it('gives a quick task id its PLAN page, and a task with only a CONTEXT its CONTEXT page', () => {
+    const plan = groupRows(run('260402-t8m'), 'exact');
+    expect(plan).toHaveLength(1);
+    expect(plan[0]).toMatchObject({ kind: 'quick', id: '260402-t8m', url: '/quick/260402-t8m', anchor: null });
+    expect(plan[0]!.title).toMatch(/restyle the top bar/i);
+    expect(plan[0]!.chips).toEqual([{ label: 'Exact', tone: 'complete' }]);
+    const context = groupRows(run('260403-k2p'), 'exact');
+    expect(context.map((row) => row.url)).toEqual(['/quick/260403-k2p/context']);
+    const verification = groupRows(run('260327-H4W'), 'exact');
+    expect(verification.map((row) => row.url)).toEqual(['/quick/260327-h4w/verification']);
+  });
+});
+
+describe('buildJumpGroups: a finding id beats a requirement id (13-04, RESEARCH open question 3)', () => {
+  it('resolves CR-01 as findings only on a project that also defines a requirement CR-01', () => {
+    const synthetic = withRequirements([requirementDto('CR-01', 'A requirement that shares the finding id')]);
+    const rows = groupRows(run('CR-01', '/', synthetic), 'exact');
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((row) => row.kind === 'finding')).toBe(true);
+    expect(rows).toEqual(groupRows(run('CR-01'), 'exact'));
+  });
+
+  it('resolves a requirement id nothing else defines as a requirement', () => {
+    const synthetic = withRequirements([requirementDto('CR-77', 'Only a requirement')]);
+    expect(groupRows(run('CR-77', '/', synthetic), 'exact')[0]!.kind).toBe('requirement');
+  });
+});
+
+describe('buildJumpGroups: prefix completion in the IDs group (13-04, D-07)', () => {
+  const find = Array.from({ length: 9 }, (_, index) => requirementDto(`FIND-0${index + 1}`, `Find requirement number ${index + 1}`));
+
+  it('lists all nine FIND requirements in natural order with their text, for FIND and find', () => {
+    const synthetic = withRequirements(find);
+    for (const query of ['FIND', 'find', 'FIND-']) {
+      const result = run(query, '/', synthetic);
+      expect(groupRows(result, 'exact')).toEqual([]);
+      const rows = groupRows(result, 'ids');
+      expect(rows.map((row) => row.id), query).toEqual(find.map((entry) => entry.id));
+      expect(rows.map((row) => row.title)).toEqual(find.map((entry) => entry.text));
+      expect(rows.every((row) => row.kind === 'requirement' && row.subtitle === 'Requirement')).toBe(true);
+      expect(rows[0]!.url).toBe('/traceability?q=FIND-01');
+      expect(rows[0]!.anchor).toBe('requirement-find-01');
+      expect(result.notFoundId).toBeNull();
+    }
+  });
+
+  it('never exceeds twelve rows, in natural order', () => {
+    const many = Array.from({ length: 20 }, (_, index) => requirementDto(`FIND-${String(index + 1).padStart(2, '0')}`, `Find ${index + 1}`));
+    const rows = groupRows(run('FIND', '/', withRequirements(many)), 'ids');
+    expect(rows).toHaveLength(JUMP_GROUP_CAPS.ids);
+    expect(rows[11]!.id).toBe('FIND-12');
+  });
+
+  it('lists each distinct finding id once for WR-, with where it is defined', () => {
+    const rows = groupRows(run('WR-'), 'ids');
+    expect(rows.length).toBeGreaterThan(1);
+    expect(rows.length).toBeLessThanOrEqual(JUMP_GROUP_CAPS.ids);
+    const ids = rows.map((row) => row.id!);
+    expect(new Set(ids.map((id) => id.toUpperCase())).size).toBe(ids.length);
+    expect(ids.every((id) => id.toUpperCase().startsWith('WR-'))).toBe(true);
+    expect(ids).toEqual([...ids].sort((a, b) => a.localeCompare(b, 'en', { numeric: true })));
+    for (const row of rows) {
+      expect(row.kind).toBe('finding');
+      expect(row.subtitle).toMatch(/^(.* · REVIEW|Defined in \d+ phases)$/);
+      expect(row.anchor).toBe(findingAnchor(row.id!));
+    }
+    expect(rows.some((row) => /^Defined in \d+ phases$/.test(row.subtitle))).toBe(true);
+  });
+
+  it('lists only ids starting D-1 for D-1, in natural order', () => {
+    const rows = groupRows(run('D-1'), 'ids');
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((row) => row.id!.toUpperCase().startsWith('D-1'))).toBe(true);
+    expect(rows[0]!.id).toBe('D-10');
+    expect(groupRows(run('D-1'), 'exact')).toEqual([]);
+  });
+
+  it('completes a plan id prefix and a quick id prefix', () => {
+    const plans = groupRows(run('01-0'), 'ids');
+    expect(plans.map((row) => row.id)).toEqual(['01-01', '01-06']);
+    expect(plans[0]!.kind).toBe('plan');
+    const quick = groupRows(run('2604'), 'ids');
+    expect(quick.map((row) => row.id)).toEqual(['260402-t8m', '260403-k2p']);
+    expect(quick[0]!.subtitle).toBe('Quick task');
+  });
+
+  it('gives a full exact match the Exact group and no IDs group', () => {
+    const result = run('D-01');
+    expect(groupRows(result, 'exact').length).toBeGreaterThan(0);
+    expect(groupRows(result, 'ids')).toEqual([]);
+  });
+
+  it('gives no IDs group for a query that does not have the ID shape', () => {
+    expect(groupRows(run('d-1 x'), 'ids')).toEqual([]);
+    expect(groupRows(run('-'), 'ids')).toEqual([]);
+    expect(groupRows(run('D'), 'ids')).toEqual([]);
+  });
+});
+
+describe('buildJumpGroups: an ID that resolves to nothing (13-04, UI-SPEC "ID not found")', () => {
+  it('names the canonical id and gives neither Exact nor IDs', () => {
+    for (const [query, expected] of [
+      ['D-99', 'D-99'],
+      ['d-99', 'D-99'],
+      ['ZZZZ-01', 'ZZZZ-01'],
+      ['zzzz-01', 'ZZZZ-01'],
+      ['99-99', '99-99'],
+      ['990101-zzz', '990101-zzz'],
+      ['990101-ZZZ', '990101-zzz'],
+    ] as const) {
+      const result = run(query);
+      expect(groupRows(result, 'exact'), query).toEqual([]);
+      expect(groupRows(result, 'ids'), query).toEqual([]);
+      expect(result.notFoundId, query).toBe(expected);
+    }
+  });
+
+  it('leaves notFoundId null for words, a resolved id and a prefix that completes', () => {
+    expect(run('roadmap').notFoundId).toBeNull();
+    expect(run('SIGN-01').notFoundId).toBeNull();
+    expect(run('D-1').notFoundId).toBeNull();
+    expect(run('01-06').notFoundId).toBeNull();
+    expect(run('260402-t8m').notFoundId).toBeNull();
+  });
+
+  it('skips every ID producer for a query over MAX_ID_LENGTH', () => {
+    const synthetic = withRequirements([requirementDto(`FIND-${'1'.repeat(40)}`, 'Absurdly long id')]);
+    for (const query of [`FIND-${'1'.repeat(40)}`, `D-${'0'.repeat(31)}`, `${'A'.repeat(33)}`]) {
+      expect(query.length).toBeGreaterThan(MAX_ID_LENGTH);
+      const result = run(query, '/', synthetic);
+      expect(groupRows(result, 'exact'), query).toEqual([]);
+      expect(groupRows(result, 'ids'), query).toEqual([]);
+      expect(result.notFoundId, query).toBeNull();
+    }
   });
 });
