@@ -23685,10 +23685,11 @@ a.view-note-open:hover {
   background: transparent;
 }
 
+/* One fixed column for the pick, so every card's description starts at the same edge. */
 .sketch-verdict-pick {
   display: grid;
   gap: var(--space-1);
-  min-width: var(--space-10);
+  width: calc(var(--space-10) * 3);
 }
 
 .sketch-verdict-label {
@@ -23701,6 +23702,7 @@ a.view-note-open:hover {
 }
 
 .sketch-verdict-variant {
+  overflow-wrap: anywhere;
   color: var(--primary);
   font-family: var(--font-heading);
   font-size: var(--fs-fluid-3);

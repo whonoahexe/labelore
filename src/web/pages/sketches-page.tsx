@@ -21,19 +21,38 @@ function shortDirection(direction: string): string {
   return /^.+?[.!?](?=\s|$)/s.exec(direction)?.[0] ?? direction;
 }
 
-/** Splits a MANIFEST winner cell such as "C — status rail" into the picked variant and its
- * description; a cell with no short leading pick stays whole. */
-function splitWinner(winner: string): { pick: string | null; text: string } {
-  const match = /^(.{1,12}?)\s+[—–]\s+(.+)$/s.exec(winner);
-  return match ? { pick: match[1], text: match[2] } : { pick: null, text: winner };
+/** Splits a MANIFEST winner cell into the picked variant, the round it was picked in, and its description, across
+ * the shapes the file uses: "C — status rail", "A Desk (build it)", "E (round 1b) — …", "Round 2: E — …",
+ * "B+B — …", "B + P1 — …", "None — …", "Reuse — …". A cell with no leading variant stays whole. */
+export function splitWinner(winner: string): { pick: string | null; round: string | null; text: string } {
+  let rest = winner.trim();
+  let round: string | null = null;
+  const lead = /^round\s+(\w+)\s*:\s*/i.exec(rest);
+  if (lead) {
+    round = lead[1] ?? null;
+    rest = rest.slice(lead[0].length);
+  }
+  const code = /^(None|Reuse|[A-Z]\d*[a-z]?(?:\s*\+\s*[A-Z]\d*[a-z]?)*)(?=[\s—–:(]|$)/.exec(rest);
+  if (!code?.[1]) return { pick: null, round, text: winner };
+  rest = rest.slice(code[0].length);
+  const trailing = /^\s*\(round\s+(\w+)\)/i.exec(rest);
+  if (trailing) {
+    round = trailing[1] ?? round;
+    rest = rest.slice(trailing[0].length);
+  }
+  rest = rest.replace(/^\s*[—–:-]?\s*/, '');
+  return { pick: code[1].replace(/\s*\+\s*/g, ' + '), round, text: rest === '' ? winner : rest };
 }
 
 function SketchVerdict({ sketch }: { sketch: SketchRow }): React.JSX.Element {
-  const { pick, text } = sketch.winner ? splitWinner(sketch.winner) : { pick: null, text: 'Not decided yet' };
+  const { pick, round, text } = sketch.winner
+    ? splitWinner(sketch.winner)
+    : { pick: null, round: null, text: 'Not decided yet' };
+  const label = sketch.decided ? 'Winner' : 'No winner';
   return (
     <div className="sketch-verdict" data-decided={sketch.decided ? 'true' : 'false'}>
       <div className="sketch-verdict-pick">
-        <span className="sketch-verdict-label">{sketch.decided ? 'Winner' : 'No winner'}</span>
+        <span className="sketch-verdict-label">{round ? `${label} · round ${round}` : label}</span>
         {pick ? <span className="sketch-verdict-variant">{pick}</span> : null}
       </div>
       <p className="sketch-verdict-text">{text}</p>
