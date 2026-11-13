@@ -48,12 +48,10 @@ describe('ProjectHandler structured.project milestone', () => {
     expect(milestone!.goal).not.toContain('Target features');
   });
 
-  it("this repository's PROJECT.md gives milestone v2.1 Wayfinding", () => {
-    const { milestone } = projectOf(labelore);
-    expect(milestone?.label).toBe('v2.1 Wayfinding');
-    expect(milestone?.version).toBe('v2.1');
-    expect(milestone?.goal?.startsWith('Every file GSD can write opens into a designed page')).toBe(true);
-    expect(milestone?.goal).toContain('easier to read.');
+  it("this repository's PROJECT.md, between milestones after the v2.1 close, gives no current milestone", () => {
+    // v2.1 Wayfinding shipped 2026-11-13 and its "Current Milestone" section was replaced by "Next Milestone
+    // Goals", so there is no milestone to report until /gsd-new-milestone writes the next one.
+    expect(projectOf(labelore).milestone ?? null).toBeNull();
   });
 
   it('keeps sections and keyDecisions as before', () => {

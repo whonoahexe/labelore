@@ -209,10 +209,10 @@ describe('buildLedgerContext - the head takes open and total from the dispositio
     const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
     const LB_PLANNING = join(LB_ROOT, '.planning');
     const project = await loadProject(LB_ROOT);
-    const path = '.planning/phases/08-several-projects-and-a-switcher/08-REVIEW-DISPOSITION.md';
+    const path = '.planning/milestones/v2.1-phases/08-several-projects-and-a-switcher/08-REVIEW-DISPOSITION.md';
     expect(
       existsSync(
-        join(LB_PLANNING, 'phases/08-several-projects-and-a-switcher/08-REVIEW-DISPOSITION.md'),
+        join(LB_PLANNING, 'milestones/v2.1-phases/08-several-projects-and-a-switcher/08-REVIEW-DISPOSITION.md'),
       ),
     ).toBe(true);
     const context = contextOf(project, path)!;

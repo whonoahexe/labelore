@@ -602,20 +602,20 @@ describe('buildDrawerViewModel — coverage', () => {
     expect([...placed].sort()).toEqual([...expectedPaths(model, presentation)].sort());
   });
 
-  it("opens this repository's own corpus on its current milestone, with v2.0 the newest shipped one", async () => {
+  it("opens this repository's own corpus between milestones on v2.1, the newest shipped one", async () => {
     const model = buildDrawerViewModel(await diskPresentation(resolve('.')));
-    // v2.1 is the milestone in progress, so the drawer opens on one of its phases, not on a shipped place.
-    expect(model.current.version).toBe('v2.1');
-    expect(model.current.phases.length).toBeGreaterThan(0);
-    expect(model.current.phases.map((phase) => phase.key)).toContain(model.defaultPlaceKey);
-    expect(model.shipped.map((milestone) => milestone.key)).not.toContain(model.defaultPlaceKey);
+    // v2.1 closed 2026-11-13 and no milestone is in progress, so the drawer opens on the newest shipped place.
+    expect(model.current.version).toBeNull();
+    expect(model.current.phases).toHaveLength(0);
+    expect(model.defaultPlaceKey).toBe('m~v2.1');
     // The shipped milestones, newest first, and what the drawer lists for each. The v2.0 folder holds
-    // quick tasks and no phases; v1.0 and v1.1 are archived and no longer change.
-    expect(model.shipped.map((milestone) => milestone.version)).toEqual(['v2.0', 'v1.1', 'v1.0']);
-    expect(model.shipped.map((milestone) => milestone.phases.length)).toEqual([0, 1, 4]);
+    // quick tasks and no phases; every milestone is archived and no longer changes.
+    expect(model.shipped.map((milestone) => milestone.version)).toEqual(['v2.1', 'v2.0', 'v1.1', 'v1.0']);
+    expect(model.shipped.map((milestone) => milestone.phases.length)).toEqual([8, 0, 1, 4]);
     for (const milestone of model.shipped) expect(milestone.shippedLabel).not.toBeNull();
     const shippedQuick = model.quick.groups.filter((group) => !group.current);
     expect(shippedQuick.map((group) => [group.version, group.tasks.length])).toEqual([
+      ['v2.1', 1],
       ['v2.0', 40],
       ['v1.1', 13],
       ['v1.0', 5],

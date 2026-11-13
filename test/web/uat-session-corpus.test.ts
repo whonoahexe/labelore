@@ -82,16 +82,16 @@ const PINNED: Record<string, Pinned> = {
   // Session completed by /gsd-verify-work 07 (D-18).
   // The pin follows the diagnosed session (1 pass, 1 issue, G-08-2 open); /gsd-verify-work 08 re-pins it when
   // G-08-2 is re-tested.
-  'LB:phases/08-several-projects-and-a-switcher/08-UAT.md': { ...DONE, tests: 2, pass: 1, issue: 1, gaps: 1, mode: 'items' },
-  'LB:phases/07-recognised-files-and-readable-urls/07-UAT.md': { ...DONE, tests: 6, pass: 6 },
+  'LB:milestones/v2.1-phases/08-several-projects-and-a-switcher/08-UAT.md': { ...DONE, tests: 2, pass: 1, issue: 1, gaps: 1, mode: 'items' },
+  'LB:milestones/v2.1-phases/07-recognised-files-and-readable-urls/07-UAT.md': { ...DONE, tests: 6, pass: 6 },
   // Session completed by /gsd-verify-work 09: both items passed.
-  'LB:phases/09-review-audit-and-root-document-pages/09-UAT.md': { ...DONE, tests: 2, pass: 2, extras: ['Deferred Follow-Ups'] },
+  'LB:milestones/v2.1-phases/09-review-audit-and-root-document-pages/09-UAT.md': { ...DONE, tests: 2, pass: 2, extras: ['Deferred Follow-Ups'] },
   // Session completed by /gsd-verify-work 11: both decision items passed (WR-01 fixed, this pin kept).
-  'LB:phases/11-exploration-handoff-report-and-workstream-pages/11-UAT.md': { ...DONE, tests: 2, pass: 2 },
+  'LB:milestones/v2.1-phases/11-exploration-handoff-report-and-workstream-pages/11-UAT.md': { ...DONE, tests: 2, pass: 2 },
   // Session completed by /gsd-verify-work 12: 10 passed, the throttled-reload item deferred (skipped).
-  'LB:phases/12-project-settings-source-mode-and-reading-polish/12-UAT.md': { ...DONE, tests: 11, pass: 10, skipped: 1, extras: ['Deferred Follow-Ups'] },
+  'LB:milestones/v2.1-phases/12-project-settings-source-mode-and-reading-polish/12-UAT.md': { ...DONE, tests: 11, pass: 10, skipped: 1, extras: ['Deferred Follow-Ups'] },
   // Session completed by /gsd-verify-work 13: all four passed (test 3 deviations accepted).
-  'LB:phases/13-search-and-quick-jump-palette/13-UAT.md': { ...DONE, tests: 4, pass: 4 },
+  'LB:milestones/v2.1-phases/13-search-and-quick-jump-palette/13-UAT.md': { ...DONE, tests: 4, pass: 4 },
   'FX:phases/01-member-sign-in-sessions/01-UAT.md': { ...DONE, tests: 7, pass: 6, skipped: 1, extras: ['Notes'] },
   'FX:phases/02-roles-and-permissions/02-UAT.md': { ...DONE, tests: 3, pass: 3, gaps: 4, mode: 'prose' },
   'FX:phases/03-account-admin-and-sessions/03-UAT.md': { ...DONE, tests: 5, pass: 5, gaps: 1, mode: 'items' },

@@ -112,7 +112,7 @@ const PINNED: Record<string, Pinned> = {
     verdict: 'Full marks. Nothing to fix.',
     facts: '10 Sep 2026|3|0',
   },
-  'LB:phases/09-review-audit-and-root-document-pages/09-UI-REVIEW.md': {
+  'LB:milestones/v2.1-phases/09-review-audit-and-root-document-pages/09-UI-REVIEW.md': {
     overall: [17, 24],
     scores: [3, 2, 3, 3, 3, 3],
     fails: [0, 0, 0, 0, 0, 0],
@@ -126,7 +126,7 @@ const PINNED: Record<string, Pinned> = {
     verdict: '7 points lost, in Copywriting, Visuals, Color, Typography, Spacing and Experience Design.',
     facts: '3 Nov 2026|9|3',
   },
-  'LB:phases/13-search-and-quick-jump-palette/13-UI-REVIEW.md': {
+  'LB:milestones/v2.1-phases/13-search-and-quick-jump-palette/13-UI-REVIEW.md': {
     overall: [18, 24],
     scores: [3, 3, 3, 3, 3, 3],
     fails: [0, 0, 0, 0, 0, 0],
@@ -140,7 +140,7 @@ const PINNED: Record<string, Pinned> = {
     verdict: '6 points lost, in Copywriting, Visuals, Color, Typography, Spacing and Experience Design.',
     facts: '13 Nov 2026|13|3',
   },
-  'LB:phases/12-project-settings-source-mode-and-reading-polish/12-UI-REVIEW.md': {
+  'LB:milestones/v2.1-phases/12-project-settings-source-mode-and-reading-polish/12-UI-REVIEW.md': {
     overall: [18, 24],
     scores: [3, 3, 3, 3, 3, 3],
     fails: [0, 0, 0, 0, 0, 0],
@@ -154,7 +154,7 @@ const PINNED: Record<string, Pinned> = {
     verdict: '6 points lost, in Copywriting, Visuals, Color, Typography, Spacing and Experience Design.',
     facts: '11 Nov 2026|12|3',
   },
-  'LB:phases/10-codebase-map-specification-and-check-pages/10-UI-REVIEW.md': {
+  'LB:milestones/v2.1-phases/10-codebase-map-specification-and-check-pages/10-UI-REVIEW.md': {
     overall: [16, 24],
     scores: [3, 3, 2, 3, 2, 3],
     fails: [0, 0, 0, 0, 0, 0],
@@ -168,7 +168,7 @@ const PINNED: Record<string, Pinned> = {
     verdict: '8 points lost, in Copywriting, Visuals, Color, Typography, Spacing and Experience Design.',
     facts: '6 Nov 2026|10|3',
   },
-  'LB:phases/08-several-projects-and-a-switcher/08-UI-REVIEW.md': {
+  'LB:milestones/v2.1-phases/08-several-projects-and-a-switcher/08-UI-REVIEW.md': {
     overall: [21, 24],
     scores: [4, 3, 4, 4, 3, 3],
     fails: [0, 0, 0, 0, 0, 0],
@@ -182,7 +182,7 @@ const PINNED: Record<string, Pinned> = {
     verdict: '3 points lost, in Visuals, Spacing and Experience Design.',
     facts: '31 Oct 2026|8|3',
   },
-  'LB:phases/07-recognised-files-and-readable-urls/07-UI-REVIEW.md': {
+  'LB:milestones/v2.1-phases/07-recognised-files-and-readable-urls/07-UI-REVIEW.md': {
     overall: [20, 24],
     scores: [4, 3, 4, 3, 3, 3],
     fails: [0, 0, 0, 0, 0, 0],

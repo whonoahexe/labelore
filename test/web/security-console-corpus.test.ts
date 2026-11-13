@@ -87,17 +87,17 @@ const PINNED: Record<string, Pinned> = {
     disposition: { mitigate: 22, accept: 8 }, columns: FX3_COLS, boundaries: 10, destinations: 0, singles: 10,
     stores: 0, risks: 8, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
-  'LB:phases/06-trustworthy-tests-and-security-baseline/06-SECURITY.md': {
+  'LB:milestones/v2.1-phases/06-trustworthy-tests-and-security-baseline/06-SECURITY.md': {
     rows: 34, open: 0, openLow: 0, closed: 34, severity: { high: 25, medium: 7, low: 2 },
     disposition: { mitigate: 33, accept: 1 }, columns: { T: 3, R: 4, I: 24, D: 3 }, boundaries: 5,
     destinations: 0, singles: 5, stores: 0, risks: 2, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
-  'LB:phases/08-several-projects-and-a-switcher/08-SECURITY.md': {
+  'LB:milestones/v2.1-phases/08-several-projects-and-a-switcher/08-SECURITY.md': {
     rows: 58, open: 0, openLow: 0, closed: 58, severity: { high: 13, medium: 17, low: 28 },
     disposition: { mitigate: 41, accept: 17 }, columns: { S: 8, T: 32, I: 12, D: 4, E: 2 }, boundaries: 32,
     destinations: 3, singles: 22, stores: 2, risks: 0, audit: 2, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
-  'LB:phases/09-review-audit-and-root-document-pages/09-SECURITY.md': {
+  'LB:milestones/v2.1-phases/09-review-audit-and-root-document-pages/09-SECURITY.md': {
     rows: 48, open: 0, openLow: 0, closed: 48, severity: { medium: 18, low: 30 },
     disposition: { mitigate: 32, accept: 16 }, columns: { S: 4, T: 29, R: 2, I: 4, D: 9 }, boundaries: 20,
     destinations: 5, singles: 10, stores: 0, risks: 0, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
@@ -107,22 +107,29 @@ const PINNED: Record<string, Pinned> = {
   // the 2 dated audit rows and the 4 checked Sign-Off lines.
   // 13: 26 `| T-13-` rows (5 high, 8 medium, 13 low; 24 mitigate, 2 accept), 10 Trust Boundaries rows with no arrow
   // (all at-rest), 2 `| AR-13-` rows, 1 dated audit row and 4 checked Sign-Off lines.
-  'LB:phases/13-search-and-quick-jump-palette/13-SECURITY.md': {
+  'LB:milestones/v2.1-phases/13-search-and-quick-jump-palette/13-SECURITY.md': {
     rows: 26, open: 0, openLow: 0, closed: 26, severity: { high: 5, medium: 8, low: 13 },
     disposition: { mitigate: 24, accept: 2 }, columns: { S: 4, T: 10, I: 6, D: 6 }, boundaries: 10,
     destinations: 0, singles: 0, stores: 10, risks: 2, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
-  'LB:phases/12-project-settings-source-mode-and-reading-polish/12-SECURITY.md': {
+  'LB:milestones/v2.1-phases/12-project-settings-source-mode-and-reading-polish/12-SECURITY.md': {
     rows: 36, open: 0, openLow: 0, closed: 36, severity: { high: 12, medium: 12, low: 12 },
     disposition: { mitigate: 33, accept: 3 }, columns: { S: 1, T: 10, R: 3, I: 13, D: 6, E: 3 }, boundaries: 5,
     destinations: 0, singles: 0, stores: 5, risks: 11, audit: 5, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
-  'LB:phases/11-exploration-handoff-report-and-workstream-pages/11-SECURITY.md': {
+  'LB:milestones/v2.1-phases/11-exploration-handoff-report-and-workstream-pages/11-SECURITY.md': {
     rows: 79, open: 0, openLow: 0, closed: 79, severity: { high: 8, medium: 35, low: 36 },
     disposition: { mitigate: 74, accept: 5 }, columns: { S: 5, T: 30, R: 8, I: 22, D: 9, E: 5 }, boundaries: 7,
     destinations: 0, singles: 0, stores: 7, risks: 6, audit: 2, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
-  'LB:phases/07-recognised-files-and-readable-urls/07-SECURITY.md': {
+  // 10: 50 `| T-10-` rows (5 high, 26 medium, 19 low; 46 mitigate, 4 accept), 8 Trust Boundaries rows with no arrow
+  // (all at-rest), 4 `| AR-10-` rows, 1 dated audit row and 4 checked Sign-Off lines.
+  'LB:milestones/v2.1-phases/10-codebase-map-specification-and-check-pages/10-SECURITY.md': {
+    rows: 50, open: 0, openLow: 0, closed: 50, severity: { high: 5, medium: 26, low: 19 },
+    disposition: { mitigate: 46, accept: 4 }, columns: { S: 3, T: 15, R: 2, I: 20, D: 9, E: 1 }, boundaries: 8,
+    destinations: 0, singles: 0, stores: 8, risks: 4, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
+  },
+  'LB:milestones/v2.1-phases/07-recognised-files-and-readable-urls/07-SECURITY.md': {
     rows: 43, open: 0, openLow: 0, closed: 43, severity: { high: 9, medium: 17, low: 17 },
     disposition: { mitigate: 31, accept: 12 }, columns: { S: 6, T: 19, R: 2, I: 10, D: 5, E: 1 }, boundaries: 18,
     destinations: 1, singles: 15, stores: 1, risks: 12, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
