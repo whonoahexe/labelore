@@ -167,6 +167,9 @@ function ResolvedRow({ finding, onUnfold }: { finding: ComposedReviewFinding; on
   return (
     <button
       type="button"
+      // The folded row keeps the finding's anchor, so a link to a fixed finding (a palette jump, a pasted
+      // #review-finding-wr-03) finds its element while the thread is folded; unfolded, the <article> has it.
+      id={finding.anchorId}
       className="view-review-resolved"
       aria-expanded="false"
       data-outcome={finding.stamp.outcome}

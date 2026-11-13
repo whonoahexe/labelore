@@ -2,7 +2,8 @@
 // sketch before it is called done (D-14). Run by hand or from a plan's verify step:
 //
 //   node test/helpers/shoot-pages.ts --root <project folder> --out <folder> --name <prefix> \
-//        --address / --address /codebase [--sketch <path to a sketch's index.html>[#variant]]
+//        --address / --address /codebase [--sketch <path to a sketch's index.html>[#variant]] \
+//        [--jump <text>]...
 //
 // It serves the built ./dist (run `npm run build` first) with NODE_ENV=production on the first free port
 // of 4191-4194, on an isolated settings directory (LABELORE_CONFIG_DIR), so it never reads or writes the
@@ -15,6 +16,16 @@
 // an error status, raises a page error, has other than one <h1>, or scrolls sideways at 390px. Sketches are
 // reference mock-ups, not built pages, so they are photographed but only checked for loading. The server is
 // always stopped, however the run ends.
+//
+// --jump (repeatable) drives the quick-jump palette on every --address, after its normal shots: at 1280x800 in
+// the light theme it opens the address, presses Control+K, types the text, waits up to 5 s for an option row
+// (or the indexing status), saves {name}-{address-slug}-jump-{text-slug}.png, presses Enter and waits up to 5 s
+// for the address to change. It then prints one line:
+//   JUMP {address} "{text}" -> {where it went}{search}{hash} target=found|missing|none landed=yes|no brand="{name}"
+// where it went is the pathname with the project's slug segment removed (the full pathname when it left the
+// project). target is none when the address has no hash, found when an element with that id exists within 3 s,
+// else missing; landed is yes when an element with data-landed="true" appears within 3 s. brand is the
+// aria-label of the .brand element. A missing target prints a FAIL line and makes the run exit 1.
 //
 // A sketch with no #variant opens the variant its README's `winner:` names (matched against the sketch's
 // own `data-variant` tabs); with no winner, or a winner that matches no tab (a synthesis, "none"), every
@@ -47,10 +58,11 @@ interface Options {
   name: string;
   addresses: string[];
   sketches: string[];
+  jumps: string[];
 }
 
 function parseArgs(argv: string[]): Options {
-  const options: Options = { root: '', out: '', name: 'shot', addresses: [], sketches: [] };
+  const options: Options = { root: '', out: '', name: 'shot', addresses: [], sketches: [], jumps: [] };
   for (let index = 0; index < argv.length; index++) {
     const flag = argv[index];
     const value = argv[index + 1];
@@ -61,6 +73,7 @@ function parseArgs(argv: string[]): Options {
     else if (flag === '--name') options.name = value;
     else if (flag === '--address') options.addresses.push(value.startsWith('/') ? value : `/${value}`);
     else if (flag === '--sketch') options.sketches.push(value);
+    else if (flag === '--jump') options.jumps.push(value);
     else throw new Error(`unknown option ${flag}`);
   }
   if (options.root === '') throw new Error('--root is required');
@@ -203,6 +216,67 @@ async function shootAddress(
   return failures;
 }
 
+/** Types `text` into the quick-jump palette opened on `address`, presses Enter on what is highlighted and
+ * reports where it went (see the header comment). Returns the failures; prints the JUMP line itself. */
+async function jumpFrom(
+  browser: Browser,
+  server: RunningServer,
+  options: Options,
+  address: string,
+  text: string,
+): Promise<string[]> {
+  const failures: string[] = [];
+  const label = `${address} jump "${text}"`;
+  const page = await newPage(browser, 1280, 800, 'light');
+  try {
+    await page.goto(`${server.base}/${server.slug}${address}`, { waitUntil: 'networkidle' });
+    await page.waitForSelector('h1', { timeout: 15_000 }).catch(() => undefined);
+    await page.keyboard.press('Control+K');
+    const input = page.locator('.search-dialog-input');
+    await input.waitFor({ timeout: 5000 });
+    await input.fill(text);
+    await page
+      .locator('[role="option"], .search-dialog-status')
+      .first()
+      .waitFor({ timeout: 5000 })
+      .catch(() => undefined);
+    // Let the highlight settle on the first row before Enter reads it.
+    await page.waitForTimeout(200);
+    await page.screenshot({
+      path: join(options.out, `${options.name}-${addressSlug(address)}-jump-${addressSlug(text)}.png`),
+    });
+    const before = page.url();
+    await input.press('Enter');
+    await page.waitForURL((url) => url.href !== before, { timeout: 5000 }).catch(() => undefined);
+
+    const where = new URL(page.url());
+    const prefix = `/${server.slug}`;
+    const inProject = where.pathname === prefix || where.pathname.startsWith(`${prefix}/`);
+    const shown = `${inProject ? where.pathname.slice(prefix.length) || '/' : where.pathname}${where.search}${where.hash}`;
+    let target: 'found' | 'missing' | 'none' = 'none';
+    if (where.hash.length > 1) {
+      const id = decodeURIComponent(where.hash.slice(1));
+      const present = await page
+        .waitForFunction((wanted) => document.getElementById(wanted) !== null, id, { timeout: 3000 })
+        .then(() => true)
+        .catch(() => false);
+      target = present ? 'found' : 'missing';
+      if (!present) failures.push(`${label}: the target #${id} is not on ${where.pathname}`);
+    }
+    const landed = await page
+      .waitForSelector('[data-landed="true"]', { timeout: 3000 })
+      .then(() => 'yes')
+      .catch(() => 'no');
+    const brand = (await page.locator('.brand').first().getAttribute('aria-label').catch(() => null)) ?? '';
+    console.log(`JUMP ${address} "${text}" -> ${shown} target=${target} landed=${landed} brand="${brand}"`);
+  } catch (error) {
+    failures.push(`${label}: ${error instanceof Error ? error.message : String(error)}`);
+  } finally {
+    await page.context().close();
+  }
+  return failures;
+}
+
 /** The README's `winner:` value, or '' when it has none. */
 function readWinner(folder: string): string {
   try {
@@ -292,6 +366,11 @@ async function main(): Promise<number> {
         for (const sketch of options.sketches) {
           failures.push(...(await shootSketch(browser, options, sketch, width, height, theme)));
         }
+      }
+    }
+    if (server !== null) {
+      for (const address of options.addresses) {
+        for (const text of options.jumps) failures.push(...(await jumpFrom(browser, server, options, address, text)));
       }
     }
   } catch (error) {

@@ -494,10 +494,15 @@ describe('search dialog (NAV-04)', () => {
   it('keeps the existing query machinery unchanged', async () => {
     const field = await source('src/web/components/search-field.tsx');
     expect(field).toMatch(/const DEBOUNCE_MS = 160;/);
-    expect(field).toMatch(/const DROPDOWN_LIMIT = 8;/);
-    expect(field).toMatch(/\.slice\(0, DROPDOWN_LIMIT\)/);
     expect(field).toMatch(/queryFn:\s*\(\{\s*signal\s*\}\)/);
     expect(field).toMatch(/status === 'building'/);
+  });
+
+  it('is the grouped quick-jump palette fed by /jump (Phase 13)', async () => {
+    const field = await source('src/web/components/search-field.tsx');
+    expect(field).toContain('/jump?q=');
+    expect(field).toContain('Quick jump');
+    expect(field).toContain('autoHighlight');
   });
 
   it('builds the search-page navigation from presentationRoutePatterns.search, never a literal path', async () => {

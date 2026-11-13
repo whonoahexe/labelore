@@ -126,7 +126,7 @@ export class ProjectRuntime {
     // the actual MiniSearch build is scheduled off this path inside buildFrom - callers never wait
     // on index readiness.
     const searchIndexState = createSearchIndexState();
-    searchIndexState.buildFrom(snapshot, routeTable);
+    searchIndexState.buildFrom(snapshot, routeTable, presentation);
     // Creating the summary does no read: the graph is scanned only when the Indexes page asks (11-13, D-04).
     const indexSummary = createIndexSummary({
       fs: () => this.planningFilesystem(),
