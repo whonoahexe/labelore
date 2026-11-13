@@ -10,10 +10,10 @@ import type {
 import { createApp } from '../../src/server/index.ts';
 import type { SearchApiResponse } from '../../src/server/search-index.ts';
 import {
-  buildSearchGroups,
   buildSearchSections,
   extractSnippets,
   type SearchHitLike,
+  type SearchResultRow,
 } from '../../src/presentation/search.ts';
 import { emptyLedger } from '../../src/server/dashboard-ledger.ts';
 import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
@@ -105,111 +105,26 @@ function presentation(overrides: Partial<ProjectPresentation> = {}): ProjectPres
   };
 }
 
-describe('buildSearchGroups', () => {
-  it('groups by location taxonomy then artifact type, archived-last order with active phases first (Test 1)', () => {
-    const activePhase = phase({
-      key: 'p~active',
-      milestoneKey: 'm~current',
-      name: 'Active Phase',
-      identity: { milestoneVersion: null, number: '02', projectCode: null, slug: 'active' },
-    });
-    const archivedPhaseV1 = phase({
-      key: 'p~v1',
-      milestoneKey: 'm~v1.0',
-      name: 'Archived Phase v1.0',
-      archived: true,
-      identity: { milestoneVersion: 'v1.0', number: '01', projectCode: null, slug: 'old' },
-    });
+// The row rules that held under the retired location grouping (removed in 13-06) and still hold
+// under the milestone-then-phase sections: ordering inside a group, the warning tone that never re-orders, the
+// designed-page address of a root document, and a hit that cannot be placed degrading instead of dropping.
+describe('buildSearchSections - row rules', () => {
+  const allRows = (sections: ReturnType<typeof buildSearchSections>) => [
+    ...sections.milestones.flatMap((entry) => entry.groups.flatMap((group) => group.rows)),
+    ...sections.outside.flatMap((group) => group.rows),
+  ];
 
-    const view = presentation({
-      milestones: [
-        milestone({ key: 'm~v1.0', archived: true, version: 'v1.0', name: 'v1.0', phases: [archivedPhaseV1] }),
-        milestone({ key: 'm~current', archived: false, version: null, name: 'Current', phases: [activePhase] }),
-      ],
-      artifacts: [
-        artifact({ path: 'phases/02-active/02-01-PLAN.md', location: 'phase', kind: 'plan', phaseKey: 'p~active' }),
-        artifact({ path: 'ROOT.md', location: 'root', kind: 'roadmap' }),
-        artifact({ path: 'research/NOTES.md', location: 'research', kind: 'markdown' }),
-        artifact({ path: 'quick/260101-fix/NOTES.md', location: 'quick', kind: 'markdown' }),
-        artifact({
-          path: 'milestones/v1.0-phases/01-old/01-01-PLAN.md',
-          location: 'archived-phase',
-          kind: 'plan',
-          phaseKey: 'p~v1',
-          milestoneKey: 'm~v1.0',
-        }),
-      ],
-    });
-
-    const hits: SearchHitLike[] = [
-      hit({ path: 'milestones/v1.0-phases/01-old/01-01-PLAN.md', phaseKey: 'p~v1', milestoneKey: 'm~v1.0' }),
-      hit({ path: 'quick/260101-fix/NOTES.md' }),
-      hit({ path: 'research/NOTES.md' }),
-      hit({ path: 'ROOT.md' }),
-      hit({ path: 'phases/02-active/02-01-PLAN.md', phaseKey: 'p~active' }),
-    ];
-
-    const groups = buildSearchGroups(hits, view);
-
-    expect(groups.map((g) => g.key)).toEqual([
-      'p~active',
-      'location:root',
-      'location:research',
-      'location:quick',
-      'm~v1.0',
-    ]);
-    expect(groups.map((g) => g.kind)).toEqual(['phase', 'root', 'research', 'quick', 'archived-milestone']);
-  });
-
-  it('sorts a second archived milestone after the first by version', () => {
-    const p1 = phase({ key: 'p~v1', milestoneKey: 'm~v1.0', name: 'v1 phase', archived: true });
-    const p2 = phase({ key: 'p~v2', milestoneKey: 'm~v2.0', name: 'v2 phase', archived: true });
-
-    const view = presentation({
-      milestones: [
-        milestone({ key: 'm~v1.0', archived: true, version: 'v1.0', name: 'v1.0', phases: [p1] }),
-        milestone({ key: 'm~v2.0', archived: true, version: 'v2.0', name: 'v2.0', phases: [p2] }),
-      ],
-      artifacts: [
-        artifact({
-          path: 'milestones/v2.0-phases/01-x/A.md',
-          location: 'archived-phase',
-          phaseKey: 'p~v2',
-          milestoneKey: 'm~v2.0',
-        }),
-        artifact({
-          path: 'milestones/v1.0-phases/01-x/A.md',
-          location: 'archived-phase',
-          phaseKey: 'p~v1',
-          milestoneKey: 'm~v1.0',
-        }),
-      ],
-    });
-
-    // Hits provided in reverse-version order — group order must still be version-ascending.
-    const hits: SearchHitLike[] = [
-      hit({ path: 'milestones/v2.0-phases/01-x/A.md', phaseKey: 'p~v2', milestoneKey: 'm~v2.0' }),
-      hit({ path: 'milestones/v1.0-phases/01-x/A.md', phaseKey: 'p~v1', milestoneKey: 'm~v1.0' }),
-    ];
-
-    const groups = buildSearchGroups(hits, view);
-    expect(groups.map((g) => g.key)).toEqual(['m~v1.0', 'm~v2.0']);
-  });
-
-  it('groups a milestone-root hit with its archived milestone via the canonical filename grammar', () => {
+  it('places an archived milestone-root hit with its milestone through the canonical filename grammar', () => {
     const view = presentation({
       milestones: [milestone({ key: 'm~v1.0', archived: true, version: 'v1.0', name: 'v1.0', phases: [] })],
-      artifacts: [
-        artifact({ path: 'milestones/v1.0-ROADMAP.md', location: 'milestone-root', kind: 'roadmap' }),
-      ],
+      artifacts: [artifact({ path: 'milestones/v1.0-ROADMAP.md', location: 'milestone-root', kind: 'roadmap' })],
     });
-    const hits: SearchHitLike[] = [hit({ path: 'milestones/v1.0-ROADMAP.md' })];
-
-    const groups = buildSearchGroups(hits, view);
-    expect(groups.map((g) => g.key)).toEqual(['m~v1.0']);
+    const sections = buildSearchSections([hit({ path: 'milestones/v1.0-ROADMAP.md' })], view);
+    expect(sections.milestones.map((entry) => entry.key)).toEqual(['m~v1.0']);
+    expect(sections.milestones[0].groups.map((group) => group.kind)).toEqual(['milestone-files']);
   });
 
-  it('clusters within a group by kind (plan, summary, context, generic) then path ascending (Test 2)', () => {
+  it('clusters within a group by kind (plan, summary, context, generic) then path ascending (D-07)', () => {
     const activePhase = phase({ key: 'p~a', milestoneKey: 'm~current', name: 'Phase A' });
     const view = presentation({
       milestones: [milestone({ key: 'm~current', archived: false, phases: [activePhase] })],
@@ -229,7 +144,7 @@ describe('buildSearchGroups', () => {
       hit({ path: 'phases/a/01-PLAN.md', kind: 'plan', phaseKey: 'p~a' }),
     ];
 
-    const [group] = buildSearchGroups(hits, view);
+    const group = buildSearchSections(hits, view).milestones[0].groups[0];
     expect(group.rows.map((row) => row.path)).toEqual([
       'phases/a/01-PLAN.md',
       'phases/a/02-SUMMARY.md',
@@ -253,9 +168,9 @@ describe('buildSearchGroups', () => {
         }),
       ],
     });
-    const groups = buildSearchGroups([hit({ path: 'phases/a/broken.md', phaseKey: 'p~a' })], view);
-    expect(groups[0].rows).toHaveLength(1);
-    expect(groups[0].rows[0].warningTone).toBe('unreadable');
+    const rows = allRows(buildSearchSections([hit({ path: 'phases/a/broken.md', phaseKey: 'p~a' })], view));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].warningTone).toBe('unreadable');
   });
 
   it('marks a row with the body-survived tone when its warned artifact has a non-empty body', () => {
@@ -272,8 +187,8 @@ describe('buildSearchGroups', () => {
         }),
       ],
     });
-    const groups = buildSearchGroups([hit({ path: 'phases/a/damaged.md', phaseKey: 'p~a' })], view);
-    expect(groups[0].rows[0].warningTone).toBe('warning');
+    const rows = allRows(buildSearchSections([hit({ path: 'phases/a/damaged.md', phaseKey: 'p~a' })], view));
+    expect(rows[0].warningTone).toBe('warning');
   });
 
   describe('root documents designed elsewhere (09 D-01)', () => {
@@ -286,9 +201,7 @@ describe('buildSearchGroups', () => {
       ],
     });
     const rowFor = (path: string, url: string) =>
-      buildSearchGroups([hit({ path, url })], view)
-        .flatMap((group) => group.rows)
-        .find((row) => row.path === path)!;
+      allRows(buildSearchSections([hit({ path, url })], view)).find((row) => row.path === path)!;
 
     it('leads a STATE.md hit to the dashboard and carries the Source address', () => {
       const row = rowFor('.planning/STATE.md', '/state');
@@ -312,7 +225,7 @@ describe('buildSearchGroups', () => {
     });
   });
 
-  it('a warning does not change row order — a warned and an unwarned row sort identically to two clean rows (D-13)', () => {
+  it('a warning does not change row order - a warned and an unwarned row sort identically to two clean rows (D-13)', () => {
     const activePhase = phase({ key: 'p~a', milestoneKey: 'm~current', name: 'Phase A' });
     const buildView = (warned: boolean) =>
       presentation({
@@ -335,18 +248,19 @@ describe('buildSearchGroups', () => {
       hit({ path: 'phases/a/01-PLAN.md', kind: 'plan', phaseKey: 'p~a' }),
     ];
 
-    const cleanOrder = buildSearchGroups(hits, buildView(false))[0].rows.map((row) => row.path);
-    const warnedOrder = buildSearchGroups(hits, buildView(true))[0].rows.map((row) => row.path);
+    const cleanOrder = allRows(buildSearchSections(hits, buildView(false))).map((row) => row.path);
+    const warnedOrder = allRows(buildSearchSections(hits, buildView(true))).map((row) => row.path);
     expect(warnedOrder).toEqual(cleanOrder);
   });
 
-  it('drops an unmatched phase/milestone hit into the trailing "other" group rather than an error', () => {
+  it('drops an unmatched phase hit into the Other group rather than an error', () => {
     const view = presentation({
       milestones: [],
       artifacts: [artifact({ path: 'phases/gone/X.md', location: 'phase', phaseKey: 'p~gone' })],
     });
-    const groups = buildSearchGroups([hit({ path: 'phases/gone/X.md', phaseKey: 'p~gone' })], view);
-    expect(groups.map((g) => g.kind)).toEqual(['other']);
+    const sections = buildSearchSections([hit({ path: 'phases/gone/X.md', phaseKey: 'p~gone' })], view);
+    expect(sections.milestones).toEqual([]);
+    expect(sections.outside.map((group) => group.key)).toEqual(['other']);
   });
 });
 
@@ -580,8 +494,16 @@ function makeSnapshot(project: Project | null): ProjectSnapshot {
   };
 }
 
-describe('GET /api/search — grouped response (Task 2)', () => {
-  it('returns groups alongside results in the ready state, every group row also present in results (Test 1)', async () => {
+/** Every row of a /search answer's sections, milestone groups first, then the outside groups. */
+function sectionRows(payload: SearchApiResponse): SearchResultRow[] {
+  return [
+    ...payload.sections.milestones.flatMap((entry) => entry.groups.flatMap((group) => group.rows)),
+    ...payload.sections.outside.flatMap((group) => group.rows),
+  ];
+}
+
+describe('GET /api/search — sectioned response (Task 2)', () => {
+  it('returns sections alongside results in the ready state, every section row also present in results (Test 1)', async () => {
     const body = `${'x '.repeat(30)}IDENT-02 appears in this document body for testing purposes.`;
     const artifact = makeArtifact({ path: 'phases/01-demo/01-01-PLAN.md', kind: 'plan', title: 'Plan', body });
     const app = createApp({ getSnapshot: () => makeSnapshot(makeProject([artifact])) });
@@ -592,18 +514,17 @@ describe('GET /api/search — grouped response (Task 2)', () => {
 
     expect(response.status).toBe(200);
     expect(payload.status).toBe('ready');
-    expect(payload.groups.length).toBeGreaterThan(0);
+    const rows = sectionRows(payload);
+    expect(rows.length).toBeGreaterThan(0);
     const resultPaths = new Set(payload.results.map((hit) => hit.path));
-    for (const group of payload.groups) {
-      for (const row of group.rows) {
-        expect(resultPaths.has(row.path)).toBe(true);
-        expect(Array.isArray(row.snippets)).toBe(true);
-      }
+    for (const row of rows) {
+      expect(resultPaths.has(row.path)).toBe(true);
+      expect(Array.isArray(row.snippets)).toBe(true);
     }
-    expect(payload.groups[0].rows[0].snippets.length).toBeGreaterThan(0);
+    expect(rows[0].snippets.length).toBeGreaterThan(0);
   });
 
-  it('returns an empty groups array and building status while the index is still constructing (Test 2)', async () => {
+  it('returns empty sections and building status while the index is still constructing (Test 2)', async () => {
     const artifact = makeArtifact({ path: 'phases/01-demo/01-01-PLAN.md' });
     const app = createApp({ getSnapshot: () => makeSnapshot(makeProject([artifact])) });
     // No await between createApp() and this request — the setImmediate-scheduled build has not
@@ -613,7 +534,7 @@ describe('GET /api/search — grouped response (Task 2)', () => {
 
     expect(response.status).toBe(200);
     expect(payload.status).toBe('building');
-    expect(payload.groups).toEqual([]);
+    expect(payload.sections).toEqual({ milestones: [], outside: [] });
   });
 
   it('marks a hit with the nothing-salvageable tone when its parse-warned artifact has an empty body (Test 3)', async () => {
@@ -628,7 +549,7 @@ describe('GET /api/search — grouped response (Task 2)', () => {
     const response = await app.request('/api/search?q=UNIQUETERM');
     const payload = (await response.json()) as SearchApiResponse;
 
-    const row = payload.groups.flatMap((group) => group.rows).find((candidate) => candidate.path === artifact.path);
+    const row = sectionRows(payload).find((candidate) => candidate.path === artifact.path);
     expect(row?.warningTone).toBe('unreadable');
   });
 
@@ -870,11 +791,11 @@ describe('GET /api/search - filters, facets and sections (13-03)', () => {
     expect(unfiltered.unfilteredTotal).toBe(unfiltered.total);
     expect(filtered.selection).toEqual({ phase: [], type: ['plan'], req: [] });
     expect(filtered.facets?.type.values).toEqual(unfiltered.facets?.type.values.map((value) => ({ ...value, selected: value.value === 'plan' })));
-    const sectionRows =
+    const sectionCount =
       filtered.sections.milestones.reduce((total, entry) => total + entry.count, 0) +
       filtered.sections.outside.reduce((total, group) => total + group.count, 0);
-    expect(sectionRows).toBe(filtered.total);
-    expect(filtered.groups.flatMap((group) => group.rows)).toHaveLength(filtered.total);
+    expect(sectionCount).toBe(filtered.total);
+    expect(sectionRows(filtered)).toHaveLength(filtered.total);
   });
 
   it('ORs repeated values inside a parameter and ANDs across parameters', async () => {
@@ -914,18 +835,14 @@ describe('GET /api/search - filters, facets and sections (13-03)', () => {
     expect(JSON.stringify(ignored)).not.toContain('<script>');
   });
 
-  it('keeps the groups field as it was for a request with no filters', async () => {
+  it('answers every result in its sections for a request with no filters, and no retired groups field', async () => {
     const app = await lendshedApp();
     const plain = await search(app, 'q=session');
-    expect(plain.groups.flatMap((group) => group.rows).map((row) => row.path).sort()).toEqual(
-      plain.results.map((entry) => entry.path).sort(),
-    );
-    const rows = [
-      ...plain.sections.milestones.flatMap((entry) => entry.groups.flatMap((group) => group.rows)),
-      ...plain.sections.outside.flatMap((group) => group.rows),
-    ];
+    expect(sectionRows(plain).map((row) => row.path).sort()).toEqual(plain.results.map((entry) => entry.path).sort());
+    const rows = sectionRows(plain);
     expect(rows).toHaveLength(plain.total);
     expect(rows.some((row) => row.snippets.length > 0 && row.matchCount > 0)).toBe(true);
+    expect('groups' in plain).toBe(false);
   });
 
   it('answers the pending shape with empty sections, no facets and an empty selection', async () => {

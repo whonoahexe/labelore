@@ -31,6 +31,10 @@
 // way the add dialog does (POST /api/projects with the server's own Origin), so a palette jump can switch to it.
 // It prints "PROJECT {folder} slug={slug}"; an answer that is not 2xx is a FAIL and the run exits 1.
 //
+// --sketch takes the sketch's file with an optional query and an optional #variant: `index.html?v=f` or
+// `index.html?v=f#variant`. The query is kept on the file URL (with the theme parameter added), so a sketch that
+// picks its variant from ?v= is shot as that query draws it; the query's slug is added to each file name.
+//
 // A sketch with no #variant opens the variant its README's `winner:` names (matched against the sketch's
 // own `data-variant` tabs); with no winner, or a winner that matches no tab (a synthesis, "none"), every
 // tab is shot.
@@ -350,13 +354,18 @@ async function shootSketch(
   theme: Theme,
 ): Promise<string[]> {
   const failures: string[] = [];
-  const [file, hash = ''] = sketch.split('#');
-  const path = resolve(file ?? '');
+  const [fileAndQuery = '', hash = ''] = sketch.split('#');
+  const queryAt = fileAndQuery.indexOf('?');
+  const file = queryAt < 0 ? fileAndQuery : fileAndQuery.slice(0, queryAt);
+  const sketchQuery = queryAt < 0 ? '' : fileAndQuery.slice(queryAt + 1);
+  const path = resolve(file);
   const folderName = basename(dirname(path));
+  const querySlug = sketchQuery === '' ? '' : `-${addressSlug(sketchQuery)}`;
   const page = await newPage(browser, width, height, theme);
   try {
     // The sketches in this repository read `?theme=dark` themselves (the browser's colour scheme does not reach them).
-    const response = await page.goto(`${pathToFileURL(path).href}?theme=${theme}`, { waitUntil: 'load' });
+    const withQuery = sketchQuery === '' ? '' : `${sketchQuery}&`;
+    const response = await page.goto(`${pathToFileURL(path).href}?${withQuery}theme=${theme}`, { waitUntil: 'load' });
     if (response !== null && response.status() >= 400) failures.push(`${folderName}: could not load ${path}`);
     const available = await variantsOf(page);
     const variants = available.length === 0 ? [''] : pickVariants(available, hash, readWinner(dirname(path)));
@@ -368,7 +377,7 @@ async function shootSketch(
         else await page.locator(`[data-variant="${variant}"]`).first().click();
       }
       await page.waitForTimeout(200);
-      const suffix = variant === '' ? 'sketch' : `sketch-${variant}`;
+      const suffix = `${variant === '' ? 'sketch' : `sketch-${variant}`}${querySlug}`;
       await page.screenshot({
         path: join(options.out, `${options.name}-${folderName}-${suffix}-${width}-${theme}.png`),
         fullPage: true,

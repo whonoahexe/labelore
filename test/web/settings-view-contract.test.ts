@@ -12,7 +12,7 @@ import { ScopedPlanningFilesystem } from '../../src/planning-fs/scoped-fs.ts';
 import { isInternalPath } from '../../src/planning-repo/file-class.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { buildDrawerViewModel } from '../../src/presentation/drawer.ts';
-import { buildSearchGroups } from '../../src/presentation/search.ts';
+import { buildSearchSections } from '../../src/presentation/search.ts';
 import { createSearchIndexState, searchIndex } from '../../src/server/search-index.ts';
 import { toProjectPresentation } from '../../src/server/project-presentation.ts';
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
@@ -123,8 +123,10 @@ describe("config.json's one URL (D-12)", () => {
     const hits = searchIndex(built.state(), 'granularity');
     const hit = hits.find((candidate) => candidate.path === '.planning/config.json');
     expect(hit?.url).toBe('/settings');
-    const groups = buildSearchGroups(hits, lendshed.presentation);
-    const row = groups.flatMap((group) => group.rows).find((candidate) => candidate.path === '.planning/config.json');
+    const sections = buildSearchSections(hits, lendshed.presentation);
+    const row = [...sections.milestones.flatMap((entry) => entry.groups), ...sections.outside]
+      .flatMap((group) => group.rows)
+      .find((candidate) => candidate.path === '.planning/config.json');
     expect(row?.url).toBe('/settings');
   });
 

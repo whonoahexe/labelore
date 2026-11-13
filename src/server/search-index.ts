@@ -10,7 +10,7 @@ import type { ProjectSnapshot } from '../planning-repo/types.ts';
 import type { JumpGroup } from '../presentation/jump.ts';
 import { buildRequirementMap } from '../presentation/search-facets.ts';
 import type { FacetSelection, SearchFacets } from '../presentation/search-facets.ts';
-import type { SearchResultGroup, SearchSections } from '../presentation/search.ts';
+import type { SearchSections } from '../presentation/search.ts';
 import { buildRouteTable, type RouteTable } from '../presentation/route-table.ts';
 import { buildArtifactUrl, milestoneKeyOf, phaseKeyOf } from '../presentation/routes.ts';
 import { segmentPlanBody } from '../rendering/plan-segments.ts';
@@ -100,9 +100,8 @@ export interface JumpApiResponse {
 }
 
 /** The full API response shape `/api/search` returns in every readiness state. `results` is the
- * flat ranked list (unchanged since plan 03-01, still what the header dropdown reads); `groups` is
- * the same rows reshaped by buildSearchGroups for the /search reading surface (03-02, additive —
- * every row in `groups` also appears in `results`). `fileCount` is the distinct-file count backing
+ * flat ranked list (unchanged since plan 03-01); `sections` is the same rows grouped by milestone, then phase,
+ * for the /search reading surface (Phase 13, D-12). `fileCount` is the distinct-file count backing
  * the "N results across M files" half of the results-page copy, alongside `total`'s row count. */
 export interface SearchApiResponse {
   status: SearchIndexState['status'];
@@ -117,8 +116,6 @@ export interface SearchApiResponse {
   unfilteredTotal: number;
   fileCount: number;
   results: SearchHit[];
-  /** The pre-Phase-13 grouping; 13-06 retires it with the old page. */
-  groups: SearchResultGroup[];
   /** The filtered hits grouped by milestone, then phase, with the outside-phase groups beside them (D-12). */
   sections: SearchSections;
   /** Per-facet disjunctive counts (D-09); null until the index is ready. */

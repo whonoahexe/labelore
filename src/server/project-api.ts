@@ -37,7 +37,7 @@ import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
 import { buildArtifactUrl, parseRoutePath } from '../presentation/routes.ts';
 import { buildJumpGroups, MAX_FROM_LENGTH } from '../presentation/jump.ts';
 import { buildTraceabilityViewModel } from '../presentation/traceability.ts';
-import { buildSearchGroups, buildSearchSections, extractSnippets } from '../presentation/search.ts';
+import { buildSearchSections, extractSnippets } from '../presentation/search.ts';
 import type { SearchResultRow } from '../presentation/search.ts';
 import {
   applyFacetSelection,
@@ -379,7 +379,6 @@ export function createProjectApi(
         unfilteredTotal: 0,
         fileCount: 0,
         results: [],
-        groups: [],
         sections: { milestones: [], outside: [] },
         facets: null,
         selection: { phase: [], type: [], req: [] },
@@ -400,7 +399,6 @@ export function createProjectApi(
     );
     const facets = computeFacets(all, selection, context);
     const results = applyFacetSelection(all, selection, context);
-    const groups = buildSearchGroups(results, state.presentation);
     const sections = buildSearchSections(results, state.presentation);
     // D-08: snippets are extracted from the artifact's raw indexed body — never rendered HTML,
     // never a second call through the artifact renderer — using each hit's own matched terms.
@@ -412,7 +410,6 @@ export function createProjectApi(
         row.matchCount = extracted?.matchCount ?? 0;
       }
     };
-    for (const group of groups) fillSnippets(group.rows);
     for (const milestone of sections.milestones) for (const group of milestone.groups) fillSnippets(group.rows);
     for (const group of sections.outside) fillSnippets(group.rows);
     const fileCount = new Set(results.map((hit) => hit.path)).size;
@@ -425,7 +422,6 @@ export function createProjectApi(
       unfilteredTotal: all.length,
       fileCount,
       results,
-      groups,
       sections,
       facets,
       selection,

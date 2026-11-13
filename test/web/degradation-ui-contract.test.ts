@@ -96,7 +96,11 @@ describe('degradation UI contract (D-10, D-11, D-12, D-13)', () => {
     expect(places).toContain("warningTone === 'unreadable' ? 'Unreadable' : 'Warning'");
 
     expect(search).toContain('warningTone');
-    expect(search).not.toContain('data-tone="quiet"');
+    // Phase 13 (13-06): the search page's status chips are quiet by the UI-SPEC (Indexing and Updating index…),
+    // so the old blanket ban is re-scoped. The page's quiet tones are exactly these two, each on a status-chip
+    // that holds a Loader icon; a quiet tone anywhere else on the page is still a defect.
+    expect((search.match(/data-tone="quiet"/g) ?? []).length).toBe(2);
+    expect((search.match(/<span className="status-chip" data-tone="quiet"[^>]*>\s*<Loader\b/g) ?? []).length).toBe(2);
   });
 
   it("planning-places.tsx's empty-group branch renders the one absence copy under a group heading (D-06/D-08)", async () => {

@@ -59,17 +59,17 @@ function settled(): Promise<void> {
   return new Promise((resolve) => setImmediate(resolve));
 }
 
-/** What search answers for a query: its hits and groups, without the echoed query (which is the
+/** What search answers for a query: its hits and sections, without the echoed query (which is the
  * caller's own text and would hold a searched-for fragment by construction). */
 async function search(app: App, query: string): Promise<string> {
   await settled();
   const body = JSON.parse(await textOf(app, `/api/search?q=${encodeURIComponent(query)}`)) as {
     status: string;
     results: unknown;
-    groups: unknown;
+    sections: unknown;
   };
   expect(body.status).toBe('ready');
-  return JSON.stringify({ results: body.results, groups: body.groups });
+  return JSON.stringify({ results: body.results, sections: body.sections });
 }
 
 describe('config.json secret masking, end to end (SEC-04)', () => {
