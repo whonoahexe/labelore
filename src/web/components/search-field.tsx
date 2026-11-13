@@ -19,6 +19,7 @@ import { isEditableTarget, isSearchShortcut, shortcutHintFor } from '../../prese
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { SearchHighlightRange } from '../../presentation/search.ts';
 import type { JumpApiResponse } from '../../server/search-index.ts';
+import type { ProjectListEntry } from '../../presentation/project-list.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { humanizeKind } from '../views/kinds.ts';
 import {
@@ -30,6 +31,7 @@ import {
 } from '../palette/palette-model.ts';
 import type { KeyPage, PaletteGroup, PaletteNotice, PaletteRow } from '../palette/palette-model.ts';
 import { browserStorage, readRecent, recentKey, recordRecent } from '../palette/recent-pages.ts';
+import { requestMainFocusOnNextMount } from './main-focus.ts';
 import { ProjectPathIcon } from './project-row.tsx';
 import { buttonVariants } from './ui/button.tsx';
 
@@ -306,6 +308,8 @@ interface PaletteBodyProps {
   inputRef: React.RefObject<HTMLInputElement | null>;
   /** Closes the palette (clearing everything: the body unmounts with the popup). */
   onClose(): void;
+  /** A row of another project was chosen: the dialog must not hand focus back to a trigger that is about to go. */
+  onLeaveProject(): void;
 }
 
 /** Everything inside the popup. It mounts when the palette opens and unmounts when it closes, so its queries are
@@ -318,6 +322,7 @@ function PaletteBody({
   presentation,
   inputRef,
   onClose,
+  onLeaveProject,
 }: PaletteBodyProps): React.JSX.Element {
   const navigate = useProjectNavigate();
   const appNavigate = useAppNavigate();
@@ -400,18 +405,33 @@ function PaletteBody({
     navigate(searchPageHref(submitted));
   }
 
+  // D-15: choosing another project is the header switcher's own move. The whole shell is keyed by slug, so the
+  // palette and its trigger are gone once the new project mounts; the shared request tells that shell to put focus
+  // on the main content, and the dialog is told not to return focus to a trigger that no longer exists.
+  function chooseProject(entry: ProjectListEntry): void {
+    if (entry.slug !== slug) {
+      requestMainFocusOnNextMount();
+      onLeaveProject();
+    }
+  }
+
   function openRow(row: PaletteRow): void {
-    onClose();
     if (row.type === 'project') {
+      chooseProject(row.entry);
+      onClose();
+      // useAppNavigate flushes synchronously, so the old project's text never shows under the new address.
       appNavigate(projectRootPath(row.entry.slug));
       return;
     }
+    onClose();
     navigate(hrefOfRow(row));
   }
 
-  function chooseWithClick(_row: PaletteRow, event: React.MouseEvent): void {
-    // A modified click opens a new tab and leaves the palette where it is; a plain one closes it.
+  function chooseWithClick(row: PaletteRow, event: React.MouseEvent): void {
+    // A modified click opens a new tab and leaves the palette where it is; a plain one closes it. A project row
+    // is an AppLink, which navigates (with flushSync) right after this runs.
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (row.type === 'project') chooseProject(row.entry);
     onClose();
   }
 
@@ -505,6 +525,9 @@ export function SearchDialog(): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const popupRef = useRef<HTMLDivElement | null>(null);
+  // Set when a row of another project is chosen: the shell is keyed by slug, so the trigger focus would return
+  // to is about to unmount, and the next shell's switcher focuses the main content instead (main-focus.ts).
+  const leavingProject = useRef(false);
   // The shell reads the same entry, so this shares its cache and costs no extra request.
   const presentation = useQuery({
     queryKey: projectKey(slug, scope, 'presentation'),
@@ -520,6 +543,7 @@ export function SearchDialog(): React.JSX.Element {
   }, [pathname, presentation, slug, scope]);
 
   function handleOpenChange(next: boolean): void {
+    if (next) leavingProject.current = false;
     setOpen(next);
   }
 
@@ -543,7 +567,7 @@ export function SearchDialog(): React.JSX.Element {
       if (editable && !insideOwnPopup) return;
 
       event.preventDefault();
-      setOpen(!open);
+      handleOpenChange(!open);
     }
 
     window.addEventListener('keydown', handleKeydown);
@@ -565,7 +589,12 @@ export function SearchDialog(): React.JSX.Element {
       <Dialog.Portal>
         <Dialog.Backdrop className="search-dialog-backdrop" />
         <Dialog.Viewport className="search-dialog-viewport">
-          <Dialog.Popup ref={popupRef} className="search-dialog" initialFocus={inputRef}>
+          <Dialog.Popup
+            ref={popupRef}
+            className="search-dialog"
+            initialFocus={inputRef}
+            finalFocus={() => !leavingProject.current}
+          >
             <Dialog.Title className="sr-only">Quick jump</Dialog.Title>
             <PaletteBody
               slug={slug}
@@ -574,6 +603,9 @@ export function SearchDialog(): React.JSX.Element {
               presentation={presentation}
               inputRef={inputRef}
               onClose={() => handleOpenChange(false)}
+              onLeaveProject={() => {
+                leavingProject.current = true;
+              }}
             />
           </Dialog.Popup>
         </Dialog.Viewport>
