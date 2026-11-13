@@ -1267,6 +1267,7 @@ plan's "no AST tooling" constraint.
 | `moon-icon` | Shell and navigation | |
 | `palette-group` | Shell and navigation | (Phase 13) One labelled group of the quick-jump palette's list: the `Combobox.Group` wrapper holding a label and its rows; a group with no rows is not drawn |
 | `palette-group-label` | Shell and navigation | (Phase 13) A palette group's label, Label role: `--fs-2`, semibold, uppercase, `--ls-widest`, heading font, `--muted-foreground`; ruled from the group above |
+| `palette-row-snippet` | Shell and navigation | (Phase 13) A Content match row's snippet, two lines at most, with the matched words in `mark` (the `--primary-tint` ground, as on the search page); text nodes only |
 | `palette-row-chips` | Shell and navigation | (Phase 13) The trailing chips of a palette row (the Exact chip, a phase chip), right-aligned on the row's first line |
 | `route-progress` | Shell and navigation | |
 | `route-progress-bar` | Shell and navigation | |

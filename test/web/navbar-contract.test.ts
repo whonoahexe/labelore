@@ -510,7 +510,7 @@ describe('search dialog (NAV-04)', () => {
     expect(field).toContain('See all results for');
     expect(field).toContain('contentTotal > 0');
     expect(field).toContain('presentationRoutePatterns.search}?q=${encodeURIComponent(trimmed)}');
-    expect(field).toContain('<mark>');
+    expect(field).toContain('<mark key={index}>{snippet.text.slice(range.start, range.end)}</mark>');
     expect(field).not.toContain('dangerouslySetInnerHTML');
   });
 

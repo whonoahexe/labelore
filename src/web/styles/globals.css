@@ -6222,8 +6222,27 @@ a.todo-title:hover {
   margin-left: auto;
 }
 
-.search-dialog-item > .search-result-path {
+.search-dialog-item > .search-result-path,
+.search-dialog-item > .palette-row-snippet {
   grid-column: 1 / -1;
+}
+
+/* A content row's snippet: the matched words are marked, the rest is plain text. */
+.palette-row-snippet {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--foreground);
+  font-size: var(--fs-3);
+  line-height: var(--fs-3--lh);
+}
+
+.palette-row-snippet mark {
+  background: var(--primary-tint);
+  color: var(--primary);
+  padding: 0;
 }
 
 .search-dialog-item[data-highlighted] {

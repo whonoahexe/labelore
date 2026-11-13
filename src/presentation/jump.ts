@@ -10,7 +10,9 @@
 import type { MilestoneDto, PhaseDto, ProjectPresentation } from '../server/project-presentation.ts';
 import { decisionAnchor, findingAnchor } from './jump-anchors.ts';
 import { headPhaseOf, displayPhaseNumber } from './dashboard-head.ts';
+import { rootDocumentRedirect } from './root-redirects.ts';
 import { buildPhaseUrl } from './routes.ts';
+import { extractSnippets } from './search.ts';
 import type { SearchHighlightRange, SearchHitLike, SearchSnippet } from './search.ts';
 
 export type JumpGroupKey = 'exact' | 'ids' | 'pages' | 'files' | 'content';
@@ -330,6 +332,32 @@ function exactRows(input: JumpInput, query: string): JumpRow[] {
   });
 }
 
+/** The Content group: the first JUMP_GROUP_CAPS.content search hits, each with its first snippet drawn from the
+ * indexed body (highlight ranges into plain text, never markup). A root document that has a designed page opens
+ * there, the rule search.ts applies to its own rows. */
+function contentRows(input: JumpInput): JumpRow[] {
+  const artifactsByPath = new Map(input.presentation.artifacts.map((artifact) => [artifact.path, artifact]));
+  return input.contentHits.slice(0, JUMP_GROUP_CAPS.content).map((hit) => {
+    const body = input.bodyOf(hit.path);
+    const snippet = body === null ? null : (extractSnippets(body, hit.matchedTerms).snippets[0] ?? null);
+    return {
+      key: `content:${hit.path}`,
+      kind: 'content',
+      id: null,
+      title: hit.title,
+      subtitle: hit.path,
+      url: rootDocumentRedirect(artifactsByPath.get(hit.path)) ?? hit.url,
+      anchor: null,
+      chips: [],
+      artifactKind: hit.kind,
+      phaseKey: hit.phaseKey,
+      titleHighlights: [],
+      subtitleHighlights: [],
+      snippet,
+    };
+  });
+}
+
 /**
  * The palette's rows for a typed string. Groups come out in the fixed GROUP_ORDER and a group with no rows
  * is left out. `notFoundId` lets the palette say "No D-99 in this project." instead of a generic no-match
@@ -340,6 +368,7 @@ export function buildJumpGroups(input: JumpInput): JumpResult {
   const byGroup: Partial<Record<JumpGroupKey, JumpRow[]>> = {};
 
   byGroup.exact = exactRows(input, query);
+  byGroup.content = contentRows(input);
 
   const groups: JumpGroup[] = [];
   for (const key of GROUP_ORDER) {

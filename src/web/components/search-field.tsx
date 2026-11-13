@@ -10,6 +10,7 @@ import { isEditableTarget, isSearchShortcut, shortcutHintFor } from '../../prese
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import { JUMP_GROUP_LABELS } from '../../presentation/jump.ts';
 import type { JumpRow } from '../../presentation/jump.ts';
+import type { SearchSnippet } from '../../presentation/search.ts';
 import type { JumpApiResponse } from '../../server/search-index.ts';
 import { buttonVariants } from './ui/button.tsx';
 
@@ -51,6 +52,39 @@ function hrefOf(row: JumpRow): string {
 /** The search page for a query: the address is built from the route patterns, never written out. */
 function searchPageHref(trimmed: string): string {
   return `${presentationRoutePatterns.search}?q=${encodeURIComponent(trimmed)}`;
+}
+
+/** A snippet's text split at its highlight ranges into text nodes and `mark` nodes: corpus text never becomes
+ * an HTML string (T-03-02-01, T-13-01). The ranges come merged and non-overlapping from extractSnippets. */
+function snippetNodes(snippet: SearchSnippet): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let cursor = 0;
+  snippet.highlights.forEach((range, index) => {
+    if (range.start > cursor) nodes.push(snippet.text.slice(cursor, range.start));
+    nodes.push(<mark key={index}>{snippet.text.slice(range.start, range.end)}</mark>);
+    cursor = range.end;
+  });
+  if (cursor < snippet.text.length) nodes.push(snippet.text.slice(cursor));
+  return nodes;
+}
+
+/** The last row: opens the search page with the query, so every match is one Enter away. */
+function seeAllRow(trimmed: string): JumpRow {
+  return {
+    key: 'see-all',
+    kind: 'page',
+    id: null,
+    title: `See all results for "${trimmed}"`,
+    subtitle: '',
+    url: searchPageHref(trimmed),
+    anchor: null,
+    chips: [],
+    artifactKind: null,
+    phaseKey: null,
+    titleHighlights: [],
+    subtitleHighlights: [],
+    snippet: null,
+  };
 }
 
 /** An ID row prints its ID, then its title. */
@@ -99,6 +133,8 @@ export function SearchDialog(): React.JSX.Element {
     ready && jump.data
       ? jump.data.groups.map((group) => ({ value: JUMP_GROUP_LABELS[group.key], items: group.rows }))
       : [];
+  // The last group has no label and holds one row, so Enter on it opens the full results for the query.
+  if (ready && jump.data && jump.data.contentTotal > 0) groups.push({ value: '', items: [seeAllRow(trimmed)] });
   const isIndexing = trimmed.length > 0 && jump.data?.status === 'building';
   const isEmpty = trimmed.length > 0 && ready && groups.length === 0;
   const notFoundId = ready && jump.data ? jump.data.notFoundId : null;
@@ -228,7 +264,9 @@ export function SearchDialog(): React.JSX.Element {
                   <Combobox.List className="search-dialog-list">
                     {(group: PaletteGroup) => (
                       <Combobox.Group key={group.value} items={group.items} className="palette-group">
-                        <Combobox.GroupLabel className="palette-group-label">{group.value}</Combobox.GroupLabel>
+                        {group.value === '' ? null : (
+                          <Combobox.GroupLabel className="palette-group-label">{group.value}</Combobox.GroupLabel>
+                        )}
                         <Combobox.Collection>
                           {(row: JumpRow) => (
                             <Combobox.Item
@@ -246,7 +284,10 @@ export function SearchDialog(): React.JSX.Element {
                                   </span>
                                 ))}
                               </span>
-                              <span className="search-result-path">{row.subtitle}</span>
+                              {row.subtitle === '' ? null : <span className="search-result-path">{row.subtitle}</span>}
+                              {row.snippet === null ? null : (
+                                <span className="palette-row-snippet">{snippetNodes(row.snippet)}</span>
+                              )}
                             </Combobox.Item>
                           )}
                         </Combobox.Collection>

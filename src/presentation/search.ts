@@ -305,7 +305,7 @@ interface CandidateWindow {
  * match at that position. This is strictly preferable to shifting every subsequent highlight range
  * in the document to accommodate one expanding character. (Verified: this returns "MATCH", not a
  * shifted slice, for the 'İMATCH end' / 'match' case.) */
-function foldCase(input: string): string {
+export function foldCase(input: string): string {
   let out = '';
   for (const char of input) {
     const folded = char.toLowerCase();
