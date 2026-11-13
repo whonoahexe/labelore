@@ -1,13 +1,16 @@
-// Phase 12 (12-03, SET-01, D-10): the settings catalogue guards itself. The table is committed data hand-copied from gsd-core 1.11.0,
-// so these tests inline the reference lists from the plan and pin that the table holds every one of them, holds the 25 enumerated
-// children of the closed-list patterns key by key (never their parents), holds the seven open-ended maps as whole-object leaves, has
-// no key that is a dotted prefix of another, and has no duplicates, empty labels or one-option scales.
+// Phase 12 (12-03, SET-01, D-10), reshaped by quick-261114-42r: the settings catalogue guards itself. The table is committed data, the
+// labels Labelore shows over GSD's keys; descriptions, defaults and sections come from the installed gsd-core, so the table carries
+// only { key, label } rows. These tests inline the reference lists from the plan and pin that the table holds every one of them,
+// holds the 25 enumerated children of the closed-list patterns key by key (never their parents), holds the seven open-ended maps as
+// whole-object leaves, has no key that is a dotted prefix of another, and has no duplicates or empty labels. The Labelore side of
+// section placement (the order, the display names and the homes of keys GSD does not describe) is checked at the foot.
 import { describe, expect, it } from 'vitest';
 import {
   CATALOGUE_SOURCE,
   SETTINGS_CATALOGUE,
-  SETTINGS_GROUPS,
-  SETTINGS_PATTERNS,
+  SETTINGS_SECTION_NAMES,
+  SETTINGS_SECTION_ORDER,
+  UNDOCUMENTED_HOMES,
 } from '../../src/presentation/settings-catalogue.ts';
 
 /** gsd-core 1.11.0's 107 validKeys plus its runtime-state key workflow._auto_chain_active (config-schema.manifest.json). */
@@ -83,19 +86,9 @@ const KEYS = SETTINGS_CATALOGUE.map((entry) => entry.key);
 const KEY_SET = new Set(KEYS);
 
 describe('the settings catalogue table', () => {
-  it('holds each key once, and every group id is one of the seven', () => {
+  it('holds each key once, as a bare { key, label } row', () => {
     expect(new Set(KEYS).size).toBe(KEYS.length);
-    const groupIds = SETTINGS_GROUPS.map((group) => group.id);
-    expect(groupIds).toEqual(['run', 'plan', 'exec', 'check', 'git', 'tools', 'extra']);
-    for (const entry of SETTINGS_CATALOGUE) expect(groupIds, entry.key).toContain(entry.group);
-  });
-
-  it('has options only as a list of two or more distinct entries', () => {
-    for (const entry of SETTINGS_CATALOGUE) {
-      if (entry.options === undefined) continue;
-      expect(entry.options.length, entry.key).toBeGreaterThanOrEqual(2);
-      expect(new Set(entry.options).size, entry.key).toBe(entry.options.length);
-    }
+    for (const entry of SETTINGS_CATALOGUE) expect(Object.keys(entry).sort(), entry.key).toEqual(['key', 'label']);
   });
 
   it('holds every one of the 107 validKeys and the runtime-state key of gsd-core 1.11.0', () => {
@@ -136,34 +129,26 @@ describe('the settings catalogue table', () => {
     expect(SETTINGS_CATALOGUE.length).toBe(158);
   });
 
-  it('gives every key a label, and no label repeats within a group', () => {
-    for (const group of SETTINGS_GROUPS) {
-      const labels = SETTINGS_CATALOGUE.filter((entry) => entry.group === group.id).map((entry) => entry.label);
-      expect(labels.every((label) => label.trim() !== '' && label === label.trim()), group.id).toBe(true);
-      expect(new Set(labels).size, group.id).toBe(labels.length);
+  it('gives every key a plain, trimmed, non-empty label', () => {
+    for (const entry of SETTINGS_CATALOGUE) {
+      expect(entry.label.trim() !== '' && entry.label === entry.label.trim(), entry.key).toBe(true);
     }
   });
 });
 
-describe('the settings catalogue patterns', () => {
-  it('ends every prefix with a dot and makes no fixed catalogue key of the prefix itself', () => {
-    expect(SETTINGS_PATTERNS.length).toBeGreaterThan(0);
-    for (const pattern of SETTINGS_PATTERNS) {
-      expect(pattern.prefix.endsWith('.'), pattern.prefix).toBe(true);
-      expect(KEY_SET.has(pattern.prefix), pattern.prefix).toBe(false);
-      expect(KEY_SET.has(pattern.prefix.slice(0, -1)), pattern.prefix).toBe(false);
-      expect(SETTINGS_GROUPS.map((group) => group.id)).toContain(pattern.group);
-      expect(pattern.label.trim()).not.toBe('');
-    }
+describe('where keys sit on the reference page', () => {
+  it('starts the order with Core and ends it with Advanced, each section once', () => {
+    expect(SETTINGS_SECTION_ORDER[0]).toBe('Core');
+    expect(SETTINGS_SECTION_ORDER[SETTINGS_SECTION_ORDER.length - 1]).toBe('Advanced');
+    expect(new Set(SETTINGS_SECTION_ORDER).size).toBe(SETTINGS_SECTION_ORDER.length);
   });
 
-  it('keeps features.<name> beside the two fixed features keys', () => {
-    expect(SETTINGS_PATTERNS.some((pattern) => pattern.prefix === 'features.')).toBe(true);
-    expect(KEY_SET.has('features.thinking_partner')).toBe(true);
-    expect(KEY_SET.has('features.global_learnings')).toBe(true);
+  it('names only sections in the order, and homes keys only in sections in the order', () => {
+    for (const key of Object.keys(SETTINGS_SECTION_NAMES)) expect(SETTINGS_SECTION_ORDER, key).toContain(key);
+    for (const [key, home] of Object.entries(UNDOCUMENTED_HOMES)) expect(SETTINGS_SECTION_ORDER, key).toContain(home);
   });
 
-  it('names where the table came from', () => {
-    expect(CATALOGUE_SOURCE).toBe('gsd-core 1.11.0, hand-copied');
+  it('names where the labels came from', () => {
+    expect(CATALOGUE_SOURCE).toBe('Labelore-written labels for gsd-core 1.11.0 keys');
   });
 });

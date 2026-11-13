@@ -39208,14 +39208,15 @@ a.view-workstreams-file:hover {
 /* phase-12-source:end */
 
 /* phase-12-settings:start */
-/* Phase 12 (12-09): the settings page, sketch 063 winner A "Control panel". Four counts under a thick foreground rule, then the
-   groups as --card panels in two columns, each set key drawn as a read-only instrument (a switch, a scale, a value in its shape),
-   the unset keys folded at the panel's foot, and Not recognised as a hatched dashed panel. Colour comes only from tokens: the
-   accent marks an On switch, the chosen scale option, the filled meter squares and the lit gear; "not set" and masked values are
-   dashed and quiet; nothing here is destructive except the unreadable notice. Type is the Body (--fs-4), Label (--fs-2 uppercase
-   mono) and Code (--fs-3 mono) roles, and the Display numerals of the counts; bold is semibold. Instruments are plain spans: no
-   pointer cursor, no focus stop and no hover state, because nothing on this page changes a setting. The counts and the panels
-   follow the page's own width (a container query), so a phone gets one column and a 2 by 2 grid of counts. */
+/* quick-261114-42r: the settings page, sketch 065 winner A "Reference doc". The page reads as a docs reference for everything GSD can
+   be configured to do: a sticky rail (filter, status filters, "On this page" with a scroll-spy), then GSD's own sections, each over a
+   2px foreground rule, each documented key an entry (a plain label over the mono key, GSD's first sentence, then Type, Default and
+   Allowed, with this project's value and its line on the right). Keys GSD accepts but does not describe fold at each section's foot;
+   keys GSD's schema does not know sit in a hatched, dashed section. Colour comes only from existing tokens: the accent marks a true
+   boolean, this project's value in an Allowed list, the current section, a pressed filter and a filter match; "not set", null, the
+   masked box, the fold and Not recognised are dashed and quiet; destructive appears only on the unreadable notice. Type follows the
+   shipped page: Body (--fs-6) for names, --fs-5 for descriptions, the Label role (--fs-2 uppercase mono) for facts, Code (--fs-3
+   mono) for values; bold is semibold. At 760px and below the rail becomes a sticky bar of the filter and two selects. */
 .view-settings-lock {
   display: inline-flex;
   align-items: baseline;
@@ -39228,214 +39229,561 @@ a.view-workstreams-file:hover {
   height: var(--space-3-5);
 }
 
+/* The lede under the lock line: the counts, in the one sentence the sketch draws. */
+.view-settings-lede {
+  display: block;
+  max-width: 72ch;
+  margin-top: var(--space-3);
+  color: var(--muted-foreground);
+  font-size: var(--fs-6);
+}
+
+.view-settings-lede b {
+  color: var(--foreground);
+  font-weight: var(--fw-semibold);
+}
+
 .view-settings-page {
-  container-name: settings;
-  container-type: inline-size;
   display: grid;
-  gap: var(--space-8);
+  grid-template-columns: 15rem minmax(0, 1fr);
+  gap: var(--space-10);
   min-width: 0;
 }
 
-/* The counts: the largest type on the page after the h1. */
-.view-settings-counts {
+.view-settings-page[data-rail='false'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.view-settings-main {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: 0;
-  padding: 0;
-  border-top: var(--space-2) solid var(--foreground);
-  border-bottom: 1px solid var(--border);
-  list-style: none;
+  gap: var(--space-10);
+  align-content: start;
+  min-width: 0;
 }
 
-.view-settings-count {
-  display: grid;
-  gap: var(--space-1);
-  padding: var(--space-4) var(--space-4) var(--space-4) 0;
-}
-
-.view-settings-count + .view-settings-count {
-  padding-left: var(--space-4);
-  border-left: 1px solid var(--border);
-}
-
-.view-settings-count-number {
-  font-size: var(--fs-display-1);
+.view-settings-num {
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-weight: var(--fw-semibold);
-  letter-spacing: var(--ls-tight);
-  line-height: var(--lh-none);
 }
 
-.view-settings-count[data-count='notSet'] .view-settings-count-number,
-.view-settings-count[data-count='notRecognised'] .view-settings-count-number {
+.view-settings-mono {
+  font-family: var(--font-mono);
+}
+
+.view-settings-quiet {
   color: var(--muted-foreground);
 }
 
-.view-settings-count-caption {
+.view-settings-page mark {
+  background: var(--primary-tint);
+  color: var(--primary);
+  padding: 0;
+}
+
+/* The rail. */
+.view-settings-rail {
+  position: sticky;
+  top: var(--space-22);
+  align-self: start;
+  display: grid;
+  gap: var(--space-4);
+  max-height: calc(100vh - var(--space-22) - var(--space-4));
+  overflow: auto;
+  padding-right: var(--space-2);
+}
+
+.view-settings-find {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.view-settings-find input {
+  width: 100%;
+  height: calc(var(--space-8) + var(--space-1));
+  padding: 0 var(--space-3) 0 calc(var(--space-8) + var(--space-1));
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--background);
+  color: inherit;
+  font: inherit;
+  font-size: var(--fs-4);
+}
+
+.view-settings-find input:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: -1px;
+}
+
+.view-settings-find svg {
+  position: absolute;
+  top: 50%;
+  left: var(--space-3);
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--muted-foreground);
+  transform: translateY(-50%);
+}
+
+.view-settings-find kbd {
+  position: absolute;
+  top: 50%;
+  right: var(--space-2);
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  transform: translateY(-50%);
+}
+
+.view-settings-status {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.view-settings-status button {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--fs-3);
+  text-align: left;
+}
+
+.view-settings-status button:hover {
+  background: var(--state-hover);
+  color: var(--foreground);
+}
+
+.view-settings-status button[aria-pressed='true'] {
+  border-color: var(--border);
+  background: var(--state-hover);
+  color: var(--foreground);
+}
+
+.view-settings-toc ol {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--border);
+  list-style: none;
+}
+
+.view-settings-toc-title {
+  display: block;
+  padding-bottom: var(--space-2);
   color: var(--muted-foreground);
   font-family: var(--font-mono);
   font-size: var(--fs-2);
   font-weight: var(--fw-semibold);
   letter-spacing: var(--ls-widest);
-  line-height: var(--lh-normal);
   text-transform: uppercase;
 }
 
-@container settings (max-width: 52rem) {
-  .view-settings-counts {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .view-settings-count:nth-child(3) {
-    padding-left: 0;
-    border-left: 0;
-  }
-
-  .view-settings-count:nth-child(n + 3) {
-    border-top: 1px solid var(--border);
-  }
-}
-
-/* The panels: two columns of at least 22rem, one column when the page is narrower. */
-.view-settings-panels {
-  columns: 2 calc(var(--space-8) * 11);
-  column-gap: var(--space-6);
-}
-
-.view-settings-panel {
-  display: grid;
-  margin-bottom: var(--space-6);
-  border: 1px solid var(--border);
-  background: var(--card);
-  break-inside: avoid;
-}
-
-.view-settings-panel-head {
+.view-settings-toc a {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2) var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border);
-}
-
-.view-settings-panel-head h2 {
-  margin: 0;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-left: -1px;
+  padding: var(--space-1) var(--space-3);
+  border-left: 2px solid transparent;
+  color: var(--muted-foreground);
   font-size: var(--fs-4);
-  font-weight: var(--fw-semibold);
-  line-height: var(--lh-tight);
+  text-decoration: none;
+  transition: color 0.15s ease;
 }
 
-.view-settings-panel-meta {
-  margin-left: auto;
+.view-settings-toc a:hover {
+  color: var(--foreground);
+}
+
+.view-settings-toc a[aria-current='true'] {
+  border-left-color: var(--primary);
+  color: var(--foreground);
+}
+
+.view-settings-toc a[data-dim='true'] {
+  opacity: 0.45;
+}
+
+.view-settings-toc a .view-settings-num {
+  font-size: var(--fs-2);
+}
+
+.view-settings-jump {
+  display: none;
+  gap: var(--space-2);
+}
+
+.view-settings-jump select {
+  flex: 1;
+  min-width: 0;
+  height: calc(var(--space-8) + var(--space-1));
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--background);
+  color: inherit;
+  font: inherit;
+  font-size: var(--fs-3);
+}
+
+/* A section: its name and "n of m set" over a 2px rule, then GSD's intro line. */
+.view-settings-sec {
+  display: grid;
+  gap: var(--space-2);
+  scroll-margin-top: var(--space-22);
+}
+
+.view-settings-sec-head {
+  display: grid;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
+  border-bottom: 2px solid var(--foreground);
+}
+
+.view-settings-sec-head h2 {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: 0;
+  font-size: var(--fs-fluid-3);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+}
+
+.view-settings-sec-count {
   color: var(--muted-foreground);
   font-family: var(--font-mono);
-  font-size: var(--fs-2);
-  letter-spacing: var(--ls-wider);
+  font-size: var(--fs-3);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
-.view-settings-panel[data-muted='true'] .view-settings-panel-head {
+.view-settings-sec-head p {
+  max-width: 72ch;
+  margin: 0;
   color: var(--muted-foreground);
 }
 
-/* Not recognised: a dashed frame and a hatched header; the heading and the count sit on a --card chip so they stay legible. */
-.view-settings-panel[data-kind='not-recognised'] {
-  border-style: dashed;
-  border-color: var(--muted-foreground);
-}
-
-.view-settings-panel[data-kind='not-recognised'] .view-settings-panel-head {
-  background: var(--hatch);
-}
-
-.view-settings-panel[data-kind='not-recognised'] .view-settings-panel-head h2,
-.view-settings-panel[data-kind='not-recognised'] .view-settings-panel-meta {
-  padding-inline: var(--space-1);
-  background: var(--card);
-}
-
-/* A row: the label over its key path, and the instrument at the right; objects and lists of objects take the full width. */
-.view-settings-rows {
+/* A documented entry. */
+.view-settings-entry {
   display: grid;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.view-settings-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) fit-content(60%);
-  align-items: center;
-  gap: var(--space-1) var(--space-4);
-  padding: var(--space-2-5) var(--space-4);
+  grid-template-columns: minmax(0, 1fr) minmax(9rem, auto);
+  gap: var(--space-1-5) var(--space-6);
+  padding: var(--space-4) 0;
   border-bottom: 1px solid var(--border-faint);
+  scroll-margin-top: var(--space-22);
 }
 
-.view-settings-row[data-wide='true'] {
-  grid-template-columns: minmax(0, 1fr);
+.view-settings-entry:target {
+  background: var(--primary-tint);
 }
 
-.view-settings-label {
+.view-settings-entry-key {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  font-weight: inherit;
+}
+
+.view-settings-nm {
   display: grid;
   min-width: 0;
 }
 
 .view-settings-name {
+  font-family: var(--font-sans);
+  font-size: var(--fs-6);
   font-weight: var(--fw-semibold);
+  letter-spacing: normal;
   overflow-wrap: anywhere;
+}
+
+.view-settings-name[data-is-key='true'] {
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
 }
 
 .view-settings-key {
   color: var(--muted-foreground);
   font-family: var(--font-mono);
   font-size: var(--fs-2);
+  font-weight: 400;
   letter-spacing: var(--ls-wider);
   overflow-wrap: anywhere;
 }
 
-.view-settings-value {
-  min-width: 0;
-  max-width: 100%;
-  justify-self: end;
+.view-settings-hash {
+  color: var(--muted-foreground);
+  opacity: 0;
+  text-decoration: none;
+  transition: opacity 0.15s;
 }
 
-.view-settings-row[data-wide='true'] .view-settings-value {
-  justify-self: stretch;
+.view-settings-entry:hover .view-settings-hash,
+.view-settings-hash:focus-visible {
+  opacity: 1;
 }
 
-/* Values in the shape they arrive: long text wraps instead of overflowing. */
-.view-settings-text,
-.view-settings-json {
-  font-family: var(--font-mono);
+.view-settings-desc {
+  grid-column: 1;
+  max-width: 70ch;
+  margin: 0;
+  color: color-mix(in oklch, var(--foreground) 82%, var(--muted-foreground));
+  font-size: var(--fs-5);
+}
+
+.view-settings-more {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font: inherit;
   font-size: var(--fs-3);
-  overflow-wrap: anywhere;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
 }
 
-.view-settings-number {
+.view-settings-more:hover {
+  color: var(--foreground);
+}
+
+.view-settings-facts {
+  grid-column: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: var(--space-1) var(--space-5);
+}
+
+.view-settings-facts dl {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.view-settings-facts dt {
+  color: var(--muted-foreground);
   font-family: var(--font-mono);
-  font-size: var(--fs-4);
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--fw-semibold);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
 }
 
-.view-settings-null {
+.view-settings-facts dd {
+  margin: 0;
+  font-size: var(--fs-3);
+}
+
+.view-settings-allowed {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.view-settings-allowed[data-has-default='true'] {
+  padding-bottom: var(--space-3);
+}
+
+.view-settings-option {
+  position: relative;
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--border);
   color: var(--muted-foreground);
   font-family: var(--font-mono);
   font-size: var(--fs-2);
 }
 
-.view-settings-json {
-  display: block;
+.view-settings-option[aria-current='true'] {
+  border-color: var(--primary-border);
+  background: var(--primary-tint);
+  color: var(--primary);
 }
 
-.view-settings-row[data-wide='true'] .view-settings-json {
-  padding-left: var(--space-3);
-  border-left: 1px solid var(--border);
+.view-settings-option-default {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  color: var(--muted-foreground);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  transform: translateX(-50%);
 }
 
-.view-settings-json-line {
-  display: block;
-  white-space: pre-wrap;
+.view-settings-rel {
+  display: grid;
+  grid-column: 1;
+  gap: var(--space-1);
+  max-width: 70ch;
+  padding: var(--space-2) var(--space-3);
+  border-left: 2px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-settings-rel b {
+  color: var(--foreground);
+  font-weight: var(--fw-semibold);
+}
+
+/* This project: the value on the right, in its shape, and the line it sits on. */
+.view-settings-val {
+  display: grid;
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  gap: var(--space-1);
+  align-content: start;
+  justify-items: end;
+  min-width: 0;
+  text-align: right;
+}
+
+.view-settings-val-label {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
+}
+
+.view-settings-line {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+}
+
+.view-settings-line:hover {
+  color: var(--primary);
+}
+
+.view-settings-entry[data-wide='true'] .view-settings-val {
+  grid-column: 1 / -1;
+  grid-row: auto;
+  justify-items: start;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  background: var(--veil);
+  text-align: left;
+}
+
+/* Values, in the shape they arrive in. */
+.view-settings-bool {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  font-weight: var(--fw-semibold);
+}
+
+.view-settings-bool i {
+  width: var(--space-2);
+  height: var(--space-2);
+  border: 1px solid var(--muted-foreground);
+}
+
+.view-settings-bool[data-on='true'] {
+  color: var(--primary);
+}
+
+.view-settings-bool[data-on='true'] i {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.view-settings-str,
+.view-settings-num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-settings-null {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  font-style: italic;
+}
+
+.view-settings-unset {
+  padding: 0 var(--space-1-5);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  white-space: nowrap;
+}
+
+.view-settings-sum {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
+}
+
+.view-settings-list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-settings-list li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--fs-3);
+}
+
+.view-settings-meta {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-settings-obj {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-settings-obj > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.view-settings-obj dt {
+  color: var(--muted-foreground);
+}
+
+.view-settings-obj dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 /* The masked value: the masked text with a lock in the dashed quiet box the Source reader uses (.source-t-mask). */
@@ -39456,141 +39804,102 @@ a.view-workstreams-file:hover {
   height: var(--space-3);
 }
 
-/* A boolean: a switch drawn from the file's value, with the word. The track is decoration (aria-hidden). */
-.view-settings-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--muted-foreground);
-  font-family: var(--font-mono);
-  font-size: var(--fs-2);
-  font-weight: var(--fw-semibold);
-  letter-spacing: var(--ls-wider);
-  text-transform: uppercase;
+/* The fold of keys GSD accepts but does not describe. */
+.view-settings-also {
+  margin-top: var(--space-3);
+  border: 1px dashed var(--border);
 }
 
-.view-settings-track {
-  position: relative;
-  width: var(--space-8);
-  height: var(--space-4);
-  border: 1px solid var(--muted-foreground);
-}
-
-.view-settings-track::after {
-  position: absolute;
-  top: var(--space-0-5);
-  left: var(--space-0-5);
-  width: calc(var(--space-4) - var(--space-1-5));
-  height: calc(var(--space-4) - var(--space-1-5));
-  background: var(--muted-foreground);
-  content: '';
-}
-
-.view-settings-switch[data-on='true'] {
-  color: var(--foreground);
-}
-
-.view-settings-switch[data-on='true'] .view-settings-track {
-  border-color: var(--primary);
-  background: var(--primary);
-}
-
-.view-settings-switch[data-on='true'] .view-settings-track::after {
-  right: var(--space-0-5);
-  left: auto;
-  background: var(--background);
-}
-
-/* A value from a closed set the catalogue documents: every allowed option, the chosen one lit. Options never mark a default. */
-.view-settings-scale {
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.view-settings-option {
-  padding: var(--space-0-5) var(--space-2);
-  border: 1px solid var(--border-faint);
-  color: var(--muted-foreground);
-  font-family: var(--font-mono);
-  font-size: var(--fs-2);
-  letter-spacing: var(--ls-wider);
-}
-
-.view-settings-option + .view-settings-option {
-  border-left: 0;
-}
-
-.view-settings-option[aria-current='true'] {
-  border-color: var(--primary-border);
-  background: var(--primary-tint);
-  color: var(--primary);
-  font-weight: var(--fw-semibold);
-}
-
-.view-settings-option[aria-current='true'] + .view-settings-option {
-  border-left: 1px solid var(--border-faint);
-}
-
-/* The unset keys: a native details at the panel's foot; opens on its own for a panel with nothing set. */
-.view-settings-unset > summary {
+.view-settings-also summary {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  color: var(--muted-foreground);
+  padding: var(--space-3) var(--space-4);
   cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: var(--fs-2);
-  letter-spacing: var(--ls-wider);
+  font-size: var(--fs-4);
   list-style: none;
-  text-transform: uppercase;
 }
 
-.view-settings-unset > summary::-webkit-details-marker {
+.view-settings-also summary::-webkit-details-marker {
   display: none;
 }
 
-.view-settings-unset > summary:hover {
-  background: var(--state-hover);
-  color: var(--foreground);
+.view-settings-also summary svg {
+  width: var(--space-4);
+  height: var(--space-4);
+  transition: transform 0.15s;
 }
 
-.view-settings-unset > summary svg {
-  flex: none;
-  width: var(--space-3);
-  height: var(--space-3);
-}
-
-.view-settings-unset[open] > summary svg {
+.view-settings-also[open] summary svg {
   transform: rotate(90deg);
 }
 
-.view-settings-unset > ul {
+.view-settings-also summary .view-settings-quiet {
+  font-size: var(--fs-3);
+}
+
+.view-settings-also ul {
   display: grid;
   margin: 0;
   padding: 0 var(--space-4) var(--space-3);
   list-style: none;
 }
 
-.view-settings-unset-row {
+.view-settings-also li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--space-4);
   align-items: baseline;
-  gap: var(--space-3);
-  padding: var(--space-1-5) 0;
-  border-top: 1px dashed var(--border-faint);
-  color: var(--muted-foreground);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--border-faint);
+  scroll-margin-top: var(--space-22);
 }
 
-.view-settings-notset {
-  display: inline-block;
-  padding: 0 var(--space-1-5);
-  border: 1px dashed var(--muted-foreground);
+.view-settings-also-key {
+  min-width: 0;
+}
+
+.view-settings-also-default {
   color: var(--muted-foreground);
   font-family: var(--font-mono);
   font-size: var(--fs-2);
-  letter-spacing: var(--ls-wider);
+}
+
+.view-settings-also-value {
+  display: grid;
+  justify-items: end;
+  gap: var(--space-1);
+}
+
+/* Not recognised: a hatched, dashed box of keys exactly as written. */
+.view-settings-unknown {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px dashed var(--muted-foreground);
+  background: repeating-linear-gradient(135deg, transparent 0 6px, var(--border-faint) 6px 7px);
+}
+
+.view-settings-unknown-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-4);
+  scroll-margin-top: var(--space-22);
+}
+
+.view-settings-unknown-value {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.view-settings-empty {
+  margin: 0;
+  padding: var(--space-6);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
 }
 
 /* The unreadable config.json: the page's one error look, the Source notice with a solid destructive frame and glyph (a genuine read failure). */
@@ -39615,6 +39924,45 @@ a.view-workstreams-file:hover {
   .shell-controls a[aria-label='Project settings'] {
     min-width: var(--space-10);
     min-height: var(--space-10);
+  }
+}
+
+/* 760px and below: one column, the rail a sticky bar of the filter and two selects, each entry's value under its key. These come last so
+   they override the base rules above. */
+@media (max-width: 47.5rem) {
+  .view-settings-page {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+  }
+
+  .view-settings-rail {
+    top: 0;
+    z-index: 5;
+    max-height: none;
+    padding: var(--space-2) 0;
+    overflow: visible;
+    border-bottom: 1px solid var(--border);
+    background: var(--background);
+  }
+
+  .view-settings-status,
+  .view-settings-toc {
+    display: none;
+  }
+
+  .view-settings-jump {
+    display: flex;
+  }
+
+  .view-settings-entry {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .view-settings-val {
+    grid-column: 1;
+    grid-row: auto;
+    justify-items: start;
+    text-align: left;
   }
 }
 /* phase-12-settings:end */

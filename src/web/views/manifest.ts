@@ -29,7 +29,7 @@ import type { ComposedResearchBriefing } from './research-briefing.ts';
 // Type-only import — same reason as `brief` above (quick-260930-wfs, sketch-013 B).
 import type { ComposedPatternMap } from './pattern-map.ts';
 // Type-only import - same reason as `brief` above (Phase 12, 12-09, sketch-063 A).
-import type { ComposedSettings } from './settings-page.ts';
+import type { SettingsSubject } from './settings-reference.ts';
 // Type-only import — same reason as `brief` above (quick-261003-526, sketch-016 winner).
 import type { ComposedValidationStrategy } from './validation-strategy.ts';
 // Type-only import — same reason as `brief` above (quick-261006-iz7, sketch-020 D).
@@ -255,12 +255,12 @@ export interface ViewManifest {
    * `structured.onboarding`), and the page falls back to the promoted-section view, which the manifest keeps as `promote`, with no
    * notice (Phase 10 C1, X2). */
   onboardingPage?: (input: ViewInput) => ComposedOnboarding | null;
-  /** Phase 12 (12-09, sketch-063 winner A "Control panel"): the settings page a manifest opts into in View mode - the one
-   * `settings` manifest, for the project's root `config.json` (D-11). Returns `null` when the input is not the root config as an
-   * object (a workstream's own config.json, or a config.json that parses to something other than an object), and the page falls
-   * back to the manifest's `promote` fact-list of the frontmatter, with no notice (Phase 10 C1, X2). An unparseable file composes
-   * `{ state: 'unreadable' }`, which the page draws as its one error notice. */
-  settingsPage?: (input: ViewInput) => ComposedSettings | null;
+  /** quick-261114-42r (sketch-065 winner A "Reference doc"): the settings page a manifest opts into in View mode - the one
+   * `settings` manifest, for the project's root `config.json` (D-11). Returns the page's subject: `null` when the input is not the
+   * root config as an object (a workstream's own config.json, or a config.json that parses to something other than an object), and
+   * the page falls back to the manifest's `promote` fact-list of the frontmatter, with no notice (Phase 10 C1, X2). An unparseable
+   * file is `{ state: 'unreadable' }`, which the page draws as its one error notice above GSD's reference. */
+  settingsPage?: (input: ViewInput) => SettingsSubject | null;
   /** Phase 10 (10-08): true for a kind whose document text must never reach View mode through the generic
    * fallback (promoted sections or the whole document) - `user-setup`, whose file can hold a pasted value
    * (CONTEXT D-11). The Source toggle stays the way to the text. See `documentHtmlAllowedInView`. */

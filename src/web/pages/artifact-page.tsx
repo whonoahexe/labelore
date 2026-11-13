@@ -94,8 +94,8 @@ import type { ComposedForensics } from '../views/forensics-page.ts';
 import { ForensicsView, forensicsHeaderProps } from '../views/forensics-page-components.tsx';
 import type { ComposedOnboarding } from '../views/onboarding-page.ts';
 import { OnboardingView, onboardingHeaderProps } from '../views/onboarding-page-components.tsx';
-import type { ComposedSettings } from '../views/settings-page.ts';
-import { SettingsView, settingsHeaderProps } from '../views/settings-page-components.tsx';
+import { SettingsView, settingsHeaderProps, useSettingsModel } from '../views/settings-page-components.tsx';
+import type { SettingsSubject } from '../views/settings-reference.ts';
 import type { ComposedSpec } from '../views/spec-page.ts';
 import { SpecView, specHeaderProps } from '../views/spec-page-components.tsx';
 import type { ComposedAiSpec } from '../views/ai-spec-page.ts';
@@ -1050,13 +1050,15 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.onboardingPage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
-  // Phase 12 (12-09, sketch 063 A): the settings page, when the resolved manifest opts into one - `null` for every other kind, for a
+  // quick-261114-42r (sketch 065 A): the settings page, when the resolved manifest opts into one - `null` for every other kind, for a
   // workstream's own config.json and for a config.json that is not an object (D-11), where the fact-list of the frontmatter renders.
-  // The composer is pure and the page changes nothing: its one request is the unreadable state's GET of the parser's position.
-  const settingsPage = useMemo<ComposedSettings | null>(() => {
+  // The subject is what the page is about (the config, or why there is none); the model composes it with GSD's reference, and the
+  // page changes nothing: its only requests are two GETs (GSD's reference and this file's Source text).
+  const settingsPage = useMemo<SettingsSubject | null>(() => {
     if (!manifest || !viewInput) return null;
     return manifest.settingsPage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  const settingsModel = useSettingsModel(settingsPage, { slug, scope, route });
   // Phase 10 (10-16, sketch 047 B): the Spec page, when the resolved manifest opts into one - `null` for every other
   // kind and for a SPEC the page cannot shape (no `structured.spec`, or no score, requirement, dimension, goal or
   // scope), where the promoted-section view renders with no notice. The composer is pure, so two spec pages open at
@@ -1511,8 +1513,8 @@ export function ArtifactPage({
   // The onboarding page's header override (eyebrow "Onboarding", the file's title as the h1, the file name as meta) rides the same
   // spread; the page carries what the metadata disclosure would repeat.
   const onboardingCover = onboardingPage && mode === 'view' ? onboardingPage : null;
-  // The settings page's header override (crumbs "{project} / Settings", eyebrow "Settings", the h1 "Project settings" and the read-only
-  // lock line) rides the same spread; the page carries what the metadata disclosure would repeat.
+  // The settings page's header override (crumbs "{project} / Settings", eyebrow "Settings", the h1 "Project settings", the read-only
+  // lock line and the lede of counts) rides the same spread; the page carries what the metadata disclosure would repeat.
   const settingsCover = settingsPage && mode === 'view' ? settingsPage : null;
   // An unreadable config.json already says so in the settings notice, so the generic Warning chip and disclosure stay out of its way:
   // the notice is the one error look on the page.
@@ -1555,7 +1557,7 @@ export function ArtifactPage({
     (reportCover ? reportHeaderProps(reportCover, artifact.title, artifact.path) : null) ??
     (forensicsCover ? forensicsHeaderProps(forensicsCover, artifact.title, artifact.path) : null) ??
     (onboardingCover ? onboardingHeaderProps(onboardingCover, artifact.title, artifact.path) : null) ??
-    (settingsCover ? settingsHeaderProps(presentationQuery.data?.projectName ?? slug) : null) ??
+    (settingsCover ? settingsHeaderProps(presentationQuery.data?.projectName ?? slug, settingsModel) : null) ??
     (specPageCover ? specHeaderProps(specPageCover, artifact.title) : null) ??
     (aiSpecPageCover ? aiSpecHeaderProps(aiSpecPageCover, artifact.title) : null) ??
     (userSetupPageCover ? userSetupHeaderProps(userSetupPageCover, artifact.title) : null) ??
@@ -1584,9 +1586,9 @@ export function ArtifactPage({
           cover: undefined,
         }
       : null;
-  return (
-    <main className="artifact-page page-stack">
-        {switcher}
+  // The header and the warning disclosure are lifted into constants so the settings page can hand them to its own layout, where the
+  // rail sits level with the crumbs; every other page renders them in place, exactly as before.
+  const headerNode = (
       <ArtifactHeader
         crumbs={crumbs}
         hideCrumbs={Boolean(specCover || uatCover) || ledgerOwnsCrumbs}
@@ -1660,49 +1662,9 @@ export function ArtifactPage({
       >
         {designedView ? <DocumentViewToggle mode={mode} onChange={setMode} /> : null}
       </ArtifactHeader>
-
-      {panels.length > 0 ? (
-        // The UI-SPEC page's cover and shadcn card already carry the frontmatter facts, and the
-        // Winner lists the frontmatter as source-only — View mode hides the disclosure. Source mode
-        // (Phase 12, D-06) draws the file itself, so it hides the disclosure too. The UAT page's cover carries its facts and its "In the source only"
-        // strip names the frontmatter, so it hides the disclosure the same way.
-        mode !== 'view' ||
-        specCover ||
-        uatCover ||
-        windowsCover ||
-        auditCover ||
-        coverageCover ||
-        codebaseCover ||
-        pauseCover ||
-        spikesCover ||
-        indexesCover ||
-        seedCover ||
-        threadCover ||
-        reportCover ||
-        forensicsCover ||
-        onboardingCover ||
-        settingsCover ||
-        specPageCover ||
-        aiSpecPageCover ||
-        userSetupPageCover ||
-        evalReviewPageCover ||
-        domVerifyPageCover ||
-        reviewsPageCover ||
-        fixCover ? null : (
-          <details className="artifact-metadata">
-            <summary>
-              Document metadata <span>{panels.length} sections</span>
-            </summary>
-            <div className="metadata-panels" aria-label="Structured artifact metadata">
-              {panels.map((panel) => (
-                <MetadataPanel key={panel.key} panel={panel} />
-              ))}
-            </div>
-          </details>
-        )
-      ) : null}
-
-      {warningTone && !settingsOwnsWarning ? (
+  );
+  const warningNode = (
+    warningTone && !settingsOwnsWarning ? (
         <details className="artifact-metadata artifact-warning-disclosure">
           <summary>
             <span className="warning-disclosure-label">
@@ -1751,7 +1713,55 @@ export function ArtifactPage({
             </details>
           </div>
         </details>
+      ) : null
+  );
+  return (
+    <main className="artifact-page page-stack">
+        {switcher}
+      {settingsCover ? null : headerNode}
+
+      {panels.length > 0 ? (
+        // The UI-SPEC page's cover and shadcn card already carry the frontmatter facts, and the
+        // Winner lists the frontmatter as source-only — View mode hides the disclosure. Source mode
+        // (Phase 12, D-06) draws the file itself, so it hides the disclosure too. The UAT page's cover carries its facts and its "In the source only"
+        // strip names the frontmatter, so it hides the disclosure the same way.
+        mode !== 'view' ||
+        specCover ||
+        uatCover ||
+        windowsCover ||
+        auditCover ||
+        coverageCover ||
+        codebaseCover ||
+        pauseCover ||
+        spikesCover ||
+        indexesCover ||
+        seedCover ||
+        threadCover ||
+        reportCover ||
+        forensicsCover ||
+        onboardingCover ||
+        settingsCover ||
+        specPageCover ||
+        aiSpecPageCover ||
+        userSetupPageCover ||
+        evalReviewPageCover ||
+        domVerifyPageCover ||
+        reviewsPageCover ||
+        fixCover ? null : (
+          <details className="artifact-metadata">
+            <summary>
+              Document metadata <span>{panels.length} sections</span>
+            </summary>
+            <div className="metadata-panels" aria-label="Structured artifact metadata">
+              {panels.map((panel) => (
+                <MetadataPanel key={panel.key} panel={panel} />
+              ))}
+            </div>
+          </details>
+        )
       ) : null}
+
+      {settingsCover ? null : warningNode}
 
       {!recognized && mode === 'view' ? <UnrecognizedNotice kind={artifact.kind} /> : null}
 
@@ -1823,7 +1833,17 @@ export function ArtifactPage({
       ) : onboardingCover ? (
         <OnboardingView key={artifact.path} model={onboardingCover} />
       ) : settingsCover ? (
-        <SettingsView key={artifact.path} model={settingsCover} route={route} onOpenSourceAt={openSourceAt} />
+        <SettingsView
+          key={artifact.path}
+          model={settingsModel}
+          header={
+            <>
+              {headerNode}
+              {warningNode}
+            </>
+          }
+          onOpenSourceAt={openSourceAt}
+        />
       ) : specPageCover ? (
         <SpecView key={artifact.path} model={specPageCover} renderHtml={renderHtml} onShowSource={showSource} />
       ) : aiSpecPageCover ? (

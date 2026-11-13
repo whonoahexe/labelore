@@ -1,21 +1,34 @@
-// The settings page's React surface (Phase 12, 12-09, SET-01, sketch 063 variant A "Control panel"): the header override (crumbs
-// "{project name} / Settings", the eyebrow "Settings", the h1 "Project settings" and the read-only lock line that points to
-// /gsd-settings) and the page body. The body is read-only by construction: four counts, then one panel per group with its square
-// meter and "n of m set", every set key drawn as a read-only instrument (a boolean as a switch word, a closed-set value as a scale
-// with the chosen option lit, anything else in the shape it arrives) and the unset keys folded under a native details at the panel's
-// foot. The page makes no request, with one exception: the unreadable state asks /source for the parser's position (a GET, the
-// same cached query the Source reader uses). Every string is author text rendered as plain React text - never React's raw-HTML
-// injection prop (T-12-29) - and nothing here is an input, a form or an acting control: no pointer cursor, no focus stop, no hover.
+// The settings page's React surface (quick-261114-42r, SET-01, sketch 065 variant A "Reference doc"): the header override (crumbs
+// "{project name} / Settings", the eyebrow "Settings", the h1 "Project settings", the read-only lock line that points to
+// /gsd-settings, and a one-line lede of counts) and the page body: a sticky rail, then GSD's own sections, each key an entry with
+// GSD's description, type, default and allowed values beside this project's value and its line in config.json.
+//
+// The page is a reference first: every key GSD understands is on it, set or not, and the reference is shown whatever the config is
+// (no file, an unreadable file, no gsd-core install). It is read-only by construction: the only inputs are the rail's search box and
+// the two narrow-screen selects, nothing here writes, and every string - GSD's text, a config value, a key - is rendered as React
+// text through the inline tokenizer, never as React's raw-HTML injection prop (T-42r-02). Two requests feed it, both GETs: GSD's
+// reference (once per session) and the file's Source text (the Source reader's own cached query, for the line of each key and the
+// parser's position when the file is unreadable).
 import { useQuery } from '@tanstack/react-query';
-import { ChevronRight, Lock, TriangleAlert } from 'lucide-react';
+import { ChevronRight, FileText, Lock, TriangleAlert } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import type { SourceParseError } from '../../server/source-text.ts';
-import { StatusMeter } from '../components/status-meter.tsx';
+import { fetchGsdConfigReference } from '../api.ts';
 import { Button } from '../components/ui/button.tsx';
-import { useProjectScope, useProjectSlug } from '../nav.tsx';
+import { projectKey } from '../query-keys.ts';
 import { fetchSource, sourceKey } from '../source/source-api.ts';
-import { highlightLine } from '../source/source-highlight.ts';
-import type { ToneToken } from '../source/source-highlight.ts';
-import type { ComposedSettings, SettingsPanel, SettingsRow, SettingsValue } from './settings-page.ts';
+import { tokenizeInline } from './inline-markdown.ts';
+import type { InlineToken } from './inline-markdown.ts';
+import { SettingsRail } from './settings-rail.tsx';
+import { composeSettingsReference, filterSettings } from './settings-reference.ts';
+import type {
+  FilteredSection,
+  SettingsEntry,
+  SettingsModel,
+  SettingsSubject,
+  SettingsValue,
+  StatusFilter,
+} from './settings-reference.ts';
 
 /** Every field optional on purpose: the page spreads this over ArtifactHeader's own props. */
 export type SettingsHeaderProps = Partial<{
@@ -26,114 +39,191 @@ export type SettingsHeaderProps = Partial<{
   crumbs: { label: string; to?: string }[];
 }>;
 
+/** What the page draws: the composed model, or nothing yet while GSD's reference and the file's text are still on their way. */
+export type SettingsPageModel = SettingsModel | { state: 'loading' };
+
 const MASK_TITLE = 'Masked by Labelore; the file holds the real value';
 
-/** The ArtifactHeader override View mode spreads over its props: the crumbs, the eyebrow, the h1 and the read-only lock line. The
- * header keeps its own Copy path button for .planning/config.json and the View · Source toggle. */
-export function settingsHeaderProps(projectName: string): SettingsHeaderProps {
+/** The ArtifactHeader override View mode spreads over its props: the crumbs, the eyebrow, the h1, the read-only lock line and, once
+ * the reference and a readable config.json are composed, the one-line lede of counts. The header keeps its own Copy path button for
+ * .planning/config.json and the View · Source toggle. Both parts of the lead are spans: it sits inside `p.artifact-lead`. */
+export function settingsHeaderProps(projectName: string, model: SettingsPageModel | null = null): SettingsHeaderProps {
+  const counts = model !== null && model.state === 'reference' && model.config === 'ready' ? model.counts : null;
   return {
     eyebrow: 'Settings',
     title: 'Project settings',
     lead: (
-      <span className="view-settings-lock">
-        <Lock aria-hidden="true" />
-        <span>
-          Read-only. Change a setting with <code>/gsd-settings</code> in your terminal.
+      <>
+        <span className="view-settings-lock">
+          <Lock aria-hidden="true" />
+          <span>
+            Read-only. Change a setting with <code>/gsd-settings</code> in your terminal.
+          </span>
         </span>
-      </span>
+        {counts === null ? null : (
+          <span className="view-settings-lede">
+            <b>{counts.understood}</b> settings GSD understands, <b>{counts.set}</b> set in this project&apos;s{' '}
+            <code>config.json</code>
+            {counts.notRecognised > 0 ? (
+              <>
+                , <b>{counts.notRecognised}</b> it doesn&apos;t recognise
+              </>
+            ) : null}
+            . Descriptions and defaults come from GSD&apos;s configuration reference.
+          </span>
+        )}
+      </>
     ),
     crumbs: [{ label: projectName, to: '/' }, { label: 'Settings' }],
   };
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Counts
+// The model: GSD's reference and the file's text, composed
 // ---------------------------------------------------------------------------------------------------------
 
-const COUNT_CAPTIONS = [
-  ['set', 'Set'],
-  ['notSet', 'Not set'],
-  ['notRecognised', 'Not recognised'],
-  ['masked', 'Masked'],
-] as const;
-
-function Counts({ counts }: { counts: { set: number; notSet: number; notRecognised: number; masked: number } }): React.JSX.Element {
-  return (
-    <ul className="view-settings-counts" aria-label="Setting counts">
-      {COUNT_CAPTIONS.map(([key, caption]) => (
-        <li key={key} className="view-settings-count" data-count={key}>
-          <span className="view-settings-count-number">{counts[key]}</span>
-          <span className="view-settings-count-caption">{caption}</span>
-        </li>
-      ))}
-    </ul>
+/**
+ * The composed settings model for one subject. Two cached GETs feed it: GSD's reference (GSD-wide, kept for the session; a failed
+ * request just means "unavailable", and the page shows the project's values alone) and, for a config.json that exists, its Source
+ * text (the line of each key, the parser's position). The model is loading until both settle; a null subject is loading forever,
+ * and neither request is made.
+ */
+export function useSettingsModel(
+  subject: SettingsSubject | null,
+  { slug, scope, route }: { slug: string; scope: string | null; route: string },
+): SettingsPageModel {
+  const wantsText = subject !== null && subject.state !== 'missing';
+  const reference = useQuery({
+    queryKey: projectKey(slug, null, 'gsd-config-reference'),
+    queryFn: () => fetchGsdConfigReference(slug),
+    staleTime: Number.POSITIVE_INFINITY,
+    enabled: subject !== null,
+  });
+  const text = useQuery({
+    queryKey: sourceKey(slug, scope, route),
+    queryFn: () => fetchSource(slug, scope, route),
+    staleTime: Number.POSITIVE_INFINITY,
+    enabled: wantsText,
+  });
+  const waiting = subject === null || reference.isPending || (wantsText && text.isPending);
+  const referenceData = reference.data ?? null;
+  const textData = text.data ?? null;
+  return useMemo<SettingsPageModel>(
+    () =>
+      waiting
+        ? { state: 'loading' }
+        : composeSettingsReference(
+            subject,
+            referenceData,
+            textData === null ? null : { text: textData.text, parseError: textData.parseError },
+          ),
+    [waiting, subject, referenceData, textData],
   );
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Instruments
+// Text: GSD's strings as React nodes
 // ---------------------------------------------------------------------------------------------------------
 
-/** The tone-only tokens of one line, as plain React text (no markup sink): keys are `source-t-key`, a masked value `source-t-mask`. */
-function Tones({ tokens }: { tokens: readonly ToneToken[] }): React.JSX.Element {
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** A run of text with the filter's matches wrapped in `mark`. */
+function Highlighted({ text, query }: { text: string; query: string }): React.JSX.Element {
+  const needle = query.trim();
+  if (needle === '') return <>{text}</>;
+  const parts = text.split(new RegExp(`(${escapeRegExp(needle)})`, 'i'));
   return (
     <>
-      {tokens.map((token, index) =>
-        token.tone === null ? (
-          token.text
-        ) : (
-          <span key={index} className={`source-t-${token.tone}`} {...(token.tone === 'mask' ? { title: MASK_TITLE } : {})}>
-            {token.text}
-          </span>
-        ),
+      {parts.map((part, index) =>
+        index % 2 === 1 ? <mark key={`${index}-${part}`}>{part}</mark> : <span key={`${index}-${part}`}>{part}</span>,
       )}
     </>
   );
 }
 
-/** A list or object in the shape it arrives: the JSON lines the Source reader would show, keys in `--t-key`. */
-function JsonLines({ value }: { value: unknown[] | Record<string, unknown> }): React.JSX.Element {
-  const flat = Array.isArray(value) && value.every((item) => typeof item !== 'object' || item === null);
-  const lines = (flat ? JSON.stringify(value) : JSON.stringify(value, null, 2)).split('\n');
+function Tokens({ tokens, query }: { tokens: InlineToken[]; query: string }): React.JSX.Element {
   return (
-    <code className="view-settings-json">
-      {lines.map((line, index) => (
-        <span key={index} className="view-settings-json-line">
-          <Tones tokens={highlightLine(line, { language: 'json', masked: true, inFrontmatter: false, inFence: false })} />
-        </span>
-      ))}
-    </code>
+    <>
+      {tokens.map((token, index) => {
+        const key = `${token.type}-${index}`;
+        if (token.type === 'strong') return <b key={key}><Tokens tokens={token.value} query={query} /></b>;
+        if (token.type === 'em') return <em key={key}><Tokens tokens={token.value} query={query} /></em>;
+        if (token.type === 'code') {
+          return (
+            <code key={key}>
+              <Highlighted text={token.value} query={query} />
+            </code>
+          );
+        }
+        return <Highlighted key={key} text={token.value} query={query} />;
+      })}
+    </>
   );
 }
 
-function Instrument({ value }: { value: SettingsValue }): React.JSX.Element {
+/** One of GSD's strings (or a label, or a key) as inline React nodes: code, bold and emphasis only, matches marked. Never an HTML string. */
+function Marked({ text, query }: { text: string; query: string }): React.JSX.Element {
+  return <Tokens tokens={tokenizeInline(text)} query={query} />;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Values
+// ---------------------------------------------------------------------------------------------------------
+
+function isHeadingObject(item: unknown): item is { heading: string; enabled?: unknown; source?: unknown; template?: unknown } {
+  return typeof item === 'object' && item !== null && 'heading' in item && typeof (item as { heading: unknown }).heading === 'string';
+}
+
+function plain(value: unknown): string {
+  return typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value);
+}
+
+function ListValue({ items }: { items: unknown[] }): React.JSX.Element {
+  if (items.length === 0) return <span className="view-settings-str">[ ]</span>;
+  const sections = items.every(isHeadingObject);
+  const summary = sections
+    ? `${items.length} sections · ${items.filter((item) => isHeadingObject(item) && item.enabled !== false).length} on`
+    : `${items.length} items`;
+  return (
+    <>
+      <span className="view-settings-sum">{summary}</span>
+      <ul className="view-settings-list">
+        {items.map((item, index) =>
+          isHeadingObject(item) ? (
+            <li key={index}>
+              <span className="view-settings-bool" data-on={item.enabled !== false}>
+                <i aria-hidden="true" />
+                <span className="sr-only">{item.enabled !== false ? 'on' : 'off'}</span>
+              </span>
+              <span>{item.heading}</span>
+              <span className="view-settings-meta">
+                {typeof item.source === 'string' ? `from ${item.source.split('||')[0]?.trim() ?? ''}` : item.template !== undefined ? 'template' : ''}
+              </span>
+            </li>
+          ) : (
+            <li key={index} className="view-settings-mono">
+              {plain(item)}
+            </li>
+          ),
+        )}
+      </ul>
+    </>
+  );
+}
+
+/** A value in the shape it arrives in; an unset key reads "not set". */
+function Value({ value, set }: { value: SettingsValue | null; set: boolean }): React.JSX.Element {
+  if (!set || value === null) return <span className="view-settings-unset">not set</span>;
   switch (value.kind) {
     case 'boolean':
       return (
-        <span className="view-settings-switch" data-on={value.on}>
-          <span className="view-settings-track" aria-hidden="true" />
-          {value.on ? 'On' : 'Off'}
-        </span>
-      );
-    case 'enum':
-      return (
-        <span className="view-settings-scale">
-          {value.options.map((option) =>
-            option === value.chosen ? (
-              <span key={String(option)} className="view-settings-option" aria-current="true">
-                {String(option)}
-                <span className="sr-only"> (chosen)</span>
-              </span>
-            ) : (
-              <span key={String(option)} className="view-settings-option">
-                {String(option)}
-              </span>
-            ),
-          )}
+        <span className="view-settings-bool" data-on={value.on}>
+          <i aria-hidden="true" />
+          {String(value.on)}
         </span>
       );
     case 'null':
-      return <span className="view-settings-null">set to null</span>;
+      return <span className="view-settings-null">null</span>;
     case 'masked':
       return (
         <span className="source-t-mask view-settings-mask" title={MASK_TITLE}>
@@ -142,16 +232,29 @@ function Instrument({ value }: { value: SettingsValue }): React.JSX.Element {
         </span>
       );
     case 'number':
-      return <span className="view-settings-number">{value.text}</span>;
+      return <span className="view-settings-num">{value.text}</span>;
     case 'string':
       return value.text === '' ? (
-        <span className="view-settings-null">empty text</span>
+        <span className="view-settings-null">empty string</span>
       ) : (
-        <span className="view-settings-text">{value.text}</span>
+        <span className="view-settings-str">{value.text}</span>
       );
     case 'list':
-    case 'object':
-      return <JsonLines value={value.value} />;
+      return <ListValue items={value.value} />;
+    case 'object': {
+      const entries = Object.entries(value.value);
+      if (entries.length === 0) return <span className="view-settings-str">{'{ }'}</span>;
+      return (
+        <dl className="view-settings-obj">
+          {entries.map(([name, inner], index) => (
+            <div key={`${index}:${name}`}>
+              <dt>{name}</dt>
+              <dd>{plain(inner)}</dd>
+            </div>
+          ))}
+        </dl>
+      );
+    }
     default: {
       const unreachable: never = value;
       return unreachable;
@@ -159,83 +262,199 @@ function Instrument({ value }: { value: SettingsValue }): React.JSX.Element {
   }
 }
 
-/** The shape word under a Not recognised key's path (a catalogued key shows its key path there instead). */
-function shapeOf(value: SettingsValue): string {
-  switch (value.kind) {
-    case 'boolean':
-      return 'boolean';
-    case 'enum':
-      return typeof value.chosen;
-    case 'null':
-      return 'null';
-    case 'masked':
-    case 'string':
-      return 'text';
-    case 'number':
-      return 'number';
-    case 'list':
-      return 'list';
-    case 'object':
-      return 'object';
-    default: {
-      const unreachable: never = value;
-      return unreachable;
-    }
-  }
-}
+// ---------------------------------------------------------------------------------------------------------
+// Entries
+// ---------------------------------------------------------------------------------------------------------
 
-function Row({ row, panel }: { row: SettingsRow; panel: SettingsPanel }): React.JSX.Element {
-  return (
-    <li className="view-settings-row" data-wide={row.wide}>
-      <div className="view-settings-label">
-        <span className="view-settings-name">{row.label}</span>
-        <span className="view-settings-key">{panel.kind === 'not-recognised' ? shapeOf(row.value) : row.key}</span>
-      </div>
-      <div className="view-settings-value">
-        <Instrument value={row.value} />
-      </div>
-    </li>
+function EntryName({ entry, query }: { entry: SettingsEntry; query: string }): React.JSX.Element {
+  return entry.label === null ? (
+    <span className="view-settings-nm">
+      <span className="view-settings-name" data-is-key="true">
+        <Highlighted text={entry.key} query={query} />
+      </span>
+    </span>
+  ) : (
+    <span className="view-settings-nm">
+      <span className="view-settings-name">
+        <Highlighted text={entry.label} query={query} />
+      </span>
+      <span className="view-settings-key">
+        <Highlighted text={entry.key} query={query} />
+      </span>
+    </span>
   );
 }
 
-// ---------------------------------------------------------------------------------------------------------
-// Panels
-// ---------------------------------------------------------------------------------------------------------
+function AllowedList({ entry, query }: { entry: SettingsEntry; query: string }): React.JSX.Element | null {
+  if (entry.allowed !== null) {
+    const hasDefault = entry.allowed.some((option) => option.isDefault);
+    return (
+      <span className="view-settings-allowed" data-has-default={hasDefault}>
+        {entry.allowed.map((option) => (
+          <span
+            key={option.text}
+            className="view-settings-option"
+            data-default={option.isDefault}
+            {...(option.current ? { 'aria-current': 'true' as const } : {})}
+          >
+            {option.text}
+            {option.current ? <span className="sr-only"> (this project)</span> : null}
+            {option.isDefault ? <span className="view-settings-option-default">default</span> : null}
+          </span>
+        ))}
+      </span>
+    );
+  }
+  return entry.allowedText === '' ? null : <Marked text={entry.allowedText} query={query} />;
+}
 
-function PanelHeader({ panel }: { panel: SettingsPanel }): React.JSX.Element {
-  const label = `${panel.setCount} of ${panel.total} set`;
+function EntryValue({
+  entry,
+  onOpenSourceAt,
+  lineLabel,
+}: {
+  entry: SettingsEntry;
+  onOpenSourceAt: (line: number | null) => void;
+  lineLabel: string;
+}): React.JSX.Element {
   return (
-    <header className="view-settings-panel-head">
-      <h2>{panel.name}</h2>
-      {panel.kind === 'group' ? (
-        <StatusMeter
-          filled={panel.setCount}
-          total={panel.total}
-          items={Array.from({ length: panel.total }, (_unused, index) => index < panel.setCount)}
-          label={label}
-          size="compact"
-        />
+    <>
+      <Value value={entry.value} set={entry.set} />
+      {entry.set && entry.line !== null ? (
+        <button type="button" className="view-settings-line" onClick={() => onOpenSourceAt(entry.line)}>
+          {lineLabel}
+          {entry.line}
+        </button>
       ) : null}
-      <span className="view-settings-panel-meta">{panel.kind === 'group' ? label : `${panel.setCount} keys`}</span>
-    </header>
+    </>
   );
 }
 
-function UnsetFold({ panel }: { panel: SettingsPanel }): React.JSX.Element | null {
-  if (panel.unset.length === 0) return null;
+function DocumentedEntry({
+  entry,
+  query,
+  hasConfig,
+  expanded,
+  onToggle,
+  onOpenSourceAt,
+}: {
+  entry: SettingsEntry;
+  query: string;
+  hasConfig: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+  onOpenSourceAt: (line: number | null) => void;
+}): React.JSX.Element {
+  const hasMore = entry.rest !== '' || entry.related.length > 0;
+  const showAllowed = (entry.allowed !== null || entry.allowedText !== '') && entry.type !== 'boolean';
   return (
-    <details className="view-settings-unset" open={panel.openUnset}>
+    <article className="view-settings-entry" id={entry.id} data-wide={entry.wide} data-set={entry.set}>
+      <h3 className="view-settings-entry-key">
+        <EntryName entry={entry} query={query} />
+        <a className="view-settings-hash" href={`#${entry.id}`} aria-label={`Link to ${entry.key}`}>
+          #
+        </a>
+      </h3>
+      {hasConfig ? (
+        <div className="view-settings-val">
+          <span className="view-settings-val-label">This project</span>
+          <EntryValue entry={entry} onOpenSourceAt={onOpenSourceAt} lineLabel="config.json L" />
+        </div>
+      ) : null}
+      <p className="view-settings-desc">
+        <Marked text={entry.first} query={query} />
+        {expanded && entry.rest !== '' ? (
+          <>
+            {' '}
+            <Marked text={entry.rest} query={query} />
+          </>
+        ) : null}
+        {hasMore ? (
+          <>
+            {' '}
+            <button type="button" className="view-settings-more" aria-expanded={expanded} onClick={onToggle}>
+              {expanded ? 'less' : 'more'}
+            </button>
+          </>
+        ) : null}
+      </p>
+      <div className="view-settings-facts">
+        <dl>
+          <dt>Type</dt>
+          <dd className="view-settings-mono">{entry.type === '' ? '—' : entry.type}</dd>
+        </dl>
+        <dl>
+          <dt>Default</dt>
+          <dd>{entry.defaultText === '' ? <span className="view-settings-quiet">none documented</span> : <Marked text={entry.defaultText} query={query} />}</dd>
+        </dl>
+        {showAllowed ? (
+          <dl>
+            <dt>Allowed</dt>
+            <dd>
+              <AllowedList entry={entry} query={query} />
+            </dd>
+          </dl>
+        ) : null}
+      </div>
+      {expanded && entry.related.length > 0 ? (
+        <div className="view-settings-rel">
+          {entry.related.map((note) => (
+            <span key={note.title}>
+              <b>
+                <Marked text={note.title} query={query} />
+              </b>{' '}
+              — <Marked text={note.first} query={query} />
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+function AcceptedFold({
+  filtered,
+  query,
+  hasConfig,
+  open,
+  onToggle,
+  onOpenSourceAt,
+}: {
+  filtered: FilteredSection;
+  query: string;
+  hasConfig: boolean;
+  open: boolean;
+  onToggle: (open: boolean) => void;
+  onOpenSourceAt: (line: number | null) => void;
+}): React.JSX.Element | null {
+  if (filtered.accepted.length === 0) return null;
+  const count = filtered.accepted.length;
+  return (
+    <details
+      className="view-settings-also"
+      open={open || filtered.foldOpen}
+      onToggle={(event) => {
+        // A fold the page opened on its own (a query, nothing documented to read) is not the reader's choice, so it is not kept.
+        if (!filtered.foldOpen) onToggle(event.currentTarget.open);
+      }}
+    >
       <summary>
         <ChevronRight aria-hidden="true" />
-        {panel.unset.length} not set
+        <span>
+          {count} more {count === 1 ? 'key' : 'keys'} GSD accepts
+        </span>
+        <span className="view-settings-quiet">· no description in GSD&apos;s reference</span>
       </summary>
       <ul>
-        {panel.unset.map((unset) => (
-          <li key={unset.key} className="view-settings-unset-row">
-            <span>
-              <span className="view-settings-unset-label">{unset.label}</span> <span className="view-settings-key">{unset.key}</span>
+        {filtered.accepted.map((entry) => (
+          <li key={entry.id} id={entry.id}>
+            <span className="view-settings-also-key">
+              <EntryName entry={entry} query={query} />
             </span>
-            <span className="view-settings-notset">not set</span>
+            <span className="view-settings-also-default">default {entry.defaultText === '' ? '—' : <Marked text={entry.defaultText} query={query} />}</span>
+            <span className="view-settings-also-value">
+              {hasConfig ? <EntryValue entry={entry} onOpenSourceAt={onOpenSourceAt} lineLabel="L" /> : null}
+            </span>
           </li>
         ))}
       </ul>
@@ -243,25 +462,8 @@ function UnsetFold({ panel }: { panel: SettingsPanel }): React.JSX.Element | nul
   );
 }
 
-function Panel({ panel }: { panel: SettingsPanel }): React.JSX.Element {
-  return (
-    <section className="view-settings-panel" data-kind={panel.kind} data-muted={panel.muted}>
-      <PanelHeader panel={panel} />
-      {panel.rows.length > 0 ? (
-        <ul className="view-settings-rows">
-          {panel.rows.map((row, index) => (
-            // A flat 'a.b' key and a nested a.b can sit in one panel with the same path, so the position is part of the key.
-            <Row key={`${index}:${row.key}`} row={row} panel={panel} />
-          ))}
-        </ul>
-      ) : null}
-      <UnsetFold panel={panel} />
-    </section>
-  );
-}
-
 // ---------------------------------------------------------------------------------------------------------
-// The unreadable file
+// Notices
 // ---------------------------------------------------------------------------------------------------------
 
 /** The words for the closed set of reasons the raw-text route answers with (it never sends the parser's own message, which can quote the file). */
@@ -290,12 +492,13 @@ export function UnreadableNotice({
       <span className="status-chip" data-tone="destructive">
         {"Can't read config.json"}
       </span>
-      <p className="source-notice-lead">The file isn&apos;t valid JSON, so no settings are shown.</p>
+      <p className="source-notice-lead">{"The file isn't valid JSON, so this project's values aren't shown."}</p>
       {line !== null && parseError !== null ? (
         <p>
           The parser stopped at line {line}: {REASON_WORDS[parseError.reason]}.
         </p>
       ) : null}
+      <p>The reference below still lists everything you can set.</p>
       <div className="source-notice-actions">
         <Button type="button" size="xs" variant="outline" onClick={() => onOpenSourceAt(line)}>
           {line === null ? 'Open Source' : `Open Source at line ${line}`}
@@ -305,44 +508,260 @@ export function UnreadableNotice({
   );
 }
 
-/** Asks the raw-text route (a GET, the Source reader's own cached query) where the parser stopped, then draws the notice. */
-function SettingsUnreadable({
-  route,
+/** The quiet notice for a project with no config.json: GSD runs it on its defaults, and the reference still shows everything. */
+export function NoFileNotice(): React.JSX.Element {
+  return (
+    <aside className="notice source-notice" role="status">
+      <span className="source-notice-glyph" aria-hidden="true">
+        <FileText />
+      </span>
+      <p className="source-notice-lead">This project has no settings file</p>
+      <p>
+        There&apos;s no <code>.planning/config.json</code>, so GSD runs this project on its defaults. The reference below still
+        lists everything you can set.
+      </p>
+    </aside>
+  );
+}
+
+/** The quiet notice for a machine where GSD's reference cannot be read: the page falls back to the project's own values. */
+export function NoReferenceNotice(): React.JSX.Element {
+  return (
+    <aside className="notice source-notice" role="status">
+      <span className="source-notice-glyph" aria-hidden="true">
+        <FileText />
+      </span>
+      <p className="source-notice-lead">{"GSD's configuration reference wasn't found"}</p>
+      <p>
+        Labelore reads descriptions and defaults from the installed gsd-core (<code>references/planning-config.md</code> and{' '}
+        <code>bin/shared/config-schema.manifest.json</code>). Without them this page shows only the values this
+        project&apos;s <code>config.json</code> sets.
+      </p>
+    </aside>
+  );
+}
+
+function StateNotices({
+  config,
+  parseError,
   onOpenSourceAt,
 }: {
-  route: string;
+  config: 'ready' | 'missing' | 'unreadable';
+  parseError: SourceParseError | null;
+  onOpenSourceAt: (line: number | null) => void;
+}): React.JSX.Element | null {
+  if (config === 'missing') return <NoFileNotice />;
+  if (config === 'unreadable') return <UnreadableNotice parseError={parseError} onOpenSourceAt={onOpenSourceAt} />;
+  return null;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// The page
+// ---------------------------------------------------------------------------------------------------------
+
+function ReferenceBody({
+  model,
+  header,
+  onOpenSourceAt,
+}: {
+  model: Extract<SettingsModel, { state: 'reference' }>;
+  header: React.ReactNode;
   onOpenSourceAt: (line: number | null) => void;
 }): React.JSX.Element {
-  const slug = useProjectSlug() ?? '';
-  const scope = useProjectScope();
-  const text = useQuery({
-    queryKey: sourceKey(slug, scope, route),
-    queryFn: () => fetchSource(slug, scope, route),
-    staleTime: Number.POSITIVE_INFINITY,
-  });
-  return <UnreadableNotice parseError={text.data?.parseError ?? null} onOpenSourceAt={onOpenSourceAt} />;
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState<StatusFilter>('all');
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+  const [folds, setFolds] = useState<ReadonlySet<string>>(new Set());
+  const hasConfig = model.config === 'ready';
+  const effectiveStatus: StatusFilter = hasConfig ? status : 'all';
+  const filtered = useMemo(() => filterSettings(model, { query, status: effectiveStatus }), [model, query, effectiveStatus]);
+
+  // A `#k-…` or `#s-…` address scrolls its element into view once the page has drawn.
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash === '') return;
+    let target: string;
+    try {
+      target = decodeURIComponent(hash);
+    } catch {
+      return;
+    }
+    if (/^(?:k|s|u)-/.test(target)) document.getElementById(target)?.scrollIntoView({ block: 'start' });
+  }, []);
+
+  const toggle = (id: string): void =>
+    setExpanded((previous) => {
+      const next = new Set(previous);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  const setFold = (id: string, open: boolean): void =>
+    setFolds((previous) => {
+      if (previous.has(id) === open) return previous;
+      const next = new Set(previous);
+      if (open) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+
+  const shown = filtered.sections.filter((section) => section.entries.length + section.accepted.length > 0);
+  return (
+    <div className="view-settings-page" data-rail="true">
+      <SettingsRail
+        query={query}
+        onQuery={setQuery}
+        status={effectiveStatus}
+        onStatus={setStatus}
+        showStatus={hasConfig}
+        counts={model.counts}
+        filtered={filtered}
+        hasUnknown={model.unknown.length > 0}
+      />
+      <div className="view-settings-main">
+        {header}
+        <StateNotices config={model.config} parseError={model.parseError} onOpenSourceAt={onOpenSourceAt} />
+        {filtered.empty ? (
+          <p className="view-settings-empty">
+            No setting matches &ldquo;{query}&rdquo;.{' '}
+            <button
+              type="button"
+              className="view-settings-more"
+              onClick={() => {
+                setQuery('');
+                setStatus('all');
+              }}
+            >
+              Clear filter
+            </button>
+          </p>
+        ) : null}
+        {shown.map((entry) => (
+          <section key={entry.section.id} className="view-settings-sec" id={entry.section.id}>
+            <header className="view-settings-sec-head">
+              <h2>
+                {entry.section.name}
+                <span className="view-settings-sec-count">
+                  {entry.section.setCount} of {entry.section.total} set
+                </span>
+              </h2>
+              {entry.section.intro === '' ? null : (
+                <p>
+                  <Marked text={entry.section.intro} query="" />
+                </p>
+              )}
+            </header>
+            {entry.entries.map((documented) => (
+              <DocumentedEntry
+                key={documented.id}
+                entry={documented}
+                query={query}
+                hasConfig={hasConfig}
+                expanded={expanded.has(documented.id)}
+                onToggle={() => toggle(documented.id)}
+                onOpenSourceAt={onOpenSourceAt}
+              />
+            ))}
+            <AcceptedFold
+              filtered={entry}
+              query={query}
+              hasConfig={hasConfig}
+              open={folds.has(entry.section.id)}
+              onToggle={(open) => setFold(entry.section.id, open)}
+              onOpenSourceAt={onOpenSourceAt}
+            />
+          </section>
+        ))}
+        {filtered.unknown.length > 0 ? (
+          <section className="view-settings-sec" id="s-not-recognised" data-kind="not-recognised">
+            <header className="view-settings-sec-head">
+              <h2>
+                Not recognised<span className="view-settings-sec-count">{filtered.unknown.length}</span>
+              </h2>
+              <p>In this project&apos;s config.json, but not a key GSD&apos;s schema knows. Shown as it is.</p>
+            </header>
+            <div className="view-settings-unknown">
+              {filtered.unknown.map((entry, index) => (
+                <div key={`${index}:${entry.key}`} className="view-settings-unknown-row" id={entry.id}>
+                  <span className="view-settings-entry-key">
+                    <EntryName entry={entry} query={query} />
+                  </span>
+                  <span className="view-settings-unknown-value">
+                    <Value value={entry.value} set={entry.set} />
+                    {entry.line === null ? null : (
+                      <button type="button" className="view-settings-line" onClick={() => onOpenSourceAt(entry.line)}>
+                        L{entry.line}
+                      </button>
+                    )}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/** The values-only page: GSD's reference could not be read, so only what this project's config.json sets. */
+function ValuesOnlyBody({
+  model,
+  header,
+  onOpenSourceAt,
+}: {
+  model: Extract<SettingsModel, { state: 'values-only' }>;
+  header: React.ReactNode;
+  onOpenSourceAt: (line: number | null) => void;
+}): React.JSX.Element {
+  return (
+    <div className="view-settings-page" data-rail="false">
+      <div className="view-settings-main">
+        {header}
+        <StateNotices config={model.config} parseError={model.parseError} onOpenSourceAt={onOpenSourceAt} />
+        <NoReferenceNotice />
+        {model.entries.length > 0 ? (
+          <section className="view-settings-sec" id="s-set-in-this-project">
+            <header className="view-settings-sec-head">
+              <h2>
+                Set in this project<span className="view-settings-sec-count">{model.entries.length}</span>
+              </h2>
+            </header>
+            {model.entries.map((entry, index) => (
+              <article key={`${index}:${entry.key}`} className="view-settings-entry" id={entry.id} data-wide={entry.wide} data-set="true">
+                <h3 className="view-settings-entry-key">
+                  <EntryName entry={entry} query="" />
+                </h3>
+                <div className="view-settings-val">
+                  <span className="view-settings-val-label">This project</span>
+                  <EntryValue entry={entry} onOpenSourceAt={onOpenSourceAt} lineLabel="config.json L" />
+                </div>
+              </article>
+            ))}
+          </section>
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 export function SettingsView({
   model,
-  route,
+  header,
   onOpenSourceAt,
 }: {
-  model: ComposedSettings;
-  /** The page's own address: the key the raw-text route answers for. */
-  route: string;
-  /** Switches the page to Source; `line` is where the parser stopped, or null for none. */
+  model: SettingsPageModel;
+  /** The ArtifactHeader node, passed in so the rail sits level with the crumbs as in the sketch. */
+  header: React.ReactNode;
+  /** Switches the page to Source; `line` is the line to select, or null for none. */
   onOpenSourceAt: (line: number | null) => void;
 }): React.JSX.Element {
-  if (model.state === 'unreadable') return <SettingsUnreadable route={route} onOpenSourceAt={onOpenSourceAt} />;
-  return (
-    <div className="view-settings-page">
-      <Counts counts={model.counts} />
-      <div className="view-settings-panels">
-        {model.panels.map((panel) => (
-          <Panel key={panel.id} panel={panel} />
-        ))}
+  if (model.state === 'loading') {
+    return (
+      <div className="view-settings-page" data-rail="false">
+        <div className="view-settings-main">{header}</div>
       </div>
-    </div>
-  );
+    );
+  }
+  if (model.state === 'values-only') return <ValuesOnlyBody model={model} header={header} onOpenSourceAt={onOpenSourceAt} />;
+  return <ReferenceBody model={model} header={header} onOpenSourceAt={onOpenSourceAt} />;
 }

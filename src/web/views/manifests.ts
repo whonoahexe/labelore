@@ -36,7 +36,7 @@ import { composeThread } from './thread-page.ts';
 import { composeReport } from './report-page.ts';
 import { composeForensics } from './forensics-page.ts';
 import { composeOnboarding } from './onboarding-page.ts';
-import { composeSettings } from './settings-page.ts';
+import { settingsSubjectOf } from './settings-reference.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -540,7 +540,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     promote: [{ type: 'section', heading: /\S/, all: true }],
     onboardingPage: composeOnboarding,
   },
-  // Phase 12 (12-09, sketch 063 winner A): the project's root config.json, reached through `viewKindOf`'s table (wire kind `config`). The
+  // quick-261114-42r (sketch 065 winner A): the project's root config.json, reached through `viewKindOf`'s table (wire kind `config`). The
   // settings page covers it when `settingsPage` composes; a workstream's own config.json and a config.json that is not an object (D-11)
   // compose nothing and open as a plain file, whose View is `promote`'s one fact-list over the frontmatter and whose Source is the masked text.
   settings: {
@@ -556,7 +556,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       },
     ],
     settingsPage: (input) =>
-      composeSettings(input.frontmatter, { scope: input.scope ?? null, unreadable: input.structuralWarning === true }),
+      settingsSubjectOf(input.frontmatter, { scope: input.scope ?? null, unreadable: input.structuralWarning === true }),
   },
 });
 
