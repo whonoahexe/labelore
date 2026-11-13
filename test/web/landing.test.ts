@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   LANDING_FLASH_MS,
   LANDING_MAX_FRAMES,
+  landingScrollBehavior,
   landingTargetOf,
   waitForElement,
   type ElementWaitHost,
@@ -111,6 +112,34 @@ describe('waitForElement', () => {
   it('keeps the bound near three seconds of frames and the flash at 1.4 s', () => {
     expect(LANDING_MAX_FRAMES).toBe(180);
     expect(LANDING_FLASH_MS).toBe(1400);
+  });
+});
+
+describe('landingScrollBehavior', () => {
+  it('is instant under reduced motion and smooth otherwise', () => {
+    expect(landingScrollBehavior(true)).toBe('auto');
+    expect(landingScrollBehavior(false)).toBe('smooth');
+  });
+});
+
+describe('reduced motion (source text)', () => {
+  it('reads the media query once the element is found and passes it to the scroll', async () => {
+    const landing = await source('src/web/landing.ts');
+    expect(landing).toContain("matchMedia('(prefers-reduced-motion: reduce)')");
+    expect(landing).toContain('landingScrollBehavior(');
+    expect(landing).toContain("{ block: 'center', behavior }");
+  });
+
+  it('shows a static tint instead of the animation, and the mark still clears after the flash window', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const start = css.indexOf("@media (prefers-reduced-motion: reduce) {\n  [data-landed='true']");
+    expect(start).toBeGreaterThan(-1);
+    const block = css.slice(start, css.indexOf('\n}\n', start + 60) + 3);
+    expect(block).toContain('animation: none');
+    expect(block).toContain('background: var(--primary-tint)');
+    const landing = await source('src/web/landing.ts');
+    expect(landing).toContain("removeAttribute('data-landed')");
+    expect(landing).toContain('LANDING_FLASH_MS');
   });
 });
 
