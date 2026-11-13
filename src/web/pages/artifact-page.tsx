@@ -35,7 +35,7 @@ import { toMermaidColor } from './mermaid-theme.ts';
 import { scrollWhenSettled } from './scroll-settle.ts';
 import { humanizeKind } from '../views/kinds.ts';
 import { documentHtmlAllowedInView, resolveViewFor } from '../views/manifests.ts';
-import { unrecognizedNotice } from '../views/fallback.ts';
+import { UNRECOGNIZED_KIND, unrecognizedNotice } from '../views/fallback.ts';
 import {
   OUTLINE_ENTRY_CAP,
   capOutline,
@@ -745,7 +745,7 @@ export function ArtifactPage({
   );
   // D-05: a file's one URL opens in Source when it carries ?source=1 or a line fragment; the same URL
   // without either opens View. DocumentRoute keys this page by its URL, so the mode never carries over.
-  const [mode, setMode] = useState<'view' | 'source'>(() =>
+  const [chosenMode, setMode] = useState<'view' | 'source'>(() =>
     hasSourceFlag(search) || hasLineHash(hash) ? 'source' : 'view',
   );
   const shown = useMemo(
@@ -1134,7 +1134,7 @@ export function ArtifactPage({
     setMode('source');
   }, []);
   // A target belongs to one stay in Source: leaving for View drops it, so the next Source opens clean.
-  if (mode === 'view' && sourceTarget !== null) setSourceTarget(null);
+  if (chosenMode === 'view' && sourceTarget !== null) setSourceTarget(null);
   // Pitfall 2: a same-page link that adds ?source=1 or #L.. to the open document changes the router location
   // but never remounts this page (history.replaceState elsewhere is invisible to the router), so a new router
   // location key re-opens Source here. Only a flag or a line fragment that is NEW since the last location counts: a
@@ -1206,6 +1206,10 @@ export function ArtifactPage({
     reviewsPage !== null ||
     !documentHtmlAllowedInView(manifest) ||
     (composed !== null && composed.blocks.length > 0);
+  // A file with no designed view - its kind has no registered manifest (fallback.ts's structural read), or nothing
+  // composed for it, so View would only be the plain reader - opens in Source with no View/Source toggle.
+  const designedView = viewAvailable && manifest !== null && manifest.kind !== UNRECOGNIZED_KIND;
+  const mode: 'view' | 'source' = designedView ? chosenMode : 'source';
 
   if (query.isPending) {
     return (
@@ -1687,7 +1691,7 @@ export function ArtifactPage({
         {...(headerOverride ?? {})}
         {...(sourceHeader ?? {})}
       >
-        <DocumentViewToggle mode={mode} onChange={setMode} />
+        {designedView ? <DocumentViewToggle mode={mode} onChange={setMode} /> : null}
       </ArtifactHeader>
 
       {panels.length > 0 ? (
@@ -1793,7 +1797,7 @@ export function ArtifactPage({
           fileClass={shownFile?.fileClass ?? null}
           sizeBytes={shownFile?.sizeBytes ?? null}
           target={sourceTarget}
-          onOpenView={() => setMode('view')}
+          {...(designedView ? { onOpenView: () => setMode('view') } : {})}
         />
       ) : layout && mode === 'view' ? (
         <div className="document-reader-layout" data-outline="false">
