@@ -26579,6 +26579,38 @@ button.research-step-chip:hover {
   font-size: var(--fs-3);
 }
 
+/* The switcher's current-project tick sits in the row's last column, centred across the name and path lines: the
+   forget column when the row has one, where the tick gives way to the × on hover or focus (and below 42rem or on a
+   coarse pointer, where the × always shows; the row's accent edge still marks it current). */
+.project-switcher-popup .project-row[data-current='true'] .project-row-name {
+  padding-right: 0;
+}
+
+.project-switcher-popup .project-row > svg {
+  grid-column: -2 / -1;
+  grid-row: 1 / 3;
+  align-self: center;
+  justify-self: center;
+  transition: opacity 150ms ease;
+}
+
+.project-switcher-popup .project-row:hover:has(> .project-row-actions) > svg,
+.project-switcher-popup .project-row:focus-within:has(> .project-row-actions) > svg {
+  opacity: 0;
+}
+
+@media (pointer: coarse), (max-width: 42rem) {
+  .project-switcher-popup .project-row:has(> .project-row-actions) > svg {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-switcher-popup .project-row > svg {
+    transition: none;
+  }
+}
+
 /* 'Add or scan…' spans the footer as a row, its icon on the rows' left edge (the rows' --space-4 inline padding). */
 .project-switcher-footer button {
   width: 100%;
