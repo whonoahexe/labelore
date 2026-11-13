@@ -299,19 +299,30 @@ describe('the honest states', () => {
     expect(model.announcement).toBe('');
   });
 
-  it('on a failed request or an index error: one alert notice, then Projects', () => {
-    for (const jump of [
-      { state: 'error' as const, data: undefined },
-      { state: 'ready' as const, data: response({ status: 'error' }) },
-    ]) {
-      const model = buildPaletteModel(input({ query: 'lend', jump }));
+  it('on an index error: the index alert, then Projects', () => {
+    const model = buildPaletteModel(input({ query: 'lend', jump: { state: 'ready', data: response({ status: 'error' }) } }));
+    expect(labels(model)).toEqual([null, 'Projects']);
+    expect(model.groups[0]?.notice).toEqual({
+      kind: 'index-error',
+      heading: 'Search is unavailable.',
+      body: "The index could not be built. Pages and projects below still work; check that the project's .planning folder can be read, then refresh.",
+      role: 'alert',
+    });
+    expect(model.empty).toBeNull();
+  });
+
+  it('on a failed request (WR-02): its own notice, never the index-error words, then Projects', () => {
+    const previous = response({ groups: [group('pages', 'page', 2)] });
+    for (const data of [undefined, previous]) {
+      const model = buildPaletteModel(input({ query: 'lend', jump: { state: 'error', data } }));
       expect(labels(model)).toEqual([null, 'Projects']);
       expect(model.groups[0]?.notice).toEqual({
-        kind: 'index-error',
-        heading: 'Search is unavailable.',
-        body: "The index could not be built. Pages and projects below still work; check that the project's .planning folder can be read, then refresh.",
+        kind: 'request-error',
+        heading: 'Search could not be loaded.',
+        body: 'The request failed. Projects below still work; keep typing or reopen the palette to try again.',
         role: 'alert',
       });
+      expect(JSON.stringify(model)).not.toContain('The index could not be built');
       expect(model.empty).toBeNull();
     }
   });

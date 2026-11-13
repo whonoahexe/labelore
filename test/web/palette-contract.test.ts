@@ -338,3 +338,30 @@ describe('choosing a project in the palette (D-15, T-13-16, T-13-17)', () => {
     expect(switcher).toContain('requestMainFocusOnNextMount()');
   });
 });
+
+describe('Enter opens what the input says, never a stale highlight (WR-01, NAV-12)', () => {
+  const field = source('src/web/components/search-field.tsx');
+  const keyDown = field.slice(field.indexOf('onKeyDown={(event) => {'), field.indexOf('<Combobox.Input') + 2000);
+
+  it('acts on the highlight only once the rows answer the live input', () => {
+    expect(field).toContain('const settled = live === trimmed && (trimmed.length === 0 || jump.data !== undefined);');
+    expect(keyDown.indexOf('if (!settled) {')).toBeGreaterThan(-1);
+    expect(keyDown.indexOf('if (!settled) {')).toBeLessThan(keyDown.indexOf('highlightedRef.current'));
+  });
+
+  it('remembers an early Enter, flushes the debounce, and opens the first row of that query once its answer lands', () => {
+    expect(keyDown).toContain('pendingEnterRef.current = live;');
+    expect(keyDown).toContain('setDebounced(query);');
+    const effect = field.slice(field.indexOf('const pending = pendingEnterRef.current;'), field.indexOf('function commitToSearchPage'));
+    expect(effect).toContain('if (pending === null || pending !== trimmed) return;');
+    expect(effect).toContain("if (trimmed.length > 0 && jumpState === 'pending') return;");
+    expect(effect).toContain('model.groups.flatMap((group) => group.rows)[0]');
+    expect(effect).toContain('commitToSearchPage();');
+  });
+
+  it('cancels a remembered Enter when the text changes, and ignores the Enter that ends an IME composition', () => {
+    const change = field.slice(field.indexOf('onInputValueChange={(value) => {'), field.indexOf('onItemHighlighted'));
+    expect(change).toContain('pendingEnterRef.current = null;');
+    expect(keyDown).toContain("if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;");
+  });
+});

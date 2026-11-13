@@ -29,7 +29,7 @@ export type PaletteRow =
   | { type: 'see-all'; key: string; query: string; href: string };
 
 export interface PaletteNotice {
-  kind: 'indexing' | 'index-error' | 'no-match' | 'id-not-found' | 'projects-loading' | 'projects-error';
+  kind: 'indexing' | 'index-error' | 'request-error' | 'no-match' | 'id-not-found' | 'projects-loading' | 'projects-error';
   heading: string;
   /** The Meta line under the heading, or null. */
   body: string | null;
@@ -86,6 +86,13 @@ const NOTICES = {
     kind: 'index-error',
     heading: 'Search is unavailable.',
     body: "The index could not be built. Pages and projects below still work; check that the project's .planning folder can be read, then refresh.",
+    role: 'alert',
+  },
+  // The request itself failed (server restarting, connection dropped): not the index, so not the index's words.
+  requestError: {
+    kind: 'request-error',
+    heading: 'Search could not be loaded.',
+    body: 'The request failed. Projects below still work; keep typing or reopen the palette to try again.',
     role: 'alert',
   },
   projectsLoading: { kind: 'projects-loading', heading: 'Loading projects…', body: null, role: 'status' },
@@ -259,7 +266,10 @@ export function buildPaletteModel(input: PaletteInput): PaletteModel {
   if (query === '') return emptyPalette(input);
 
   const { state, data } = input.jump;
-  const failed = state === 'error' || data?.status === 'error';
+  // A failed request and a failed index build are told apart (WR-02): only the server's own 'error' status
+  // means the index could not be built.
+  const requestFailed = state === 'error';
+  const failed = requestFailed || data?.status === 'error';
   const building = !failed && data?.status === 'building';
   const ready = !failed && data?.status === 'ready' ? data : null;
   const refreshing = ready !== null && ready.refreshing;
@@ -267,7 +277,11 @@ export function buildPaletteModel(input: PaletteInput): PaletteModel {
 
   const groups: PaletteGroup[] = [];
   if (failed) {
-    groups.push({ key: 'index-error', label: null, rows: [], notice: NOTICES.indexError });
+    groups.push(
+      requestFailed
+        ? { key: 'request-error', label: null, rows: [], notice: NOTICES.requestError }
+        : { key: 'index-error', label: null, rows: [], notice: NOTICES.indexError },
+    );
   } else if (building) {
     groups.push({ key: 'indexing', label: null, rows: [], notice: NOTICES.indexing });
   } else if (ready !== null) {

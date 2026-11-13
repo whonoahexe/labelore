@@ -482,10 +482,16 @@ export function SearchPage(): React.JSX.Element {
 
   const state = classifySearchState({ query, isPending: search.isPending, isError: search.isError, data: answer });
 
+  // The filters that took effect (T-13-07): once this address's own answer is in, the page shows and writes back
+  // the server's selection, so a stale or edited link (a renamed phase, ?type=bogus) neither claims a filter that
+  // filtered nothing nor gets its unknown value written back by the next tab press. Until that answer arrives the
+  // address's own selection stands, so a tab press shows at once.
+  const applied: FacetSelection = search.data !== undefined && search.data.status === 'ready' ? search.data.selection : selection;
+
   function onSubmit(event: React.FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     const next = String(new FormData(event.currentTarget).get('q') ?? '').trim();
-    setSearchParams(facetSearchParams(next, selection));
+    setSearchParams(facetSearchParams(next, applied));
   }
 
   function clearFilters(): void {
@@ -565,9 +571,9 @@ export function SearchPage(): React.JSX.Element {
   }
 
   const view = answer;
-  const filtered = selection.phase.length + selection.type.length + selection.req.length > 0;
+  const filtered = applied.phase.length + applied.type.length + applied.req.length > 0;
   // A pasted link with several file types presses no tab, so the count line names the types it filters by.
-  const activeTypes = activeTypeTab(selection) === null ? selection.type : [];
+  const activeTypes = activeTypeTab(applied) === null ? applied.type : [];
   const hiddenNote = `${plural(view.unfilteredTotal, 'result', 'results')} for "${query}" are hidden by your filters.`;
 
   return (
@@ -576,7 +582,7 @@ export function SearchPage(): React.JSX.Element {
       <h1>Results for &quot;{query}&quot;</h1>
       <SearchQueryField query={query} onSubmit={onSubmit} />
       {view.facets === null ? null : (
-        <SearchFilters facets={view.facets} query={query} selection={selection} filtered={filtered} setSearchParams={setSearchParams} />
+        <SearchFilters facets={view.facets} query={query} selection={applied} filtered={filtered} setSearchParams={setSearchParams} />
       )}
       <div className="search-countline">
         <span>{countLineOf(view, filtered, activeTypes)}</span>

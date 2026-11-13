@@ -210,4 +210,14 @@ describe('search page: filters and counts (FIND-06, D-09, D-10)', () => {
     expect(firstStart).not.toContain('SearchFilters');
     expect(page).toContain('<SearchFilters');
   });
+
+  it("drives the filters from the selection the server applied, not the address's (WR-03, T-13-07)", () => {
+    const page = code(PAGE);
+    expect(page).toContain(
+      "const applied: FacetSelection = search.data !== undefined && search.data.status === 'ready' ? search.data.selection : selection;",
+    );
+    expect(page).toContain('const filtered = applied.phase.length + applied.type.length + applied.req.length > 0;');
+    expect(page).toContain('selection={applied}');
+    expect(page).not.toContain('<SearchFilters facets={view.facets} query={query} selection={selection}');
+  });
 });

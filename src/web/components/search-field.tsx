@@ -399,6 +399,30 @@ function PaletteBody({
     });
   }
 
+  // WR-01: Enter acts on the highlighted row only when the rows on screen answer what is in the input. While the
+  // debounce is open, or the answer for the live query has not arrived, the highlight still belongs to the
+  // previous rows (often the empty palette's first Recent row), so pasting D-12 and pressing Enter at once would
+  // open the wrong page. Instead Enter is remembered: the debounce is flushed, and once this query's own answer is
+  // in, its first row (the one D-03 highlights) is opened - or the search page when there is none.
+  const live = query.trim();
+  const settled = live === trimmed && (trimmed.length === 0 || jump.data !== undefined);
+  const pendingEnterRef = useRef<string | null>(null);
+  useEffect(() => {
+    const pending = pendingEnterRef.current;
+    if (pending === null || pending !== trimmed) return;
+    if (trimmed.length > 0 && jumpState === 'pending') return;
+    pendingEnterRef.current = null;
+    const first = trimmed.length === 0 || answer?.status === 'ready' ? model.groups.flatMap((group) => group.rows)[0] : undefined;
+    if (first !== undefined) {
+      openRow(first);
+      return;
+    }
+    commitToSearchPage();
+    onClose();
+    // openRow and commitToSearchPage are recreated each render; the inputs that decide the outcome are listed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trimmed, jumpState, answer, model]);
+
   function commitToSearchPage(): void {
     const submitted = query.trim();
     if (submitted.length === 0) return;
@@ -447,7 +471,11 @@ function PaletteBody({
       filter={null}
       // D-03: the first row (the Exact row when there is one) is highlighted whenever the rows change.
       autoHighlight={AUTO_HIGHLIGHT}
-      onInputValueChange={(value) => setQuery(value)}
+      onInputValueChange={(value) => {
+        // A remembered Enter belongs to the text it was pressed on; typing on cancels it.
+        pendingEnterRef.current = null;
+        setQuery(value);
+      }}
       onItemHighlighted={(row) => {
         highlightedRef.current = (row as PaletteRow | undefined) ?? null;
       }}
@@ -460,9 +488,15 @@ function PaletteBody({
           aria-label="Quick jump"
           className="search-dialog-input"
           onKeyDown={(event) => {
-            if (event.key !== 'Enter') return;
+            // IN-03: an Enter that ends an IME composition commits the composed text; it is not a choice.
+            if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
             event.preventDefault();
             event.preventBaseUIHandler();
+            if (!settled) {
+              pendingEnterRef.current = live;
+              setDebounced(query);
+              return;
+            }
             const highlighted = highlightedRef.current;
             if (highlighted) {
               openRow(highlighted);
