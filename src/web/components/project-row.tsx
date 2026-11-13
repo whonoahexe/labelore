@@ -13,7 +13,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Tooltip } from '@base-ui/react/tooltip';
-import { Check, Folder, Loader, Server, X } from 'lucide-react';
+import { ArrowRight, Check, Folder, Loader, Server, X } from 'lucide-react';
 import type { ProjectListEntry } from '../../presentation/project-list.ts';
 import { ApiError, UNREACHABLE_COPY, forgetProject } from '../api.ts';
 import { AppLink, useAppNavigate } from '../nav.tsx';
@@ -214,6 +214,11 @@ export function ProjectRow({ entry, current = false, variant, now, onForgotten }
         <p className="project-row-meta" title={openedTitle(entry.lastOpened) || undefined}>
           {formatOpenedAgo(entry.lastOpened, now)}
         </p>
+      ) : null}
+      {variant === 'landing' ? (
+        <span className="project-row-go" aria-hidden="true">
+          <ArrowRight />
+        </span>
       ) : null}
       {onForgotten ? (
         <div className="project-row-actions">

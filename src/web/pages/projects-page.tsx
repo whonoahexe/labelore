@@ -126,7 +126,6 @@ export function ProjectsPage(): React.JSX.Element {
       <main className="page-stack projects-page">
         <header className="page-intro">
           <div>
-            <p className="eyebrow">Projects</p>
             <h1>Projects</h1>
             <p className="lede">
               Open a GSD project to see where its work stands. Labelore only reads them and never

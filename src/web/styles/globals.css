@@ -26865,6 +26865,51 @@ button.research-step-chip:hover {
   column-gap: var(--space-3);
 }
 
+/* The landing list's rows read as links: a trailing arrow in its own column, muted at rest, and on hover
+   or focus the name and the arrow take the accent and the arrow steps right. */
+.project-row[data-variant='landing'] {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'name mark go'
+    'path meta go'
+    'reason reason reason';
+}
+
+.project-row[data-variant='landing']:has(> .project-row-actions) {
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-areas:
+    'name mark actions go'
+    'path meta actions go'
+    'reason reason reason reason';
+}
+
+.project-row-go {
+  grid-area: go;
+  display: flex;
+  align-self: center;
+  color: var(--muted-foreground);
+  transition:
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.project-row-go svg {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+.project-row[data-variant='landing']:hover .project-row-name,
+.project-row[data-variant='landing']:focus-within .project-row-name,
+.project-row[data-variant='landing']:hover .project-row-go,
+.project-row[data-variant='landing']:focus-within .project-row-go {
+  color: var(--primary);
+}
+
+.project-row[data-variant='landing']:hover .project-row-go,
+.project-row[data-variant='landing']:focus-within .project-row-go {
+  transform: translateX(var(--space-1));
+}
+
 .project-row-actions {
   grid-area: actions;
   align-self: center;
@@ -26956,6 +27001,22 @@ button.research-step-chip:hover {
       'reason reason reason';
   }
 
+  .project-row[data-variant='landing'] {
+    grid-template-areas:
+      'name mark go'
+      'path path go'
+      'meta meta go'
+      'reason reason reason';
+  }
+
+  .project-row[data-variant='landing']:has(> .project-row-actions) {
+    grid-template-areas:
+      'name mark actions go'
+      'path path actions go'
+      'meta meta actions go'
+      'reason reason reason reason';
+  }
+
   .project-row-actions button {
     width: var(--space-10);
     height: var(--space-10);
@@ -26966,6 +27027,15 @@ button.research-step-chip:hover {
 @media (prefers-reduced-motion: reduce) {
   .project-row-actions button {
     transition: none;
+  }
+
+  .project-row-go {
+    transition: none;
+  }
+
+  .project-row[data-variant='landing']:hover .project-row-go,
+  .project-row[data-variant='landing']:focus-within .project-row-go {
+    transform: none;
   }
 }
 
