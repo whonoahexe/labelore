@@ -52,6 +52,7 @@ import { createArtifactRenderer } from '../rendering/markdown.ts';
 import { applyCommitTimes } from './commit-times.ts';
 import { createFileBytesHandler } from './file-bytes.ts';
 import { createSourceHandler } from './source-text.ts';
+import { gsdCoreDir, loadGsdConfigReference } from './gsd-config-reference.ts';
 import { jsonRecord } from './project-presentation.ts';
 import type { DerivedViews, ProjectRuntime } from './project-runtime.ts';
 import { MAX_QUERY_LENGTH, searchIndex } from './search-index.ts';
@@ -493,6 +494,12 @@ export function createProjectApi(
       case 'failed':
         return c.json({ refreshed: false as const, error: outcome.error }, 500);
     }
+  });
+  // GSD's own configuration reference (quick-261114-42r): read from the installed gsd-core, the same for every project. It is
+  // mounted per project so it rides the project API's guard and key scheme, and it answers with parsed reference content only.
+  api.get('/gsd-config-reference', async (c) => {
+    c.header('Cache-Control', 'no-cache');
+    return c.json(await loadGsdConfigReference(gsdCoreDir()));
   });
   api.get('/research', (c) => {
     const runtime = c.get('runtime');

@@ -221,3 +221,44 @@ export const SETTINGS_CATALOGUE: ReadonlyArray<CatalogueKey> = [
   { key: 'capabilities.auto_update', label: 'Update capabilities on their own', group: 'extra' },
   { key: 'agent_skills_security.trusted_global_roots', label: 'Trusted global skill roots', group: 'extra' },
 ];
+
+// ---------------------------------------------------------------------------------------------------------
+// Where keys sit on the reference page (quick-261114-42r, sketch 065 A). GSD's own sections are the page's sections; this is the
+// Labelore side of that: the order they appear in, the names that differ from GSD's headings, and the homes for keys GSD's schema
+// accepts but its reference has no table for.
+// ---------------------------------------------------------------------------------------------------------
+
+/** The sections in the order the page lists them, by GSD's heading name (a section absent from the reference is skipped; a section
+ * GSD adds that is not named here sits just before Advanced). Gates and Reviews are Labelore's homes for namespaces GSD's
+ * reference has no table for. */
+export const SETTINGS_SECTION_ORDER: ReadonlyArray<string> = [
+  'Core',
+  'Workflow',
+  'Planner',
+  'Ship',
+  'Git',
+  'Search & API',
+  'Features',
+  'Hook',
+  'Gates',
+  'Reviews',
+  'Learnings',
+  'Intel',
+  'Manager',
+  'Planning',
+  'Advanced',
+];
+
+/** The display name where it differs from GSD's heading. */
+export const SETTINGS_SECTION_NAMES: Readonly<Record<string, string>> = { Hook: 'Hooks' };
+
+/** The home section of a key GSD's reference does not describe, by its top-level key or namespace. */
+export const UNDOCUMENTED_HOMES: Readonly<Record<string, string>> = {
+  tavily_search: 'Search & API',
+  ref_search: 'Search & API',
+  perplexity: 'Search & API',
+  jina: 'Search & API',
+  gates: 'Gates',
+  review: 'Reviews',
+  plan_review: 'Reviews',
+};

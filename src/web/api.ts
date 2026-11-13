@@ -3,6 +3,7 @@
 // carries the JSON content type the server's request guard demands. The presentation, open and
 // refresh calls of one project live here (08-08); the add and forget calls are 08-17's, the scan
 // and bulk-add calls 08-13's.
+import type { GsdConfigReference } from '../presentation/gsd-config-reference.ts';
 import type { ProjectListResponse } from '../presentation/project-list.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
 import type { WorkstreamInventory } from '../server/workstreams.ts';
@@ -105,6 +106,12 @@ export async function fetchPresentation(slug: string, scope: string | null = nul
  * the completed ones. Always the project's own API: inside a workstream scope the same route answers flat. */
 export function fetchWorkstreams(slug: string): Promise<WorkstreamInventory> {
   return apiFetch<WorkstreamInventory>(projectUrl(slug, '/workstreams'));
+}
+
+/** GSD's own configuration reference, parsed on the server from the installed gsd-core (the settings page). It is GSD-wide, so
+ * it takes no scope; the page keeps it for the life of the session. */
+export function fetchGsdConfigReference(slug: string): Promise<GsdConfigReference> {
+  return apiFetch<GsdConfigReference>(projectUrl(slug, '/gsd-config-reference'));
 }
 
 export interface OpenProjectResponse {
