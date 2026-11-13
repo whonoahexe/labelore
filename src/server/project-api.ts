@@ -34,7 +34,8 @@ import type { TodoContext } from '../presentation/todo-context.ts';
 import { buildNoteContext } from '../presentation/note-context.ts';
 import type { NoteContext } from '../presentation/note-context.ts';
 import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
-import { parseRoutePath } from '../presentation/routes.ts';
+import { buildArtifactUrl, parseRoutePath } from '../presentation/routes.ts';
+import { buildJumpGroups, MAX_FROM_LENGTH } from '../presentation/jump.ts';
 import { buildTraceabilityViewModel } from '../presentation/traceability.ts';
 import { buildSearchGroups, extractSnippets } from '../presentation/search.ts';
 import { buildResearchViewModel } from '../presentation/project-research.ts';
@@ -47,7 +48,8 @@ import { createFileBytesHandler } from './file-bytes.ts';
 import { createSourceHandler } from './source-text.ts';
 import { jsonRecord } from './project-presentation.ts';
 import type { DerivedViews, ProjectRuntime } from './project-runtime.ts';
-import { searchIndex } from './search-index.ts';
+import { MAX_QUERY_LENGTH, searchIndex } from './search-index.ts';
+import type { JumpApiResponse } from './search-index.ts';
 import { SKETCH_FILES_SEGMENT, createSketchFileMiddleware } from './sketch-files.ts';
 
 export type ProjectApiEnv = {
@@ -383,6 +385,41 @@ export function createProjectApi(
       results,
       groups,
     });
+  });
+  api.get('/jump', (c) => {
+    // Same skeleton as /search: the bundle is captured first, so the whole response is built from this
+    // request's one ready index and its own presentation - never the filesystem, never another project (D-17).
+    const runtime = c.get('runtime');
+    const activeDerived = runtime.derived;
+    const query = (c.req.query('q') ?? '').slice(0, MAX_QUERY_LENGTH);
+    const from = (c.req.query('from') ?? '').slice(0, MAX_FROM_LENGTH);
+    const state = activeDerived.searchIndexState.state();
+    // HTTP 200 in every readiness state, like /search.
+    if (state.status !== 'ready') {
+      const pending: JumpApiResponse = {
+        status: state.status,
+        query,
+        groups: [],
+        contentTotal: 0,
+        notFoundId: null,
+      };
+      return c.json(pending);
+    }
+    const result = buildJumpGroups({
+      query,
+      presentation: state.presentation,
+      documents: [...state.documents.values()].map((document) => ({
+        path: document.path,
+        title: document.title,
+        kind: document.kind,
+        url: state.urls.get(document.path) ?? buildArtifactUrl(state.owners.get(document.path) ?? null, document.path),
+      })),
+      contentHits: searchIndex(state, query),
+      bodyOf: (path) => state.documents.get(path)?.body ?? null,
+      from,
+    });
+    const ready: JumpApiResponse = { status: 'ready', query, ...result };
+    return c.json(ready);
   });
   api.get('/documents', async (c) => {
     // D-05: capture the bundle as the first statement after the runtime, before URL parsing and before

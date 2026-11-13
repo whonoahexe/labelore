@@ -7,10 +7,12 @@
 import MiniSearch from 'minisearch';
 import type { Artifact, PhaseIdentity } from '../domain/model.ts';
 import type { ProjectSnapshot } from '../planning-repo/types.ts';
+import type { JumpGroup } from '../presentation/jump.ts';
 import type { SearchResultGroup } from '../presentation/search.ts';
 import { buildRouteTable, type RouteTable } from '../presentation/route-table.ts';
 import { buildArtifactUrl, milestoneKeyOf, phaseKeyOf } from '../presentation/routes.ts';
 import { segmentPlanBody } from '../rendering/plan-segments.ts';
+import { toProjectPresentation, type ProjectPresentation } from './project-presentation.ts';
 
 /** Bounds per-request tokenization cost (T-03-01-01) — a query longer than this is truncated
  * before tokenization ever runs. */
@@ -57,6 +59,9 @@ export type SearchIndexState =
       owners: Map<string, PhaseIdentity | null>;
       /** path -> the file's readable URL from the bundle's route table. */
       urls: Map<string, string>;
+      /** The presentation this index was built from, so a carried-forward index groups its hits against
+       * its own presentation rather than a newer bundle's (Phase 13, 13-01). */
+      presentation: ProjectPresentation;
       builtAt: string;
     }
   | { status: 'error'; message: string };
@@ -68,6 +73,16 @@ export function isReady(
   state: SearchIndexState,
 ): state is Extract<SearchIndexState, { status: 'ready' }> {
   return state.status === 'ready';
+}
+
+/** The `/api/jump` response in every readiness state (Phase 13): `groups` is empty unless `status` is
+ * 'ready'. `contentTotal` is the full hit count behind the Content group's capped rows. */
+export interface JumpApiResponse {
+  status: SearchIndexState['status'];
+  query: string;
+  groups: JumpGroup[];
+  contentTotal: number;
+  notFoundId: string | null;
 }
 
 /** The full API response shape `/api/search` returns in every readiness state. `results` is the
@@ -245,7 +260,7 @@ function buildMiniSearchIndex(documents: SearchDocument[]): MiniSearch<SearchDoc
  */
 export function createSearchIndexState(): {
   state(): SearchIndexState;
-  buildFrom(snapshot: ProjectSnapshot, routeTable?: RouteTable): void;
+  buildFrom(snapshot: ProjectSnapshot, routeTable?: RouteTable, presentation?: ProjectPresentation): void;
   /** Stops a scheduled build from ever running (a disposed runtime); `state()` stays 'building'. */
   cancel(): void;
 } {
@@ -258,7 +273,11 @@ export function createSearchIndexState(): {
     cancel(): void {
       cancelled = true;
     },
-    buildFrom(snapshot: ProjectSnapshot, routeTable: RouteTable = buildRouteTable(snapshot.project)): void {
+    buildFrom(
+      snapshot: ProjectSnapshot,
+      routeTable: RouteTable = buildRouteTable(snapshot.project),
+      presentation?: ProjectPresentation,
+    ): void {
       setImmediate(() => {
         if (cancelled) return;
         try {
@@ -280,6 +299,9 @@ export function createSearchIndexState(): {
             documents: documentsByPath,
             owners,
             urls,
+            // Callers that already hold the bundle's presentation pass it; the default is built here,
+            // inside the scheduled callback, so a test caller pays nothing on the request path.
+            presentation: presentation ?? toProjectPresentation(snapshot, undefined, routeTable),
             builtAt: new Date().toISOString(),
           };
         } catch (error) {

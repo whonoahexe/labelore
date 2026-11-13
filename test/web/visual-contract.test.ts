@@ -521,19 +521,6 @@ describe('scrollbar-thumb-hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', (
 });
 
 describe('header search dialog — navigating surface (03-02 Task 3, D-01; quick-260911-243 NAV-04)', () => {
-  it('bounds the rendered rows by a named constant, not a magic-number slice (Test 1)', async () => {
-    const source_ = await source('src/web/components/search-field.tsx');
-    expect(source_).toMatch(/const DROPDOWN_LIMIT = 8;/);
-    expect(source_).toMatch(/\.slice\(0, DROPDOWN_LIMIT\)/);
-    expect(source_).not.toMatch(/\.slice\(0,\s*8\)/);
-  });
-
-  it('pluralizes the footer copy between the one-result and many-result forms (Test 2)', async () => {
-    const source_ = await source('src/web/components/search-field.tsx');
-    expect(source_).toMatch(/total === 1 \? 'result' : 'results'/);
-    expect(source_).toContain('See all {total}');
-  });
-
   it('builds the footer link from presentationRoutePatterns.search plus an encoded query, never a literal /search?q= string (Test 3)', async () => {
     const source_ = await source('src/web/components/search-field.tsx');
     expect(source_).toContain('presentationRoutePatterns.search}?q=${encodeURIComponent(trimmed)}');

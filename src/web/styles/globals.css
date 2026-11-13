@@ -6180,7 +6180,9 @@ a.todo-title:hover {
 
 .search-dialog-item {
   display: grid;
-  gap: var(--space-0-5);
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--space-3);
+  row-gap: var(--space-0-5);
   border-top: 1px solid var(--border);
   padding: var(--space-2-5) var(--space-4);
   color: inherit;
@@ -6188,8 +6190,59 @@ a.todo-title:hover {
   cursor: pointer;
 }
 
-.search-dialog-list > :first-child {
+/* Phase 13 palette: the list holds labelled groups; a group's first row carries no rule of its own. */
+.palette-group {
+  display: grid;
+}
+
+.palette-group-label {
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
+}
+
+.search-dialog-list > :first-child > .palette-group-label {
   border-top: 0;
+}
+
+.palette-group-label + .search-dialog-item {
+  border-top: 0;
+}
+
+/* A row's trailing chips sit on its first line, right-aligned; the path line spans both columns. */
+.palette-row-chips {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.search-dialog-item > .search-result-path,
+.search-dialog-item > .palette-row-snippet {
+  grid-column: 1 / -1;
+}
+
+/* A content row's snippet: the matched words are marked, the rest is plain text. */
+.palette-row-snippet {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--foreground);
+  font-size: var(--fs-3);
+  line-height: var(--fs-3--lh);
+}
+
+.palette-row-snippet mark {
+  background: var(--primary-tint);
+  color: var(--primary);
+  padding: 0;
 }
 
 .search-dialog-item[data-highlighted] {
