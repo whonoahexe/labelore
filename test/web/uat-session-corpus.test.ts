@@ -90,6 +90,8 @@ const PINNED: Record<string, Pinned> = {
   'LB:phases/11-exploration-handoff-report-and-workstream-pages/11-UAT.md': { ...DONE, tests: 2, pass: 2 },
   // Session completed by /gsd-verify-work 12: 10 passed, the throttled-reload item deferred (skipped).
   'LB:phases/12-project-settings-source-mode-and-reading-polish/12-UAT.md': { ...DONE, tests: 11, pass: 10, skipped: 1, extras: ['Deferred Follow-Ups'] },
+  // Session completed by /gsd-verify-work 13: all four passed (test 3 deviations accepted).
+  'LB:phases/13-search-and-quick-jump-palette/13-UAT.md': { ...DONE, tests: 4, pass: 4 },
   'FX:phases/01-member-sign-in-sessions/01-UAT.md': { ...DONE, tests: 7, pass: 6, skipped: 1, extras: ['Notes'] },
   'FX:phases/02-roles-and-permissions/02-UAT.md': { ...DONE, tests: 3, pass: 3, gaps: 4, mode: 'prose' },
   'FX:phases/03-account-admin-and-sessions/03-UAT.md': { ...DONE, tests: 5, pass: 5, gaps: 1, mode: 'items' },
