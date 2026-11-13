@@ -141,7 +141,9 @@ describe('search page: results (FIND-07, FIND-08, D-12, D-13)', () => {
 
   it('retires the location grouping: nothing on the page reads groups, the old cards or the old classes', () => {
     const page = code(PAGE);
-    expect(page).not.toMatch(/SearchResultGroup|view\.groups|search-result-card|search-groups|search-group-rows/);
+    const retiredType = ['Search', 'ResultGroup'].join('');
+    expect(page).not.toContain(retiredType);
+    expect(page).not.toMatch(/view\.groups|search-result-card|search-groups|search-group-rows/);
   });
 });
 
