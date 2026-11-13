@@ -9,6 +9,7 @@ import { projectMapState } from '../../presentation/project-map-state.ts';
 import { projectHasResearch } from '../../presentation/project-research-files.ts';
 import { projectHasSketches } from '../../presentation/sketches.ts';
 import { fetchPresentation } from '../api.ts';
+import { useLanding } from '../landing.ts';
 import { NavLink, UnscopedLink, useProjectLocation, useProjectScope } from '../nav.tsx';
 import { projectKey } from '../query-keys.ts';
 import { LabeloreMark } from './labelore-mark.tsx';
@@ -46,6 +47,8 @@ export function AppShell({
   workstreamIndex?: { countText: string };
   children?: React.ReactNode;
 }): React.JSX.Element {
+  // A palette jump lands on its item once the page has it (13-02, D-05).
+  useLanding();
   const scope = useProjectScope();
   // D-11: the gear is the project's own /settings, never a workstream's config.json, so it is lit only when no
   // scope is open and the project pathname is /settings.
