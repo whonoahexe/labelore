@@ -415,6 +415,14 @@ describe('createSearchIndexState - a refresh keeps the previous index answering 
     expect(ready.refreshing).toBe(false);
   });
 
+  it('a ready state holds its own requirement map, and a carried copy keeps it', async () => {
+    const { ready } = await readyState();
+    expect(ready.requirementsByPath).toBeInstanceOf(Map);
+    const next = createSearchIndexState(ready);
+    const carried = next.state();
+    expect(carried.status === 'ready' && carried.requirementsByPath).toBe(ready.requirementsByPath);
+  });
+
   it('searches the carried index, with its own documents', async () => {
     const { ready, plan } = await readyState();
     const next = createSearchIndexState(ready);

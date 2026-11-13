@@ -8,6 +8,7 @@ import MiniSearch from 'minisearch';
 import type { Artifact, PhaseIdentity } from '../domain/model.ts';
 import type { ProjectSnapshot } from '../planning-repo/types.ts';
 import type { JumpGroup } from '../presentation/jump.ts';
+import { buildRequirementMap } from '../presentation/search-facets.ts';
 import type { SearchResultGroup } from '../presentation/search.ts';
 import { buildRouteTable, type RouteTable } from '../presentation/route-table.ts';
 import { buildArtifactUrl, milestoneKeyOf, phaseKeyOf } from '../presentation/routes.ts';
@@ -63,6 +64,9 @@ export interface ReadyIndexState {
   /** The presentation this index was built from, so a carried-forward index groups its hits against
    * its own presentation rather than a newer bundle's (Phase 13, 13-01). */
   presentation: ProjectPresentation;
+  /** path -> the requirement ids the file is traced to (D-08), built once from `presentation` so a carried
+   * index keeps its own map (Phase 13, 13-03). */
+  requirementsByPath: Map<string, string[]>;
   builtAt: string;
   /** True while this is the PREVIOUS generation's index, served until the refresh's own build lands
    * (D-11, FIND-09): search keeps answering instead of dropping to 'building'. */
@@ -318,6 +322,7 @@ export function createSearchIndexState(previous: ReadyIndexState | null = null):
           }
           const index = buildMiniSearchIndex(documents);
           const documentsByPath = new Map(documents.map((doc) => [doc.path, doc]));
+          const readyPresentation = presentation ?? toProjectPresentation(snapshot, undefined, routeTable);
           const ready: ReadyIndexState = {
             status: 'ready',
             index,
@@ -326,7 +331,8 @@ export function createSearchIndexState(previous: ReadyIndexState | null = null):
             urls,
             // Callers that already hold the bundle's presentation pass it; the default is built here,
             // inside the scheduled callback, so a test caller pays nothing on the request path.
-            presentation: presentation ?? toProjectPresentation(snapshot, undefined, routeTable),
+            presentation: readyPresentation,
+            requirementsByPath: buildRequirementMap(readyPresentation),
             builtAt: new Date().toISOString(),
             refreshing: false,
           };
