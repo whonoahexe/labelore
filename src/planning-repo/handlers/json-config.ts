@@ -40,6 +40,14 @@ export const JsonConfigHandler: ArtifactHandler = {
         // A file that does not parse: the redactor reaches only a quoted key followed by a quoted string. When a
         // secret key name is still written some other way (unquoted, a comment before the colon, an object value),
         // its value cannot be told from the rest of the text, so the body is withheld whole.
+        // Accepted trade-off (WR-02): the check is a name scan, not a tokenizer, and a file that does not parse gives no
+        // reliable way to tell a key from the same word inside a value or a comment (the redactor's own quote matching can
+        // lose its place in a broken file). A secret key name written anywhere in an unparseable file, as in
+        // `// search provider: brave_search` or `"search_provider": "firecrawl"`, therefore withholds the whole body: Source
+        // shows the marker alone, and the parser position the unreadable-config notice reports is read from that withheld
+        // text, not from the file. Narrowing this to "not inside a quoted value" would
+        // trust a string boundary the file has already broken, so the file fails closed instead; a parseable file never
+        // takes this branch.
         if (hasUnmaskedSecretKey(body)) body = `${VALUE_NOT_SHOWN_MARK}\n`;
       } else {
         const masked = maskConfig(result.data);

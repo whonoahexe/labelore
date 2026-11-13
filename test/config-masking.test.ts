@@ -253,3 +253,28 @@ describe('loading a project never writes to its config.json (SEC-04, read-only)'
     expect(statSync(config).mtimeMs).toBe(before.mtimeMs);
   });
 });
+
+// WR-02: an unparseable config.json that writes a secret key name anywhere (here in a comment and in a value) is withheld
+// whole. The check cannot tell a key from the same word elsewhere in a broken file, so it fails closed; this pins that
+// documented trade-off, and that a parseable file naming the word in a value is not caught by it.
+describe('an unparseable config.json that names a secret key outside a key position (WR-02)', () => {
+  const NOTE = 'madeup-note-text-8421';
+  it.each([
+    ['a comment', `{\n  // search provider: brave_search\n  "note": "${NOTE}",\n}\n`],
+    ['a value', `{\n  "search_provider": "firecrawl",\n  "note": "${NOTE}",\n}\n`],
+  ])('serves the withheld marker for %s', async (_label, content) => {
+    const { app } = await appFor({ '.planning/config.json': content });
+    const key = await keyFor(app, '.planning/config.json');
+    const body = JSON.parse(await textOf(app, `/api/source?route=${encodeURIComponent(key)}`)) as { text: string; masked: boolean };
+    expect(body.text).toBe('[Value not shown]\n');
+    expect(body.masked).toBe(true);
+  });
+
+  it('does not take that branch for a parseable file', async () => {
+    const content = `{\n  "search_provider": "firecrawl",\n  "note": "${NOTE}"\n}\n`;
+    const { app } = await appFor({ '.planning/config.json': content });
+    const key = await keyFor(app, '.planning/config.json');
+    const body = JSON.parse(await textOf(app, `/api/source?route=${encodeURIComponent(key)}`)) as { text: string };
+    expect(body.text).toContain(NOTE);
+  });
+});
