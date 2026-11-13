@@ -21,6 +21,28 @@ const REFUSE_CODE_ENGINE = {
 };
 const MATTER_OPTIONS = { engines: { javascript: REFUSE_CODE_ENGINE, js: REFUSE_CODE_ENGINE } };
 
+// CR-01: gray-matter looks the language up in a plain object that inherits `Object.prototype`, so `---constructor`,
+// `---toString`, `---valueOf` and `---hasOwnProperty` select a built-in function as the "engine" and hand back a String
+// wrapper, a string or a boolean as `data`, which every handler's key-based mask then walks character by character. Only the
+// languages that are meant to be read are allowed (the empty one is YAML, the default); any other name reads as malformed
+// frontmatter, and the refusing engines above stay as defence in depth.
+const ALLOWED_LANGUAGES: ReadonlySet<string> = new Set(['', 'yaml', 'yml', 'json']);
+
+/**
+ * True when gray-matter would look up an engine for a language this file does not allow: it names one on the opening fence
+ * line (cut out the way gray-matter cuts it, so a file with no line break after the fence reads the same here) and text
+ * follows it for an engine to parse. When nothing follows the language gray-matter parses nothing and looks nothing up
+ * (a CR-only file, whose whole text it takes as the language), so the file is left to read as it always did.
+ */
+function namesUnreadLanguage(content: string): boolean {
+  const start = content.startsWith('\uFEFF') ? 1 : 0;
+  if (!content.startsWith('---', start)) return false;
+  const rest = content.slice(start + 3);
+  const language = rest.slice(0, rest.search(/\r?\n/));
+  if (ALLOWED_LANGUAGES.has(language.trim().toLowerCase())) return false;
+  return rest.slice(language.length).trim() !== '';
+}
+
 export const tryParseFrontmatter = (content: string): FrontmatterResult => {
   try {
     // gray-matter caches its internal `file` object by raw content string BEFORE attempting the
@@ -37,8 +59,14 @@ export const tryParseFrontmatter = (content: string): FrontmatterResult => {
     // wrapped, every failure produces a warning" contract. Passing any options object (here
     // MATTER_OPTIONS, which also refuses the code engine) bypasses the cache path entirely — see
     // node_modules/gray-matter/index.js's `if (!options)` guard — so every call re-parses fresh.
+    if (namesUnreadLanguage(content)) throw new Error('frontmatter language not read');
     const parsed = matter(content, MATTER_OPTIONS);
-    return { data: parsed.data as Record<string, unknown>, body: parsed.content };
+    const data: unknown = parsed.data;
+    // Every handler assumes a plain map; a list, a scalar or a non-plain object is malformed frontmatter.
+    if (typeof data !== 'object' || data === null || Array.isArray(data) || Object.getPrototypeOf(data) !== Object.prototype) {
+      throw new Error('frontmatter is not a map');
+    }
+    return { data: data as Record<string, unknown>, body: parsed.content };
   } catch {
     // D-11: stage = 'frontmatter', salvage = 'body intact, frontmatter unavailable'
     return {
