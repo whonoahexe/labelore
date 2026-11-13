@@ -105,6 +105,13 @@ const PINNED: Record<string, Pinned> = {
   // 11: awk over the 79 `| T-` rows of the register (the file's own lead line says 118 rows but the table holds 79;
   // 79 is what is counted), the 7 Trust Boundaries rows (none has an arrow, so all 7 are at-rest), the 6 `| AR-` rows,
   // the 2 dated audit rows and the 4 checked Sign-Off lines.
+  // 13: 26 `| T-13-` rows (5 high, 8 medium, 13 low; 24 mitigate, 2 accept), 10 Trust Boundaries rows with no arrow
+  // (all at-rest), 2 `| AR-13-` rows, 1 dated audit row and 4 checked Sign-Off lines.
+  'LB:phases/13-search-and-quick-jump-palette/13-SECURITY.md': {
+    rows: 26, open: 0, openLow: 0, closed: 26, severity: { high: 5, medium: 8, low: 13 },
+    disposition: { mitigate: 24, accept: 2 }, columns: { S: 4, T: 10, I: 6, D: 6 }, boundaries: 10,
+    destinations: 0, singles: 0, stores: 10, risks: 2, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
+  },
   'LB:phases/12-project-settings-source-mode-and-reading-polish/12-SECURITY.md': {
     rows: 36, open: 0, openLow: 0, closed: 36, severity: { high: 12, medium: 12, low: 12 },
     disposition: { mitigate: 33, accept: 3 }, columns: { S: 1, T: 10, R: 3, I: 13, D: 6, E: 3 }, boundaries: 5,
