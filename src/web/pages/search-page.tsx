@@ -1,13 +1,15 @@
 import { Fragment, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
-import { ChevronRight, FileText, Loader, Search } from 'lucide-react';
+import type { SetURLSearchParams } from 'react-router';
+import { Menu } from '@base-ui/react/menu';
+import { Check, ChevronDown, ChevronRight, FileText, Loader, Search } from 'lucide-react';
 import { Link, useProjectScope, useProjectSlug } from '../nav.tsx';
 import { Button, buttonVariants } from '../components/ui/button.tsx';
 import { apiFetch, projectUrl } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
 import { EMPTY_SELECTION, facetSearchParams } from '../../presentation/search-facets.ts';
-import type { FacetSelection } from '../../presentation/search-facets.ts';
+import type { FacetDimension, FacetSelection, SearchFacet } from '../../presentation/search-facets.ts';
 import type {
   SearchHighlightRange,
   SearchMilestoneSection,
@@ -17,7 +19,18 @@ import type {
   SearchSnippet,
 } from '../../presentation/search.ts';
 import type { SearchApiResponse } from '../../server/search-index.ts';
-import { classifySearchState, countLineOf, crumbsOf, readSearchUrl } from './search-view.ts';
+import { humanizeKind } from '../views/kinds.ts';
+import { stripEmoji } from './strip-emoji.ts';
+import {
+  activeTypeTab,
+  classifySearchState,
+  countLineOf,
+  crumbsOf,
+  dropdownLabelOf,
+  readSearchUrl,
+  toggleFacetValue,
+  withTypeTab,
+} from './search-view.ts';
 
 function fetchSearchResults(
   slug: string,
@@ -215,11 +228,13 @@ function SearchSections({ view }: { view: SearchApiResponse }): React.JSX.Elemen
     <div className="search-sections">
       {view.sections.milestones.map((milestone) => {
         const headingId = `search-milestone-${milestone.key}`;
+        // A milestone's name may lead with an emoji (the roadmap writes them); the page shows words only.
+        const name = stripEmoji(milestone.label);
         if (!milestone.archived) {
           return (
             <section key={milestone.key} className="search-section" aria-labelledby={headingId}>
               <h2 className="search-milestone-label" id={headingId}>
-                {milestone.label}
+                {name}
                 <span className="search-milestone-count">{plural(milestone.count, 'result', 'results')}</span>
               </h2>
               <MilestoneGroups milestone={milestone} />
@@ -234,11 +249,11 @@ function SearchSections({ view }: { view: SearchApiResponse }): React.JSX.Elemen
                 type="button"
                 className="search-milestone-fold"
                 aria-expanded={open}
-                aria-label={open ? `Hide ${milestone.label}` : `Show ${milestone.label}`}
+                aria-label={open ? `Hide ${name}` : `Show ${name}`}
                 onClick={() => toggleMilestone(milestone.key)}
               >
                 <ChevronRight aria-hidden="true" />
-                <span>{milestone.label}</span>
+                <span>{name}</span>
                 <span className="search-milestone-count">{plural(milestone.count, 'result', 'results')}</span>
               </button>
             </h2>
@@ -291,6 +306,132 @@ function SearchQueryField({
         />
       </label>
     </form>
+  );
+}
+
+/** UI-SPEC count rule 8: every facet control's accessible name carries its count ("Plan, 10 results"). */
+const countName = (label: string, count: number): string => `${label}, ${plural(count, 'result', 'results')}`;
+
+/** A Phase or Requirement dropdown: a Base UI menu of checkbox items. Several values may be chosen (OR within the
+ * facet) and the menu stays open while choosing. A value at zero stays listed, dashed, and a chosen value at zero
+ * stays chosen so it can be cleared. Every choice replaces the history entry (D-10). */
+function SearchFilterMenu({
+  dimension,
+  facet,
+  query,
+  selection,
+  setSearchParams,
+}: {
+  dimension: Extract<FacetDimension, 'phase' | 'req'>;
+  facet: SearchFacet;
+  query: string;
+  selection: FacetSelection;
+  setSearchParams: SetURLSearchParams;
+}): React.JSX.Element {
+  const name = dimension === 'phase' ? 'Phase' : 'Requirement';
+  const chosen = facet.values.some((value) => value.selected);
+  return (
+    <Menu.Root>
+      <Menu.Trigger
+        className={`${buttonVariants({ variant: 'outline', size: 'sm' })} search-filter-trigger`}
+        data-on={chosen}
+      >
+        <span className="search-filter-trigger-label">{dropdownLabelOf(dimension, facet.values)}</span>
+        <ChevronDown aria-hidden="true" />
+      </Menu.Trigger>
+      <Menu.Portal>
+        <Menu.Positioner className="search-filter-menu" align="start" sideOffset={4}>
+          <Menu.Popup className="search-filter-popup" aria-label={name}>
+            {facet.values.map((value) => (
+              <Menu.CheckboxItem
+                key={value.value}
+                className="search-filter-option"
+                checked={value.selected}
+                closeOnClick={false}
+                data-zero={value.count === 0}
+                aria-label={countName(value.label, value.count)}
+                onCheckedChange={() =>
+                  setSearchParams(facetSearchParams(query, toggleFacetValue(selection, dimension, value.value)), {
+                    replace: true,
+                  })
+                }
+              >
+                <span className="search-filter-box" aria-hidden="true">
+                  <Menu.CheckboxItemIndicator>
+                    <Check aria-hidden="true" />
+                  </Menu.CheckboxItemIndicator>
+                </span>
+                <span className="search-filter-label">{value.label}</span>
+                <span className="search-filter-count">{value.count}</span>
+              </Menu.CheckboxItem>
+            ))}
+          </Menu.Popup>
+        </Menu.Positioner>
+      </Menu.Portal>
+    </Menu.Root>
+  );
+}
+
+/** The filter row (FIND-06): file type as tabs (All or one type; sketch 064 F), then the Phase and Requirement
+ * dropdowns and Clear filters. Counts are the server's disjunctive counts; the address is the state. */
+function SearchFilters({
+  facets,
+  query,
+  selection,
+  filtered,
+  setSearchParams,
+}: {
+  facets: NonNullable<SearchApiResponse['facets']>;
+  query: string;
+  selection: FacetSelection;
+  filtered: boolean;
+  setSearchParams: SetURLSearchParams;
+}): React.JSX.Element {
+  const pressed = activeTypeTab(selection);
+  const pressTab = (kind: string | null): void =>
+    setSearchParams(facetSearchParams(query, withTypeTab(selection, kind)), { replace: true });
+  return (
+    <>
+      <div className="search-tabs" role="group" aria-label="File type">
+        <button
+          type="button"
+          className="search-tab"
+          aria-pressed={pressed === 'all'}
+          data-zero={facets.type.allCount === 0}
+          aria-label={countName('All', facets.type.allCount)}
+          onClick={() => pressTab(null)}
+        >
+          All <span className="search-tab-count">{facets.type.allCount}</span>
+        </button>
+        {facets.type.values.map((tab) => (
+          <button
+            key={tab.value}
+            type="button"
+            className="search-tab"
+            aria-pressed={pressed === tab.value}
+            data-zero={tab.count === 0}
+            aria-label={countName(humanizeKind(tab.value), tab.count)}
+            onClick={() => pressTab(tab.value)}
+          >
+            {humanizeKind(tab.value)} <span className="search-tab-count">{tab.count}</span>
+          </button>
+        ))}
+      </div>
+      <div className="search-filters">
+        <SearchFilterMenu dimension="phase" facet={facets.phase} query={query} selection={selection} setSearchParams={setSearchParams} />
+        <SearchFilterMenu dimension="req" facet={facets.req} query={query} selection={selection} setSearchParams={setSearchParams} />
+        {filtered ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setSearchParams(facetSearchParams(query, EMPTY_SELECTION), { replace: true })}
+          >
+            Clear filters
+          </Button>
+        ) : null}
+      </div>
+    </>
   );
 }
 
@@ -425,6 +566,8 @@ export function SearchPage(): React.JSX.Element {
 
   const view = answer;
   const filtered = selection.phase.length + selection.type.length + selection.req.length > 0;
+  // A pasted link with several file types presses no tab, so the count line names the types it filters by.
+  const activeTypes = activeTypeTab(selection) === null ? selection.type : [];
   const hiddenNote = `${plural(view.unfilteredTotal, 'result', 'results')} for "${query}" are hidden by your filters.`;
 
   return (
@@ -432,8 +575,11 @@ export function SearchPage(): React.JSX.Element {
       <p className="eyebrow">Search</p>
       <h1>Results for &quot;{query}&quot;</h1>
       <SearchQueryField query={query} onSubmit={onSubmit} />
+      {view.facets === null ? null : (
+        <SearchFilters facets={view.facets} query={query} selection={selection} filtered={filtered} setSearchParams={setSearchParams} />
+      )}
       <div className="search-countline">
-        <span>{countLineOf(view, filtered)}</span>
+        <span>{countLineOf(view, filtered, activeTypes)}</span>
         {view.refreshing ? (
           <span className="status-chip" data-tone="quiet" role="status">
             <Loader aria-hidden="true" />

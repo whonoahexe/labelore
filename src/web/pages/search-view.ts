@@ -95,19 +95,36 @@ export function crumbsOf(
   return [milestone, place, kind];
 }
 
-// Skeleton: the filter rules arrive with the filter row.
-export function withTypeTab(selection: FacetSelection, _kind: string | null): FacetSelection {
-  return selection;
+// --- The filter row (FIND-06, D-09 as narrowed on 2026-11-13) -------------------------------------------------
+// File type is single-select in the UI (sketch F's tabs: All or one type), while the server and the address stay
+// OR-capable, so a pasted link with two types still filters by both and presses no tab. Phase and Requirement
+// are checklists: several values, OR within the facet, AND across facets.
+
+/** The selection after pressing a file type tab; `null` is the All tab. Phase and requirement are untouched. */
+export function withTypeTab(selection: FacetSelection, kind: string | null): FacetSelection {
+  return { ...selection, type: kind === null ? [] : [kind] };
 }
 
-export function activeTypeTab(_selection: FacetSelection): string | null {
-  return null;
+/** The tab that reads as pressed: 'all' for no type, the kind for exactly one, null for several (a pasted link). */
+export function activeTypeTab(selection: FacetSelection): string | null {
+  if (selection.type.length === 0) return 'all';
+  return selection.type.length === 1 ? selection.type[0] : null;
 }
 
-export function toggleFacetValue(selection: FacetSelection, _dimension: FacetDimension, _token: string): FacetSelection {
-  return selection;
+/** The selection after choosing or unchoosing one value of a facet; the others stay. Never mutates `selection`. */
+export function toggleFacetValue(selection: FacetSelection, dimension: FacetDimension, token: string): FacetSelection {
+  const current = selection[dimension];
+  const next = current.includes(token) ? current.filter((value) => value !== token) : [...current, token];
+  return { ...selection, [dimension]: next };
 }
 
-export function dropdownLabelOf(_dimension: 'phase' | 'req', _values: readonly SearchFacetValue[]): string {
-  return '';
+const DROPDOWN_NAMES = { phase: 'Phase', req: 'Requirement' } as const;
+
+/** What a dropdown's trigger reads: its name with nothing selected, the value's label with one, "{name} · {n}" with more. */
+export function dropdownLabelOf(dimension: 'phase' | 'req', values: readonly SearchFacetValue[]): string {
+  const selected = values.filter((value) => value.selected);
+  if (selected.length === 0) return DROPDOWN_NAMES[dimension];
+  if (selected.length === 1) return selected[0].label;
+  return `${DROPDOWN_NAMES[dimension]} · ${selected.length}`;
 }
+
