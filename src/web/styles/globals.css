@@ -26203,7 +26203,6 @@ button.research-step-chip:hover {
 
 .project-switcher-footer {
   flex: none;
-  padding: var(--space-2);
   border-top: 1px solid var(--border);
 }
 
@@ -26580,7 +26579,12 @@ button.research-step-chip:hover {
   font-size: var(--fs-3);
 }
 
+/* 'Add or scan…' spans the footer as a row, its icon on the rows' left edge (the rows' --space-4 inline padding). */
 .project-switcher-footer button {
+  width: 100%;
+  height: auto;
+  justify-content: flex-start;
+  padding: var(--space-3-5) var(--space-4);
   font-size: var(--fs-3);
 }
 
