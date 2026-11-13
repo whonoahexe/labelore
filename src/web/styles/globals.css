@@ -1031,6 +1031,11 @@
   gap: var(--space-5);
 }
 
+/* "About this project" is as wide as its words, so its hover starts on the link, not the empty row. */
+.project-identity > .text-link {
+  justify-self: start;
+}
+
 .project-identity h1 {
   margin: 0;
   overflow-wrap: anywhere;
