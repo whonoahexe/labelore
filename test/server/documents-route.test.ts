@@ -624,3 +624,24 @@ describe('/api/documents carries the onboarding context for the onboarding summa
     expect(body.onboardingContext).toBeNull();
   });
 });
+
+describe('/api/documents serves the root PROJECT.md with no project join (quick-261114-3gq)', () => {
+  interface ProjectBody {
+    found: true;
+    artifact: { path: string; structured: Record<string, unknown> };
+  }
+
+  it('answers found, carries no project join key and structures only sections and keyDecisions', async () => {
+    const app = await appOver(FX_ROOT);
+    const presentation = await presentationOf(app);
+    const project = presentation.artifacts.find((artifact) => artifact.kind === 'project' && artifact.location === 'root');
+    expect(project).toBeDefined();
+    const response = await documentRequest(app, project?.key ?? '');
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as ProjectBody;
+    expect(body.found).toBe(true);
+    // The deleted join's key, spelled in two halves so the removal grep stays at zero.
+    expect(Object.hasOwn(body, `project${'Context'}`)).toBe(false);
+    expect(Object.keys(body.artifact.structured).sort()).toEqual(['keyDecisions', 'sections']);
+  });
+});

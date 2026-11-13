@@ -23,8 +23,6 @@ import { buildOnboardingContext } from '../presentation/onboarding-context.ts';
 import type { OnboardingContext } from '../presentation/onboarding-context.ts';
 import { buildSeedThreadLinks } from '../presentation/seed-thread-links.ts';
 import type { SeedThreadLinks } from '../presentation/seed-thread-links.ts';
-import { buildProjectContext } from '../presentation/project-context.ts';
-import type { ProjectContext } from '../presentation/project-context.ts';
 import { buildReviewContext } from '../presentation/review-context.ts';
 import type { ReviewContext } from '../presentation/review-context.ts';
 import { buildLedgerContext } from '../presentation/review-ledger.ts';
@@ -178,19 +176,6 @@ export function createProjectApi(
         return null;
       }
     })();
-    // Phase 9 (09-07): the project page's name, lead, core value and requirement-state counts, from this
-    // request's own bundle - built only for the root PROJECT.md (null elsewhere).
-    const projectContext = ((): ProjectContext | null => {
-      try {
-        const isRootProject = activeDerived.presentation.artifacts.some(
-          (candidate) =>
-            candidate.path === lookup.artifact.path && candidate.kind === 'project' && candidate.location === 'root',
-        );
-        return isRootProject ? buildProjectContext(activeDerived.presentation) : null;
-      } catch {
-        return null;
-      }
-    })();
     // Phase 10 (10-08): the Codebase page's seven-panel list, readiness and stamp, from this request's own bundle
     // - built only for a codebase-* map document (null elsewhere).
     const codebaseContext = ((): CodebaseContext | null => {
@@ -299,7 +284,6 @@ export function createProjectApi(
       todoContext,
       noteContext,
       ledgerContext,
-      projectContext,
       codebaseContext,
       pauseContext,
       spikesContext,

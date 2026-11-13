@@ -305,14 +305,6 @@ export function projectSectionLead(presentation: ProjectPresentation, heading: R
   return body === null ? null : sectionLead(body);
 }
 
-/** A PROJECT.md section's whole first paragraph, emphasis dropped: the project page's masthead shows the
- * section in full where the dashboard shows its lead. */
-export function projectSectionParagraph(presentation: ProjectPresentation, heading: RegExp): string | null {
-  const body = projectSectionBody(presentation, heading);
-  const first = body === null ? undefined : paragraphs(body)[0];
-  return first ? withoutEmphasis(first) : null;
-}
-
 function projectSectionBody(presentation: ProjectPresentation, heading: RegExp): string | null {
   const project = presentation.artifacts.find(
     (artifact) => artifact.kind === 'project' && artifact.location === 'root',
