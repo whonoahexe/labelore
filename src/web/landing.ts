@@ -79,6 +79,11 @@ export function waitForElement<T>(
   };
 }
 
+/** The scroll behaviour of a landing: instant when the reader asked for reduced motion, smooth otherwise. */
+export function landingScrollBehavior(reducedMotion: boolean): 'auto' | 'smooth' {
+  return reducedMotion ? 'auto' : 'smooth';
+}
+
 /**
  * Lands the page on the element a palette jump named. Mounted once, at the top of the shell: on every
  * navigation (location key) or hash change it takes the jump anchor from the hash, waits for the element,
@@ -102,6 +107,8 @@ export function useLanding(): void {
         cancel: (handle) => cancelAnimationFrame(handle),
       },
       (element) => {
+        // Read once the element is found, not subscribed: a setting changed mid-jump applies to the next jump.
+        const behavior = landingScrollBehavior(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
         disposeSettle = scrollWhenSettled({
           measure: () => {
             const current = document.getElementById(target);
@@ -109,7 +116,7 @@ export function useLanding(): void {
             return window.scrollY + current.getBoundingClientRect().top + document.documentElement.scrollHeight;
           },
           scroll: () => {
-            document.getElementById(target)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            document.getElementById(target)?.scrollIntoView({ block: 'center', behavior });
           },
           schedule: (callback) => requestAnimationFrame(callback),
           cancel: (handle) => cancelAnimationFrame(handle),

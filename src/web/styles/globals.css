@@ -39123,6 +39123,14 @@ a.view-workstreams-file:hover {
   }
 }
 
+/* Reduced motion: no animation, a static tint that clears with the mark. */
+@media (prefers-reduced-motion: reduce) {
+  [data-landed='true'] {
+    animation: none;
+    background: var(--primary-tint);
+  }
+}
+
 /* Under 42rem: icon-only copy buttons, 4ch numbers, and the bar stacks (the presets wrap above the actions). */
 @container source (max-width: 42rem) {
   .source-copy-label {
