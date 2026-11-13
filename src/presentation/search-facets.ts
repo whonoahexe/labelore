@@ -160,7 +160,7 @@ export interface FacetContext {
 }
 
 /** '3' reads '03', '2.1' reads '02.1': the two-digit pad of the leading digits. */
-function paddedNumber(number: string): string {
+export function paddedNumber(number: string): string {
   return number.replace(/^\d+/, (digits) => digits.padStart(2, '0'));
 }
 

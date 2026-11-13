@@ -46,7 +46,7 @@ describe('search page: data and address (D-10)', () => {
 
   it('submitting a query pushes a history entry: the query form does not pass replace', () => {
     const page = code(PAGE);
-    const submit = page.slice(page.indexOf('function onSubmit'), page.indexOf('function onSubmit') + 600);
+    const submit = /function onSubmit[\s\S]*?\n {2}\}\n/.exec(page)?.[0] ?? '';
     expect(submit).toContain('setSearchParams(');
     expect(submit).not.toContain('replace');
   });
