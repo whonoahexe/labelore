@@ -9,6 +9,7 @@ import type { JumpRow } from '../../src/presentation/jump.ts';
 import type { ProjectListEntry } from '../../src/presentation/project-list.ts';
 import type { PaletteRow } from '../../src/web/palette/palette-model.ts';
 import { PaletteRowBody } from '../../src/web/components/search-field.tsx';
+import { consumeMainFocusRequest, requestMainFocusOnNextMount } from '../../src/web/components/main-focus.ts';
 
 function source(path: string): string {
   return readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
@@ -272,5 +273,68 @@ describe('palette CSS', () => {
     for (const retired of ['search-dialog-item', 'search-dialog-empty', 'search-dialog-status', 'search-dialog-hint', 'search-dialog-footer', 'search-result-title']) {
       expect(css, retired).not.toContain(`.${retired}`);
     }
+  });
+});
+
+describe('the shared main-focus request (D-15, NAV-13)', () => {
+  it('is false with no request, true once after a request, then false again', () => {
+    expect(consumeMainFocusRequest()).toBe(false);
+    requestMainFocusOnNextMount();
+    expect(consumeMainFocusRequest()).toBe(true);
+    expect(consumeMainFocusRequest()).toBe(false);
+  });
+
+  it('a second request before the consume still reads as one', () => {
+    requestMainFocusOnNextMount();
+    requestMainFocusOnNextMount();
+    expect(consumeMainFocusRequest()).toBe(true);
+    expect(consumeMainFocusRequest()).toBe(false);
+  });
+});
+
+describe('choosing a project in the palette (D-15, T-13-16, T-13-17)', () => {
+  const field = source('src/web/components/search-field.tsx');
+  const switcher = source('src/web/components/project-switcher.tsx');
+
+  it('renders a project row through AppLink to projectRootPath(entry.slug), never Link or useProjectNavigate', () => {
+    expect(field).toContain('<AppLink to={projectRootPath(row.entry.slug)} />');
+    expect(field).toMatch(/row\.type === 'project' \? <AppLink to=\{projectRootPath\(row\.entry\.slug\)\} \/> : <Link to=\{href\} \/>/);
+    const open = field.slice(field.indexOf('function openRow('), field.indexOf('function chooseWithClick('));
+    const projectBranch = open.slice(open.indexOf("row.type === 'project'"), open.indexOf('navigate(hrefOfRow(row));'));
+    expect(projectBranch).toContain('appNavigate(projectRootPath(row.entry.slug))');
+    expect(projectBranch).not.toContain('useProjectNavigate');
+  });
+
+  it('asks for focus on the main content before navigating to another project, on click and on Enter', () => {
+    expect(field).toContain('requestMainFocusOnNextMount()');
+    const choose = field.slice(field.indexOf('function chooseProject('), field.indexOf('function openRow('));
+    expect(choose).toContain('entry.slug !== slug');
+    expect(choose.indexOf('requestMainFocusOnNextMount()')).toBeGreaterThan(-1);
+    const open = field.slice(field.indexOf('function openRow('), field.indexOf('function chooseWithClick('));
+    expect(open.indexOf('chooseProject(row.entry)')).toBeGreaterThan(-1);
+    expect(open.indexOf('chooseProject(row.entry)')).toBeLessThan(open.indexOf('appNavigate('));
+    const click = field.slice(field.indexOf('function chooseWithClick('), field.indexOf('return (', field.indexOf('function chooseWithClick(')));
+    expect(click).toContain('chooseProject(row.entry)');
+  });
+
+  it('keeps no palette-owned cache for the project switch: the list is a plain uncached query inside the popup body', () => {
+    expect(field).toMatch(/useQuery\(\{ queryKey: projectsKey, queryFn: fetchProjects, staleTime: 0 \}\)/);
+    expect(field).not.toMatch(/setQueryData|invalidateQueries|removeQueries/);
+  });
+
+  it('returns no focus to the trigger after a project choice, and the default otherwise', () => {
+    expect(field).toMatch(/finalFocus=\{\(\) => !leavingProject\.current\}/);
+    expect(field).toContain('leavingProject.current = true');
+    expect(field).toContain('leavingProject.current = false');
+  });
+
+  it('is the same request the header switcher makes: project-switcher.tsx uses the shared module', () => {
+    expect(switcher).toContain("from './main-focus.ts'");
+    expect(switcher).toMatch(/import \{[^}]*requestMainFocusOnNextMount[^}]*\} from '\.\/main-focus\.ts'/);
+    expect(switcher).toMatch(/import \{[^}]*consumeMainFocusRequest[^}]*\} from '\.\/main-focus\.ts'/);
+    expect(switcher).toMatch(/import \{[^}]*mainContent[^}]*\} from '\.\/main-focus\.ts'/);
+    expect(switcher).not.toContain('let focusMainOnNextMount');
+    expect(switcher).toContain('consumeMainFocusRequest()');
+    expect(switcher).toContain('requestMainFocusOnNextMount()');
   });
 });

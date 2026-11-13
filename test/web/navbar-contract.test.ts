@@ -546,6 +546,17 @@ describe('search dialog (NAV-04)', () => {
     expect(field).not.toContain('dangerouslySetInnerHTML');
   });
 
+  it('a project row in the palette goes through AppLink and the shared main-focus request, like the switcher (Phase 13, D-15)', async () => {
+    const field = await source('src/web/components/search-field.tsx');
+    const switcher = await source('src/web/components/project-switcher.tsx');
+    expect(field).toContain("from './project-row.tsx'");
+    expect(field).toContain('AppLink');
+    expect(field).toContain('useAppNavigate');
+    expect(field).toContain('requestMainFocusOnNextMount()');
+    expect(switcher).toContain("from './main-focus.ts'");
+    expect(switcher).not.toContain('let focusMainOnNextMount');
+  });
+
   it('CSS: --overlay-scrim is declared in both :root and .dark with different values', async () => {
     const css = await source('src/web/styles/globals.css');
     const rootMatch = css.match(/:root\s*\{[^}]*--overlay-scrim:\s*([^;]+);/s);
