@@ -211,8 +211,9 @@ describe('dashboard ledger: decisions', () => {
       ['01', '01-02', 'Store the raw response beside the parsed one', 'parse failures must stay recoverable.', 'Phase 01 · while executing plan 01-02'],
     ]);
     expect(decisions.map((d) => (d.source ? [d.source.kind, d.source.label, d.source.meta, d.source.detail, d.source.path] : null))).toEqual([
-      null,
-      null,
+      // A decision that names no document points at STATE.md, where it is logged.
+      ['Document', 'STATE', null, null, '.planning/STATE.md'],
+      ['Document', 'STATE', null, null, '.planning/STATE.md'],
       ['Plan', '03-01', null, 'Key filings by entry number across the gateway client.', `${PHASE3}/03-01-PLAN.md`],
       [
         'Quick task',
@@ -242,22 +243,22 @@ describe('dashboard ledger: decisions', () => {
     const plan0301 = phases.flatMap((p) => p.plans).find((p) => p.id === '03-01');
     expect(decisions[2].source?.url).toBe(plan0301?.key);
     expect(decisions[3].source?.url).toBe(keyOf(presentation, decisions[3].source!.path));
-    expect(JSON.stringify(decisions)).not.toContain('STATE.md');
+    expect(decisions[0].source?.url).toBe('/state?source=1');
   });
 
   it('reads the synthetic and dense fixtures', async () => {
     const synthetic = (await ledgerOfDirectory(SYNTHETIC_ROOT)).ledger.decisions;
     expect(synthetic).toHaveLength(9);
-    expect(synthetic.every((d) => d.source === null)).toBe(true);
+    expect(synthetic.every((d) => d.source?.path === '.planning/STATE.md')).toBe(true);
     expect(synthetic[0].title).toBe(
       "Duty differences under ₹500 auto-reconcile; anything above waits for a broker's sign-off.",
     );
     expect([synthetic[0].phase, synthetic[0].plan]).toEqual(['03', '03-CONTEXT']);
 
     const dense = (await ledgerOfDirectory(DENSE_ROOT)).ledger.decisions;
-    expect(dense.map((d) => [d.phase, d.title, d.source, d.phaseUrl !== null])).toEqual([
-      [null, 'Corruption deliberately isolated to two files, per D-02.', null, false],
-      ['01', expect.stringMatching(/^Included every artifact type .+ has never produced, per D-01\.$/), null, true],
+    expect(dense.map((d) => [d.phase, d.title, d.source?.label, d.phaseUrl !== null])).toEqual([
+      [null, 'Corruption deliberately isolated to two files, per D-02.', 'STATE', false],
+      ['01', expect.stringMatching(/^Included every artifact type .+ has never produced, per D-01\.$/), 'STATE', true],
     ]);
   });
 

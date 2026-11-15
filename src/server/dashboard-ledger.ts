@@ -619,7 +619,8 @@ export function buildDashboardLedger(
             ...parsed,
             text: bullet.text,
             logged: loggedOf(parsed.phase, parsed.plan),
-            source: resolver.decisionSource(parsed.plan),
+            // Like a blocker, a decision that names no document points at STATE.md, where it lives.
+            source: resolver.decisionSource(parsed.plan) ?? stateSource,
             phaseUrl: parsed.phase ? resolver.phaseUrl(parsed.phase) : null,
           };
         })
