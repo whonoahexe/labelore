@@ -1,0 +1,38 @@
+{
+  "id": "labelore",
+  "role": "feature",
+  "version": "2.1.0",
+  "title": "Labelore",
+  "description": "Read-only web dashboard for a GSD project's .planning/ — /gsd-labelore opens it on the current project and a ship:post step prints where the shipped phase is in it.",
+  "tier": "full",
+  "requires": [],
+  "engines": { "gsd": ">=1.21.0" },
+  "runtimeCompat": { "supported": ["*"], "unsupported": [] },
+  "author": { "name": "whonoahexe", "url": "https://github.com/whonoahexe" },
+  "homepage": "https://github.com/whonoahexe/labelore",
+  "repository": "https://github.com/whonoahexe/labelore",
+  "license": "MIT",
+  "keywords": ["dashboard", "planning", "read-only"],
+  "skills": ["labelore"],
+  "agents": [],
+  "hooks": [],
+  "config": {
+    "labelore.announce": {
+      "type": "boolean",
+      "default": true,
+      "description": "After /gsd-ship, print where the shipped phase is in the Labelore dashboard. Never starts or changes a server."
+    }
+  },
+  "steps": [
+    {
+      "point": "ship:post",
+      "ref": { "skill": "labelore" },
+      "produces": [],
+      "consumes": [],
+      "when": "labelore.announce",
+      "onError": "skip"
+    }
+  ],
+  "contributions": [],
+  "gates": []
+}
