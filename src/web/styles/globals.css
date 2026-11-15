@@ -39263,7 +39263,7 @@ a.view-workstreams-file:hover {
 
 .view-settings-main {
   display: grid;
-  gap: var(--space-10);
+  gap: calc(var(--space-10) + var(--space-5));
   align-content: start;
   min-width: 0;
 }
@@ -39309,7 +39309,7 @@ a.view-workstreams-file:hover {
   top: var(--space-22);
   align-self: start;
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-7);
   max-height: calc(100vh - var(--space-22) - var(--space-4));
   overflow: auto;
   padding-right: var(--space-2);
@@ -39373,7 +39373,7 @@ a.view-workstreams-file:hover {
   display: flex;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-1-5) var(--space-2);
   border: 1px solid transparent;
   border-radius: 0;
   background: none;
@@ -39404,7 +39404,7 @@ a.view-workstreams-file:hover {
 
 .view-settings-toc-title {
   display: block;
-  padding-bottom: var(--space-2);
+  padding-bottom: var(--space-3);
   color: var(--muted-foreground);
   font-family: var(--font-mono);
   font-size: var(--fs-2);
@@ -39417,7 +39417,7 @@ a.view-workstreams-file:hover {
   display: flex;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
+  padding: var(--space-1-5) var(--space-3);
   box-shadow: inset 1px 0 0 var(--border);
   color: var(--muted-foreground);
   font-size: var(--fs-4);
@@ -39463,14 +39463,14 @@ a.view-workstreams-file:hover {
 /* A section: its name and "n of m set" over a 2px rule, then GSD's intro line. */
 .view-settings-sec {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
   scroll-margin-top: var(--space-22);
 }
 
 .view-settings-sec-head {
   display: grid;
-  gap: var(--space-1);
-  padding-bottom: var(--space-3);
+  gap: var(--space-2);
+  padding-bottom: var(--space-4);
   border-bottom: 2px solid var(--foreground);
 }
 
@@ -39505,7 +39505,7 @@ a.view-workstreams-file:hover {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-1) var(--space-6);
-  padding: var(--space-2) 0;
+  padding: var(--space-3-5) 0;
   border-bottom: 1px solid var(--border-faint);
   scroll-margin-top: var(--space-22);
 }
