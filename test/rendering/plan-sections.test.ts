@@ -111,6 +111,7 @@ function registryWithRead05(): ReferenceRegistry {
           kind: 'project',
           fileClass: 'text',
           sizeBytes: 0,
+          mtimeMs: 0,
           title: 'Project',
           location: 'root',
           frontmatter: {},

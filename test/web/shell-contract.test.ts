@@ -77,7 +77,7 @@ describe('authorized reference-portal shell contract', () => {
     const dashboard = dashboardSources();
     const roadmap = await source('src/web/pages/roadmap-page.tsx');
 
-    expect(dashboard).toContain('Next up');
+    expect(dashboard).toContain('Where the work stands');
     expect(dashboard).toContain('attention-pagination');
     expect(dashboard).toContain('Previous page');
     expect(dashboard).not.toContain('Show more');

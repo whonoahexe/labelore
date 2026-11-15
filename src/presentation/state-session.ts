@@ -1,6 +1,7 @@
 // STATE.md's Session Continuity, Deferred Items and Operator Next Steps as one capped projection for the
-// dashboard's Next up card (09 D-03 as amended 2026-11-02: STATE.md opens on the dashboard, so what only
-// STATE.md held is filled there). Pure: no node:* or React imports, never throws. Author text is capped
+// dashboard's position line (09 D-03 as amended 2026-11-02: STATE.md opens on the dashboard, so what only
+// STATE.md held is filled there; quick-261115-o34 reads it for the session note, the operator steps and the
+// deferred count). Pure: no node:* or React imports, never throws. Author text is capped
 // before any scan, every scan is one pass over lines with a bounded single-line pattern, and every link
 // is an artifact key or sourceUrlOf plus a stableSlug anchor — nothing STATE.md says becomes a target.
 import { stableSlug } from '../rendering/slug.ts';
@@ -51,6 +52,15 @@ function cleanValue(text: string): string {
   return cap(text.replace(/\*\*|`/g, '').trim(), MAX_FIELD_CHARS);
 }
 
+/** A value that says "nothing": `None`, `(none)`, `*(none)*`, `N/A`, a dash. Such a value is not data. */
+function isPlaceholder(text: string): boolean {
+  const bare = text
+    .replace(/[*_`()]/g, '')
+    .trim()
+    .toLowerCase();
+  return bare === '' || bare === 'none' || bare === 'n/a' || bare === 'na' || bare === 'nothing' || bare === '-' || bare === '—';
+}
+
 const LABELLED = /^[\s>*_-]{0,8}(Last session|Stopped at|Resume file)\s*:\s*\**\s*(.{0,2000})$/i;
 
 interface SessionFields {
@@ -69,12 +79,13 @@ function sessionFields(body: string): SessionFields {
     const label = match[1].toLowerCase();
     if (label === 'last session') fields.lastSession ??= value;
     else if (label === 'stopped at') fields.stoppedAt ??= value;
-    else fields.resumePath ??= value;
+    else if (!isPlaceholder(value)) fields.resumePath ??= value;
   }
   return fields;
 }
 
-/** The count of non-blank data rows in the section's first pipe table; null when it has none. */
+/** The count of data rows in the section's first pipe table that hold something other than blanks or a
+ * placeholder such as `*(none)*`; null when it has no table. */
 function deferredRowCount(body: string): number | null {
   let header = false;
   let separator = false;
@@ -86,7 +97,7 @@ function deferredRowCount(body: string): number | null {
       header = true;
     } else if (!separator) {
       separator = true;
-    } else if (line.split('|').slice(1, -1).some((cell) => cell.trim() !== '')) {
+    } else if (line.split('|').slice(1, -1).some((cell) => !isPlaceholder(cell))) {
       rows += 1;
     }
   }

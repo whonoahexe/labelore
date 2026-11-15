@@ -76,6 +76,22 @@ describe('buildStateSession', () => {
     expect(session?.resumeFile).toBeNull();
   });
 
+  it('D4: a Deferred Items table whose only row is a (none) placeholder counts zero', async () => {
+    const session = await sessionOf(
+      '## Deferred Items\n\n| Category | Item | Status | Deferred At |\n|----------|------|--------|-------------|\n| *(none)* | | | |\n',
+    );
+    expect(session?.deferredCount).toBe(0);
+    const mixed = await sessionOf('## Deferred Items\n\n| A | B |\n|---|---|\n| none | |\n| real item | x |\n');
+    expect(mixed?.deferredCount).toBe(1);
+  });
+
+  it('D3: a placeholder Resume file is not a resume file', async () => {
+    for (const value of ['None', '(none)', '—', 'N/A', '*None*']) {
+      const session = await sessionOf(`## Session Continuity\n\nStopped at: here\nResume file: ${value}\n`);
+      expect(session?.resumeFile, value).toBeNull();
+    }
+  });
+
   it('gives a null deferred count for a Deferred Items section with no table', async () => {
     const session = await sessionOf('## Deferred Items\n\nNothing deferred.\n');
     expect(session?.deferredCount).toBeNull();

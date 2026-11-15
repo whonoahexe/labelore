@@ -34,6 +34,7 @@ function requirements(path: string, items: { id: string; text: string }[]): Arti
     kind: 'requirements',
     fileClass: 'text',
     sizeBytes: 0,
+    mtimeMs: 0,
     title: 'Requirements',
     location: 'milestone-root',
     frontmatter: {},

@@ -31,53 +31,17 @@ async function headOf(files: Record<string, string>) {
   return buildDashboardHead(toProjectPresentation({ ...snapshot, readAt: '2026-10-17T12:00:00.000Z' }));
 }
 
-const ARCHIVED_STATE = `---
-milestone: v1.1
-milestone_name: Legible Documents
-current_phase: 05
-status: Awaiting next milestone
-last_activity: 2026-10-17
-last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-progress:
-  total_phases: 1
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
----
-`;
-
-const plan = (id: string) => `---\nphase: 05\nplan: ${id.slice(3)}\n---\n<objective>\nBuild ${id}.\n</objective>\n`;
-
 describe('dashboard head', () => {
-  it('opens the dense fixture on its project, its current phase and the next plan', async () => {
+  it('opens the dense fixture on its project name and lead', async () => {
     const head = await headOfDirectory(join(REPO_ROOT, 'fixtures/dense'));
     expect(head.name).toBe('Dense Fixture Project');
     expect(head.tagline).toBeNull();
     expect(head.lead).toBe(
       "A synthetic, hand-authored GSD project three milestones deep, carrying every artifact type `gsd-core`'s templates define plus several it does not.",
     );
-    expect(head.now).toEqual({
-      milestone: 'v3.0 Live Read Surface',
-      phase: '1',
-      title: 'Identity Slice',
-      status: 'Executing',
-      done: false,
-    });
-    expect(head.next?.plans).toEqual([
-      { id: '01-01', done: true, next: false },
-      { id: '01-02', done: true, next: false },
-    ]);
-    expect(head.next?.percent).toBe(100);
-    expect(head.next?.last).toEqual({
-      date: '2026-08-22',
-      dateLabel: '22 Aug',
-      text: 'Phase 1 hardening task committed',
-    });
-    expect(head.next?.step).toMatchObject({ kind: 'execute', title: 'Execute phase 2', plan: { id: '02-01' } });
-    expect(head.next?.step?.plan?.url).toMatch(/\/phase-2\/plan-01$/);
   });
 
-  it('splits a tagline off the title, and asks to discuss a phase with no folder yet', async () => {
+  it('splits a tagline off the title', async () => {
     const head = await headOf({
       '.planning/PROJECT.md': fixture('synthetic-PROJECT.md'),
       '.planning/STATE.md': fixture('synthetic-STATE.md'),
@@ -87,35 +51,6 @@ describe('dashboard head', () => {
     expect(head.lead).toBe(
       "A batch service and review console that turns a broker's shipment manifests into customs filings for the `ace-gateway` submission API.",
     );
-    expect(head.now).toMatchObject({ milestone: 'v2.0 Gateway Corrections', phase: '3', title: 'Correction Reconciliation', status: 'Planning' });
-    expect(head.next).toMatchObject({
-      plans: [],
-      percent: null,
-      last: { dateLabel: '14 Oct', text: 'Phase 3 context gathered' },
-      step: { kind: 'discuss', title: 'Discuss phase 3', plan: null },
-    });
-  });
-
-  it('resolves a shipped phase from the milestone archive and points at the next milestone', async () => {
-    const head = await headOf({
-      '.planning/STATE.md': ARCHIVED_STATE,
-      '.planning/milestones/v1.1-ROADMAP.md': '# v1.1\n\n### Phase 5: Per-Type Document Views\n\n**Goal:** Views.\n',
-      '.planning/milestones/v1.1-phases/05-per-type-document-views/05-01-PLAN.md': plan('05-01'),
-      '.planning/milestones/v1.1-phases/05-per-type-document-views/05-01-SUMMARY.md': '# Summary\n',
-      '.planning/milestones/v1.1-phases/05-per-type-document-views/05-02-PLAN.md': plan('05-02'),
-      '.planning/milestones/v1.1-phases/05-per-type-document-views/05-02-SUMMARY.md': '# Summary\n',
-    });
-    expect(head.name).toBe('project');
-    expect(head.now).toEqual({
-      milestone: 'v1.1 Legible Documents',
-      phase: '5',
-      title: 'Per-Type Document Views',
-      status: 'Awaiting next milestone',
-      done: true,
-    });
-    expect(head.next?.plans.map((entry) => entry.done)).toEqual([true, true]);
-    expect(head.next?.last?.text).toBe('Quick task: compact discussion-log tables');
-    expect(head.next?.step).toEqual({ kind: 'new-milestone', title: 'Start the next milestone', plan: null });
   });
 
   it('cuts any PROJECT.md section to a lead, such as Core Value for the Traceability lede', async () => {
@@ -132,86 +67,12 @@ describe('dashboard head', () => {
 
   it('shows just the name for a project with a bare PROJECT.md', async () => {
     const head = await headOf({ '.planning/PROJECT.md': fixture('sparse-PROJECT.md') });
-    expect(head).toEqual({ name: 'Untitled Spike', tagline: null, lead: null, now: null, next: null, session: null, projectUrl: '/project' });
+    expect(head).toEqual({ name: 'Untitled Spike', tagline: null, lead: null, position: null, projectUrl: '/project' });
   });
 
   it('never throws on malformed STATE frontmatter', async () => {
     const head = await headOf({ '.planning/STATE.md': '---\nmilestone: [unclosed\n---\n' });
     expect(head.name).toBe('project');
-  });
-});
-
-const liveState = (phase: string, status = 'executing') => `---
-milestone: v1.0
-current_phase: ${phase}
-status: ${status}
----
-`;
-
-const ROADMAP = `# Roadmap
-
-## Phase Details
-
-### Phase 1: First Slice
-**Goal**: First.
-
-### Phase 2: Second Slice
-**Goal**: Second.
-`;
-
-const phaseFile = (dir: string, name: string, body = '# File\n') => ({ [`.planning/phases/${dir}/${name}`]: body });
-const planFile = (dir: string, id: string) =>
-  phaseFile(dir, `${id}-PLAN.md`, `---\nphase: ${dir}\nplan: ${id.slice(3)}\n---\n<objective>\nBuild ${id}.\n</objective>\n`);
-const summaryFile = (dir: string, id: string) => phaseFile(dir, `${id}-SUMMARY.md`);
-const stepFor = async (files: Record<string, string>) => (await headOf({ '.planning/ROADMAP.md': ROADMAP, ...files })).next?.step;
-
-describe('dashboard head next step, routed as /gsd-next routes it', () => {
-  it('executes the lowest phase with a plan missing its summary, from that plan', async () => {
-    const step = await stepFor({
-      '.planning/STATE.md': liveState('2'),
-      ...planFile('01-first-slice', '01-01'),
-      ...planFile('01-first-slice', '01-02'),
-      ...summaryFile('01-first-slice', '01-01'),
-      ...planFile('02-second-slice', '02-01'),
-    });
-    expect(step).toMatchObject({ kind: 'execute', title: 'Execute phase 1', plan: { id: '01-02' } });
-  });
-
-  it('verifies a phase whose plans all have summaries but nothing is verified yet', async () => {
-    const step = await stepFor({
-      '.planning/STATE.md': liveState('1', 'verifying'),
-      ...planFile('01-first-slice', '01-01'),
-      ...summaryFile('01-first-slice', '01-01'),
-    });
-    expect(step).toEqual({ kind: 'verify', title: 'Verify phase 1', plan: null });
-  });
-
-  it('moves on to discuss the next phase once verification passed', async () => {
-    const step = await stepFor({
-      '.planning/STATE.md': liveState('1'),
-      ...planFile('01-first-slice', '01-01'),
-      ...summaryFile('01-first-slice', '01-01'),
-      ...phaseFile('01-first-slice', '01-VERIFICATION.md', '---\nstatus: passed\n---\n# Verification\n'),
-    });
-    expect(step).toEqual({ kind: 'discuss', title: 'Discuss phase 2', plan: null });
-  });
-
-  it('completes the milestone after its last phase is verified', async () => {
-    const step = await stepFor({
-      '.planning/STATE.md': liveState('2'),
-      ...phaseFile('01-first-slice', '01-UAT.md', '---\nstatus: complete\n---\n# UAT\n'),
-      ...planFile('02-second-slice', '02-01'),
-      ...summaryFile('02-second-slice', '02-01'),
-      ...phaseFile('02-second-slice', '02-UAT.md', '---\nstatus: complete\n---\n# UAT\n'),
-    });
-    expect(step).toEqual({ kind: 'complete-milestone', title: 'Complete the milestone', plan: null });
-  });
-
-  it('plans a phase with context but no plans, and discusses one without context', async () => {
-    const planned = await stepFor({ '.planning/STATE.md': liveState('1', 'planning'), ...phaseFile('01-first-slice', '01-CONTEXT.md') });
-    expect(planned).toEqual({ kind: 'plan', title: 'Plan phase 1', plan: null });
-    const bare = await stepFor({ '.planning/STATE.md': liveState('1', 'planning'), ...phaseFile('01-first-slice', '01-NOTES.md') });
-    expect(bare).toEqual({ kind: 'discuss', title: 'Discuss phase 1', plan: null });
   });
 });
 
@@ -271,18 +132,5 @@ describe('dashboard head project link', () => {
       '.planning/phases/01-x/PROJECT.md': '# A phase file\n',
     });
     expect(head.projectUrl).toBeNull();
-  });
-});
-
-describe('dashboard head session lines', () => {
-  it('attaches the STATE.md session for Lendshed and null for a project without a STATE.md', async () => {
-    const { presentation } = await loadFixtureProject();
-    const head = buildDashboardHead(presentation);
-    expect(head.session?.stoppedAt).toBe('Phase 04 UI-SPEC reviewed, export wave 2 next');
-    expect(head.session?.deferredCount).toBe(3);
-    expect(head.session?.operatorSteps).toHaveLength(2);
-
-    const bare = await headOf({ '.planning/PROJECT.md': '# Bare\n' });
-    expect(bare.session).toBeNull();
   });
 });

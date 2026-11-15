@@ -449,8 +449,8 @@ export function buildDashboardViewModel(presentation: ProjectPresentation): Dash
   const completion = completionOf(currentPhase);
   const consolidated = phaseCompletionConsolidated(currentPhase, presentation);
   const head = buildDashboardHead(presentation);
-  // The head already names its plan, so On deck lists what comes after it.
-  const headPlanId = head.next?.step?.plan?.id ?? null;
+  // The head's Next point already names its plan, so On deck lists what comes after it.
+  const headPlanId = head.position?.next.plan?.id ?? null;
   const ledger = presentation.ledger;
   return {
     readAt: presentation.readAt,
