@@ -40343,7 +40343,16 @@ a.view-workstreams-file:hover {
     left: calc(var(--space-0-5) / 2 - var(--space-2));
   }
 
+  .position-cell {
+    padding-inline: var(--space-1) var(--space-0-5);
+  }
+
   .position-cell-name {
     overflow-wrap: anywhere;
+    letter-spacing: var(--ls-normal);
+  }
+
+  .position-cell-count svg {
+    display: none;
   }
 }
