@@ -1,5 +1,6 @@
 // The capability.json manifest and the skill it owns, checked against the shape gsd-core 1.21.0 expects
 // of a feature capability (see its capability-manifest reference).
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -95,5 +96,19 @@ describe('capability.json', () => {
     const skill = readFileSync(join(REPO_ROOT, 'skills', 'labelore', 'SKILL.md'), 'utf8');
     expect(skill).toContain('/.gsd/capabilities/labelore/scripts/labelore.mjs');
     expect(existsSync(join(REPO_ROOT, 'scripts', 'labelore.mjs'))).toBe(true);
+  });
+});
+
+describe('publishable repository', () => {
+  it('carries the MIT license text for 2026 whonoahexe', () => {
+    const license = readFileSync(join(REPO_ROOT, 'LICENSE'), 'utf8');
+    expect(license.startsWith('MIT License')).toBe(true);
+    expect(license).toContain('Copyright (c) 2026 whonoahexe');
+  });
+
+  it('tracks no symlink, because GSD refuses to stage any symlink in a capability bundle', () => {
+    const index = execFileSync('git', ['ls-files', '-s'], { cwd: REPO_ROOT, encoding: 'utf8' });
+    const links = index.split('\n').filter((line) => line.startsWith('120000'));
+    expect(links, 'GSD refuses to stage any symlink in a capability bundle').toEqual([]);
   });
 });
