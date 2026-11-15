@@ -1,55 +1,22 @@
-// The dashboard head (quick-261017-wlg, sketch 025 R3b): the project's name and What This Is lead,
-// a "Now" block for the current phase, and a Next up card scoped to that phase's own plans. Pure —
-// no node:* or React imports. Every extractor is total, and author text is capped before any regex
+// The dashboard head (quick-261017-wlg, sketch 025 R3b; position block quick-261115-o34, sketches 066 C and
+// 067 S): the project's name and What This Is lead, plus the position block built in dashboard-position.ts.
+// Pure — no node:* or React imports. Every extractor is total, and author text is capped before any regex
 // runs, so a hostile or huge PROJECT.md / STATE.md cannot throw or stall the dashboard route.
-import type {
-  ArtifactDto,
-  PhaseDto,
-  ProjectPresentation,
-  ProjectStateDto,
-} from '../server/project-presentation.ts';
+import type { PhaseDto, ProjectPresentation } from '../server/project-presentation.ts';
+import { buildDashboardPosition, type DashboardPosition } from './dashboard-position.ts';
 import { projectDisplayName } from './shell-header.ts';
-import { buildStateSession, type StateSession } from './state-session.ts';
 
 const MAX_SECTION_CHARS = 20000;
 const MAX_PARAGRAPH_CHARS = 2000;
 const MAX_ACTIVITY_CHARS = 400;
 const MAX_CLAUSE_CHARS = 72;
 
-export interface DashboardHeadNow {
-  milestone: string | null;
-  phase: string | null;
-  title: string | null;
-  status: string | null;
-  done: boolean;
-}
-
-/** GSD's next action, routed the way `/gsd-next` routes it — from the plan, summary, context and
- * verification files on disk, never from STATE.md's wording. `plan` is set only on an execute step:
- * the first plan in that phase with no SUMMARY.md. */
-export interface DashboardHeadStep {
-  kind: 'execute' | 'discuss' | 'plan' | 'verify' | 'complete-milestone' | 'new-milestone';
-  title: string;
-  plan: { id: string; url: string } | null;
-}
-
-export interface DashboardHeadNext {
-  plans: { id: string; done: boolean; next: boolean }[];
-  completed: number;
-  percent: number | null;
-  last: { date: string | null; dateLabel: string | null; text: string | null } | null;
-  step: DashboardHeadStep | null;
-}
-
 export interface DashboardHead {
   name: string;
   tagline: string | null;
   lead: string | null;
-  now: DashboardHeadNow | null;
-  /** Null exactly when the project has no STATE.md. */
-  next: DashboardHeadNext | null;
-  /** What STATE.md holds that no other page shows; null when it has none of those sections. */
-  session: StateSession | null;
+  /** Then / Now / Next, derived from the files on disk; null when there is no roadmap or phase to place. */
+  position: DashboardPosition | null;
   /** The address of the root PROJECT.md (the project page); null when the project has none. */
   projectUrl: string | null;
 }
@@ -178,127 +145,6 @@ export function headPhaseOf(presentation: ProjectPresentation): PhaseDto | null 
   return null;
 }
 
-function titleCaseSlug(name: string): string {
-  return /^[a-z0-9-]+$/.test(name)
-    ? name
-        .split('-')
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ')
-    : name;
-}
-
-function stateDone(state: ProjectStateDto): boolean {
-  const { totalPlans, completedPlans, totalPhases, completedPhases } = state.progress;
-  return (
-    totalPlans !== null &&
-    completedPlans !== null &&
-    totalPhases !== null &&
-    completedPhases !== null &&
-    totalPlans > 0 &&
-    completedPlans >= totalPlans &&
-    completedPhases >= totalPhases
-  );
-}
-
-function nowOf(state: ProjectStateDto | null, phase: PhaseDto | null): DashboardHeadNow | null {
-  if (!state) return null;
-  const milestone = [state.milestone?.trim(), state.milestoneName].filter(Boolean).join(' ') || null;
-  const number = displayPhaseNumber(state.phaseNumber);
-  const stateName = state.phaseName?.trim() ? titleCaseSlug(state.phaseName.trim()) : null;
-  const title =
-    (phase?.archived ? phase.name : null) ??
-    stateName ??
-    phase?.name ??
-    (number ? `Phase ${number}` : null);
-  const status = state.status?.trim()
-    ? state.status.trim().charAt(0).toUpperCase() + state.status.trim().slice(1)
-    : null;
-  if (milestone === null && number === null && title === null && status === null) return null;
-  return { milestone, phase: number, title, status, done: stateDone(state) };
-}
-
-function byPhaseNumber(left: PhaseDto, right: PhaseDto): number {
-  return Number(left.identity.number) - Number(right.identity.number);
-}
-
-function firstOpenPlan(phase: PhaseDto) {
-  return [...phase.plans].sort((left, right) => left.id.localeCompare(right.id)).find((plan) => plan.summary === null);
-}
-
-function phaseArtifacts(presentation: ProjectPresentation, phase: PhaseDto, kind: string): ArtifactDto[] {
-  return presentation.artifacts.filter((artifact) => artifact.phaseKey === phase.key && artifact.kind === kind);
-}
-
-/** A phase is verified once its VERIFICATION.md passed or its UAT.md is complete. */
-function phaseVerified(presentation: ProjectPresentation, phase: PhaseDto): boolean {
-  const statusIs = (kind: string, value: string) =>
-    phaseArtifacts(presentation, phase, kind).some(
-      (artifact) => typeof artifact.frontmatter.status === 'string' && artifact.frontmatter.status.trim().toLowerCase() === value,
-    );
-  return statusIs('verification', 'passed') || statusIs('uat', 'complete');
-}
-
-function phaseLabel(phase: PhaseDto): string {
-  return displayPhaseNumber(phase.identity.number) ?? phase.identity.number;
-}
-
-function executeStep(phase: PhaseDto): DashboardHeadStep | null {
-  const plan = firstOpenPlan(phase);
-  return plan
-    ? { kind: 'execute', title: `Execute phase ${phaseLabel(phase)}`, plan: { id: plan.id, url: plan.key } }
-    : null;
-}
-
-function stepOf(presentation: ProjectPresentation, state: ProjectStateDto, current: PhaseDto | null): DashboardHeadStep | null {
-  if (current?.archived) return { kind: 'new-milestone', title: 'Start the next milestone', plan: null };
-  const version = state.milestone?.trim() || null;
-  const phases = [
-    ...(presentation.milestones.find((milestone) => !milestone.archived && milestone.version === version)?.phases ?? []),
-  ].sort(byPhaseNumber);
-  // A phase anywhere in the milestone with plans still missing summaries comes first, even below
-  // the current one — a session that died mid-execution can leave STATE.md already moved on.
-  for (const phase of phases) {
-    const step = executeStep(phase);
-    if (step) return step;
-  }
-  const number = displayPhaseNumber(state.phaseNumber);
-  if (!current) return number ? { kind: 'discuss', title: `Discuss phase ${number}`, plan: null } : null;
-  const label = phaseLabel(current);
-  if (current.plans.length === 0) {
-    const ready =
-      phaseArtifacts(presentation, current, 'context').length > 0 || phaseArtifacts(presentation, current, 'research').length > 0;
-    return { kind: ready ? 'plan' : 'discuss', title: `${ready ? 'Plan' : 'Discuss'} phase ${label}`, plan: null };
-  }
-  if (!phaseVerified(presentation, current)) return { kind: 'verify', title: `Verify phase ${label}`, plan: null };
-  const following = phases.find((phase) => Number(phase.identity.number) > Number(current.identity.number));
-  return following
-    ? { kind: 'discuss', title: `Discuss phase ${phaseLabel(following)}`, plan: null }
-    : { kind: 'complete-milestone', title: 'Complete the milestone', plan: null };
-}
-
-function nextOf(presentation: ProjectPresentation, phase: PhaseDto | null): DashboardHeadNext | null {
-  const state = presentation.state;
-  if (!state) return null;
-  const step = stepOf(presentation, state, phase);
-  const plans = [...(phase?.plans ?? [])]
-    .sort((left, right) => left.id.localeCompare(right.id))
-    .map((plan) => ({
-      id: plan.id,
-      done: plan.summary !== null,
-      next: step?.plan?.url === plan.key,
-    }));
-  const completed = plans.filter((plan) => plan.done).length;
-  const text = activityClause(state.lastActivityDescription);
-  const dateLabel = activityDateLabel(state.lastActivity, presentation.readAt);
-  return {
-    plans,
-    completed,
-    percent: plans.length > 0 ? Math.round((completed / plans.length) * 100) : null,
-    last: dateLabel || text ? { date: state.lastActivity, dateLabel, text } : null,
-    step,
-  };
-}
-
 /** The lead of the root PROJECT.md's `## ` section whose heading matches, or null. */
 export function projectSectionLead(presentation: ProjectPresentation, heading: RegExp): string | null {
   const body = projectSectionBody(presentation, heading);
@@ -328,14 +174,11 @@ export function buildDashboardHead(presentation: ProjectPresentation): Dashboard
     (artifact) => artifact.kind === 'project' && artifact.location === 'root',
   );
   const { name, tagline } = splitProjectTitle(project ? presentation.projectName : null, presentation.rootPath);
-  const phase = headPhaseOf(presentation);
   return {
     name,
     tagline,
     lead: projectSectionLead(presentation, /^what this is\b/i),
-    now: nowOf(presentation.state, phase),
-    next: nextOf(presentation, phase),
-    session: buildStateSession(presentation),
+    position: buildDashboardPosition(presentation),
     projectUrl: project?.key ?? null,
   };
 }

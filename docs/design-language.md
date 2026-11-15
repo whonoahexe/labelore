@@ -1084,26 +1084,27 @@ plan's "no AST tooling" constraint.
 | `pace-total` | Dashboard | the total as the hero, in `--fs-display-3` |
 | `pace-trend` | Dashboard | the trend chip; `data-verdict` is faster, steady or slower |
 | `pace-verdict` | Dashboard | the trend chip and its sentence |
+| `position-cell` | Dashboard | One of the position line's five stage buttons (Discuss, Research, Plan, Execute, Verify): a squared button with a 4px top rule by state (done `--primary`, now and next `--in-flight-fill`, not reached a quiet or dashed `--muted-foreground` rule), `aria-expanded` toggles its detail; the open cell takes `--veil` and a `--foreground` border (quick-261115-o34) |
+| `position-cell-count` | Dashboard | A cell's count (`2 files`, `9/16 plans`, `to do`, `—`) in mono at Meta size on one line with an ellipsis, beside the chevron that turns when the cell is open (quick-261115-o34) |
+| `position-cell-name` | Dashboard | A cell's stage name in the heading face, uppercase; muted while the stage is not reached (quick-261115-o34) |
+| `position-cells` | Dashboard | The `role=group` row of the five stage cells under the Now point's phase name (quick-261115-o34) |
+| `position-detail` | Dashboard | The open cell's detail under the cells, on `--card`: the stage label then files one per line, an empty-stage sentence, or the plan summary; short at any size (quick-261115-o34) |
+| `position-detail-list` | Dashboard | The detail's file or plan list, one row each, one line each (quick-261115-o34) |
+| `position-empty` | Dashboard | An empty stage's sentence in `--muted-foreground`, its command in `--foreground` (quick-261115-o34) |
+| `position-file` | Dashboard | A link to a file or plan inside the position line: inherits the text colour with a quiet underline, `--primary` on hover (quick-261115-o34) |
 | `position-hero` | Dashboard | now used by the CONTEXT brief alone; the dashboard opens on `project-head` (quick-261017-wlg) |
+| `position-label` | Dashboard | A small caps label inside the position line (a stage name over its detail, `Session note`, a row's `Next`) (quick-261115-o34) |
+| `position-line` | Dashboard | The dashboard's one `Where the work stands` section: Then, Now and Next as three points on one line under the project identity, joined by a rule that is `--primary` up to Now and quiet after it; one column with left rules below 62rem (sketch 066 C, quick-261115-o34) |
+| `position-one-line` | Dashboard | A file or plan row's text held to one line with an end ellipsis (quick-261115-o34) |
+| `position-pin` | Dashboard | The marker that opens a point: a squared 2px box, filled `--primary` for Then, a larger `--in-flight-fill` square for Now, an outlined `--in-flight-fill` one for Next (quick-261115-o34) |
+| `position-point` | Dashboard | One of the line's three points (`data-point` then, now, next), ruled from its neighbour by a faint line (quick-261115-o34) |
+| `position-what` | Dashboard | The Next point's step title (`Execute phase 3, from 03-02`) at Heading size, semibold (quick-261115-o34) |
+| `position-when` | Dashboard | A point's mono caps lead line (`Then · 14 Nov`, the milestone and phase, `Next`) (quick-261115-o34) |
+| `position-why` | Dashboard | A quiet explanation line under a point: why this is the next step, or what the milestone shipped (quick-261115-o34) |
 | `preview-panel` | Dashboard | the CONTEXT brief and the document endnotes alone; the dashboard's On deck left it (quick-261018-4tb) |
 | `project-head` | Dashboard | |
-| `project-head-copy` | Dashboard | |
 | `project-identity` | Dashboard | |
 | `project-lead` | Dashboard | |
-| `project-next` | Dashboard | |
-| `project-next-bar` | Dashboard | |
-| `project-next-counts` | Dashboard | |
-| `project-next-figure` | Dashboard | |
-| `project-next-label` | Dashboard | |
-| `project-next-last` | Dashboard | |
-| `project-next-percent` | Dashboard | |
-| `project-next-plan` | Dashboard | |
-| `project-next-progress` | Dashboard | |
-| `project-next-step` | Dashboard | |
-| `project-next-unit` | Dashboard | |
-| `project-now` | Dashboard | |
-| `project-now-label` | Dashboard | |
-| `project-now-line` | Dashboard | |
 | `project-tagline` | Dashboard | |
 | `recent-activity` | Dashboard | the 21-day activity chart with its axis and key |
 | `recent-axis` | Dashboard | |

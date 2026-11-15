@@ -512,7 +512,7 @@ describe('dashboard ledger: the queue', () => {
       ['phase', 'Phase 4'],
     ]);
     const view = buildDashboardViewModel(presentation);
-    expect(view.head.next?.step?.plan?.id).toBe('03-01');
+    expect(view.head.position?.next.plan?.id).toBe('03-01');
     expect(view.onDeck.queue.map((q) => [q.kind, q.id, q.title, q.detail])).toEqual([
       ['plan', '03-02', 'Show unreconciled corrections in a broker review queue with the duty difference.', null],
       ['plan', '03-03', 'Auto-reconcile differences under the threshold and record who signed off the rest.', null],
@@ -531,7 +531,7 @@ describe('dashboard ledger: the queue', () => {
   it('queues Phase 4 after the head drops the ledger fixture plan', async () => {
     const { presentation } = await ledgerOfDirectory(LEDGER_ROOT);
     const view = buildDashboardViewModel(presentation);
-    expect(view.head.next?.step?.plan?.id).toBe('03-02');
+    expect(view.head.position?.next.plan?.id).toBe('03-02');
     expect(view.onDeck.queue.map((q) => [q.kind, q.id, q.title, q.detail])).toEqual([
       ['phase', 'Phase 4', 'Importer Portal', 'Importers see their own filings without asking the broker.'],
     ]);

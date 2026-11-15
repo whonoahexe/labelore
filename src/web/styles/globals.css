@@ -119,6 +119,8 @@
   /* The accent softened toward the border: the outline of a selected chip, a hovered card and a
      focused search box on the dashboard, and of the active status chip. */
   --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  /* quick-261115-o34: the quiet tone's fill: the dashboard position line's not-reached rule and squares. */
+  --quiet-fill: color-mix(in oklch, var(--muted-foreground) 22%, transparent);
   /* quick-260918-qkd Task 2: the five-bucket bar/chip tone vocabulary (A1-A4). --in-flight-fill
      and --missing-fill stay named recipes because the matching status chips (below) also read
      them; .trace-bar-complete/-unresolved/-uncovered reference their base tokens directly — see
@@ -376,7 +378,6 @@
 .traceability-page,
 .position-hero,
 .project-head,
-.project-head-copy,
 .dashboard-lower,
 .deck-panel,
 .immediate-work,
@@ -1021,15 +1022,8 @@
 
 .project-head {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(19rem, 0.9fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-fluid-9);
-  align-items: center;
-}
-
-.project-head-copy {
-  display: grid;
-  gap: var(--space-8);
-  align-content: start;
 }
 
 .project-identity {
@@ -1074,50 +1068,6 @@
   background: var(--code-veil);
   font-family: var(--font-mono);
   font-size: var(--fs-4);
-}
-
-.project-now {
-  display: grid;
-  gap: var(--space-2-5);
-  justify-items: start;
-  padding-left: var(--space-4);
-  border-left: 2px solid var(--primary);
-}
-
-.project-now-label,
-.project-next-label {
-  font-family: var(--font-heading);
-  font-size: var(--fs-1);
-  font-weight: var(--fw-semibold);
-  letter-spacing: var(--ls-wider);
-  text-transform: uppercase;
-}
-
-.project-now-label {
-  color: var(--primary);
-}
-
-.project-now-line {
-  margin: 0;
-  color: var(--muted-foreground);
-  font-family: var(--font-mono);
-  font-size: var(--fs-2);
-  letter-spacing: var(--ls-wider);
-  text-transform: uppercase;
-}
-
-.project-now-line b {
-  color: var(--foreground);
-  font-weight: var(--fw-medium);
-}
-
-.project-now h2 {
-  margin: 0;
-  overflow-wrap: anywhere;
-  font-size: var(--fs-display-1);
-  font-weight: var(--fw-semibold);
-  letter-spacing: var(--ls-tight);
-  line-height: var(--lh-tight);
 }
 
 .status-chip,
@@ -1193,117 +1143,6 @@
   margin-bottom: 0;
   font-size: var(--fs-fluid-3);
   letter-spacing: var(--ls-tight);
-}
-
-.project-next {
-  display: grid;
-  min-width: 0;
-  gap: var(--space-4);
-  box-shadow: none;
-}
-
-.project-next .eyebrow {
-  margin-bottom: 0;
-}
-
-.project-next-progress {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.project-next-figure {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  align-items: baseline;
-}
-
-.project-next-percent {
-  font-size: var(--fs-display-1);
-  font-weight: var(--fw-semibold);
-  letter-spacing: var(--ls-tight);
-  line-height: var(--lh-none);
-}
-
-.project-next-unit {
-  color: var(--muted-foreground);
-  font-size: var(--fs-fluid-2);
-  font-weight: var(--fw-medium);
-}
-
-.project-next-counts {
-  color: var(--muted-foreground);
-  font-size: var(--fs-4);
-}
-
-.project-next-counts b {
-  color: var(--foreground);
-  font-weight: var(--fw-semibold);
-}
-
-.project-next-bar {
-  display: flex;
-  gap: var(--space-0-5);
-  height: var(--space-1-5);
-}
-
-.project-next-bar span {
-  flex: 1;
-  background: color-mix(in oklch, var(--muted-foreground) 22%, transparent);
-}
-
-.project-next-bar span[data-state='done'] {
-  background: var(--primary);
-}
-
-.project-next-bar span[data-state='next'] {
-  background: var(--in-flight-fill);
-}
-
-.project-next-last {
-  margin: 0;
-  overflow-wrap: anywhere;
-  color: var(--muted-foreground);
-  font-size: var(--fs-3);
-  line-height: var(--lh-snug);
-}
-
-.project-next-label {
-  margin-right: var(--space-2);
-}
-
-.project-next-step {
-  display: grid;
-  gap: var(--space-2);
-  justify-items: start;
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--border);
-}
-
-.project-next-step strong {
-  overflow-wrap: anywhere;
-  font-size: var(--fs-7);
-  font-weight: var(--fw-semibold);
-  letter-spacing: var(--ls-tight);
-  line-height: var(--lh-tight);
-}
-
-.project-next-step[data-done='true'] strong {
-  color: var(--muted-foreground);
-  font-weight: var(--fw-medium);
-}
-
-.project-next-plan {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: color-mix(in oklch, var(--foreground) 35%, transparent);
-  text-underline-offset: 0.15em;
-}
-
-.project-next-plan:hover,
-.project-next-plan:focus-visible {
-  color: var(--primary);
-  text-decoration-color: var(--primary);
 }
 
 .formal-status {
@@ -40127,4 +39966,246 @@ a.view-workstreams-file:hover {
 
 .search-dialog-results .planning-tree {
   padding: var(--space-2) var(--space-4);
+}
+
+/* quick-261115-o34: the dashboard's "Where the work stands" line (sketch 066 C, with 067 S's stage detail).
+   Then, Now and Next sit on one line under the project identity. Colours are the Tones only: done is
+   complete (--primary), now and next are in-flight (--in-flight-fill), not reached is quiet (a dashed
+   --muted-foreground rule over a faint muted fill). Squared corners throughout. */
+.position-line {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.3fr) minmax(0, 1fr);
+  min-width: 0;
+}
+
+.position-line::before {
+  content: '';
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  left: var(--space-2);
+  height: 2px;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg, var(--primary) 0 50%, var(--quiet-fill) 50%);
+}
+
+.position-point {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+  padding: 0 var(--space-fluid-3) 0 0;
+}
+
+.position-point + .position-point {
+  padding-left: var(--space-fluid-3);
+  border-left: 1px solid var(--border-faint);
+}
+
+.position-pin {
+  width: var(--space-4);
+  height: var(--space-4);
+  border: 2px solid var(--primary);
+  background: var(--background);
+}
+
+.position-point[data-point='then'] .position-pin {
+  background: var(--primary);
+}
+
+.position-point[data-point='now'] .position-pin {
+  width: var(--space-5);
+  height: var(--space-5);
+  margin-top: calc(-1 * var(--space-0-5));
+  border-color: var(--in-flight-fill);
+  background: var(--in-flight-fill);
+}
+
+.position-point[data-point='next'] .position-pin {
+  border-color: var(--in-flight-fill);
+}
+
+.position-when {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.position-point h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-display-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+.position-what {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+.position-why {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  line-height: var(--lh-snug);
+}
+
+.position-file {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--muted-foreground);
+  text-underline-offset: 0.15em;
+}
+
+.position-file:hover,
+.position-file:focus-visible {
+  color: var(--primary);
+  text-decoration-color: var(--primary);
+}
+
+.position-label {
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.position-cells {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-0-5);
+}
+
+.position-cell {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-2) var(--space-2) var(--space-1-5);
+  border: 1px solid var(--border-faint);
+  border-top: 4px solid var(--quiet-fill);
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.position-cell:hover {
+  background: var(--state-hover);
+}
+
+.position-cell[data-state='done'] {
+  border-top-color: var(--primary);
+}
+
+.position-cell[data-state='now'] {
+  border-top-color: var(--in-flight-fill);
+}
+
+.position-cell[data-state='next'] {
+  border-color: var(--in-flight-fill);
+}
+
+.position-cell[data-state='skip'] {
+  border-top-style: dashed;
+  border-top-color: var(--muted-foreground);
+}
+
+.position-cell[aria-expanded='true'] {
+  border-color: var(--foreground);
+  background: var(--veil);
+}
+
+.position-cell-name {
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.position-cell[data-state='todo'] .position-cell-name,
+.position-cell[data-state='skip'] .position-cell-name {
+  color: var(--muted-foreground);
+}
+
+.position-cell-count {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.position-cell-count svg {
+  width: 0.8rem;
+  height: 0.8rem;
+  flex: none;
+  opacity: 0.6;
+}
+
+.position-cell[aria-expanded='true'] .position-cell-count svg {
+  transform: rotate(180deg);
+}
+
+.position-detail {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.position-detail-list {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-3);
+}
+
+.position-one-line {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.position-detail-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.position-empty {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.position-empty b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
 }
