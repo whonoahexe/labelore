@@ -23,8 +23,18 @@ function shortDirection(direction: string): string {
 
 /** Splits a MANIFEST winner cell into the picked variant, the round it was picked in, and its description, across
  * the shapes the file uses: "C — status rail", "A Desk (build it)", "E (round 1b) — …", "Round 2: E — …",
- * "B+B — …", "B + P1 — …", "None — …", "Reuse — …". A cell with no leading variant stays whole. */
+ * "B+B — …", "B + P1 — …", "None — …", "Reuse — …", and a cell with a winner per part, "Room: B: … Create page: R3 A: …"
+ * (the picks join as "B + A", and each part keeps its label, and its round, in the text). A cell with no leading variant
+ * stays whole. */
 export function splitWinner(winner: string): { pick: string | null; round: string | null; text: string } {
+  const parts = labelledParts(winner.trim());
+  if (parts !== null) {
+    return {
+      pick: parts.map((part) => part.pick).join(' + '),
+      round: null,
+      text: parts.map((part) => `${part.label}${part.round ? ` (round ${part.round})` : ''}: ${part.text}`).join(' '),
+    };
+  }
   let rest = winner.trim();
   let round: string | null = null;
   const lead = /^round\s+(\w+)\s*:\s*/i.exec(rest);
@@ -42,6 +52,19 @@ export function splitWinner(winner: string): { pick: string | null; round: strin
   }
   rest = rest.replace(/^\s*[—–:-]?\s*/, '');
   return { pick: code[1].replace(/\s*\+\s*/g, ' + '), round, text: rest === '' ? winner : rest };
+}
+
+// "<Part>: [R<n>] <variant>: …", the shape a sketch with a separate winner per part writes. Not "Round 2: E — …".
+const LABELLED_PART = /(?:^|(?<=[.)]\s))(?!Round\b)([A-Z][A-Za-z -]{0,30}?):\s*(?:R(\w+)\s+)?([A-Z]\d*[a-z]?)\s*:\s*/g;
+
+function labelledParts(cell: string): { label: string; round: string | null; pick: string; text: string }[] | null {
+  const starts = [...cell.matchAll(LABELLED_PART)];
+  if (starts.length === 0 || starts[0]?.index !== 0) return null;
+  return starts.map((match, index) => {
+    const from = (match.index ?? 0) + match[0].length;
+    const to = starts[index + 1]?.index ?? cell.length;
+    return { label: match[1] ?? '', round: match[2] ?? null, pick: match[3] ?? '', text: cell.slice(from, to).trim() };
+  });
 }
 
 function SketchVerdict({ sketch }: { sketch: SketchRow }): React.JSX.Element {

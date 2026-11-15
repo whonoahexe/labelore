@@ -19,6 +19,14 @@ describe('splitWinner', () => {
     expect(splitWinner(cell)).toEqual({ pick, round, text });
   });
 
+  it('joins a winner per part, keeping each label and round in the text', () => {
+    expect(splitWinner('Room: B: Video first (dashed screen). Create page: R3 A: The sentence (one line)')).toEqual({
+      pick: 'B + A',
+      round: null,
+      text: 'Room: Video first (dashed screen). Create page (round 3): The sentence (one line)',
+    });
+  });
+
   it('keeps a cell with no leading variant whole', () => {
     expect(splitWinner('the folded one')).toEqual({ pick: null, round: null, text: 'the folded one' });
   });
