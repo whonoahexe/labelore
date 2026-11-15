@@ -40112,3 +40112,13 @@ a.view-workstreams-file:hover {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+
+.search-dialog-modes {
+  display: flex;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.search-dialog-results .planning-tree {
+  padding: var(--space-2) var(--space-4);
+}

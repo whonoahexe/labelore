@@ -33,6 +33,8 @@ import type { KeyPage, PaletteGroup, PaletteNotice, PaletteRow } from '../palett
 import { browserStorage, readRecent, recentKey, recordRecent } from '../palette/recent-pages.ts';
 import { requestMainFocusOnNextMount } from './main-focus.ts';
 import { ProjectPathIcon } from './project-row.tsx';
+import { PlanningTree, SearchModeSwitch } from './planning-tree.tsx';
+import type { SearchMode } from '../pages/search-view.ts';
 import { buttonVariants } from './ui/button.tsx';
 
 // D-02: the debounce band the UI contract specifies (120-200ms), landed at the midpoint.
@@ -546,6 +548,36 @@ function PaletteBody({
   );
 }
 
+/** The palette's File tree mode (quick-261115-k9z): the project's whole `.planning/` file tree in the scrolling results
+ * area, from the presentation the dialog already holds. A plain click on a file closes the palette and the link
+ * navigates; a modified click opens a new tab and leaves the palette where it is. */
+function PaletteTree({
+  presentation,
+  onClose,
+}: {
+  presentation: ProjectPresentation | undefined;
+  onClose(): void;
+}): React.JSX.Element {
+  function onOpen(event: React.MouseEvent<HTMLAnchorElement>): void {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    onClose();
+  }
+  return (
+    <>
+      <div className="search-dialog-results">
+        {presentation === undefined ? (
+          <div className="palette-status" role="status">
+            Reading the planning files…
+          </div>
+        ) : (
+          <PlanningTree artifacts={presentation.artifacts} onOpen={onOpen} />
+        )}
+      </div>
+      <p className="search-dialog-legend">↑↓ move · Enter open · Esc close</p>
+    </>
+  );
+}
+
 /** NAV-04 (quick-260911-243), Phase 13: the quick-jump palette. The header trigger opens a large centred
  * @base-ui/react Dialog over a full-screen scrim, wrapping an inline grouped Combobox fed by /jump: an exact
  * decision, finding, requirement, plan or quick-task ID first (the current phase's copy highlighted, so Enter
@@ -557,6 +589,8 @@ export function SearchDialog(): React.JSX.Element {
   const scope = useProjectScope();
   const { pathname } = useProjectLocation();
   const [open, setOpen] = useState(false);
+  // Every opening starts on Search (quick-261115-k9z): Cmd+K's first job is typing.
+  const [mode, setMode] = useState<SearchMode>('search');
   const inputRef = useRef<HTMLInputElement | null>(null);
   const popupRef = useRef<HTMLDivElement | null>(null);
   // Set when a row of another project is chosen: the shell is keyed by slug, so the trigger focus would return
@@ -577,8 +611,25 @@ export function SearchDialog(): React.JSX.Element {
   }, [pathname, presentation, slug, scope]);
 
   function handleOpenChange(next: boolean): void {
-    if (next) leavingProject.current = false;
+    if (next) {
+      leavingProject.current = false;
+      setMode('search');
+    }
     setOpen(next);
+  }
+
+  // Switching back to Search remounts the body: put focus in its input again.
+  useEffect(() => {
+    if (open && mode === 'search') inputRef.current?.focus();
+  }, [open, mode]);
+
+  // From the switch, Arrow Down steps into the tree.
+  function onModesKeyDown(event: React.KeyboardEvent<HTMLDivElement>): void {
+    if (mode !== 'tree' || event.key !== 'ArrowDown') return;
+    const first = popupRef.current?.querySelector<HTMLElement>('.search-dialog-results button, .search-dialog-results a[href]');
+    if (first === null || first === undefined) return;
+    event.preventDefault();
+    first.focus();
   }
 
   // Global ⌘K/Ctrl+K: registered in an effect, removed in its cleanup, so there is exactly one
@@ -630,17 +681,24 @@ export function SearchDialog(): React.JSX.Element {
             finalFocus={() => !leavingProject.current}
           >
             <Dialog.Title className="sr-only">Quick jump</Dialog.Title>
-            <PaletteBody
-              slug={slug}
-              scope={scope}
-              pathname={pathname}
-              presentation={presentation}
-              inputRef={inputRef}
-              onClose={() => handleOpenChange(false)}
-              onLeaveProject={() => {
-                leavingProject.current = true;
-              }}
-            />
+            <div className="search-dialog-modes" onKeyDown={onModesKeyDown}>
+              <SearchModeSwitch mode={mode} onChange={setMode} />
+            </div>
+            {mode === 'search' ? (
+              <PaletteBody
+                slug={slug}
+                scope={scope}
+                pathname={pathname}
+                presentation={presentation}
+                inputRef={inputRef}
+                onClose={() => handleOpenChange(false)}
+                onLeaveProject={() => {
+                  leavingProject.current = true;
+                }}
+              />
+            ) : (
+              <PaletteTree presentation={presentation} onClose={() => handleOpenChange(false)} />
+            )}
           </Dialog.Popup>
         </Dialog.Viewport>
       </Dialog.Portal>

@@ -2,7 +2,7 @@
 // search page and the quick-jump palette, draw it through PlanningTree: every file the reader discovered as clean-tree
 // rows, `.planning/` open, every folder below it collapsed, a file count on each folder, file names only. A file's
 // name is a project-aware link to its page (Source mode for a text file). Names and paths are React text nodes only.
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { File, FolderTree, Search } from 'lucide-react';
 import { Link } from '../nav.tsx';
 import { planningTreeOf } from '../../presentation/planning-tree.ts';
@@ -47,6 +47,7 @@ export function PlanningTree({
   onOpen?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 }): React.JSX.Element {
   const model = useMemo(() => planningTreeOf(artifacts), [artifacts]);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const rows = useMemo<CleanTreeRow[]>(
     () =>
       model.rows.map((row) => ({
@@ -67,8 +68,23 @@ export function PlanningTree({
   );
   // A payload refresh that adds or removes a file remounts the tree, so its index-keyed fold state never lands on another folder.
   const treeKey = useMemo(() => model.rows.map((row) => row.path).join('\n'), [model]);
+  // Arrow Up/Down, Home and End move focus between the tree's folder buttons and file links; every other key (Enter,
+  // Space, Tab) keeps its native behaviour, and a key this does not handle is never prevented.
+  function onKeyDown(event: React.KeyboardEvent<HTMLDivElement>): void {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp' && event.key !== 'Home' && event.key !== 'End') return;
+    const stops = Array.from(wrapperRef.current?.querySelectorAll<HTMLElement>('button, a[href]') ?? []);
+    if (stops.length === 0) return;
+    const at = stops.indexOf(document.activeElement as HTMLElement);
+    let next: number;
+    if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = stops.length - 1;
+    else if (event.key === 'ArrowDown') next = at < 0 ? 0 : Math.min(at + 1, stops.length - 1);
+    else next = at < 0 ? stops.length - 1 : Math.max(at - 1, 0);
+    event.preventDefault();
+    stops[next].focus();
+  }
   return (
-    <div className="planning-tree">
+    <div className="planning-tree" ref={wrapperRef} onKeyDown={onKeyDown}>
       <p className="planning-tree-count">
         {plural(model.files, 'file', 'files')} in {plural(model.folders, 'folder', 'folders')}
       </p>

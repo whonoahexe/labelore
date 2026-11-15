@@ -1262,6 +1262,7 @@ plan's "no AST tooling" constraint.
 
 | Class | Surface | Note |
 |---|---|---|
+| `search-dialog-modes` | Shell and navigation | (quick-261115-k9z) The palette's strip above the input holding the Search \| File tree switch; stays mounted in both modes |
 | `app-shell` | Shell and navigation | |
 | `brand` | Shell and navigation | |
 | `brand-mark` | Shell and navigation | |
