@@ -743,6 +743,12 @@
   text-transform: uppercase;
 }
 
+/* An empty sidebar list's note sits on the heading's inset, not the column edge. */
+.places-group > .empty-note,
+.places-files > .empty-note {
+  padding: 0 var(--space-3);
+}
+
 .places-group-version {
   font-family: var(--font-mono);
   font-weight: normal;
