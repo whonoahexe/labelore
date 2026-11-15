@@ -85,6 +85,8 @@ describe('dashboard ledger: blockers', () => {
       ],
     ]);
     expect(shape(blockers[4])).toEqual([['Document', 'STATE', null, null, '.planning/STATE.md']]);
+    // STATE.md's own address is this dashboard, so the source opens the file itself.
+    expect(blockers[4].sources[0].url).toBe('/state?source=1');
 
     const mentions = (b: (typeof blockers)[number]) => b.mentions.map((m) => [m.label, m.path]);
     expect(mentions(blockers[0])).toEqual([['2026-07-20-retry-after', '.planning/notes/2026-07-20-retry-after.md']]);
@@ -97,7 +99,9 @@ describe('dashboard ledger: blockers', () => {
     // The plan source links to the plan's own page; every other url is the artifact page.
     expect(blockers[0].sources[1].url).toBe(plan32!.key);
     for (const b of blockers) {
-      for (const s of b.sources.filter((x) => x.kind !== 'Plan')) expect(s.url).toBe(keyOf(presentation, s.path));
+      for (const s of b.sources.filter((x) => x.kind !== 'Plan' && x.label !== 'STATE')) {
+        expect(s.url).toBe(keyOf(presentation, s.path));
+      }
       for (const m of b.mentions) expect(m.url).toBe(keyOf(presentation, m.path));
     }
     // Only the blocker that names nothing points at STATE.md, the file it was read from.

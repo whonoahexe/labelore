@@ -11,6 +11,7 @@ import type { Artifact, Phase, Project } from '../domain/model.ts';
 import { fileTitleOf, sentencesOf } from '../planning-repo/handlers/note-lift.ts';
 import { parseDuration } from '../presentation/dashboard-pace.ts';
 import { buildRouteTable, type RouteTable } from '../presentation/route-table.ts';
+import { sourceUrlOf } from '../presentation/root-redirects.ts';
 import { buildPhaseUrl, buildPlanUrl } from '../presentation/routes.ts';
 import {
   createSourceResolver,
@@ -587,7 +588,9 @@ export function buildDashboardLedger(
 ): DashboardLedgerDto {
   const resolver = createSourceResolver(project, routeTable);
   const blockersBody = sectionBody(project, 'blockersConcerns');
-  const stateUrl = resolver.artifactUrl(STATE_PATH);
+  // STATE.md's own address redirects to this dashboard, so link to the file itself (Source).
+  const stateKey = resolver.artifactUrl(STATE_PATH);
+  const stateUrl = stateKey ? sourceUrlOf({ key: stateKey, path: STATE_PATH, location: 'root' }) : null;
   const stateSource: LedgerSourceDto | null = stateUrl
     ? { kind: 'Document', label: 'STATE', meta: null, detail: null, path: STATE_PATH, url: stateUrl }
     : null;
