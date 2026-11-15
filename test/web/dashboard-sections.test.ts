@@ -36,24 +36,25 @@ const render = (node: React.ReactElement): string =>
 const textOf = (markup: string): string => markup.replace(/<[^>]*>/g, '');
 
 describe('Blocking band', () => {
-  it('leads with the most urgent blocker and lists the rest, never naming STATE.md', async () => {
+  it('leads with the most urgent blocker and lists the rest, an unsourced one under STATE', async () => {
     const ledger = await ledgerOf(LEDGER_ROOT);
     const markup = render(createElement(BlockingBand, { blockers: ledger.blockers }));
 
     expect(markup).toContain('Blocking');
     expect(markup).toContain('>4<');
     expect(markup).toContain('open blockers, plus 1 marked resolved');
-    for (const entry of ['All', 'Phase 3 review', 'Operational', 'Untagged']) expect(markup).toContain(entry);
+    for (const entry of ['All', 'Phase 3 review', 'Operational']) expect(markup).toContain(entry);
     expect(markup).toContain('The sandbox certificate expires 2026-10-30');
     expect(markup).toContain('Time-bound · most urgent');
     const accessUrl = ledger.blockers[2].sources[0].url;
     expect(markup).toContain(`href="${accessUrl}"`);
     expect(markup).toContain('Requirement ACCESS-04');
     expect(markup).toContain('Also in portal');
-    // The collapsed row chips: the first source and how many more, or Untagged.
+    // The collapsed row chips: the first source and how many more; a blocker naming nothing gets STATE.
     expect(markup).toContain('WR-02<b>+2</b>');
     expect(markup).toContain('WR-01<b>+1</b>');
-    expect(markup).toContain('Untagged');
+    expect(markup).toContain('<span class="ledger-source-sum">STATE</span>');
+    expect(markup).not.toContain('Untagged');
     // Three rows, no pager; the resolved blocker waits behind its toggle.
     expect(markup.match(/ledger-row-head/g)).toHaveLength(3);
     expect(markup).not.toContain('Flaky snapshot test');

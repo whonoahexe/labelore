@@ -21,6 +21,7 @@ import {
   type SourceGroup,
 } from './document-sources.ts';
 
+const STATE_PATH = '.planning/STATE.md';
 const MAX_SECTION_CHARS = 200_000;
 const MAX_ENTRIES = 1_000;
 const MAX_ENTRY_CHARS = 4_000;
@@ -586,10 +587,16 @@ export function buildDashboardLedger(
 ): DashboardLedgerDto {
   const resolver = createSourceResolver(project, routeTable);
   const blockersBody = sectionBody(project, 'blockersConcerns');
+  const stateUrl = resolver.artifactUrl(STATE_PATH);
+  const stateSource: LedgerSourceDto | null = stateUrl
+    ? { kind: 'Document', label: 'STATE', meta: null, detail: null, path: STATE_PATH, url: stateUrl }
+    : null;
   const blockers = blockersBody
     ? readBullets(blockersBody).map((bullet, index): LedgerBlockerDto => {
         const parsed = parseBlocker(bullet.text);
         const trail = resolver.sourcesOf(bullet.text, bullet.group);
+        // A blocker that names nothing still lives somewhere: point it at STATE.md itself.
+        if (trail.sources.length === 0 && stateSource) trail.sources = [stateSource];
         return {
           key: `blocker-${index}`,
           group: bullet.group?.name ?? null,

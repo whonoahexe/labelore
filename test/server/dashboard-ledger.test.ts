@@ -84,7 +84,7 @@ describe('dashboard ledger: blockers', () => {
         '.planning/quick/260714-3tp-cache-tariff-lookups/260714-3tp-SUMMARY.md',
       ],
     ]);
-    expect(blockers[4].sources).toEqual([]);
+    expect(shape(blockers[4])).toEqual([['Document', 'STATE', null, null, '.planning/STATE.md']]);
 
     const mentions = (b: (typeof blockers)[number]) => b.mentions.map((m) => [m.label, m.path]);
     expect(mentions(blockers[0])).toEqual([['2026-07-20-retry-after', '.planning/notes/2026-07-20-retry-after.md']]);
@@ -100,8 +100,8 @@ describe('dashboard ledger: blockers', () => {
       for (const s of b.sources.filter((x) => x.kind !== 'Plan')) expect(s.url).toBe(keyOf(presentation, s.path));
       for (const m of b.mentions) expect(m.url).toBe(keyOf(presentation, m.path));
     }
-    // Nothing that reaches the page names the file the blockers were read from.
-    expect(JSON.stringify(blockers)).not.toContain('STATE.md');
+    // Only the blocker that names nothing points at STATE.md, the file it was read from.
+    expect(blockers.filter((b) => JSON.stringify(b).includes('STATE.md'))).toEqual([blockers[4]]);
   });
 
   it('keeps the blocker text whole for Copy text, and keys by position', async () => {
@@ -110,23 +110,23 @@ describe('dashboard ledger: blockers', () => {
     expect(ledger.blockers[4].text).toBe('Vendor ticket WHAT-75 was opened on 10-14 and has no answer yet.');
   });
 
-  it('reads the synthetic fixture: three blockers, no sources, the certificate one urgent', async () => {
+  it('reads the synthetic fixture: three blockers sourced to STATE.md, the certificate one urgent', async () => {
     const { ledger } = await ledgerOfDirectory(SYNTHETIC_ROOT);
     expect(ledger.blockers.map((b) => b.group)).toEqual(['Gateway', 'Gateway', 'Process']);
-    expect(ledger.blockers.every((b) => b.sources.length === 0)).toBe(true);
+    expect(ledger.blockers.every((b) => b.sources.map((s) => s.path).join() === '.planning/STATE.md')).toBe(true);
     expect(ledger.blockers.map((b) => b.urgent)).toEqual([true, false, false]);
     expect(ledger.blockers[0].title).toBe('The ACE sandbox certificate expires 2026-10-30');
   });
 
-  it('reads the dense fixture: one untagged blocker with no group', async () => {
+  it('reads the dense fixture: one blocker with no group, sourced to STATE.md', async () => {
     const { ledger } = await ledgerOfDirectory(DENSE_ROOT);
     expect(ledger.blockers).toHaveLength(1);
     expect(ledger.blockers[0]).toMatchObject({
       group: null,
       title: "Phase 2's transport layer plan has not yet produced a summary",
       why: 'mid-flight phase shape.',
-      sources: [],
     });
+    expect(ledger.blockers[0].sources.map((s) => s.label)).toEqual(['STATE']);
   });
 
   it('degrades to empty sections and never throws', async () => {
@@ -144,7 +144,7 @@ describe('dashboard ledger: blockers', () => {
     });
     const built = toProjectPresentation(malformed).ledger.blockers;
     expect(built.length).toBeLessThanOrEqual(1);
-    for (const blocker of built) expect(blocker.sources).toEqual([]);
+    for (const blocker of built) expect(blocker.sources.map((s) => s.label)).toEqual(['STATE']);
 
     const noHeading = await snapshotOf({
       '.planning/STATE.md':
@@ -152,7 +152,7 @@ describe('dashboard ledger: blockers', () => {
       '.planning/phases/05-x/05-01-PLAN.md': '<objective>\nDo.\n</objective>\n',
       '.planning/phases/05-x/05-REVIEW.md': '# Review\n\n### WR-01: Another\n',
     });
-    expect(toProjectPresentation(noHeading).ledger.blockers[0].sources).toEqual([]);
+    expect(toProjectPresentation(noHeading).ledger.blockers[0].sources.map((s) => s.label)).toEqual(['STATE']);
   });
 
   it('builds long blockers over large artifacts no faster than linearly', async () => {

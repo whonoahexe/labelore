@@ -46,7 +46,8 @@ describe('blocker filtering and the lead', () => {
       { key: 'Phase 3 review', label: 'Phase 3 review', count: 2 },
       { key: 'Operational', label: 'Operational', count: 2 },
     ]);
-    expect(open.filter(isUntagged)).toHaveLength(1);
+    // A blocker that names nothing is sourced to STATE.md, so none is untagged.
+    expect(open.filter(isUntagged)).toHaveLength(0);
 
     const shown = filterBlockers(all, NONE);
     const lead = blockingLead(shown);
@@ -68,11 +69,11 @@ describe('blocker filtering and the lead', () => {
     ]);
   });
 
-  it('leads with the untagged blocker when only untagged ones are in view', async () => {
+  it('shows no blocker under the untagged filter: unsourced ones point at STATE.md', async () => {
     const all = await blockers();
-    const shown = filterBlockers(all, { ...NONE, untagged: true });
-    expect(titles(shown)).toEqual(['Vendor ticket WHAT-75 was opened on 10-14 and has no answer yet.']);
-    expect(blockingLead(shown)).toBe(shown[0]);
+    expect(filterBlockers(all, { ...NONE, untagged: true })).toEqual([]);
+    const vendor = all.find((b) => b.title.startsWith('Vendor ticket WHAT-75'));
+    expect(vendor?.sources.map((s) => s.label)).toEqual(['STATE']);
   });
 
   it('adds the resolved blocker to the rows when the toggle is on', async () => {
