@@ -365,3 +365,37 @@ describe('Enter opens what the input says, never a stale highlight (WR-01, NAV-1
     expect(keyDown).toContain("if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;");
   });
 });
+
+describe("the palette's File tree mode (quick-261115-k9z)", () => {
+  const field = source('src/web/components/search-field.tsx');
+  const tree = source('src/web/components/planning-tree.tsx');
+
+  it('starts on Search at every opening and renders the body only in search mode', () => {
+    const opening = field.slice(field.indexOf('function handleOpenChange('), field.indexOf('// Switching back to Search'));
+    expect(opening).toContain("setMode('search');");
+    expect(field).toContain("useState<SearchMode>('search')");
+    expect(field).toMatch(/mode === 'search' \? \(\s*<PaletteBody/);
+  });
+
+  it('holds the switch in a strip above the body and swaps the body for the tree', () => {
+    expect(field).toContain('className="search-dialog-modes"');
+    expect(field).toContain('<SearchModeSwitch mode={mode} onChange={setMode} />');
+    expect(field).toContain('<PlanningTree artifacts={presentation.artifacts} onOpen={onOpen} />');
+    expect(field.indexOf('className="search-dialog-modes"')).toBeLessThan(field.indexOf('<PaletteBody'));
+  });
+
+  it('leaves a modified or non-primary click alone and closes the palette on a plain one', () => {
+    const paletteTree = field.slice(field.indexOf('function PaletteTree('), field.indexOf('export function SearchDialog'));
+    expect(paletteTree).toContain('event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey');
+    expect(paletteTree).toContain('onClose();');
+    expect(paletteTree).not.toContain('projectsKey');
+  });
+
+  it('moves between tree rows with the arrow keys and renders every name as React text', () => {
+    expect(tree).toContain("'ArrowDown'");
+    expect(tree).toContain("'ArrowUp'");
+    expect(tree).toContain('preventDefault');
+    expect(tree).not.toContain('dangerouslySetInnerHTML');
+    expect(tree).not.toMatch(/innerHTML/);
+  });
+});

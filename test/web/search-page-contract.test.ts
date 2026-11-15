@@ -221,3 +221,35 @@ describe('search page: filters and counts (FIND-06, D-09, D-10)', () => {
     expect(page).not.toContain('<SearchFilters facets={view.facets} query={query} selection={selection}');
   });
 });
+
+describe('search page: file tree mode (quick-261115-k9z)', () => {
+  const page = code(PAGE);
+
+  it('reads the mode from the address and writes it through the one helper', () => {
+    expect(page).toContain('searchModeOf(searchParams)');
+    expect(page).toContain('withSearchMode(searchParams, next)');
+  });
+
+  it('ignores the typed query in tree mode, and decides the mode before any search state renders', () => {
+    expect(page).toContain("enabled: mode === 'search' && query.length > 0");
+    const tree = page.indexOf("if (mode === 'tree')");
+    expect(tree).toBeGreaterThan(page.indexOf('classifySearchState('));
+    expect(tree).toBeLessThan(page.indexOf("state === 'empty-query'"));
+  });
+
+  it('declares the tree mode above the loading skeleton, which stays directly above the page', () => {
+    expect(page.indexOf('function SearchTreeMode(')).toBeLessThan(page.indexOf('function SearchLoading()'));
+  });
+
+  it('puts the switch wherever the query field is', () => {
+    const switches = page.match(/<SearchModeSwitch/g)?.length ?? 0;
+    const fields = page.match(/<SearchQueryField/g)?.length ?? 0;
+    expect(switches).toBeGreaterThanOrEqual(fields);
+  });
+
+  it('pushes a history entry when the mode changes: switchMode does not pass replace', () => {
+    const switchMode = /function switchMode[\s\S]*?\n {2}\}\n/.exec(page)?.[0] ?? '';
+    expect(switchMode).toContain('setSearchParams(');
+    expect(switchMode).not.toContain('replace');
+  });
+});

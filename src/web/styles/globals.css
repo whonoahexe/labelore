@@ -6836,6 +6836,7 @@ a.todo-title:hover {
 
 @media (pointer: coarse) {
   .search-tab,
+  .search-mode-option,
   .search-filter-option,
   .search-filter-trigger,
   .search-milestone-fold,
@@ -40027,3 +40028,97 @@ a.view-workstreams-file:hover {
   }
 }
 /* phase-12-settings:end */
+
+/* quick-261115-k9z: Search | File tree switch and the planning file tree. The switch is a joined, squared segmented
+   control; the pressed option is filled in the active tone, as the settings page's segmented control does. */
+.search-mode-switch {
+  display: inline-flex;
+  justify-self: start;
+}
+
+.search-mode-option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--fs-3);
+  white-space: nowrap;
+}
+
+.search-mode-option + .search-mode-option {
+  border-left-width: 0;
+}
+
+.search-mode-option:hover {
+  color: var(--foreground);
+}
+
+.search-mode-option[aria-pressed='true'] {
+  z-index: 1;
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: var(--fw-semibold);
+}
+
+.search-mode-option svg {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+.planning-tree {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.planning-tree-count {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+/* The file count stays at the row's end at every width (this out-specifies the 62rem single-column override). */
+.planning-tree .clean-tree-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.planning-tree .clean-tree-note {
+  padding-left: 0;
+  white-space: nowrap;
+}
+
+.planning-tree-file {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  min-width: 0;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.planning-tree-file:hover {
+  text-decoration: underline;
+}
+
+.planning-tree-file:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.search-dialog-modes {
+  display: flex;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.search-dialog-results .planning-tree {
+  padding: var(--space-2) var(--space-4);
+}
