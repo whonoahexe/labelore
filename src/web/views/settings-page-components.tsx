@@ -22,6 +22,7 @@ import type { InlineToken } from './inline-markdown.ts';
 import { SettingsRail } from './settings-rail.tsx';
 import { composeSettingsReference, filterSettings } from './settings-reference.ts';
 import type {
+  AllowedOption,
   FilteredSection,
   SettingsEntry,
   SettingsModel,
@@ -62,14 +63,13 @@ export function settingsHeaderProps(projectName: string, model: SettingsPageMode
         </span>
         {counts === null ? null : (
           <span className="view-settings-lede">
-            <b>{counts.understood}</b> settings GSD understands, <b>{counts.set}</b> set in this project&apos;s{' '}
-            <code>config.json</code>
+            <b>{counts.set}</b> of {counts.understood} set
             {counts.notRecognised > 0 ? (
               <>
-                , <b>{counts.notRecognised}</b> it doesn&apos;t recognise
+                {' · '}
+                <b>{counts.notRecognised}</b> not recognised
               </>
             ) : null}
-            . Descriptions and defaults come from GSD&apos;s configuration reference.
           </span>
         )}
       </>
@@ -285,27 +285,131 @@ function EntryName({ entry, query }: { entry: SettingsEntry; query: string }): R
   );
 }
 
-function AllowedList({ entry, query }: { entry: SettingsEntry; query: string }): React.JSX.Element | null {
-  if (entry.allowed !== null) {
-    const hasDefault = entry.allowed.some((option) => option.isDefault);
+/** The choices a key offers, as a segmented control: GSD's literal Allowed list, or false/true for a boolean. Null for anything else. */
+function choicesOf(entry: SettingsEntry): AllowedOption[] | null {
+  if (entry.allowed !== null && entry.allowed.length > 0) return entry.allowed;
+  const defaultLiteral = /`([^`]*)`/.exec(entry.defaultText)?.[1] ?? null;
+  const isBoolean = entry.type === 'boolean' || (entry.type === '' && (defaultLiteral === 'true' || defaultLiteral === 'false'));
+  if (!isBoolean) return null;
+  return [false, true].map((option) => ({
+    text: String(option),
+    current: entry.value !== null && entry.value.kind === 'boolean' && entry.value.on === option,
+    isDefault: defaultLiteral === String(option),
+  }));
+}
+
+/**
+ * The answer: what this key is in this project, read at a glance. A key with choices is a segmented control with this project's value
+ * filled (the active tone) or, when unset, GSD's default filled quietly, since that is what GSD runs on; every default option carries a
+ * small dot. Any other key shows its value, or the default in muted type when unset.
+ */
+function Answer({ entry, query }: { entry: SettingsEntry; query: string }): React.JSX.Element {
+  const choices = choicesOf(entry);
+  const matched = choices !== null && choices.some((option) => option.current);
+  if (choices !== null && (!entry.set || matched)) {
     return (
-      <span className="view-settings-allowed" data-has-default={hasDefault}>
-        {entry.allowed.map((option) => (
+      <span className="view-settings-seg" data-set={entry.set}>
+        {choices.map((option) => (
           <span
             key={option.text}
             className="view-settings-option"
             data-default={option.isDefault}
+            data-effective={entry.set ? option.current : option.isDefault}
             {...(option.current ? { 'aria-current': 'true' as const } : {})}
           >
             {option.text}
             {option.current ? <span className="sr-only"> (this project)</span> : null}
-            {option.isDefault ? <span className="view-settings-option-default">default</span> : null}
+            {option.isDefault ? <span className="sr-only"> (default)</span> : null}
           </span>
         ))}
       </span>
     );
   }
-  return entry.allowedText === '' ? null : <Marked text={entry.allowedText} query={query} />;
+  if (entry.set) return <Value value={entry.value} set />;
+  return (
+    <span className="view-settings-fallback">
+      {entry.defaultText === '' ? '—' : <Marked text={entry.defaultText} query={query} />}
+      <span className="view-settings-fallback-tag">default</span>
+    </span>
+  );
+}
+
+/** One setting as one row: its name (a button that opens the details) and its answer. GSD's description, the type, the default, the
+ * related notes and the config.json line sit in the details, closed until asked for. */
+function SettingRow({
+  entry,
+  query,
+  expanded,
+  onToggle,
+  onOpenSourceAt,
+}: {
+  entry: SettingsEntry;
+  query: string;
+  expanded: boolean;
+  onToggle: () => void;
+  onOpenSourceAt: (line: number | null) => void;
+}): React.JSX.Element {
+  const detailId = `${entry.id}-detail`;
+  const description = entry.rest === '' ? entry.first : `${entry.first} ${entry.rest}`;
+  return (
+    <article className="view-settings-entry" id={entry.id} data-wide={entry.wide} data-set={entry.set} data-open={expanded}>
+      <h3 className="view-settings-entry-key">
+        <button type="button" className="view-settings-toggle" aria-expanded={expanded} aria-controls={detailId} onClick={onToggle}>
+          <ChevronRight aria-hidden="true" />
+          <EntryName entry={entry} query={query} />
+        </button>
+      </h3>
+      <div className="view-settings-val">
+        <Answer entry={entry} query={query} />
+      </div>
+      {expanded ? (
+        <div className="view-settings-detail" id={detailId}>
+          <p className="view-settings-desc">
+            {description === '' ? (
+              <span className="view-settings-quiet">No description in GSD&apos;s reference.</span>
+            ) : (
+              <Marked text={description} query={query} />
+            )}
+          </p>
+          <div className="view-settings-facts">
+            <dl>
+              <dt>Type</dt>
+              <dd className="view-settings-mono">{entry.type === '' ? '—' : entry.type}</dd>
+            </dl>
+            <dl>
+              <dt>Default</dt>
+              <dd>{entry.defaultText === '' ? <span className="view-settings-quiet">none documented</span> : <Marked text={entry.defaultText} query={query} />}</dd>
+            </dl>
+            {entry.allowed === null && entry.allowedText !== '' && entry.type !== 'boolean' ? (
+              <dl>
+                <dt>Allowed</dt>
+                <dd>
+                  <Marked text={entry.allowedText} query={query} />
+                </dd>
+              </dl>
+            ) : null}
+            {entry.set && entry.line !== null ? (
+              <button type="button" className="view-settings-line" onClick={() => onOpenSourceAt(entry.line)}>
+                config.json L{entry.line}
+              </button>
+            ) : null}
+          </div>
+          {entry.related.length > 0 ? (
+            <div className="view-settings-rel">
+              {entry.related.map((note) => (
+                <span key={note.title}>
+                  <b>
+                    <Marked text={note.title} query={query} />
+                  </b>{' '}
+                  — <Marked text={note.first} query={query} />
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </article>
+  );
 }
 
 function EntryValue({
@@ -330,100 +434,22 @@ function EntryValue({
   );
 }
 
-function DocumentedEntry({
-  entry,
-  query,
-  hasConfig,
-  expanded,
-  onToggle,
-  onOpenSourceAt,
-}: {
-  entry: SettingsEntry;
-  query: string;
-  hasConfig: boolean;
-  expanded: boolean;
-  onToggle: () => void;
-  onOpenSourceAt: (line: number | null) => void;
-}): React.JSX.Element {
-  const hasMore = entry.rest !== '' || entry.related.length > 0;
-  const showAllowed = (entry.allowed !== null || entry.allowedText !== '') && entry.type !== 'boolean';
-  return (
-    <article className="view-settings-entry" id={entry.id} data-wide={entry.wide} data-set={entry.set}>
-      <h3 className="view-settings-entry-key">
-        <EntryName entry={entry} query={query} />
-        <a className="view-settings-hash" href={`#${entry.id}`} aria-label={`Link to ${entry.key}`}>
-          #
-        </a>
-      </h3>
-      {hasConfig ? (
-        <div className="view-settings-val">
-          <span className="view-settings-val-label">This project</span>
-          <EntryValue entry={entry} onOpenSourceAt={onOpenSourceAt} lineLabel="config.json L" />
-        </div>
-      ) : null}
-      <p className="view-settings-desc">
-        <Marked text={entry.first} query={query} />
-        {expanded && entry.rest !== '' ? (
-          <>
-            {' '}
-            <Marked text={entry.rest} query={query} />
-          </>
-        ) : null}
-        {hasMore ? (
-          <>
-            {' '}
-            <button type="button" className="view-settings-more" aria-expanded={expanded} onClick={onToggle}>
-              {expanded ? 'less' : 'more'}
-            </button>
-          </>
-        ) : null}
-      </p>
-      <div className="view-settings-facts">
-        <dl>
-          <dt>Type</dt>
-          <dd className="view-settings-mono">{entry.type === '' ? '—' : entry.type}</dd>
-        </dl>
-        <dl>
-          <dt>Default</dt>
-          <dd>{entry.defaultText === '' ? <span className="view-settings-quiet">none documented</span> : <Marked text={entry.defaultText} query={query} />}</dd>
-        </dl>
-        {showAllowed ? (
-          <dl>
-            <dt>Allowed</dt>
-            <dd>
-              <AllowedList entry={entry} query={query} />
-            </dd>
-          </dl>
-        ) : null}
-      </div>
-      {expanded && entry.related.length > 0 ? (
-        <div className="view-settings-rel">
-          {entry.related.map((note) => (
-            <span key={note.title}>
-              <b>
-                <Marked text={note.title} query={query} />
-              </b>{' '}
-              — <Marked text={note.first} query={query} />
-            </span>
-          ))}
-        </div>
-      ) : null}
-    </article>
-  );
-}
-
 function AcceptedFold({
   filtered,
   query,
-  hasConfig,
   open,
   onToggle,
+  expanded,
+  onToggleEntry,
+  onOpenSourceAt,
 }: {
   filtered: FilteredSection;
   query: string;
-  hasConfig: boolean;
   open: boolean;
   onToggle: (open: boolean) => void;
+  expanded: ReadonlySet<string>;
+  onToggleEntry: (id: string) => void;
+  onOpenSourceAt: (line: number | null) => void;
 }): React.JSX.Element | null {
   if (filtered.accepted.length === 0) return null;
   const count = filtered.accepted.length;
@@ -439,23 +465,19 @@ function AcceptedFold({
       <summary>
         <ChevronRight aria-hidden="true" />
         <span>
-          {count} more {count === 1 ? 'key' : 'keys'} GSD accepts
+          {count} more {count === 1 ? 'key' : 'keys'} without a description
         </span>
-        <span className="view-settings-quiet">· no description in GSD&apos;s reference</span>
       </summary>
-      <ul>
-        {filtered.accepted.map((entry) => (
-          <li key={entry.id} id={entry.id}>
-            <span className="view-settings-also-key">
-              <EntryName entry={entry} query={query} />
-            </span>
-            <span className="view-settings-also-default">default {entry.defaultText === '' ? '—' : <Marked text={entry.defaultText} query={query} />}</span>
-            <span className="view-settings-also-value">
-              {hasConfig ? <Value value={entry.value} set={entry.set} /> : null}
-            </span>
-          </li>
-        ))}
-      </ul>
+      {filtered.accepted.map((entry) => (
+        <SettingRow
+          key={entry.id}
+          entry={entry}
+          query={query}
+          expanded={expanded.has(entry.id)}
+          onToggle={() => onToggleEntry(entry.id)}
+          onOpenSourceAt={onOpenSourceAt}
+        />
+      ))}
     </details>
   );
 }
@@ -642,18 +664,12 @@ function ReferenceBody({
                   {entry.section.setCount} of {entry.section.total} set
                 </span>
               </h2>
-              {entry.section.intro === '' ? null : (
-                <p>
-                  <Marked text={entry.section.intro} query="" />
-                </p>
-              )}
             </header>
             {entry.entries.map((documented) => (
-              <DocumentedEntry
+              <SettingRow
                 key={documented.id}
                 entry={documented}
                 query={query}
-                hasConfig={hasConfig}
                 expanded={expanded.has(documented.id)}
                 onToggle={() => toggle(documented.id)}
                 onOpenSourceAt={onOpenSourceAt}
@@ -662,9 +678,11 @@ function ReferenceBody({
             <AcceptedFold
               filtered={entry}
               query={query}
-              hasConfig={hasConfig}
               open={folds.has(entry.section.id)}
               onToggle={(open) => setFold(entry.section.id, open)}
+              expanded={expanded}
+              onToggleEntry={toggle}
+              onOpenSourceAt={onOpenSourceAt}
             />
           </section>
         ))}

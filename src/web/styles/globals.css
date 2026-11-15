@@ -39492,12 +39492,13 @@ a.view-workstreams-file:hover {
   color: var(--muted-foreground);
 }
 
-/* A documented entry. */
+/* A setting: one row, the name on the left and the answer on the right; the details open under it. */
 .view-settings-entry {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(9rem, auto);
-  gap: var(--space-1-5) var(--space-6);
-  padding: var(--space-4) 0 calc(var(--space-4) + var(--space-0-5));
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-6);
+  padding: var(--space-2) 0;
   border-bottom: 1px solid var(--border-faint);
   scroll-margin-top: var(--space-22);
 }
@@ -39506,23 +39507,62 @@ a.view-workstreams-file:hover {
   background: var(--primary-tint);
 }
 
+.view-settings-entry[data-set='false'] .view-settings-name {
+  color: var(--muted-foreground);
+  font-weight: normal;
+}
+
 .view-settings-entry-key {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
   margin: 0;
+  min-width: 0;
   font-weight: inherit;
   line-height: var(--lh-normal);
 }
 
+.view-settings-toggle {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.view-settings-toggle svg {
+  flex: none;
+  align-self: center;
+  width: var(--space-3-5);
+  height: var(--space-3-5);
+  color: var(--muted-foreground);
+  transition: transform 0.15s;
+}
+
+.view-settings-toggle[aria-expanded='true'] svg {
+  transform: rotate(90deg);
+}
+
+.view-settings-toggle:hover .view-settings-name {
+  color: var(--foreground);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
 .view-settings-nm {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
   min-width: 0;
 }
 
 .view-settings-name {
   font-family: var(--font-sans);
-  font-size: var(--fs-6);
+  font-size: var(--fs-5);
   font-weight: var(--fw-semibold);
   letter-spacing: var(--ls-normal);
   overflow-wrap: anywhere;
@@ -39530,7 +39570,7 @@ a.view-workstreams-file:hover {
 
 .view-settings-name[data-is-key='true'] {
   font-family: var(--font-mono);
-  font-size: var(--fs-4);
+  font-size: var(--fs-3);
 }
 
 .view-settings-key {
@@ -39542,24 +39582,21 @@ a.view-workstreams-file:hover {
   overflow-wrap: anywhere;
 }
 
-.view-settings-hash {
-  color: var(--muted-foreground);
-  opacity: 0;
-  text-decoration: none;
-  transition: opacity 0.15s;
-}
-
-.view-settings-entry:hover .view-settings-hash,
-.view-settings-hash:focus-visible {
-  opacity: 1;
+.view-settings-detail {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: var(--space-2);
+  margin: var(--space-1) 0 var(--space-2) calc(var(--space-3-5) + var(--space-2));
+  padding: var(--space-3) var(--space-4);
+  border-left: 2px solid var(--border);
+  background: var(--veil);
 }
 
 .view-settings-desc {
-  grid-column: 1;
   max-width: 70ch;
   margin: 0;
   color: color-mix(in oklch, var(--foreground) 82%, var(--muted-foreground));
-  font-size: var(--fs-5);
+  font-size: var(--fs-4);
 }
 
 .view-settings-more {
@@ -39579,10 +39616,9 @@ a.view-workstreams-file:hover {
 }
 
 .view-settings-facts {
-  grid-column: 1;
   display: flex;
   flex-wrap: wrap;
-  align-items: start;
+  align-items: baseline;
   gap: var(--space-1) var(--space-5);
 }
 
@@ -39596,7 +39632,7 @@ a.view-workstreams-file:hover {
 .view-settings-facts dt {
   color: var(--muted-foreground);
   font-family: var(--font-mono);
-  font-size: var(--fs-2);
+  font-size: var(--fs-1);
   letter-spacing: var(--ls-wider);
   text-transform: uppercase;
 }
@@ -39606,48 +39642,10 @@ a.view-workstreams-file:hover {
   font-size: var(--fs-3);
 }
 
-.view-settings-allowed {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-}
-
-.view-settings-allowed[data-has-default='true'] {
-  padding-bottom: var(--space-3);
-}
-
-.view-settings-option {
-  position: relative;
-  padding: var(--space-0-5) var(--space-2);
-  border: 1px solid var(--border);
-  color: var(--muted-foreground);
-  font-family: var(--font-mono);
-  font-size: var(--fs-2);
-}
-
-.view-settings-option[aria-current='true'] {
-  border-color: var(--primary-border);
-  background: var(--primary-tint);
-  color: var(--primary);
-}
-
-.view-settings-option-default {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  color: var(--muted-foreground);
-  font-size: var(--fs-1);
-  letter-spacing: var(--ls-wider);
-  transform: translateX(-50%);
-}
-
 .view-settings-rel {
   display: grid;
-  grid-column: 1;
   gap: var(--space-1);
   max-width: 70ch;
-  padding: var(--space-2) var(--space-3);
-  border-left: 2px solid var(--border);
   color: var(--muted-foreground);
   font-size: var(--fs-3);
 }
@@ -39657,16 +39655,84 @@ a.view-workstreams-file:hover {
   font-weight: var(--fw-semibold);
 }
 
-/* This project: the value on the right, in its shape, and the line it sits on. */
+/* The answer: a segmented control of the choices, or the value itself. */
 .view-settings-val {
-  display: grid;
-  grid-column: 2;
-  grid-row: 1 / span 3;
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-1);
-  align-content: start;
-  justify-items: end;
+  align-items: center;
+  justify-content: flex-end;
   min-width: 0;
   text-align: right;
+}
+
+.view-settings-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.view-settings-option {
+  position: relative;
+  padding: var(--space-0-5) var(--space-2-5);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  white-space: nowrap;
+}
+
+.view-settings-option + .view-settings-option {
+  border-left-width: 0;
+}
+
+/* GSD's default: a small dot in the corner. */
+.view-settings-option[data-default='true']::after {
+  content: '';
+  position: absolute;
+  top: var(--space-0-5);
+  right: var(--space-0-5);
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+/* Unset: the default is what GSD runs on, filled quietly. */
+.view-settings-seg[data-set='false'] .view-settings-option[data-effective='true'] {
+  background: var(--veil);
+  color: var(--foreground);
+}
+
+/* Set: this project's value, filled in the active tone. */
+.view-settings-option[aria-current='true'] {
+  z-index: 1;
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: var(--fw-semibold);
+}
+
+.view-settings-fallback {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+}
+
+.view-settings-main .view-settings-sec .view-settings-fallback code {
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+.view-settings-fallback-tag {
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  opacity: 0.7;
 }
 
 .view-settings-val-label {
@@ -39686,6 +39752,7 @@ a.view-workstreams-file:hover {
   cursor: pointer;
   font-family: var(--font-mono);
   font-size: var(--fs-1);
+  text-decoration: underline dotted;
 }
 
 .view-settings-line:hover {
@@ -39694,7 +39761,8 @@ a.view-workstreams-file:hover {
 
 .view-settings-entry[data-wide='true'] .view-settings-val {
   grid-column: 1 / -1;
-  grid-row: auto;
+  display: grid;
+  justify-content: stretch;
   justify-items: start;
   padding: var(--space-3);
   border: 1px solid var(--border);
@@ -39825,7 +39893,7 @@ a.view-workstreams-file:hover {
 
 /* The fold of keys GSD accepts but does not describe. */
 .view-settings-also {
-  margin-top: var(--space-3);
+  margin-top: var(--space-2);
   border: 1px dashed var(--border);
 }
 
@@ -39853,45 +39921,12 @@ a.view-workstreams-file:hover {
   transform: rotate(90deg);
 }
 
-.view-settings-also summary .view-settings-quiet {
-  font-size: var(--fs-3);
+.view-settings-also > .view-settings-entry {
+  margin: 0 var(--space-4);
 }
 
-.view-settings-also ul {
-  display: grid;
-  margin: 0;
-  padding: 0 var(--space-4) var(--space-3);
-  list-style: none;
-}
-
-.view-settings-also li {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: var(--space-4);
-  align-items: baseline;
-  padding: var(--space-2) 0;
-  border-top: 1px solid var(--border-faint);
-  scroll-margin-top: var(--space-22);
-}
-
-.view-settings-also-key {
-  min-width: 0;
-}
-
-.view-settings-also-key .view-settings-name[data-is-key='true'] {
-  padding-block: var(--space-0-5);
-}
-
-.view-settings-also-default {
-  color: var(--muted-foreground);
-  font-family: var(--font-mono);
-  font-size: var(--fs-2);
-}
-
-.view-settings-also-value {
-  display: grid;
-  justify-items: end;
-  gap: var(--space-1);
+.view-settings-also > .view-settings-entry:last-child {
+  border-bottom: 0;
 }
 
 /* Not recognised: a hatched, dashed box of keys exactly as written. */
@@ -39981,11 +40016,14 @@ a.view-workstreams-file:hover {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .view-settings-val {
-    grid-column: 1;
-    grid-row: auto;
-    justify-items: start;
+  .view-settings-val,
+  .view-settings-seg {
+    justify-content: flex-start;
     text-align: left;
+  }
+
+  .view-settings-detail {
+    margin-left: 0;
   }
 }
 /* phase-12-settings:end */

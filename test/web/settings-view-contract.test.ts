@@ -118,20 +118,19 @@ describe('the settings page header and lede', () => {
     expect(lead).not.toContain('view-settings-lede');
   });
 
-  it("draws the lede with a ready config and a reference: N understood, N set, N not recognised", () => {
+  it("draws the lede with a ready config and a reference: N of N set, N not recognised", () => {
     const model = ready(configOf(lendshed.presentation));
     if (model.state !== 'reference') throw new Error('expected the reference shape');
     const lead = renderToStaticMarkup(createElement('p', null, settingsHeaderProps('Lendshed', model).lead));
     const { understood, set, notRecognised } = model.counts;
-    expect(lead).toContain(`<b>${understood}</b> settings GSD understands, <b>${set}</b> set in this project&#x27;s <code>config.json</code>`);
+    expect(lead).toContain(`<b>${set}</b> of ${understood} set`);
     expect(notRecognised).toBeGreaterThan(0);
-    expect(lead).toContain(`, <b>${notRecognised}</b> it doesn&#x27;t recognise`);
-    expect(lead).toContain('Descriptions and defaults come from GSD&#x27;s configuration reference.');
+    expect(lead).toContain(` · <b>${notRecognised}</b> not recognised`);
   });
 
   it('leaves out the "doesn\'t recognise" clause at zero, and the whole lede without a ready config', () => {
     const none = ready({ mode: 'yolo' });
-    expect(renderToStaticMarkup(createElement('p', null, settingsHeaderProps('P', none).lead))).not.toContain('recognise');
+    expect(renderToStaticMarkup(createElement('p', null, settingsHeaderProps('P', none).lead))).not.toContain('recognised');
     for (const model of [modelOf({ state: 'missing' }), modelOf({ state: 'unreadable' }), { state: 'loading' as const }]) {
       expect(renderToStaticMarkup(createElement('p', null, settingsHeaderProps('P', model).lead))).not.toContain('view-settings-lede');
     }
@@ -155,48 +154,43 @@ describe('the settings page body (a ready config over a reference)', () => {
     expect(html).toContain(`>${core?.setCount} of ${core?.total} set</span>`);
   });
 
-  it('gives a documented entry its id, anchor, first sentence, more button and Type and Default labels', () => {
+  it('draws a setting as one row: a toggle with the label and key, and the details closed', () => {
     const entry = articleOf(html, 'k-mode');
-    expect(entry).toContain('href="#k-mode"');
-    expect(entry).toContain('Operation mode:');
-    expect(entry).toMatch(/<button type="button" class="view-settings-more" aria-expanded="false">more<\/button>/);
-    expect(entry).toContain('<dt>Type</dt>');
-    expect(entry).toContain('<dt>Default</dt>');
+    expect(entry).toMatch(/<button type="button" class="view-settings-toggle" aria-expanded="false" aria-controls="k-mode-detail">/);
     expect(entry).toContain('<span class="view-settings-name">How much it asks</span><span class="view-settings-key">mode</span>');
-    expect(entry).not.toContain('Switching it mid-run');
+    expect(entry).not.toContain('Operation mode:');
+    expect(entry).not.toContain('<dt>Type</dt>');
   });
 
-  it("lights this project's value in an enum's options, once, and labels GSD's default", () => {
+  it("fills this project's value in an enum's segmented control, once, and marks GSD's default", () => {
     const entry = articleOf(html, 'k-mode');
+    expect(entry).toContain('<span class="view-settings-seg" data-set="true">');
     expect((entry.match(/aria-current="true"/g) ?? []).length).toBe(1);
     expect(entry).toMatch(/aria-current="true"[^>]*>yolo<span class="sr-only"> \(this project\)<\/span><\/span>/);
-    expect(entry).toMatch(/data-default="true">interactive<span class="view-settings-option-default">default<\/span>/);
+    expect(entry).toMatch(/data-default="true" data-effective="false">interactive<span class="sr-only"> \(default\)<\/span>/);
   });
 
-  it('shows no Allowed line for a boolean, and prose allowed text for a non-literal list', () => {
-    expect(articleOf(html, 'k-commit_docs')).not.toContain('<dt>Allowed</dt>');
-    expect(articleOf(html, 'k-project_code')).toContain('<dt>Allowed</dt>');
-    expect(articleOf(html, 'k-project_code')).toContain('Any short string');
+  it('draws a boolean as a false/true control with the value filled', () => {
+    const entry = articleOf(html, 'k-commit_docs');
+    expect(entry).toMatch(/aria-current="true">true<span class="sr-only"> \(this project\)<\/span>/);
+    expect(entry).toContain('>false');
   });
 
-  it("shows 'This project' with the value in its shape and a 'config.json L<n>' button", () => {
-    const entry = articleOf(html, 'k-mode');
-    expect(entry).toContain('<span class="view-settings-val-label">This project</span>');
-    expect(entry).toMatch(/<button type="button" class="view-settings-line">config\.json L2<\/button>/);
-    expect(articleOf(html, 'k-commit_docs')).toContain('<span class="view-settings-bool" data-on="true"><i aria-hidden="true"></i>true</span>');
-    expect(articleOf(html, 'k-context_window')).toContain('<span class="view-settings-num">1000000</span>');
+  it('shows a value that has no choices in its shape', () => {
+    expect(articleOf(html, 'k-context_window')).toContain('1000000');
     expect(articleOf(html, 'k-project_code')).toContain('<span class="view-settings-null">null</span>');
   });
 
-  it('reads an unset key as not set, with no line button', () => {
+  it("an unset key fills GSD's default quietly, with no 'not set' word", () => {
     const entry = articleOf(html, 'k-workflow.plan_check');
-    expect(entry).toContain('<span class="view-settings-unset">not set</span>');
+    expect(entry).toContain('data-set="false"');
+    expect(entry).not.toContain('not set');
     expect(entry).not.toContain('view-settings-line');
   });
 
   it('folds the accepted keys under a details that opens only when no documented entry is left to read', () => {
     expect(html).toContain('<details class="view-settings-also"><summary>');
-    expect(html).toMatch(/1 more key GSD accepts<\/span><span class="view-settings-quiet">· no description in GSD&#x27;s reference<\/span>/);
+    expect(html).toContain('1 more key without a description</span>');
     const gates = /<section class="view-settings-sec" id="s-gates">[\s\S]*?<\/section>/.exec(html)?.[0] ?? '';
     expect(gates).toContain('<details class="view-settings-also" open="">');
     const workflow = /<section class="view-settings-sec" id="s-workflow">[\s\S]*?<\/section>/.exec(html)?.[0] ?? '';

@@ -77,7 +77,6 @@ const HREF_ALLOWED: Array<{ file: string; kinds: HrefKind[] }> = [
   { file: 'src/web/components/source-reader.tsx', kinds: ['hash'] },
   { file: 'src/web/pages/sketches-page.tsx', kinds: ['new-tab', 'new-tab'] },
   { file: 'src/web/views/research-briefing-components.tsx', kinds: ['new-tab'] },
-  { file: 'src/web/views/settings-page-components.tsx', kinds: ['hash'] },
   { file: 'src/web/views/settings-rail.tsx', kinds: ['hash', 'hash'] },
 ];
 
