@@ -121,6 +121,71 @@ describe('dashboard position line', () => {
     expect(markup).toContain('waiting in STATE.md');
   });
 
+  describe('stage detail stays short at any plan count', () => {
+    async function sixteen(): Promise<DashboardPosition> {
+      const files: Record<string, string> = {
+        '.planning/ROADMAP.md': '# Roadmap\n\n## Phase Details\n\n### Phase 9: Big Phase\n**Goal**: Many.\n',
+        '.planning/STATE.md': '---\nmilestone: v1.0\n---\n',
+      };
+      for (let index = 1; index <= 16; index += 1) {
+        const id = `09-${String(index).padStart(2, '0')}`;
+        files[`.planning/phases/09-big-phase/${id}-PLAN.md`] = planFile(id);
+        if (index <= 9) files[`.planning/phases/09-big-phase/${id}-SUMMARY.md`] = '# Summary\n';
+      }
+      const snapshot = await new PlanningRepository(new InMemoryPlanningFilesystem(files), '/project').load();
+      const position = buildDashboardPosition(toProjectPresentation({ ...snapshot, readAt: '2026-11-15T12:00:00.000Z' }));
+      if (!position) throw new Error('expected a position');
+      return position;
+    }
+
+    it('Execute: one square per plan, three rows with Next on the first, and the All link', async () => {
+      const markup = render(await sixteen(), 3);
+      const detail = markup.slice(markup.indexOf('class="position-detail"'), markup.indexOf('data-point="next"'));
+      expect(detail.match(/class="position-square"/g)).toHaveLength(16 + 3);
+      expect(detail).toContain('9 of 16 done');
+      expect(detail.match(/<li /g)).toHaveLength(3);
+      expect(detail.match(/>Next</g)).toHaveLength(1);
+      expect(detail).toContain('All 16 plans →');
+      expect(detail).toMatch(/<a[^>]*class="position-more"[^>]*href="[^"]*\/phase-9"/);
+      expect(detail.match(/class="position-one-line"/g)).toHaveLength(3);
+    });
+
+    it('Plan: one summary line plus the link', async () => {
+      const markup = render(await sixteen(), 2);
+      const detail = markup.slice(markup.indexOf('class="position-detail"'));
+      expect(detail).toContain('16 PLAN files · 09-01 … 09-16');
+      expect(detail).toContain('All 16 plans →');
+      expect(detail).not.toContain('position-square');
+    });
+
+    it('an empty stage is one sentence naming its command', async () => {
+      const files = { '.planning/ROADMAP.md': ROADMAP, '.planning/STATE.md': '---\nmilestone: v1.0\n---\n' };
+      const snapshot = await new PlanningRepository(new InMemoryPlanningFilesystem(files), '/project').load();
+      const position = buildDashboardPosition(toProjectPresentation({ ...snapshot, readAt: '2026-11-15T12:00:00.000Z' }));
+      const markup = render(position as DashboardPosition, 0);
+      const detail = markup.slice(markup.indexOf('class="position-detail"'), markup.indexOf('data-point="next"'));
+      expect(detail).toContain('No phase folder yet. <b>/gsd-discuss-phase 1</b> creates it and writes NN-CONTEXT.md.');
+    });
+  });
+
+  it('renders the shipped milestone phase squares with an All phases link', async () => {
+    const files = {
+      '.planning/STATE.md': '---\nmilestone: v1.1\n---\n',
+      '.planning/milestones/v1.1-ROADMAP.md': '# v1.1\n\n### Phase 5: Views\n**Goal:** V.\n\n### Phase 6: Pages\n**Goal:** P.\n',
+      '.planning/milestones/v1.1-phases/05-views/05-01-PLAN.md': planFile('05-01'),
+      '.planning/milestones/v1.1-phases/05-views/05-01-SUMMARY.md': '# Summary\n',
+      '.planning/milestones/v1.1-phases/06-pages/06-01-PLAN.md': planFile('06-01'),
+      '.planning/milestones/v1.1-phases/06-pages/06-01-SUMMARY.md': '# Summary\n',
+    };
+    const snapshot = await new PlanningRepository(new InMemoryPlanningFilesystem(files), '/project').load();
+    const position = buildDashboardPosition(toProjectPresentation({ ...snapshot, readAt: '2026-11-15T12:00:00.000Z' }));
+    const markup = render(position as DashboardPosition, null);
+    expect(markup.match(/class="position-square"/g)).toHaveLength(2);
+    expect(markup).toContain('2 of 2 phases');
+    expect(markup).toContain('All 2 phases →');
+    expect(markup).toMatch(/<a[^>]*href="[^"]*roadmap[^"]*"/);
+  });
+
   it('opens the Discuss cell to list its files', async () => {
     const markup = render(await executing(), 0);
     expect(markup).toMatch(/<button[^>]*aria-expanded="true"[^>]*>/);

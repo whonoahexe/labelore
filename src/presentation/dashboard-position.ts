@@ -18,6 +18,7 @@ import { buildPhaseUrl } from './routes.ts';
 import { buildStateSession, type StateSession } from './state-session.ts';
 
 const MAX_NAME_CHARS = 200;
+const ROW_LIMIT = 3;
 
 export type PositionStageName = 'Discuss' | 'Research' | 'Plan' | 'Execute' | 'Verify';
 export type PositionStageState = 'done' | 'now' | 'next' | 'todo' | 'skip';
@@ -36,6 +37,17 @@ export interface PositionEmpty {
   tail: string | null;
 }
 
+export interface PositionSquare {
+  id: string;
+  state: 'done' | 'next' | 'todo';
+}
+
+export interface PositionPlanRow extends PositionSquare {
+  url: string;
+  /** The plan's objective title, else its ROADMAP description; null when it has neither. */
+  objective: string | null;
+}
+
 export interface PositionStage {
   name: PositionStageName;
   state: PositionStageState;
@@ -45,6 +57,14 @@ export interface PositionStage {
   empty: PositionEmpty | null;
   plansTotal: number;
   plansDone: number;
+  /** Plan stage only: '16 PLAN files · 09-01 … 09-16'. */
+  summary: string | null;
+  /** Execute stage only: one square per plan, in id order. */
+  squares: PositionSquare[];
+  /** Execute stage only: at most three plan rows, starting at the next plan (the last three when all are done). */
+  rows: PositionPlanRow[];
+  /** The phase's page, set on the Plan and Execute stages when the detail shows less than every plan. */
+  moreUrl: string | null;
 }
 
 export interface PositionStep {
@@ -70,6 +90,8 @@ export type PositionNow =
       title: string;
       why: string;
       milestoneUrl: string | null;
+      /** One entry per phase of the shipped milestone, in number order. */
+      phases: { number: string; name: string; done: boolean }[];
     };
 
 export interface PositionThen {
@@ -217,6 +239,17 @@ interface StageInput {
   summarised: number;
   done: boolean;
   step: StepKind;
+  plans: { id: string; url: string; objective: string | null; done: boolean }[];
+  phaseUrl: string | null;
+}
+
+/** A plan's objective title from its PLAN.md, else the ROADMAP's own line for it. */
+function objectiveOf(presentation: ProjectPresentation, plan: PlanDto): string | null {
+  const artifact = presentation.artifacts.find((candidate) => candidate.path === plan.path);
+  const parsed = artifact?.structured.plan as { objective?: { title?: unknown } | null } | undefined;
+  const title = parsed?.objective?.title;
+  if (typeof title === 'string' && title.trim() !== '') return cap(title.trim(), MAX_NAME_CHARS);
+  return plan.description?.trim() ? cap(plan.description.trim(), MAX_NAME_CHARS) : null;
 }
 
 function stageInputOf(presentation: ProjectPresentation, phase: PhaseDto, step: StepKind): StageInput {
@@ -230,11 +263,18 @@ function stageInputOf(presentation: ProjectPresentation, phase: PhaseDto, step: 
     summarised: phase.plans.filter((plan) => plan.summary !== null).length,
     done: finished(presentation, phase),
     step,
+    plans: [...phase.plans].sort(byPlanId).map((plan) => ({
+      id: plan.id,
+      url: plan.key,
+      objective: objectiveOf(presentation, plan),
+      done: plan.summary !== null,
+    })),
+    phaseUrl: buildPhaseUrl(phase.identity),
   };
 }
 
 function stagesFrom(input: StageInput): PositionStage[] {
-  const { context, research, verify, total, summarised, done, step, hasFolder, number } = input;
+  const { context, research, verify, total, summarised, done, step, hasFolder, number, plans, phaseUrl } = input;
   const allSummarised = total > 0 && summarised === total;
   const command = (verb: string) => `/gsd-${verb} ${number}`;
 
@@ -295,9 +335,31 @@ function stagesFrom(input: StageInput): PositionStage[] {
           ? { text: 'Starts once every plan has a SUMMARY.', command: null, tail: null }
           : { text: 'No VERIFICATION.md or UAT.md on disk.', command: null, tail: null };
 
+  // 067 S refined: one row of squares for every plan, then at most three plan rows (the next plan and the two
+  // after it, or the last three when all are done); the rest is one link to the phase.
+  const firstOpen = plans.findIndex((plan) => !plan.done);
+  const squares: PositionSquare[] = plans.map((plan, index) => ({
+    id: plan.id,
+    state: plan.done ? 'done' : index === firstOpen ? 'next' : 'todo',
+  }));
+  const start = firstOpen === -1 ? Math.max(0, plans.length - ROW_LIMIT) : firstOpen;
+  const rows: PositionPlanRow[] = plans.slice(start, start + ROW_LIMIT).map((plan) => ({
+    id: plan.id,
+    url: plan.url,
+    objective: plan.objective,
+    state: squares[plans.indexOf(plan)].state,
+  }));
+  const planSummary =
+    total === 0
+      ? null
+      : total === 1
+        ? `1 PLAN file · ${plans[0].id}`
+        : `${total} PLAN files · ${plans[0].id} … ${plans[total - 1].id}`;
+  const none = { summary: null, squares: [], rows: [], moreUrl: null };
+
   return [
-    { name: 'Discuss', state: discussState, count: countOf(discussState, context), files: context, empty: discussEmpty, plansTotal: 0, plansDone: 0 },
-    { name: 'Research', state: researchState, count: countOf(researchState, research), files: research, empty: researchEmpty, plansTotal: 0, plansDone: 0 },
+    { name: 'Discuss', state: discussState, count: countOf(discussState, context), files: context, empty: discussEmpty, plansTotal: 0, plansDone: 0, ...none },
+    { name: 'Research', state: researchState, count: countOf(researchState, research), files: research, empty: researchEmpty, plansTotal: 0, plansDone: 0, ...none },
     {
       name: 'Plan',
       state: planState,
@@ -306,6 +368,9 @@ function stagesFrom(input: StageInput): PositionStage[] {
       empty: planEmpty,
       plansTotal: total,
       plansDone: summarised,
+      ...none,
+      summary: planSummary,
+      moreUrl: total > 0 ? phaseUrl : null,
     },
     {
       name: 'Execute',
@@ -315,8 +380,12 @@ function stagesFrom(input: StageInput): PositionStage[] {
       empty: executeEmpty,
       plansTotal: total,
       plansDone: summarised,
+      ...none,
+      squares,
+      rows,
+      moreUrl: total > rows.length ? phaseUrl : null,
     },
-    { name: 'Verify', state: verifyState, count: countOf(verifyState, verify), files: verify, empty: verifyEmpty, plansTotal: 0, plansDone: 0 },
+    { name: 'Verify', state: verifyState, count: countOf(verifyState, verify), files: verify, empty: verifyEmpty, plansTotal: 0, plansDone: 0, ...none },
   ];
 }
 
@@ -568,6 +637,11 @@ function shippedPosition(presentation: ProjectPresentation, milestone: Milestone
       title: 'Between milestones',
       why,
       milestoneUrl: milestone.roadmapUrl,
+      phases: [...milestone.phases].sort(byPhaseNumber).map((phase) => ({
+        number: phaseLabel(phase),
+        name: cap(phase.name.trim(), MAX_NAME_CHARS),
+        done: phase.plans.every((plan) => plan.summary !== null),
+      })),
     },
     next: {
       kind: 'new-milestone',
@@ -608,6 +682,8 @@ function statePhasePosition(presentation: ProjectPresentation): DashboardPositio
         summarised: 0,
         done: false,
         step: 'discuss',
+        plans: [],
+        phaseUrl: null,
       }),
     },
     next: {

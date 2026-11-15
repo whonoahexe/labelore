@@ -192,6 +192,84 @@ describe('dashboard position: a live milestone, from the files on disk', () => {
   });
 });
 
+describe('dashboard position: stage detail kept short at any plan count (067 S refined)', () => {
+  const ROADMAP9 = `# Roadmap\n\n## Phase Details\n\n### Phase 9: Big Phase\n**Goal**: Many plans.\n`;
+  const ids = (count: number) => Array.from({ length: count }, (_, index) => `09-${String(index + 1).padStart(2, '0')}`);
+  const phaseWith = async (count: number, summarised: number) => {
+    const files: Record<string, string> = { '.planning/ROADMAP.md': ROADMAP9, '.planning/STATE.md': liveState('9') };
+    for (const [index, id] of ids(count).entries()) {
+      Object.assign(files, planFile('09-big-phase', id));
+      if (index < summarised) Object.assign(files, summaryFile('09-big-phase', id));
+    }
+    const position = await positionOf(files);
+    const stages = position?.now.kind === 'phase' ? position.now.stages : [];
+    return { position, plan: stages[2], execute: stages[3] };
+  };
+
+  it('16 plans, 9 summarised: 16 squares, three rows from the next plan, and the All link', async () => {
+    const { execute, plan } = await phaseWith(16, 9);
+    expect(execute.squares).toHaveLength(16);
+    expect(execute.squares.map((square) => square.state)).toEqual([
+      ...Array(9).fill('done'),
+      'next',
+      ...Array(6).fill('todo'),
+    ]);
+    expect(execute.rows.map((row) => [row.id, row.state])).toEqual([
+      ['09-10', 'next'],
+      ['09-11', 'todo'],
+      ['09-12', 'todo'],
+    ]);
+    expect(execute.plansTotal).toBe(16);
+    expect(execute.moreUrl).toMatch(/\/phase-9$/);
+    expect(plan.summary).toBe('16 PLAN files · 09-01 … 09-16');
+    expect(plan.moreUrl).toBe(execute.moreUrl);
+  });
+
+  it('4 plans all summarised: the last three rows and none marked next', async () => {
+    const { execute } = await phaseWith(4, 4);
+    expect(execute.rows.map((row) => [row.id, row.state])).toEqual([
+      ['09-02', 'done'],
+      ['09-03', 'done'],
+      ['09-04', 'done'],
+    ]);
+    expect(execute.moreUrl).not.toBeNull();
+  });
+
+  it('2 plans: two rows, no link; one plan reads 1 PLAN file', async () => {
+    const two = await phaseWith(2, 0);
+    expect(two.execute.rows).toHaveLength(2);
+    expect(two.execute.moreUrl).toBeNull();
+    const one = await phaseWith(1, 0);
+    expect(one.plan.summary).toBe('1 PLAN file · 09-01');
+  });
+
+  it('reads a row objective from the plan, else the ROADMAP description, else null', async () => {
+    const { execute } = await phaseWith(2, 0);
+    expect(execute.rows[0].objective).toBe('Build 09-01');
+    const described = await positionOf({
+      '.planning/ROADMAP.md': `${ROADMAP9}\n- [ ] 09-01-PLAN.md — Wire the transport\n`,
+      '.planning/STATE.md': liveState('9'),
+      ...phaseFile('09-big-phase', '09-01-PLAN.md', '---\nphase: 09\nplan: 01\n---\n# Plan\n'),
+    });
+    const stage = described?.now.kind === 'phase' ? described.now.stages[3] : null;
+    expect(stage?.rows[0].objective).toBe('Wire the transport');
+  });
+
+  it('lists one entry per phase of a shipped milestone', async () => {
+    const position = await positionOf({
+      '.planning/STATE.md': '---\nmilestone: v1.1\n---\n',
+      '.planning/milestones/v1.1-ROADMAP.md': '# v1.1\n\n### Phase 5: Views\n**Goal:** V.\n\n### Phase 6: Pages\n**Goal:** P.\n',
+      '.planning/milestones/v1.1-phases/05-views/05-01-PLAN.md': '---\nphase: 05\nplan: 01\n---\n',
+      '.planning/milestones/v1.1-phases/05-views/05-01-SUMMARY.md': '# S\n',
+      '.planning/milestones/v1.1-phases/06-pages/06-01-PLAN.md': '---\nphase: 06\nplan: 01\n---\n',
+    });
+    expect(position?.now.kind === 'between' ? position.now.phases : null).toEqual([
+      { number: '5', name: 'Views', done: true },
+      { number: '6', name: 'Pages', done: false },
+    ]);
+  });
+});
+
 describe('dashboard position: Then, the session note and the shipped states', () => {
   const day = (date: string, hour = 10) => Date.parse(`${date}T${String(hour).padStart(2, '0')}:00:00.000Z`);
   const base = {
@@ -306,7 +384,9 @@ progress:
         command: '/gsd-new-milestone',
         why: 'v1.1 is archived; ROADMAP.md has no open phases.',
       });
-      expect(JSON.stringify(position?.now)).not.toContain('Per-Type Document Views');
+      // The archived phase is listed among the shipped milestone's phases, but is never the Now title.
+      expect(position?.now.title).toBe('Between milestones');
+      expect(position?.now.when).not.toContain('Per-Type Document Views');
     });
 
     it('says audited and archived once a milestone audit file exists', async () => {

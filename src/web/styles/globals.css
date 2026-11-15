@@ -40246,3 +40246,104 @@ a.view-workstreams-file:hover {
   content: '\2192';
   flex: none;
 }
+
+/* quick-261115-o34: 067 S's plan squares and rows. One square per plan (or per phase, for a shipped milestone):
+   done is --primary, now is --in-flight-fill, the next one a 2px --in-flight-fill ring, not reached a dashed
+   quiet ring. A plan row holds a square, one ellipsised line and an optional "Next" label. */
+.position-square {
+  display: inline-block;
+  width: var(--space-2-5);
+  height: var(--space-2-5);
+  flex: none;
+  border: 1.5px solid var(--muted-foreground);
+}
+
+.position-square[data-state='done'] {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.position-square[data-state='now'] {
+  border-color: var(--in-flight-fill);
+  background: var(--in-flight-fill);
+}
+
+.position-square[data-state='next'] {
+  border-color: var(--in-flight-fill);
+  border-width: 2px;
+}
+
+.position-square[data-state='todo'] {
+  border-style: dashed;
+  opacity: 0.7;
+}
+
+.position-plan-squares {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-0-5);
+  align-items: center;
+}
+
+.position-plan-squares > span:last-child:not(.position-square) {
+  margin-left: var(--space-2);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.position-detail-list[data-kind='plans'] li {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.position-objective {
+  color: var(--muted-foreground);
+}
+
+.position-detail-list li[data-state='next'] .position-objective {
+  color: var(--foreground);
+}
+
+.position-more {
+  justify-self: start;
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.position-more:hover,
+.position-more:focus-visible {
+  color: var(--foreground);
+}
+
+/* Phone: the line stacks into one column of left-ruled points (066 C's 860px container query, here the
+   shell's 62rem breakpoint); the cells stay five across, their names may wrap and their counts keep the ellipsis. */
+@media (max-width: 62rem) {
+  .position-line {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-8);
+  }
+
+  .position-line::before {
+    display: none;
+  }
+
+  .position-point,
+  .position-point + .position-point {
+    padding: 0 0 0 var(--space-4);
+    border-left: 2px solid var(--border);
+  }
+
+  .position-pin {
+    position: absolute;
+    top: 0;
+    left: calc(var(--space-0-5) / 2 - var(--space-2));
+  }
+
+  .position-cell-name {
+    overflow-wrap: anywhere;
+  }
+}

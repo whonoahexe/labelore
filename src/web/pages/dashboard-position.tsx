@@ -51,21 +51,60 @@ function EmptyText({ empty }: { empty: PositionEmpty }): React.JSX.Element {
   );
 }
 
+function MoreLink({ to, children }: { to: string; children: string }): React.JSX.Element {
+  return (
+    <Link className="position-more" to={to}>
+      {children}
+    </Link>
+  );
+}
+
+function PlanDetail({ stage }: { stage: PositionStage }): React.JSX.Element {
+  if (stage.plansTotal === 0) {
+    return stage.empty ? <EmptyText empty={stage.empty} /> : <p className="position-empty">Nothing on disk for this stage.</p>;
+  }
+  const more = stage.moreUrl ? <MoreLink to={stage.moreUrl}>{`All ${stage.plansTotal} plans \u2192`}</MoreLink> : null;
+  if (stage.name === 'Plan') {
+    return (
+      <>
+        <p className="position-empty">
+          <span className="position-one-line">{stage.summary}</span>
+        </p>
+        {more}
+      </>
+    );
+  }
+  return (
+    <>
+      <div className="position-plan-squares">
+        {stage.squares.map((square) => (
+          <span className="position-square" data-state={square.state} key={square.id} title={square.id} />
+        ))}
+        <span>{`${stage.plansDone} of ${stage.plansTotal} done`}</span>
+      </div>
+      <ul className="position-detail-list" data-kind="plans">
+        {stage.rows.map((row) => (
+          <li data-state={row.state} key={row.id}>
+            <span className="position-square" data-state={row.state} />
+            <span className="position-one-line">
+              <Link className="position-file" to={row.url}>
+                {row.id}
+              </Link>
+              {row.objective ? <span className="position-objective">{` ${clean(row.objective)}`}</span> : null}
+            </span>
+            {row.state === 'next' ? <span className="position-label">Next</span> : null}
+          </li>
+        ))}
+      </ul>
+      {more}
+    </>
+  );
+}
+
 function StageDetail({ stage }: { stage: PositionStage }): React.JSX.Element {
   let body: React.JSX.Element;
   if (stage.name === 'Plan' || stage.name === 'Execute') {
-    body =
-      stage.plansTotal > 0 ? (
-        <p className="position-empty">
-          {stage.name === 'Plan'
-            ? `${stage.plansTotal} ${stage.plansTotal === 1 ? 'plan' : 'plans'}`
-            : `${stage.plansDone} of ${stage.plansTotal} plans done`}
-        </p>
-      ) : stage.empty ? (
-        <EmptyText empty={stage.empty} />
-      ) : (
-        <p className="position-empty">Nothing on disk for this stage.</p>
-      );
+    body = <PlanDetail stage={stage} />;
   } else if (stage.files.length > 0) {
     body = (
       <ul className="position-detail-list">
@@ -206,7 +245,27 @@ export function PositionLineView({
             {openStage ? <StageDetail stage={openStage} /> : null}
           </>
         ) : (
-          <p className="position-why">{clean(now.why)}</p>
+          <>
+            <p className="position-why">{clean(now.why)}</p>
+            {now.phases.length > 0 ? (
+              <>
+                <div className="position-plan-squares">
+                  {now.phases.map((phase) => (
+                    <span
+                      className="position-square"
+                      data-state={phase.done ? 'done' : 'todo'}
+                      key={phase.number}
+                      title={`Phase ${phase.number} \u00B7 ${clean(phase.name)}`}
+                    />
+                  ))}
+                  <span>{`${now.phases.filter((phase) => phase.done).length} of ${now.phases.length} phases`}</span>
+                </div>
+                {now.milestoneUrl ? (
+                  <MoreLink to={now.milestoneUrl}>{`All ${now.phases.length} phases \u2192`}</MoreLink>
+                ) : null}
+              </>
+            ) : null}
+          </>
         )}
       </div>
       <div className="position-point" data-point="next">
