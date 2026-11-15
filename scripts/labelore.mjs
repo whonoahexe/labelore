@@ -3,6 +3,7 @@
  * Labelore launcher: the command line behind the /gsd-labelore skill.
  *
  *   node labelore.mjs open [phase]   start (or reuse) Labelore on the current GSD project
+ *   node labelore.mjs link [phase]   print the dashboard link (read-only; what the ship:post step runs)
  *   node labelore.mjs stop           stop the server this launcher started
  *
  * The launcher is read-only towards the project it opens: its only writes are its own state
@@ -208,34 +209,110 @@ function dashboardUrl(base, slug) {
   return `${base}/${encodeURIComponent(slug)}/`;
 }
 
-async function open() {
+const normPhase = (value) =>
+  String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/^0+(?=\d)/, '');
+
+/** The deep link for a phase, or the project dashboard when the phase is not in the roadmap. */
+async function phaseUrl(base, slug, phase) {
+  const dashboard = dashboardUrl(base, slug);
+  if (phase === undefined || phase === '') return dashboard;
+  try {
+    const response = await fetch(`${base}/api/projects/${encodeURIComponent(slug)}/roadmap`, {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) return dashboard;
+    const roadmap = await response.json();
+    const flows = [roadmap.active, ...(Array.isArray(roadmap.history) ? roadmap.history : [])];
+    const rows = flows.flatMap((flow) => (flow && Array.isArray(flow.phases) ? flow.phases : []));
+    const wanted = normPhase(phase);
+    const row = rows.find((candidate) => normPhase(candidate.number) === wanted);
+    return row && typeof row.url === 'string'
+      ? `${base}/${encodeURIComponent(slug)}${row.url}`
+      : dashboard;
+  } catch {
+    return dashboard;
+  }
+}
+
+/** Adds the project to the launcher's own running server. Never talks to any other Labelore. */
+async function addProject(own, root) {
+  const response = await fetch(`${own.base}/api/projects`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', origin: own.base },
+    body: JSON.stringify({ target: root }),
+    signal: AbortSignal.timeout(10000),
+  });
+  let answer;
+  try {
+    answer = await response.json();
+  } catch {
+    answer = null;
+  }
+  if (
+    (response.status === 200 || response.status === 201) &&
+    answer &&
+    typeof answer.slug === 'string'
+  ) {
+    return answer.slug;
+  }
+  const reason =
+    answer && typeof answer.error === 'string' ? answer.error : `HTTP ${response.status}`;
+  return fail(`labelore: Labelore refused this project: ${reason}`);
+}
+
+async function open(phase) {
   requireNode();
   const start = startPoint();
   const root = findProjectRoot(start);
   if (!root) fail(`labelore: no .planning/ directory at or above ${start}`);
 
-  const own = await ownServer();
-  if (own) {
-    const known = own.projects.find((project) => project.target === root);
-    if (known) {
-      process.stdout.write(`Labelore URL: ${dashboardUrl(own.base, known.slug)}\n`);
+  let server = await ownServer();
+  let slug;
+  if (server) {
+    const known = server.projects.find((project) => project.target === root);
+    slug = known ? known.slug : await addProject(server, root);
+  } else {
+    ensureBuilt();
+    const started = await startServer(root);
+    server = await ownServer();
+    const known = server?.projects.find((project) => project.target === root);
+    if (!server || !known) {
+      process.stdout.write(`Labelore URL: ${started.base}/\n`);
       return;
     }
-    fail(
-      `labelore: Labelore started earlier is running on port ${own.port} without this project; run node "${LAUNCHER}" stop, then open again`,
+    slug = known.slug;
+  }
+  process.stdout.write(`Labelore URL: ${await phaseUrl(server.base, slug, phase)}\n`);
+}
+
+/** The ship:post path: read-only, never builds, starts or changes a server, always exits 0. */
+async function link(phase) {
+  const start = startPoint();
+  const root = findProjectRoot(start);
+  if (!root) {
+    process.stdout.write(
+      `labelore: no .planning/ directory at or above ${start}; no dashboard link\n`,
+    );
+    return;
+  }
+  try {
+    const own = await ownServer();
+    const known = own?.projects.find((project) => project.target === root);
+    if (own && known) {
+      process.stdout.write(`Labelore URL: ${await phaseUrl(own.base, known.slug, phase)}\n`);
+      return;
+    }
+    process.stdout.write(
+      `labelore: this project is not open in Labelore. Open it with /gsd-labelore (or: node "${LAUNCHER}" open)\n`,
+    );
+  } catch (error) {
+    process.stdout.write(
+      `labelore: could not reach Labelore (${error instanceof Error ? error.message : String(error)})\n`,
     );
   }
-
-  ensureBuilt();
-  const started = await startServer(root);
-  const response = await fetch(`${started.base}/api/projects`, {
-    signal: AbortSignal.timeout(5000),
-  });
-  const body = await response.json();
-  const known = body.projects.find((project) => project.target === root);
-  process.stdout.write(
-    `Labelore URL: ${known ? dashboardUrl(started.base, known.slug) : `${started.base}/`}\n`,
-  );
 }
 
 async function stop() {
@@ -259,11 +336,13 @@ async function stop() {
   process.stdout.write('labelore: not running\n');
 }
 
-const [command] = process.argv.slice(2);
+const [command, phaseArg] = process.argv.slice(2);
 if (command === 'open') {
-  await open();
+  await open(phaseArg);
+} else if (command === 'link') {
+  await link(phaseArg);
 } else if (command === 'stop') {
   await stop();
 } else {
-  fail('usage: labelore.mjs open [phase] | stop', 2);
+  fail('usage: labelore.mjs open [phase] | link [phase] | stop', 2);
 }
