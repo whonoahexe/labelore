@@ -16,6 +16,11 @@ is always to add the missing name to this document, never to edit the reference 
 
 | Class | Role | Defined at |
 |---|---|---|
+| `search-mode-switch` | The joined Search \| File tree segmented control above the query field (`SearchModeSwitch`; quick-261115-k9z) | globals.css — quick-261115-k9z block |
+| `search-mode-option` | One option of that switch; the pressed one is filled in `--primary` (tone active) (quick-261115-k9z) | globals.css — quick-261115-k9z block |
+| `planning-tree` | The project's planning file tree: clean-tree rows with a file count on each folder (quick-261115-k9z) | globals.css — quick-261115-k9z block |
+| `planning-tree-count` | The "N files in M folders" line above the tree (quick-261115-k9z) | globals.css — quick-261115-k9z block |
+| `planning-tree-file` | A file's name as a link to its page, Source mode for a text file (quick-261115-k9z) | globals.css — quick-261115-k9z block |
 | `page-stack` | Page-level vertical rhythm wrapper (`<main>`) | globals.css:822, 2508 |
 | `page-intro` | Flex header row: `<h1>` + optional trailing content | globals.css:848, 1399 |
 | `eyebrow` | Uppercase kicker label, `--primary` colored, `--fs-2`, `--font-heading`, `--ls-widest` | globals.css:828 |

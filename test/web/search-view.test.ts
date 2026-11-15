@@ -14,7 +14,9 @@ import {
   crumbsOf,
   dropdownLabelOf,
   readSearchUrl,
+  searchModeOf,
   toggleFacetValue,
+  withSearchMode,
   withTypeTab,
 } from '../../src/web/pages/search-view.ts';
 import type { SearchStateData } from '../../src/web/pages/search-view.ts';
@@ -205,5 +207,34 @@ describe('dropdownLabelOf', () => {
   it('reads the facet name and the number with two or more', () => {
     expect(dropdownLabelOf('phase', [value('04 Search', true), value('05 File Watcher', true)])).toBe('Phase · 2');
     expect(dropdownLabelOf('req', [value('A-1', true), value('A-2', true), value('A-3', true)])).toBe('Requirement · 3');
+  });
+});
+
+describe('the page mode (quick-261115-k9z)', () => {
+  it('reads tree only for view=tree', () => {
+    expect(searchModeOf('view=tree')).toBe('tree');
+    expect(searchModeOf(new URLSearchParams('q=x&view=tree'))).toBe('tree');
+    expect(searchModeOf('view=TREE')).toBe('search');
+    expect(searchModeOf('view=1')).toBe('search');
+    expect(searchModeOf('q=x')).toBe('search');
+  });
+
+  it('sets view=tree and keeps the query and every facet value, without mutating its input', () => {
+    const params = new URLSearchParams('q=auth&phase=1&phase=2&type=plan');
+    const next = withSearchMode(params, 'tree');
+    expect(next.get('view')).toBe('tree');
+    expect(next.get('q')).toBe('auth');
+    expect(next.getAll('phase')).toEqual(['1', '2']);
+    expect(next.getAll('type')).toEqual(['plan']);
+    expect(params.has('view')).toBe(false);
+  });
+
+  it('drops view and keeps the rest when going back to search', () => {
+    const params = new URLSearchParams('q=auth&view=tree&req=A-1');
+    const next = withSearchMode(params, 'search');
+    expect(next.has('view')).toBe(false);
+    expect(next.get('q')).toBe('auth');
+    expect(next.getAll('req')).toEqual(['A-1']);
+    expect(params.get('view')).toBe('tree');
   });
 });

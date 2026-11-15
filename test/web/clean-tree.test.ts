@@ -87,3 +87,28 @@ describe('CleanTree (row input)', () => {
     expect(html).toContain('padding-inline-start:calc(var(--space-6) * 2)');
   });
 });
+
+describe('CleanTree (collapseDepth, quick-261115-k9z)', () => {
+  const rows = [
+    { depth: 0, name: '.planning/', dir: true, parent: null },
+    { depth: 1, name: 'phases/', dir: true, parent: 0 },
+    { depth: 2, name: 'inside.md', dir: false, parent: 1 },
+    { depth: 1, name: 'STATE.md', dir: false, parent: 0 },
+  ];
+
+  it('starts folders at or below the depth collapsed and hides their children', () => {
+    const html = renderToStaticMarkup(createElement(CleanTree, { rows, collapseDepth: 1 }));
+    expect(html.match(/aria-expanded="true"/g)).toHaveLength(1);
+    expect(html.match(/aria-expanded="false"/g)).toHaveLength(1);
+    expect(html).toContain('<span>phases/</span>');
+    expect(html).not.toContain('inside.md');
+    expect(html).toContain('STATE.md');
+  });
+
+  it('starts every folder open without the prop', () => {
+    const html = renderToStaticMarkup(createElement(CleanTree, { rows }));
+    expect(html.match(/aria-expanded="true"/g)).toHaveLength(2);
+    expect(html).not.toContain('aria-expanded="false"');
+    expect(html).toContain('inside.md');
+  });
+});

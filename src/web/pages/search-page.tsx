@@ -6,7 +6,7 @@ import { Menu } from '@base-ui/react/menu';
 import { Check, ChevronDown, ChevronRight, FileText, Loader, Search } from 'lucide-react';
 import { Link, useProjectScope, useProjectSlug } from '../nav.tsx';
 import { Button, buttonVariants } from '../components/ui/button.tsx';
-import { apiFetch, projectUrl } from '../api.ts';
+import { apiFetch, fetchPresentation, projectUrl } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
 import { EMPTY_SELECTION, facetSearchParams } from '../../presentation/search-facets.ts';
 import type { FacetDimension, FacetSelection, SearchFacet } from '../../presentation/search-facets.ts';
@@ -20,6 +20,7 @@ import type {
 } from '../../presentation/search.ts';
 import type { SearchApiResponse } from '../../server/search-index.ts';
 import { humanizeKind } from '../views/kinds.ts';
+import { PlanningTree, SearchModeSwitch } from '../components/planning-tree.tsx';
 import { stripEmoji } from './strip-emoji.ts';
 import {
   activeTypeTab,
@@ -28,9 +29,12 @@ import {
   crumbsOf,
   dropdownLabelOf,
   readSearchUrl,
+  searchModeOf,
   toggleFacetValue,
+  withSearchMode,
   withTypeTab,
 } from './search-view.ts';
+import type { SearchMode } from './search-view.ts';
 
 function fetchSearchResults(
   slug: string,
@@ -435,6 +439,31 @@ function SearchFilters({
   );
 }
 
+/** The page in its File tree mode (quick-261115-k9z): the switch and the project's whole `.planning/` file tree, built
+ * from the presentation payload the shell already caches. The query field, tabs and filters are not drawn. */
+function SearchTreeMode({ onModeChange }: { onModeChange: (next: SearchMode) => void }): React.JSX.Element {
+  const slug = useProjectSlug() ?? '';
+  const scope = useProjectScope();
+  const presentation = useQuery({
+    queryKey: projectKey(slug, scope, 'presentation'),
+    queryFn: () => fetchPresentation(slug, scope),
+  }).data;
+  return (
+    <main className="page-stack search-page">
+      <p className="eyebrow">Search</p>
+      <h1>Planning files</h1>
+      <SearchModeSwitch mode="tree" onChange={onModeChange} />
+      {presentation === undefined ? (
+        <span className="sr-only" role="status" aria-live="polite">
+          Loading
+        </span>
+      ) : (
+        <PlanningTree artifacts={presentation.artifacts} />
+      )}
+    </main>
+  );
+}
+
 function SearchLoading(): React.JSX.Element {
   return (
     <main className="page-stack" aria-busy="true">
@@ -453,13 +482,14 @@ function SearchLoading(): React.JSX.Element {
 export function SearchPage(): React.JSX.Element {
   const [searchParams, setSearchParams] = useSearchParams();
   const { query, selection } = useMemo(() => readSearchUrl(searchParams), [searchParams]);
+  const mode = searchModeOf(searchParams);
   const slug = useProjectSlug() ?? '';
   const scope = useProjectScope();
 
   const search = useQuery({
     queryKey: projectKey(slug, scope, 'search', 'page', query, selection),
     queryFn: ({ signal }) => fetchSearchResults(slug, scope, query, selection, signal),
-    enabled: query.length > 0,
+    enabled: mode === 'search' && query.length > 0,
     // D-11: while the index builds, or a refresh is running, poll until it resolves.
     refetchInterval: (latest) =>
       latest.state.data?.status === 'building' || latest.state.data?.refreshing === true ? 500 : false,
@@ -498,11 +528,18 @@ export function SearchPage(): React.JSX.Element {
     setSearchParams(facetSearchParams(query, EMPTY_SELECTION), { replace: true });
   }
 
+  function switchMode(next: SearchMode): void {
+    setSearchParams(withSearchMode(searchParams, next));
+  }
+
+  if (mode === 'tree') return <SearchTreeMode onModeChange={switchMode} />;
+
   if (state === 'empty-query') {
     return (
       <main className="page-stack search-page">
         <p className="eyebrow">Search</p>
         <h1>Search</h1>
+        <SearchModeSwitch mode="search" onChange={switchMode} />
         <SearchQueryField query={query} onSubmit={onSubmit} />
         <p className="empty-note">Search plans, phases, decisions and every other planning file in this project.</p>
       </main>
@@ -514,6 +551,7 @@ export function SearchPage(): React.JSX.Element {
       <main className="page-stack">
         <p className="eyebrow">Connection error</p>
         <h1>Search could not be loaded.</h1>
+        <SearchModeSwitch mode="search" onChange={switchMode} />
         <section className="notice destructive" role="alert">
           <h2>Request failed</h2>
           <p>{search.error?.message}</p>
@@ -533,6 +571,7 @@ export function SearchPage(): React.JSX.Element {
           <Loader aria-hidden="true" />
           Indexing
         </span>
+        <SearchModeSwitch mode="search" onChange={switchMode} />
         <SearchQueryField query={query} onSubmit={onSubmit} />
         <p className="empty-note">Results will appear automatically once the index finishes.</p>
       </main>
@@ -544,6 +583,7 @@ export function SearchPage(): React.JSX.Element {
       <main className="page-stack search-page">
         <p className="eyebrow">Search</p>
         <h1>Search</h1>
+        <SearchModeSwitch mode="search" onChange={switchMode} />
         <SearchQueryField query={query} onSubmit={onSubmit} />
         <section className="notice destructive" role="alert">
           <h2>Search is unavailable.</h2>
@@ -561,6 +601,7 @@ export function SearchPage(): React.JSX.Element {
       <main className="page-stack search-page">
         <p className="eyebrow">Search</p>
         <h1>No matches for &quot;{query}&quot;.</h1>
+        <SearchModeSwitch mode="search" onChange={switchMode} />
         <SearchQueryField query={query} onSubmit={onSubmit} />
         <p className="empty-note">
           Nothing in .planning/ contains that exact token or its prefix. Search does not correct
@@ -580,6 +621,7 @@ export function SearchPage(): React.JSX.Element {
     <main className="page-stack search-page">
       <p className="eyebrow">Search</p>
       <h1>Results for &quot;{query}&quot;</h1>
+      <SearchModeSwitch mode="search" onChange={switchMode} />
       <SearchQueryField query={query} onSubmit={onSubmit} />
       {view.facets === null ? null : (
         <SearchFilters facets={view.facets} query={query} selection={applied} filtered={filtered} setSearchParams={setSearchParams} />

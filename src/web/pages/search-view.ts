@@ -39,6 +39,26 @@ export function readSearchUrl(params: URLSearchParams | string): { query: string
   };
 }
 
+/** The page's two modes (quick-261115-k9z): the search, or the project's file tree. */
+export type SearchMode = 'search' | 'tree';
+
+/** The address key that carries the mode; `search` is the absence of it. */
+export const SEARCH_MODE_PARAM = 'view';
+
+/** 'tree' only for exactly `view=tree`; anything else (no key, `TREE`, `1`) is the search. */
+export function searchModeOf(params: URLSearchParams | string): SearchMode {
+  const read = typeof params === 'string' ? new URLSearchParams(params) : params;
+  return read.get(SEARCH_MODE_PARAM) === 'tree' ? 'tree' : 'search';
+}
+
+/** A copy of `params` with the mode set (`view=tree`) or dropped; the query and every facet value stay. */
+export function withSearchMode(params: URLSearchParams, mode: SearchMode): URLSearchParams {
+  const next = new URLSearchParams(params);
+  if (mode === 'tree') next.set(SEARCH_MODE_PARAM, 'tree');
+  else next.delete(SEARCH_MODE_PARAM);
+  return next;
+}
+
 /**
  * Which state the page is in (FIND-09, D-11). An answer on screen decides: a refresh in flight keeps the page on
  * 'results', and a failed or pending refetch of a page that has an answer does not blank it. Only with nothing to

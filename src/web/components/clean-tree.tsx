@@ -4,7 +4,8 @@
 // MODIFIED / EXISTING chips (active / in-flight / in-flight / quiet), a "Changed only" filter shown
 // only when changed markers exist, and file/folder counts. A page that builds its own rows (10-19: the User setup
 // page's dashboard paths, with a clickable leaf and a status word on each) passes `rows` instead of an ASCII `text`;
-// the row styling, indentation, guides and folder collapsing are the same. CleanTreeFigure frames the tree in the
+// the row styling, indentation, guides and folder collapsing are the same; `collapseDepth` (quick-261115-k9z) starts
+// every folder at or below that depth collapsed (absent: all open). CleanTreeFigure frames the tree in the
 // same FigureFrame shell as the diagram, with Changed only and the counts in the frame bar. The model
 // comes from src/rendering/ascii-tree.ts. View-agnostic: no research-specific import; notes render
 // only through tokenizeInline-mapped React nodes.
@@ -97,11 +98,14 @@ export function CleanTree({
   rows: inputRows,
   changedOnly = false,
   labels,
+  collapseDepth,
 }: {
   text?: string;
   rows?: readonly CleanTreeRow[];
   changedOnly?: boolean;
   labels?: TreeLabels;
+  /** Folders at or below this depth start collapsed; absent, every folder starts open. */
+  collapseDepth?: number;
 }): React.JSX.Element {
   const rows = useMemo<DrawnRow[]>(
     () => (inputRows !== undefined ? drawnRowsOf(inputRows) : collapseFolderChains(parseTree(text))),
@@ -116,7 +120,15 @@ export function CleanTree({
     return out;
   }, [rows]);
   const keep = useMemo(() => changedOnlySet(rows), [rows]);
-  const [collapsed, setCollapsed] = useState<ReadonlySet<number>>(() => new Set());
+  const [collapsed, setCollapsed] = useState<ReadonlySet<number>>(() => {
+    const initial = new Set<number>();
+    if (collapseDepth !== undefined) {
+      rows.forEach((row, index) => {
+        if (row.dir && row.depth >= collapseDepth) initial.add(index);
+      });
+    }
+    return initial;
+  });
 
   const toggle = (index: number): void => {
     setCollapsed((previous) => {
