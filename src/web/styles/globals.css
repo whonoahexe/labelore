@@ -40209,3 +40209,40 @@ a.view-workstreams-file:hover {
   color: var(--foreground);
   font-weight: var(--fw-medium);
 }
+
+/* quick-261115-o34: the Then point's session note and the Next point's "also" list (sketch 066 C). */
+.position-quote {
+  margin: 0;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.position-quote .position-label {
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+.position-also {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) 0 0;
+  border-top: 1px dashed var(--border);
+  list-style: none;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.position-also li {
+  display: flex;
+  gap: var(--space-2);
+  overflow-wrap: anywhere;
+}
+
+.position-also li::before {
+  content: '\2192';
+  flex: none;
+}

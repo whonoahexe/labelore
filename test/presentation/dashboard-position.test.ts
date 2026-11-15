@@ -1,6 +1,7 @@
 // quick-261115-o34: the dashboard position block (sketches 066 C and 067 S) through the real reader.
 // Expected values come from the sketches' own states and from /gsd-next's routing, not from the code under
 // test. Files are written the way GSD writes them; nothing here reads a real project.
+import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -9,17 +10,18 @@ import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { buildDashboardPosition } from '../../src/presentation/dashboard-position.ts';
 import { toProjectPresentation } from '../../src/server/project-presentation.ts';
 import { fromDirectory } from '../helpers/from-directory.ts';
+import { loadFixtureProject } from '../helpers/fixture-project.ts';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const READ_AT = '2026-11-15T12:00:00.000Z';
 
-async function presentationOf(files: Record<string, string>) {
-  const snapshot = await new PlanningRepository(new InMemoryPlanningFilesystem(files), '/project').load();
+async function presentationOf(files: Record<string, string>, mtimes: number | Record<string, number> = 0) {
+  const snapshot = await new PlanningRepository(new InMemoryPlanningFilesystem(files, mtimes), '/project').load();
   return toProjectPresentation({ ...snapshot, readAt: READ_AT });
 }
 
-async function positionOf(files: Record<string, string>) {
-  return buildDashboardPosition(await presentationOf(files));
+async function positionOf(files: Record<string, string>, mtimes: number | Record<string, number> = 0) {
+  return buildDashboardPosition(await presentationOf(files, mtimes));
 }
 
 const liveState = (phase: string | null, status = 'executing') =>
@@ -187,5 +189,232 @@ describe('dashboard position: a live milestone, from the files on disk', () => {
 
   it('is null when there is no roadmap and no phase to place', async () => {
     expect(await positionOf({ '.planning/PROJECT.md': '# Bare\n' })).toBeNull();
+  });
+});
+
+describe('dashboard position: Then, the session note and the shipped states', () => {
+  const day = (date: string, hour = 10) => Date.parse(`${date}T${String(hour).padStart(2, '0')}:00:00.000Z`);
+  const base = {
+    '.planning/ROADMAP.md': ROADMAP,
+    '.planning/STATE.md': liveState('1'),
+    ...phaseFile('01-first-slice', '01-CONTEXT.md'),
+    ...phaseFile('01-first-slice', '01-RESEARCH.md'),
+  };
+
+  it('names the newest markdown file on disk with a kind phrase, a date and a link', async () => {
+    const presentation = await presentationOf(base, {
+      '.planning/ROADMAP.md': day('2026-11-10'),
+      '.planning/phases/01-first-slice/01-CONTEXT.md': day('2026-11-12'),
+      '.planning/phases/01-first-slice/01-RESEARCH.md': day('2026-11-14'),
+      '.planning/STATE.md': day('2026-11-15'),
+    });
+    const position = buildDashboardPosition(presentation);
+    const research = presentation.artifacts.find((artifact) => artifact.path.endsWith('01-RESEARCH.md'));
+    expect(position?.then).toMatchObject({
+      what: 'Research written',
+      dateLabel: '14 Nov',
+      file: { name: '01-RESEARCH.md', url: research?.key },
+    });
+  });
+
+  it('phrases a summary, an archive, a sketch and a quick task, and skips the manifests', async () => {
+    const newest = async (path: string, extra: Record<string, string> = {}) => {
+      const files = { ...base, [path]: '# File\n', ...extra };
+      const position = buildDashboardPosition(await presentationOf(files, { [path]: day('2026-11-15') }));
+      return position?.then?.what;
+    };
+    expect(
+      await newest('.planning/phases/01-first-slice/01-01-SUMMARY.md', planFile('01-first-slice', '01-01')),
+    ).toBe('Plan 01-01 finished');
+    expect(await newest('.planning/milestones/v1.1-ROADMAP.md')).toBe('v1.1 archived');
+    expect(await newest('.planning/sketches/067-x/README.md')).toBe('Sketch 067 written');
+    expect(await newest('.planning/quick/261115-k9z-x/261115-k9z-SUMMARY.md')).toBe('Quick task 261115-k9z finished');
+    const skipped = buildDashboardPosition(
+      await presentationOf(
+        { ...base, '.planning/sketches/MANIFEST.md': '# Manifest\n' },
+        {
+          '.planning/sketches/MANIFEST.md': day('2026-11-15'),
+          '.planning/phases/01-first-slice/01-RESEARCH.md': day('2026-11-14'),
+        },
+      ),
+    );
+    expect(skipped?.then?.what).toBe('Research written');
+  });
+
+  it('has no file when no mtime is known, but still carries the session note', async () => {
+    const position = await positionOf({
+      ...base,
+      '.planning/STATE.md': '---\nmilestone: v1.0\nstatus: executing\n---\n\n## Session Continuity\n\nStopped at: here we are\n',
+    });
+    expect(position?.then?.file).toBeNull();
+    expect(position?.then?.what).toBeNull();
+    expect(position?.then?.note?.text).toBe('here we are');
+  });
+
+  describe('D1: one session note, the newer of the two', () => {
+    const state = (stopped: string, session: string, activity: string) =>
+      `---\nmilestone: v1.0\nstatus: executing\nlast_activity: ${activity}\nlast_activity_desc: Phase 01 execution started\n---\n\n## Session Continuity\n\nLast session: ${session}T09:00:00.000Z\nStopped at: ${stopped}\n`;
+    const noteOf = async (session: string, activity: string) =>
+      (await positionOf({ ...base, '.planning/STATE.md': state('Phase 1 context gathered', session, activity) }))?.then?.note;
+
+    it('takes the frontmatter activity when it is newer', async () => {
+      expect(await noteOf('2026-11-14', '2026-11-15')).toEqual({ text: 'Phase 01 execution started', dateLabel: '15 Nov' });
+    });
+    it('takes Stopped at when it is newer', async () => {
+      expect(await noteOf('2026-11-15', '2026-11-14')).toEqual({ text: 'Phase 1 context gathered', dateLabel: '15 Nov' });
+    });
+    it('takes Stopped at on the same day', async () => {
+      expect((await noteOf('2026-11-15', '2026-11-15'))?.text).toBe('Phase 1 context gathered');
+    });
+  });
+
+  describe('S4 / D2: a shipped milestone is between milestones, never the archived phase', () => {
+    const ARCHIVED_STATE = `---
+milestone: v1.1
+milestone_name: Legible Documents
+current_phase: 05
+status: Awaiting next milestone
+progress:
+  total_phases: 1
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
+---
+`;
+    const archivedPlan = (id: string) =>
+      `---\nphase: 05\nplan: ${id.slice(3)}\n---\n<objective>\nBuild ${id}.\n</objective>\n`;
+    const archive: Record<string, string> = {
+      '.planning/STATE.md': ARCHIVED_STATE,
+      '.planning/milestones/v1.1-ROADMAP.md': '# v1.1\n\n### Phase 5: Per-Type Document Views\n\n**Goal:** Views.\n',
+      '.planning/milestones/v1.1-phases/05-per-type-document-views/05-01-PLAN.md': archivedPlan('05-01'),
+      '.planning/milestones/v1.1-phases/05-per-type-document-views/05-01-SUMMARY.md': '# Summary\n',
+      '.planning/milestones/v1.1-phases/05-per-type-document-views/05-02-PLAN.md': archivedPlan('05-02'),
+      '.planning/milestones/v1.1-phases/05-per-type-document-views/05-02-SUMMARY.md': '# Summary\n',
+    };
+
+    it('reads Between milestones with /gsd-new-milestone', async () => {
+      const position = await positionOf(archive);
+      expect(position?.now).toMatchObject({
+        kind: 'between',
+        title: 'Between milestones',
+        when: 'v1.1 Legible Documents · 1 phase',
+        why: '2 plans across 1 phase, archived.',
+      });
+      expect(position?.next).toMatchObject({
+        kind: 'new-milestone',
+        title: 'Start the next milestone',
+        command: '/gsd-new-milestone',
+        why: 'v1.1 is archived; ROADMAP.md has no open phases.',
+      });
+      expect(JSON.stringify(position?.now)).not.toContain('Per-Type Document Views');
+    });
+
+    it('says audited and archived once a milestone audit file exists', async () => {
+      const position = await positionOf({ ...archive, '.planning/milestones/v1.1-MILESTONE-AUDIT.md': '---\nstatus: passed\n---\n# Audit\n' });
+      expect(position?.now).toMatchObject({ why: '2 plans across 1 phase, audited and archived.' });
+      expect(position?.next.why).toBe('v1.1 is audited and archived; ROADMAP.md has no open phases.');
+    });
+
+    it('D5: drops an operator step that repeats the next command', async () => {
+      const position = await positionOf({
+        ...archive,
+        '.planning/STATE.md': `${ARCHIVED_STATE}\n## Operator Next Steps\n\n- Start the next milestone with /gsd-new-milestone\n`,
+      });
+      expect(position?.also).toEqual([]);
+    });
+  });
+
+  describe('S5: a roadmap only project, and the also items', () => {
+    const ROADMAP3 = `# Roadmap
+
+## Phase Details
+
+### Phase 1: First Slice
+**Goal**: First.
+**Depends on**: Nothing (first phase)
+
+### Phase 2: Second Slice
+**Goal**: Second.
+**Depends on**: Nothing (runs in parallel)
+
+### Phase 3: Third Slice
+**Goal**: Third.
+**Depends on**: Phase 1
+`;
+    const state = `---
+milestone: v1.0
+status: planning
+---
+
+## Deferred Items
+
+| Item | Status |
+|------|--------|
+| First | open |
+| Second | open |
+
+## Operator Next Steps
+
+1. Discuss Phase 1 with /gsd-discuss-phase 1. Then plan it.
+2. Plan an operator session at the team PCs; ask before scheduling it.
+3. Also run /gsd-discuss-phase 10 when the time comes.
+`;
+
+    it('lists ready phases, the step that adds something, and the deferred count in that order', async () => {
+      const position = await positionOf({ '.planning/ROADMAP.md': ROADMAP3, '.planning/STATE.md': state });
+      expect(position?.next).toMatchObject({ kind: 'discuss', command: '/gsd-discuss-phase 1' });
+      expect(position?.also).toEqual([
+        { kind: 'phases', text: 'Phase 2 has no open prerequisites and can be discussed alongside it.' },
+        {
+          kind: 'step',
+          text: 'Plan an operator session at the team PCs; ask before scheduling it.',
+          moreUrl: expect.stringContaining('#operator-next-steps'),
+          moreCount: 1,
+        },
+        { kind: 'deferred', count: 2, url: expect.stringContaining('#deferred-items') },
+      ]);
+    });
+
+    it('names two ready phases together, and keeps a step naming /gsd-discuss-phase 10', async () => {
+      const roadmap = `${ROADMAP3}\n### Phase 5: Fifth Slice\n**Goal**: Fifth.\n**Depends on**: Nothing\n`;
+      const position = await positionOf({ '.planning/ROADMAP.md': roadmap, '.planning/STATE.md': state });
+      expect(position?.also[0]).toEqual({
+        kind: 'phases',
+        text: 'Phases 2 and 5 have no open prerequisites and can be discussed alongside it.',
+      });
+      expect(position?.also.find((item) => item.kind === 'step')).toMatchObject({ moreCount: 1 });
+    });
+
+    it('treats a phase that depends on an unfinished phase as not ready', async () => {
+      const position = await positionOf({ '.planning/ROADMAP.md': ROADMAP3, '.planning/STATE.md': '---\nmilestone: v1.0\n---\n' });
+      expect(position?.also.some((item) => item.kind === 'phases' && item.text.includes('Phase 3'))).toBe(false);
+    });
+  });
+
+  it('falls back to STATE.md alone: Discuss phase 3 from the synthetic project', async () => {
+    const fixture = (name: string) => readFileSync(join(REPO_ROOT, 'test/fixtures/dashboard', name), 'utf8');
+    const position = await positionOf({
+      '.planning/PROJECT.md': fixture('synthetic-PROJECT.md'),
+      '.planning/STATE.md': fixture('synthetic-STATE.md'),
+    });
+    expect(position?.next).toMatchObject({ kind: 'discuss', title: 'Discuss phase 3', command: '/gsd-discuss-phase 3' });
+    expect(position?.now).toMatchObject({
+      kind: 'phase',
+      title: 'Correction Reconciliation',
+      when: 'v2.0 Gateway Corrections · Phase 3',
+      phaseUrl: null,
+    });
+    expect(position?.then?.note).toEqual({ text: 'Phase 3 context gathered', dateLabel: '14 Oct' });
+  });
+
+  it('reads the Lendshed fixture: Execute phase 2, the operator step and three deferred items', async () => {
+    const { presentation } = await loadFixtureProject();
+    const position = buildDashboardPosition(presentation);
+    expect(position?.next).toMatchObject({ kind: 'execute', title: 'Execute phase 2', plan: { id: '02-01' } });
+    expect(position?.also).toContainEqual(
+      expect.objectContaining({ kind: 'step', text: 'Run /gsd-execute-phase 4 to continue the bulk loan export waves.' }),
+    );
+    expect(position?.also).toContainEqual(expect.objectContaining({ kind: 'deferred', count: 3 }));
+    expect(position?.then?.note?.text).toBe('Phase 04 UI-SPEC reviewed, export wave 2 next');
   });
 });

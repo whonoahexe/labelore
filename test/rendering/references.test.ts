@@ -120,6 +120,7 @@ function presentation(): ProjectPresentation {
         kind: 'context',
         fileClass: 'text',
         sizeBytes: 0,
+        mtimeMs: 0,
         title: 'Current context',
         location: 'phase',
         frontmatter: {},
@@ -135,6 +136,7 @@ function presentation(): ProjectPresentation {
         kind: 'context',
         fileClass: 'text',
         sizeBytes: 0,
+        mtimeMs: 0,
         title: 'Archived context',
         location: 'archived-phase',
         frontmatter: {},
@@ -150,6 +152,7 @@ function presentation(): ProjectPresentation {
         kind: 'project',
         fileClass: 'text',
         sizeBytes: 0,
+        mtimeMs: 0,
         title: 'Project',
         location: 'root',
         frontmatter: {},
@@ -489,6 +492,7 @@ describe('BACK-02 — decision/warning mentions, phase-local-then-corpus resolut
       bodyLength: 0,
       fileClass: 'text',
       sizeBytes: 0,
+      mtimeMs: 0,
       ...overrides,
     };
   }

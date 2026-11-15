@@ -372,6 +372,7 @@ describe('buildDashboardViewModel', () => {
             bodyLength: 1,
             fileClass: 'text',
             sizeBytes: 1,
+            mtimeMs: 0,
           },
         ],
         blockers: [

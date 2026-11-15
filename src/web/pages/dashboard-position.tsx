@@ -6,11 +6,14 @@ import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type {
   DashboardPosition,
+  PositionAlso,
   PositionEmpty,
   PositionFile,
   PositionStage,
+  PositionThen,
 } from '../../presentation/dashboard-position.ts';
 import { CopyCommand } from '../components/copy-command.tsx';
+import { LeadText } from '../components/lead-tokens.tsx';
 import { Link } from '../nav.tsx';
 import { stripEmoji, stripMarkdown } from './strip-emoji.ts';
 
@@ -84,13 +87,79 @@ function StageDetail({ stage }: { stage: PositionStage }): React.JSX.Element {
   );
 }
 
-function ThenPoint(): React.JSX.Element {
+function ThenPoint({ then }: { then: PositionThen | null }): React.JSX.Element {
+  const note = then?.note ?? null;
   return (
     <div className="position-point" data-point="then">
       <span className="position-pin" aria-hidden="true" />
-      <p className="position-when">Then</p>
-      <p className="position-why">Nothing on disk is dated yet.</p>
+      {then?.file ? (
+        <>
+          <p className="position-when">{then.dateLabel ? `Then · ${then.dateLabel}` : 'Then'}</p>
+          <p className="position-what">{then.what ? clean(then.what) : null}</p>
+          <p className="position-why">
+            <Link className="position-file" to={then.file.url}>
+              {then.file.name}
+            </Link>
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="position-when">Then</p>
+          <p className="position-why">Nothing on disk is dated yet.</p>
+        </>
+      )}
+      {note ? (
+        <p className="position-quote">
+          <span className="position-label">
+            Session note
+            {note.dateLabel && note.dateLabel !== then?.dateLabel ? ` · ${note.dateLabel}` : null}
+          </span>
+          {`\u201C${clean(note.text)}\u201D`}
+        </p>
+      ) : null}
     </div>
+  );
+}
+
+function AlsoList({ also }: { also: PositionAlso[] }): React.JSX.Element | null {
+  if (also.length === 0) return null;
+  return (
+    <ul className="position-also">
+      {also.map((item) => {
+        if (item.kind === 'phases') return <li key="phases">{clean(item.text)}</li>;
+        if (item.kind === 'step') {
+          return (
+            <li key="step">
+              <span>
+                <LeadText text={stripEmoji(item.text)} />
+                {item.moreUrl ? (
+                  <>
+                    {' '}
+                    <Link className="position-file" to={item.moreUrl}>
+                      {`+${item.moreCount} more`}
+                    </Link>
+                  </>
+                ) : null}
+              </span>
+            </li>
+          );
+        }
+        return (
+          <li key="deferred">
+            <span>
+              {item.url ? (
+                <Link className="position-file" to={item.url}>
+                  {`${item.count} deferred ${item.count === 1 ? 'item' : 'items'}`}
+                </Link>
+              ) : (
+                `${item.count} deferred ${item.count === 1 ? 'item' : 'items'}`
+              )}
+              {' waiting in STATE.md'}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -108,7 +177,7 @@ export function PositionLineView({
   const openStage = now.kind === 'phase' && open !== null ? now.stages[open] : undefined;
   return (
     <section className="position-line" aria-label="Where the work stands">
-      <ThenPoint />
+      <ThenPoint then={position.then} />
       <div className="position-point" data-point="now">
         <span className="position-pin" aria-hidden="true" />
         <p className="position-when">{clean(now.when)}</p>
@@ -156,6 +225,7 @@ export function PositionLineView({
         </p>
         <CopyCommand command={next.command} />
         <p className="position-why">{clean(next.why)}</p>
+        <AlsoList also={position.also} />
       </div>
     </section>
   );

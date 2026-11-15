@@ -30,11 +30,21 @@ export class InMemoryPlanningFilesystem implements PlanningFilesystem {
 
   private readonly files: Map<string, string | Uint8Array>;
   private readonly mtimeMs: number;
+  private readonly mtimes: ReadonlyMap<string, number>;
 
-  /** A file's content is text (a string) or raw bytes (a Uint8Array, for images and binaries). */
-  constructor(contents: Record<string, string | Uint8Array>, mtimeMs = 0) {
+  /** A file's content is text (a string) or raw bytes (a Uint8Array, for images and binaries). `mtimeMs` is one
+   * modification time for every file, or a record keyed by path that dates files individually (a path left out
+   * reads 0), so a test can say which file is newest. */
+  constructor(contents: Record<string, string | Uint8Array>, mtimeMs: number | Readonly<Record<string, number>> = 0) {
     this.files = new Map(Object.entries(contents).map(([p, c]) => [normalizeRelPath(p), c]));
-    this.mtimeMs = mtimeMs;
+    this.mtimeMs = typeof mtimeMs === 'number' ? mtimeMs : 0;
+    this.mtimes = new Map(
+      typeof mtimeMs === 'number' ? [] : Object.entries(mtimeMs).map(([p, t]) => [normalizeRelPath(p), t]),
+    );
+  }
+
+  private mtimeOf(key: string): number {
+    return this.mtimes.get(key) ?? this.mtimeMs;
   }
 
   async list(relDir: string): Promise<DirEntry[]> {
@@ -62,7 +72,7 @@ export class InMemoryPlanningFilesystem implements PlanningFilesystem {
       err.code = 'ENOENT';
       throw err;
     }
-    return { content: typeof content === 'string' ? content : new TextDecoder().decode(content), mtimeMs: this.mtimeMs, size: byteLengthOf(content) };
+    return { content: typeof content === 'string' ? content : new TextDecoder().decode(content), mtimeMs: this.mtimeOf(key), size: byteLengthOf(content) };
   }
 
   async readHead(relPath: string, maxBytes: number): Promise<Uint8Array> {
@@ -86,7 +96,7 @@ export class InMemoryPlanningFilesystem implements PlanningFilesystem {
     const content = this.files.get(key);
     if (content !== undefined) {
       const bytes = bytesOf(content).slice();
-      return { bytes, mtimeMs: this.mtimeMs, size: bytes.length };
+      return { bytes, mtimeMs: this.mtimeOf(key), size: bytes.length };
     }
     const prefix = `${key}/`;
     const code = [...this.files.keys()].some((p) => p.startsWith(prefix)) ? 'EISDIR' : 'ENOENT';

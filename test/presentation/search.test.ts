@@ -56,6 +56,7 @@ function artifact(overrides: Partial<ArtifactDto> & Pick<ArtifactDto, 'path' | '
     kind: 'markdown',
     fileClass: 'text',
     sizeBytes: 0,
+    mtimeMs: 0,
     title: overrides.path,
     frontmatter: {},
     structured: {},

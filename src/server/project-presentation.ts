@@ -169,6 +169,8 @@ export interface ArtifactDto {
   fileClass: FileClass;
   /** Artifact.sizeBytes, passed through (Phase 7): the byte length the filesystem port reported. */
   sizeBytes: number;
+  /** Artifact.mtimeMs, passed through: when the file was last modified; 0 when the filesystem port reported none. */
+  mtimeMs: number;
   /** Where the file really is, relative to the project root. Present only in a workstream-scoped presentation,
    * where `path` is the scope's virtual `.planning/...` path; a flat project's artifacts carry no such key. */
   realPath?: string;
@@ -583,6 +585,7 @@ function artifactDtos(project: Project, routeTable: RouteTable, pathMapper?: Pat
         bodyLength: artifact.bodyLength,
         fileClass: artifact.fileClass,
         sizeBytes: artifact.sizeBytes,
+        mtimeMs: artifact.mtimeMs,
         ...(pathMapper ? { realPath: pathMapper(artifact.path) } : {}),
       };
     })

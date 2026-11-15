@@ -69,6 +69,58 @@ describe('dashboard position line', () => {
     expect(markup).not.toContain('Executing');
   });
 
+  it('renders Then with its date, kind phrase, file link and the quoted session note', async () => {
+    const files = {
+      '.planning/ROADMAP.md': ROADMAP,
+      '.planning/STATE.md':
+        '---\nmilestone: v1.0\nstatus: executing\n---\n\n## Session Continuity\n\nLast session: 2026-11-15T09:00:00.000Z\nStopped at: Phase 1 context gathered\n',
+      '.planning/phases/01-first-slice/01-RESEARCH.md': '# Research\n',
+    };
+    const research = Date.parse('2026-11-14T10:00:00.000Z');
+    const snapshot = await new PlanningRepository(
+      new InMemoryPlanningFilesystem(files, { '.planning/phases/01-first-slice/01-RESEARCH.md': research }),
+      '/project',
+    ).load();
+    const position = buildDashboardPosition(toProjectPresentation({ ...snapshot, readAt: '2026-11-15T12:00:00.000Z' }));
+    const markup = render(position as DashboardPosition, null);
+    expect(markup).toContain('Then · 14 Nov');
+    expect(markup).toContain('Research written');
+    expect(markup).toMatch(/<a[^>]*href="[^"]*research[^"]*"[^>]*>01-RESEARCH\.md<\/a>/);
+    expect(markup).toContain('Session note');
+    expect(markup).toContain('“Phase 1 context gathered”');
+    expect(markup).toContain('15 Nov');
+  });
+
+  it('renders Between milestones with no stage cells for a shipped milestone', async () => {
+    const files = {
+      '.planning/STATE.md': '---\nmilestone: v1.1\nmilestone_name: Legible Documents\n---\n',
+      '.planning/milestones/v1.1-ROADMAP.md': '# v1.1\n\n### Phase 5: Per-Type Document Views\n\n**Goal:** Views.\n',
+      '.planning/milestones/v1.1-phases/05-x/05-01-PLAN.md': planFile('05-01'),
+      '.planning/milestones/v1.1-phases/05-x/05-01-SUMMARY.md': '# Summary\n',
+    };
+    const snapshot = await new PlanningRepository(new InMemoryPlanningFilesystem(files), '/project').load();
+    const position = buildDashboardPosition(toProjectPresentation({ ...snapshot, readAt: '2026-11-15T12:00:00.000Z' }));
+    const markup = render(position as DashboardPosition, null);
+    expect(markup).toContain('Between milestones');
+    expect(markup).toContain('/gsd-new-milestone');
+    expect(markup).not.toContain('position-cell');
+  });
+
+  it('renders the also list: ready phases, the step, and the deferred link to the STATE.md anchor', async () => {
+    const files = {
+      '.planning/ROADMAP.md': ROADMAP.replace('**Goal**: Second.', '**Goal**: Second.\n**Depends on**: Nothing'),
+      '.planning/STATE.md':
+        '---\nmilestone: v1.0\n---\n\n## Deferred Items\n\n| Item |\n|------|\n| one |\n\n## Operator Next Steps\n\n- Ask the operator about the team PCs\n',
+    };
+    const snapshot = await new PlanningRepository(new InMemoryPlanningFilesystem(files), '/project').load();
+    const position = buildDashboardPosition(toProjectPresentation({ ...snapshot, readAt: '2026-11-15T12:00:00.000Z' }));
+    const markup = render(position as DashboardPosition, null);
+    expect(markup).toContain('Phase 2 has no open prerequisites and can be discussed alongside it.');
+    expect(markup).toContain('Ask the operator about the team PCs');
+    expect(markup).toMatch(/<a[^>]*href="[^"]*#deferred-items"[^>]*>1 deferred item<\/a>/);
+    expect(markup).toContain('waiting in STATE.md');
+  });
+
   it('opens the Discuss cell to list its files', async () => {
     const markup = render(await executing(), 0);
     expect(markup).toMatch(/<button[^>]*aria-expanded="true"[^>]*>/);
