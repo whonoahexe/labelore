@@ -143,7 +143,13 @@ test.describe('Review page', () => {
       const response = await fetch(await projectApiUrl(base, '/presentation'));
       const data = (await response.json()) as PresentationLite;
       const paths = data.artifacts
-        .filter((a) => a.path.endsWith('-REVIEW.md') && !a.path.endsWith('-UI-REVIEW.md') && !a.path.includes('sketches'))
+        .filter(
+          (a) =>
+            a.path.endsWith('-REVIEW.md') &&
+            !a.path.endsWith('-UI-REVIEW.md') &&
+            !a.path.endsWith('-EVAL-REVIEW.md') &&
+            !a.path.includes('sketches'),
+        )
         .map((a) => a.path);
       // At least seven REVIEW files sit under the Lendshed fixture.
       expect(paths.length).toBeGreaterThanOrEqual(7);

@@ -19,7 +19,7 @@ test.describe('Research page: the frame', () => {
     await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
     await page.goto(await projectUrl(BASE_URL, '/'));
     const nav = page.getByRole('navigation', { name: 'Primary navigation' });
-    await expect(nav.locator('a')).toContainText(['Dashboard', 'Roadmap', 'Research', 'Traceability', 'Sketches']);
+    await expect(nav.locator('a')).toContainText(['Dashboard', 'Roadmap', 'Research', 'Traceability']);
     await nav.getByRole('link', { name: 'Research' }).click();
     await expect(page).toHaveURL(exactUrl(await projectUrl(BASE_URL, '/research')));
     await expect(page.locator('.research-spines')).toBeVisible();

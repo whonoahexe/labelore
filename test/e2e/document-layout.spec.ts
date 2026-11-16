@@ -17,9 +17,9 @@ interface Fixture {
 }
 
 const DISCUSSION_LOG_FIXTURES: Fixture[] = [
-  { id: '01-discussion-log', pathIncludes: 'phases/01-member-sign-in-sessions/01-DISCUSSION-LOG.md', glance: true },
-  { id: '02-discussion-log', pathIncludes: 'phases/02-roles-and-permissions/02-DISCUSSION-LOG.md', glance: true },
-  { id: '03-discussion-log', pathIncludes: 'phases/03-account-admin-and-sessions/03-DISCUSSION-LOG.md', glance: true },
+  { id: '01-discussion-log', pathIncludes: 'phases/01-member-sign-in-sessions/01-DISCUSSION-LOG.md', glance: false },
+  { id: '02-discussion-log', pathIncludes: 'phases/02-roles-and-permissions/02-DISCUSSION-LOG.md', glance: false },
+  { id: '03-discussion-log', pathIncludes: 'phases/03-account-admin-and-sessions/03-DISCUSSION-LOG.md', glance: false },
   { id: '04-discussion-log', pathIncludes: 'phases/04-bulk-loan-export/04-DISCUSSION-LOG.md', glance: true },
 ];
 
