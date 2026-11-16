@@ -1,7 +1,11 @@
-// Phase 06 standing guard (D-08, D-16, D-19, TEST-03): no private project name, host, tool tell or
+// Standing leak guard (TEST-03, quick-261116-r41): no private project name, host, tool tell or
 // private-looking file name may live in a fixture (scope A), a test source (scope B) or the app
 // source and every other tracked file (scope C).
-// The deny list is committed in plain text by decision (D-08): the guard has to name what it forbids.
+// The private names and hosts live in the gitignored `.leak-names.local.json` at the repo root, shaped
+// {"words": [...], "hosts": [...]} (quick-261116-r41, superseding D-08's committed list), so the public
+// repository never names what the guard forbids. When that file is absent (a fresh clone, CI) the word
+// and host scans run over empty lists by design and no test is skipped; the tool-tell, private-prefix
+// file-name, scope-anchor and ignore-rule checks and the planted controls still run everywhere.
 //
 // Every text file git would commit is scanned (git ls-files --cached --others --exclude-standard), so a
 // new file is covered whatever its extension while ignored build output is not. The scan is a function
@@ -16,74 +20,70 @@ import { afterAll, describe, expect, it } from 'vitest';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-/** Private project and product names. A hyphen inside a word also matches a run of whitespace, so
- * the two-word capitalised form of the reference project's name is caught too. */
-const DENY_WORDS = [
-  'user',
-  'reference-portal',
-  'reference-portal',
-  'project-a',
-  'project-c',
-  'project-e',
-  'project-d',
-  'project-f',
-  'project-b',
-  'project-g',
-];
-/** Private host names. */
-const HOST_TELLS = ['host-a', 'host-b'];
+/** Where the private deny list lives: gitignored, local only, never tracked. */
+const NAMES_FILE = '.leak-names.local.json';
+
+interface PrivateNames {
+  /** Private project and product names. A hyphen inside a word also matches a run of whitespace, so
+   * the two-word capitalised form of a hyphenated name is caught too. */
+  words: string[];
+  /** Private host names. */
+  hosts: string[];
+}
+
+function isNameList(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string' && item.length > 0);
+}
+
+function readPrivateNames(path: string): PrivateNames {
+  const parsed: unknown = JSON.parse(readFileSync(path, 'utf8'));
+  const record = (typeof parsed === 'object' && parsed !== null ? parsed : {}) as Record<string, unknown>;
+  if (!isNameList(record.words) || !isNameList(record.hosts)) {
+    throw new Error(`${NAMES_FILE} must be {"words": string[], "hosts": string[]} with non-empty strings`);
+  }
+  return { words: record.words, hosts: record.hosts };
+}
+
+/** The real deny list, or empty lists when the local file is absent (never an early return or a skip). */
+const LOCAL_NAMES: PrivateNames = existsSync(join(REPO_ROOT, NAMES_FILE))
+  ? readPrivateNames(join(REPO_ROOT, NAMES_FILE))
+  : { words: [], hosts: [] };
+
+// The next two are public tool names and a file-name rule, not private names, so they stay in the
+// source and keep guarding a fresh clone.
 /** Public tool and vendor names that mark copied private infrastructure inside fixture/test text. */
 const TOOL_TELLS = ['seagate', 'sandisk', 'smartctl', 'rclone'];
 /** File names that follow a private prefix: sp, dd or sb followed by a digit or a hyphen. */
 const PRIVATE_PREFIX = /^(?:sp|dd|sb)[0-9-]/i;
 
+type Kind = 'word' | 'host' | 'tool' | 'name';
+
+/** An exemption covers only findings of its own kind in its path (`/**` suffix means a prefix). */
 interface Exemption {
   path: string;
+  kind: Kind;
   reason: string;
 }
-interface FixtureExemption extends Exemption {
-  /** Only this word is exempt; any other finding in the same file still fails. */
-  word: string;
-}
 
-/** D-16: the three places that may still name the reference project, and only by that one word. */
-const FIXTURE_EXEMPTIONS: FixtureExemption[] = [
-  {
-    path: 'fixtures/dense/**',
-    word: 'reference-portal',
-    reason: 'the made-up dense tree names the project the parser must not overfit to (D-04)',
-  },
-  {
-    path: 'fixtures/README.md',
-    word: 'reference-portal',
-    reason: 'the fixtures ledger that states that rule',
-  },
-  {
-    path: 'test/__golden__/dense.json',
-    word: 'reference-portal',
-    reason: 'the frozen golden of that tree (D-04)',
-  },
+/** Fixture places that may still name the reference project; removed once the scrub made them stale. */
+const FIXTURE_EXEMPTIONS: Exemption[] = [
+  { path: 'fixtures/dense/**', kind: 'word', reason: 'the made-up dense tree (D-04)' },
+  { path: 'fixtures/README.md', kind: 'word', reason: 'the fixtures ledger that states that rule' },
+  { path: 'test/__golden__/dense.json', kind: 'word', reason: 'the frozen golden of that tree (D-04)' },
 ];
 
-/** Test sources that must name private text to forbid it: whole file exempt, each with a reason. */
+/** Test sources that must name private text to forbid it: each exempt for one kind, with a reason. */
 const SOURCE_EXEMPTIONS: Exemption[] = [
-  { path: 'test/fixture-leak.test.ts', reason: 'holds the deny list' },
-  { path: 'test/no-skips.test.ts', reason: 'names the real-checkout path patterns it forbids' },
+  { path: 'test/fixture-leak.test.ts', kind: 'tool', reason: 'holds the public tool-tell list and plants it' },
+  { path: 'test/no-skips.test.ts', kind: 'word', reason: 'names the real-checkout path patterns it forbids' },
   {
     path: 'test/web/shell-contract.test.ts',
+    kind: 'word',
     reason: 'names the authorized reference theme in its titles and asserts the built shell never references it',
   },
 ];
 
-/** D-19: planning content, agent instructions and a local tool config stay out of this phase's reach. */
-const OUT_OF_SCOPE: Exemption[] = [
-  { path: '.planning/', reason: 'planning content, never edited by this phase (D-19)' },
-  { path: '.claude/', reason: 'agent instructions holding the reference-project paths and name (D-19)' },
-  { path: '.mcp.json', reason: 'a local tool path (D-19)' },
-];
-
-type Scope = 'fixture' | 'test' | 'source' | 'none';
-type Kind = 'word' | 'host' | 'tool' | 'name';
+type Scope = 'fixture' | 'test' | 'source';
 interface Finding {
   path: string;
   scope: Scope;
@@ -93,14 +93,13 @@ interface Finding {
 }
 
 const FIXTURE_PREFIXES = ['fixtures/', 'test/fixtures/', 'test/__golden__/', 'test/rendering/fixtures/', 'test/helpers/'];
-const ANCHORS: Record<Exclude<Scope, 'none'>, string[]> = {
+const ANCHORS: Record<Scope, string[]> = {
   fixture: ['fixtures/README.md'],
   test: ['test/fixture-leak.test.ts'],
   source: ['src/server/index.ts', 'index.html'],
 };
 
 function scopeOf(rel: string): Scope {
-  if (OUT_OF_SCOPE.some((e) => (e.path.endsWith('/') ? rel.startsWith(e.path) : rel === e.path))) return 'none';
   if (FIXTURE_PREFIXES.some((prefix) => rel.startsWith(prefix))) return 'fixture';
   if (rel.startsWith('test/') || rel === 'playwright.config.ts') return 'test';
   return 'source';
@@ -122,15 +121,14 @@ function lineOf(text: string, index: number): number {
 
 /** Scans root-relative `paths` under `root`. Paths absent on disk are filtered out (not an early
  * return); files whose first 8,000 bytes hold a NUL byte are binary (git's own rule) and skipped. */
-function scanFiles(root: string, paths: string[]): Finding[] {
+function scanFiles(root: string, paths: string[], names: PrivateNames): Finding[] {
   const findings: Finding[] = [];
   for (const rel of paths.filter((p) => existsSync(join(root, p)))) {
     const scope = scopeOf(rel);
-    if (scope === 'none') continue;
     const add = (kind: Kind, term: string, line: number) => findings.push({ path: rel, scope, kind, term, line });
 
     const segments = rel.split('/');
-    for (const word of DENY_WORDS) {
+    for (const word of names.words) {
       if (segments.some((segment) => wordRegex(word, 'i').test(segment))) add('name', word, 0);
     }
     if (PRIVATE_PREFIX.test(segments[segments.length - 1])) add('name', 'private-prefix', 0);
@@ -139,8 +137,8 @@ function scanFiles(root: string, paths: string[]): Finding[] {
     if (buffer.subarray(0, 8000).includes(0)) continue;
     const text = buffer.toString('utf8');
     const terms: [Kind, string[]][] = [
-      ['word', DENY_WORDS],
-      ['host', HOST_TELLS],
+      ['word', names.words],
+      ['host', names.hosts],
       // Scope C skips tool tells: src/rendering/ascii-graph.ts uses a public tool name as a working
       // word in its external-node classifier, which is behaviour, not a leak.
       ...(scope === 'source' ? [] : ([['tool', TOOL_TELLS]] as [Kind, string[]][])),
@@ -158,15 +156,14 @@ function scanFiles(root: string, paths: string[]): Finding[] {
 function exemptionMatches(pattern: string, rel: string): boolean {
   return pattern.endsWith('/**') ? rel.startsWith(pattern.slice(0, -2)) : rel === pattern;
 }
+function covers(e: Exemption, f: Finding): boolean {
+  return e.kind === f.kind && exemptionMatches(e.path, f.path);
+}
 function fixtureExempt(f: Finding): boolean {
-  return (
-    f.scope === 'fixture' &&
-    f.kind === 'word' &&
-    FIXTURE_EXEMPTIONS.some((e) => e.word === f.term && exemptionMatches(e.path, f.path))
-  );
+  return f.scope === 'fixture' && FIXTURE_EXEMPTIONS.some((e) => covers(e, f));
 }
 function sourceExempt(f: Finding): boolean {
-  return f.scope === 'test' && SOURCE_EXEMPTIONS.some((e) => e.path === f.path);
+  return f.scope === 'test' && SOURCE_EXEMPTIONS.some((e) => covers(e, f));
 }
 const describeFinding = (f: Finding) => `${f.path}${f.line ? `:${f.line}` : ''} (${f.kind} ${f.term})`;
 
@@ -179,9 +176,21 @@ function trackedFiles(): string[] {
   return [...new Set(out.split('\0').filter(Boolean))].sort();
 }
 
-describe('fixture, test-source and app-source leak guard (D-08, D-16, D-19, TEST-03)', () => {
+/** Invented names for the planted controls: they stand in for the private list, which a clone lacks. */
+const MADE_UP: PrivateNames = {
+  words: ['zorblax', 'quenfrum', 'vexmoor-hall', 'tralmint', 'snodwick', 'plimthorp', 'ardvelk', 'omrixel', 'bexquill', 'fyrnwold'],
+  hosts: ['gruvnet42'],
+};
+const TERM_KIND: [Kind, (names: PrivateNames) => string[]][] = [
+  ['word', (names) => names.words],
+  ['host', (names) => names.hosts],
+  ['tool', () => TOOL_TELLS],
+];
+const EMPTY: PrivateNames = { words: [], hosts: [] };
+
+describe('fixture, test-source and app-source leak guard (TEST-03, quick-261116-r41)', () => {
   const tracked = trackedFiles();
-  const findings = scanFiles(REPO_ROOT, tracked);
+  const findings = scanFiles(REPO_ROOT, tracked, LOCAL_NAMES);
   const planted: string[] = [];
   afterAll(() => {
     for (const dir of planted) rmSync(dir, { recursive: true, force: true });
@@ -189,17 +198,24 @@ describe('fixture, test-source and app-source leak guard (D-08, D-16, D-19, TEST
 
   it('keeps every exemption list frozen at its decided length', () => {
     expect(FIXTURE_EXEMPTIONS).toHaveLength(3);
-    expect(FIXTURE_EXEMPTIONS.every((e) => e.word === 'reference-portal' && e.reason.length > 0)).toBe(true);
+    expect(FIXTURE_EXEMPTIONS.every((e) => e.reason.length > 0)).toBe(true);
     expect(SOURCE_EXEMPTIONS).toHaveLength(3);
     expect(SOURCE_EXEMPTIONS.every((e) => e.reason.length > 0)).toBe(true);
-    expect(OUT_OF_SCOPE.map((e) => e.path)).toEqual(['.planning/', '.claude/', '.mcp.json']);
-    expect(OUT_OF_SCOPE.every((e) => e.reason.includes('D-19'))).toBe(true);
   });
 
   it('has each scope anchor in git file list, so an empty list cannot pass', () => {
     for (const [scope, anchors] of Object.entries(ANCHORS)) {
       for (const anchor of anchors) expect(tracked, `${scope} anchor ${anchor}`).toContain(anchor);
     }
+  });
+
+  it('loads a non-empty word list exactly when the local names file exists', () => {
+    expect(LOCAL_NAMES.words.length > 0).toBe(existsSync(join(REPO_ROOT, NAMES_FILE)));
+  });
+
+  it('keeps the local names file ignored and out of the tracked list', () => {
+    expect(() => execFileSync('git', ['check-ignore', '-q', NAMES_FILE], { cwd: REPO_ROOT })).not.toThrow();
+    expect(tracked).not.toContain(NAMES_FILE);
   });
 
   it('finds no private word, host, tool tell or file name in the fixtures', () => {
@@ -217,14 +233,11 @@ describe('fixture, test-source and app-source leak guard (D-08, D-16, D-19, TEST
     expect(offenders.map(describeFinding)).toEqual([]);
   });
 
-  it('has no stale exemption: every entry still covers at least one finding', () => {
-    for (const e of FIXTURE_EXEMPTIONS) {
-      const hits = findings.filter((f) => fixtureExempt(f) && exemptionMatches(e.path, f.path) && f.term === e.word);
-      expect(hits.length, `fixture exemption ${e.path}`).toBeGreaterThan(0);
-    }
-    for (const e of SOURCE_EXEMPTIONS) {
-      const hits = findings.filter((f) => f.path === e.path && sourceExempt(f));
-      expect(hits.length, `source exemption ${e.path}`).toBeGreaterThan(0);
+  it('has no stale exemption: an entry covers a finding exactly when its kind has terms to find', () => {
+    const terms = (kind: Kind) => TERM_KIND.find(([k]) => k === kind)![1](LOCAL_NAMES);
+    for (const e of [...FIXTURE_EXEMPTIONS, ...SOURCE_EXEMPTIONS]) {
+      const hits = findings.filter((f) => covers(e, f));
+      expect(hits.length > 0, `exemption ${e.path} (${e.kind})`).toBe(terms(e.kind).length > 0);
     }
   });
 
@@ -240,44 +253,80 @@ describe('fixture, test-source and app-source leak guard (D-08, D-16, D-19, TEST
     }
 
     it('reports every deny word, the spaced form, a host, a tool tell and a private file name, but not nodeId', () => {
+      const [spacedWord] = MADE_UP.words.filter((word) => word.includes('-'));
+      const spaced = spacedWord.replace('-', ' ');
       const files: Record<string, string> = {};
-      DENY_WORDS.forEach((word, i) => {
+      MADE_UP.words.forEach((word, i) => {
         files[`fixtures/word-${i}.md`] = `A line that mentions ${word} plainly.\n`;
       });
-      files['fixtures/spaced.md'] = 'The reference-portal checkout lives somewhere.\n';
-      files['test/spaced-cine.md'] = 'See reference-portal for details.\n';
-      files['fixtures/host.md'] = 'ssh to host-b now\n';
+      files['fixtures/spaced.md'] = `The ${spaced} checkout lives somewhere.\n`;
+      files['test/spaced-upper.md'] = `See ${spaced.toUpperCase()} for details.\n`;
+      files['fixtures/host.md'] = `ssh to ${MADE_UP.hosts[0]} now\n`;
       files['test/tool.md'] = 'smartctl output pasted here\n';
       files['test/sp01-REVIEW.md'] = 'harmless body\n';
       files['test/clean.ts'] = 'const nodeId = 1;\n';
-      files['src/comment.ts'] = '// the user checkout drifted this heading\nexport const a = 1;\n';
-      files['src/host.ts'] = "// reachable at host-b\nexport const b = 2;\n";
+      files['src/comment.ts'] = `// the ${MADE_UP.words[0]} checkout drifted this heading\nexport const a = 1;\n`;
+      files['src/host.ts'] = `// reachable at ${MADE_UP.hosts[0]}\nexport const b = 2;\n`;
       files['src/tool.ts'] = '/** classifies rclone mounts as external */\nexport const c = /rclone/;\n';
       const root = plant(files);
-      const found = scanFiles(root, Object.keys(files));
+      const found = scanFiles(root, Object.keys(files), MADE_UP);
       const byPath = (p: string) => found.filter((f) => f.path === p);
 
-      DENY_WORDS.forEach((word, i) => {
+      MADE_UP.words.forEach((word, i) => {
         expect(byPath(`fixtures/word-${i}.md`).map((f) => f.term)).toContain(word);
       });
-      expect(byPath('fixtures/spaced.md').map((f) => f.term)).toContain('reference-portal');
-      expect(byPath('test/spaced-cine.md').map((f) => f.term)).toContain('reference-portal');
+      expect(byPath('fixtures/spaced.md').map((f) => f.term)).toContain(spacedWord);
+      expect(byPath('test/spaced-upper.md').map((f) => f.term)).toContain(spacedWord);
       expect(byPath('fixtures/host.md').map((f) => f.kind)).toContain('host');
       expect(byPath('test/tool.md').map((f) => f.kind)).toContain('tool');
       expect(byPath('test/sp01-REVIEW.md').map((f) => f.kind)).toContain('name');
       expect(byPath('test/clean.ts')).toEqual([]);
-      expect(byPath('src/comment.ts').map((f) => [f.scope, f.kind, f.term])).toEqual([['source', 'word', 'user']]);
+      expect(byPath('src/comment.ts').map((f) => [f.scope, f.kind, f.term])).toEqual([['source', 'word', MADE_UP.words[0]]]);
       expect(byPath('src/host.ts').map((f) => [f.scope, f.kind])).toEqual([['source', 'host']]);
       expect(byPath('src/tool.ts')).toEqual([]);
       const moved = plant({ 'test/tool-copy.ts': files['src/tool.ts'] });
-      expect(scanFiles(moved, ['test/tool-copy.ts']).map((f) => f.kind)).toEqual(['tool']);
+      expect(scanFiles(moved, ['test/tool-copy.ts'], MADE_UP).map((f) => f.kind)).toEqual(['tool']);
+    });
+
+    it('still reports a tool tell and a private file name when the name lists are empty', () => {
+      const files = { 'test/tool.md': 'smartctl output pasted here\n', 'test/dd01-NOTES.md': 'harmless body\n' };
+      const root = plant(files);
+      const found = scanFiles(root, Object.keys(files), EMPTY);
+      expect(found.map((f) => [f.path, f.kind])).toEqual([
+        ['test/tool.md', 'tool'],
+        ['test/dd01-NOTES.md', 'name'],
+      ]);
+    });
+
+    it('reports every name in the local list when planted into a fixture file', () => {
+      const names = [...LOCAL_NAMES.words.map((term) => ['word', term] as const), ...LOCAL_NAMES.hosts.map((term) => ['host', term] as const)];
+      const files: Record<string, string> = {};
+      names.forEach(([, term], i) => {
+        files[`fixtures/local-${i}.md`] = `A line that mentions ${term} plainly.\n`;
+      });
+      const root = plant(files);
+      const found = scanFiles(root, Object.keys(files), LOCAL_NAMES);
+      names.forEach(([kind, term], i) => {
+        expect(found.filter((f) => f.path === `fixtures/local-${i}.md`).map((f) => [f.kind, f.term])).toContainEqual([kind, term]);
+      });
+    });
+
+    it('throws on a malformed names file', () => {
+      const root = plant({
+        'bad-words.json': '{"words": "not-a-list", "hosts": []}\n',
+        'bad-host.json': '{"words": [], "hosts": [""]}\n',
+        'good.json': '{"words": ["a-b"], "hosts": ["h"]}\n',
+      });
+      expect(() => readPrivateNames(join(root, 'bad-words.json'))).toThrow(NAMES_FILE);
+      expect(() => readPrivateNames(join(root, 'bad-host.json'))).toThrow(NAMES_FILE);
+      expect(readPrivateNames(join(root, 'good.json'))).toEqual({ words: ['a-b'], hosts: ['h'] });
     });
 
     it('skips a binary file and a listed path that is absent', () => {
       const root = plant({});
       mkdirSync(join(root, 'fixtures'));
-      writeFileSync(join(root, 'fixtures/font.bin'), Buffer.concat([Buffer.from([0, 1, 2]), Buffer.from('user')]));
-      expect(scanFiles(root, ['fixtures/font.bin', 'fixtures/gone.md'])).toEqual([]);
+      writeFileSync(join(root, 'fixtures/font.bin'), Buffer.concat([Buffer.from([0, 1, 2]), Buffer.from(MADE_UP.words[0])]));
+      expect(scanFiles(root, ['fixtures/font.bin', 'fixtures/gone.md'], MADE_UP)).toEqual([]);
     });
   });
 });

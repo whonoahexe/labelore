@@ -20,3 +20,6 @@ playwright-report/
 /.planning/
 /.claude/
 /.mcp.json
+
+# Private deny list read by test/fixture-leak.test.ts: local only, never tracked (quick-261116-r41).
+/.leak-names.local.json
