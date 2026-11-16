@@ -1,18 +1,19 @@
 // quick-261024-vty: the two-column planning-files drawer (sketch 038 C). Every target, count and
 // label is resolved from the project's drawer payload, never hardcoded, so the spec follows whatever the
-// Lendshed fixture project's `.planning/` holds (the 4198 server).
+// Shapes fixture project's `.planning/` holds (the 4197 server).
 import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DrawerPhasePlace, DrawerQuickTask, DrawerViewModel } from '../../src/presentation/drawer.ts';
 import { artifactUrl, exactUrl, projectApiUrl, projectUrl } from './app-url.ts';
-import { FIXTURE_BASE_URL } from './fixture-root.ts';
+import { SHAPES_BASE_URL } from './fixture-root.ts';
 import { SCREENSHOT_ROOT } from './pages.ts';
 
 const SHOTS = join(SCREENSHOT_ROOT, 'vty');
 
-// The Lendshed fixture holds shipped milestones with quick tasks; the dense fixture has only the current one.
-test.use({ baseURL: FIXTURE_BASE_URL });
+// The Shapes fixture is the committed project with a shipped milestone holding a phase with plans and a
+// quick task with a plan and a summary; Lendshed and dense do not have that shape.
+test.use({ baseURL: SHAPES_BASE_URL });
 
 async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
   await page.addInitScript((t: string) => {
@@ -86,7 +87,7 @@ test.describe('planning files drawer', () => {
   test('keeps every quick task in one place, grouped by milestone, each row opening its plan with a Plan / Summary switch', async ({ page, baseURL }) => {
     const model = await fetchDrawer(baseURL!);
     const quick = model.quick;
-    // The Lendshed fixture project holds shipped quick tasks, so the quick-task place is never empty here.
+    // The Shapes fixture project holds a shipped quick task, so the quick-task place is never empty here.
     expect(quick.count).toBeGreaterThan(0);
 
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -108,7 +109,7 @@ test.describe('planning files drawer', () => {
     const task = quick.groups
       .flatMap((group) => group.tasks)
       .find((candidate) => fileNamed(candidate, 'plan') && fileNamed(candidate, 'summary'));
-    // Some of Lendshed's shipped quick tasks hold a plan and a summary.
+    // Shapes' shipped quick task holds a plan and a summary.
     expect(task, 'a quick task with both a plan and a summary').toBeDefined();
     const planFile = fileNamed(task!, 'plan')!;
     const summaryFile = fileNamed(task!, 'summary')!;
