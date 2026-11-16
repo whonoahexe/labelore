@@ -1,6 +1,6 @@
 // Phase 13, 13-06: the search page as a source-text contract (no browser here; the browser half is
 // test/helpers/shoot-pages.ts). Web-layer files are read as raw text and never imported, in the style of
-// test/web/degradation-ui-contract.test.ts, so tsconfig.server.json need not compile JSX.
+// test/web/shell-contract.test.ts, so tsconfig.server.json need not compile JSX.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 

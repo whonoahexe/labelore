@@ -2,8 +2,8 @@
 // Lendshed phase 3 (a review and two shard fix reports) and a lone phase 4 review; composeReviewLedger and
 // the Fix tab's markup over the same project and planted folders for the shapes it does not hold (many
 // files modified, a fix file with no entries, a suffix longer than 24 characters); 09-13 adds the Disposition
-// tab, the disposition-first head and the stale-disposition marks. The ledger's view contract is in
-// review-ledger-view-contract.test.ts.
+// tab, the disposition-first head and the stale-disposition marks. The ledger's source-text rules run from
+// view-source-rules.test.ts.
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';

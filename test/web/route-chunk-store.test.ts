@@ -3,7 +3,7 @@
 // is precisely why the original regression shipped green: the broken wiring
 // (`<Suspense fallback={<RouteProgress />}>`) also contained `createPortal`, `document.body`,
 // `ROUTE_PROGRESS_DELAY_MS = 150`, `clearTimeout` and the a11y attributes, so every assertion in
-// loading-state-contract.test.ts passed while the bar could not paint on any in-app navigation.
+// the old source-text loading contract passed while the bar could not paint on any in-app navigation.
 //
 // These tests are the behavioural guard. They drive `trackRouteChunk` and `routeChunkStore`
 // directly — no DOM, no React renderer, no Suspense boundary — which is the point: the loading
