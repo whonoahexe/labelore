@@ -12,8 +12,6 @@ import type { LiftCard, LiftFrame, LiftKind, LiftedFigure } from '../../src/rend
 import { GRID_MAX_CELLS, GRID_SHAPES, gridOfCells } from '../helpers/diagram-grids.ts';
 import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
 
-const REPO = new URL('../../', import.meta.url);
-
 async function diagramOf(url: URL | string): Promise<string> {
   const body = await readFile(url, 'utf8');
   const diagram = extractResearchBriefing(body).architecture?.diagram?.text;
@@ -186,19 +184,15 @@ describe('liftDiagram — the corpus diagrams', () => {
     expect(figure.cards.filter((c) => c.kind === 'node')).toHaveLength(0);
   });
 
-  it('labelore v1.0/02 (repo file): 0 boxes, 23 node cards', async () => {
-    const text = await diagramOf(
-      new URL('.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-RESEARCH.md', REPO),
-    );
+  it('labelore v1.0/02 (committed diagram fixture): 0 boxes, 23 node cards', async () => {
+    const text = await fixture('lb-v1-02-situational-awareness-diagram');
     const figure = must(liftDiagram(text));
     expect(figure.cards.filter((c) => c.kind === 'box')).toHaveLength(0);
     expect(figure.cards.filter((c) => c.kind === 'node')).toHaveLength(23);
   });
 
-  it('labelore v1.0/01 (repo file): 3 boxes', async () => {
-    const text = await diagramOf(
-      new URL('.planning/milestones/v1.0-phases/01-read-layer-domain-model/01-RESEARCH.md', REPO),
-    );
+  it('labelore v1.0/01 (committed diagram fixture): 3 boxes', async () => {
+    const text = await fixture('lb-v1-01-read-layer-diagram');
     expect(must(liftDiagram(text)).cards.filter((c) => c.kind === 'box')).toHaveLength(3);
   });
 
@@ -210,16 +204,7 @@ describe('liftDiagram — the corpus diagrams', () => {
 
   it('isLiftableDiagram: true for the corpus diagrams, false for prose and code', async () => {
     expect(isLiftableDiagram(extractResearchBriefing(LS02_SHAPE).architecture?.diagram?.text ?? '')).toBe(true);
-    expect(
-      isLiftableDiagram(
-        await diagramOf(
-          new URL(
-            '.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-RESEARCH.md',
-            REPO,
-          ),
-        ),
-      ),
-    ).toBe(true);
+    expect(isLiftableDiagram(await fixture('lb-v1-02-situational-awareness-diagram'))).toBe(true);
     expect(isLiftableDiagram('Hello world\nthis is plain prose\nwith no glyphs')).toBe(false);
     expect(isLiftableDiagram('fn main() {\n    println!("hi");\n}')).toBe(false);
     expect(isLiftableDiagram('')).toBe(false);

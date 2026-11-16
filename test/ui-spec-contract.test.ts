@@ -12,8 +12,6 @@ import { UiSpecHandler } from '../src/planning-repo/handlers/ui-spec.ts';
 import type { ArtifactRef, RawArtifact } from '../src/planning-repo/types.ts';
 
 const REPO_ROOT = new URL('../', import.meta.url);
-const LB02 = '.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-UI-SPEC.md';
-const LB05 = '.planning/milestones/v1.1-phases/05-per-type-document-views/05-UI-SPEC.md';
 const DENSE = 'fixtures/dense/.planning/phases/01-identity-slice/01-UI-SPEC.md';
 const FX01 = 'phases/01-member-sign-in-sessions/01-UI-SPEC.md';
 const FX_V04 = 'milestones/v1.0-phases/04-shed-to-shed-transfers/04-UI-SPEC.md';
@@ -140,34 +138,7 @@ describe('extractUiSpec — Lendshed phases/03 (the Element | Kinds trap)', () =
   });
 });
 
-describe('extractUiSpec — labelore v1.0/02 (long, table-form sign-off)', () => {
-  it('reads six PASS dimensions from the table, 15 elements, 104 rows, 8 revision chapters', async () => {
-    const spec = extractUiSpec(await repoText(LB02));
-    expect(spec.signoff?.dims).toHaveLength(6);
-    expect(spec.signoff?.dims.every((d) => d.verdict === 'PASS')).toBe(true);
-    expect(counts(spec)).toEqual({ elements: 15, rows: 104, split: [90, 1, 9, 4] });
-    expect(spec.considerations?.coverage).toMatch(/^103 applicable/);
-    expect(spec.meta.preset).toContain('base-sera');
-    const unclaimed = spec.sections.filter((s) => !s.claimed).map((s) => s.heading);
-    expect(unclaimed.filter((h) => h.includes('Revision'))).toHaveLength(8);
-    // "(added this revision)" is not a kinds list: the name keeps it and the kinds come from the
-    // section's own "Element kinds" line.
-    const e15 = spec.considerations?.elements.find((e) => e.key === 'E15');
-    expect(e15?.kinds).toBe('static-content, list-collection');
-    expect(e15?.name).toContain('unrecognised PLAN section');
-  });
-});
-
 describe('extractUiSpec — draft documents', () => {
-  it('lb v1.1/05: every unchecked PASS reads as PENDING; the flat table keys elements by code or name', async () => {
-    const spec = extractUiSpec(await repoText(LB05));
-    expect(spec.meta.phase).toBe('5');
-    expect(spec.meta.created).toBe('2026-09-20');
-    expect(spec.signoff?.dims.every((d) => d.verdict === 'PENDING')).toBe(true);
-    expect(counts(spec)).toEqual({ elements: 8, rows: 53, split: [39, 0, 0, 14] });
-    expect(spec.considerations?.coverage).toMatch(/^53 applicable/);
-  });
-
   it('the dense fixture: PENDING dimensions, an empty considerations section, a "none" design system', async () => {
     const spec = extractUiSpec(await repoText(DENSE));
     expect(spec.signoff?.dims).toHaveLength(6);

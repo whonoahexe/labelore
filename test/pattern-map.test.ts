@@ -12,7 +12,6 @@ import { PatternsHandler } from '../src/planning-repo/handlers/patterns.ts';
 import type { ArtifactRef, RawArtifact } from '../src/planning-repo/types.ts';
 
 const REPO_ROOT = new URL('../', import.meta.url);
-const LB05 = '.planning/milestones/v1.1-phases/05-per-type-document-views/05-PATTERNS.md';
 const FX02 = 'milestones/v1.0-phases/02-shed-inventory-health/02-PATTERNS.md';
 const DENSE = 'fixtures/dense/.planning/phases/01-identity-slice/01-PATTERNS.md';
 
@@ -41,39 +40,6 @@ describe('splitRow', () => {
 
   it('does not split on an escaped pipe or a pipe inside a code span', () => {
     expect(splitRow('| a \\| b | `x | y` | z |')).toEqual(['a | b', '`x | y`', 'z']);
-  });
-});
-
-describe('extractPatternMap — LB v1.1/05 (repo file)', () => {
-  it('meta, classification, assignments, shared, no-analog and scope', async () => {
-    const map = extractPatternMap(await repoBody(LB05));
-    expect(map.meta.phase).toBe('5');
-    expect(map.meta.title).toBe('Per-Type Document Views');
-    expect(map.meta.mapped).toBe('2026-09-20');
-    expect(map.meta.filesAnalyzed).toBe('17 (new + modified)');
-    expect(map.meta.analogsFound).toBe('17 / 17');
-    expect(map.meta.notes.length).toBeGreaterThanOrEqual(1);
-
-    expect(map.classification).toHaveLength(17);
-    expect(map.classification.every((row) => row.group === null)).toBe(true);
-    // The rows have no trailing pipe: their last cell (Match Quality) must survive.
-    expect(map.classification.at(-1)?.quality).toBe('role-match');
-    expect(map.classification[1].quality.startsWith('exact')).toBe(true);
-
-    expect(map.assignments).toHaveLength(11);
-    expect(map.shared).toHaveLength(7);
-    expect(map.noAnalog).toHaveLength(3);
-    expect(map.excerpts).toBe(26);
-    expect(map.scope?.startsWith('`src/planning-repo/handlers/`')).toBe(true);
-    expect(map.other).toEqual([]);
-  });
-
-  it('keeps guidance as paragraphs and lists, never code', async () => {
-    const map = extractPatternMap(await repoBody(LB05));
-    for (const assignment of map.assignments) {
-      for (const block of assignment.guidance) expect(['paragraph', 'list']).toContain(block.kind);
-    }
-    expect(map.assignments[0].analog?.startsWith('`src/planning-repo/handlers/markdown-sections.ts`')).toBe(true);
   });
 });
 

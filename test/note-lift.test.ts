@@ -3,8 +3,8 @@
 // those pins come from running the sketch's own `quickModel` and `exploreModel` over its data.js. The `short`
 // title flag of the 028 A page is gone.
 // quick-261023-61l (sketch 028 A): the note body extractor - pinned against the Lendshed quick notes (the
-// made-up fixture project, heartbeat note included), the two synthetic files and labelore's own sketches
-// note; plus the tolerant degrade paths and the growth bound on the input size. Pinned values are counted
+// made-up fixture project, heartbeat note included), the two synthetic files and a made-up register note
+// ported inline (the sketches-page note shape); plus the tolerant degrade paths and the growth bound on the input size. Pinned values are counted
 // in the fixture files themselves (grep, awk, wc), never copied from the extractor's output (D-02);
 // correction 1 (the first sentence is the title and the rest of a multi-sentence lead becomes a "Then"
 // row) is marked where it applies.
@@ -31,6 +31,20 @@ function read(key: keyof typeof NOTE_FILES): NoteBody {
     lines: lineCount(text),
   });
 }
+
+const REGISTER_PATH = '.planning/notes/2026-03-27-register-page-in-lendshed.md';
+const REGISTER_TEXT =
+  [
+    'Show the tool register inside Lendshed instead of a separate spreadsheet.',
+    "`docs/register/` is a folder of exports like any other, so it belongs on the steward desk: a Register page built from register/MANIFEST.md (number, name, owner, status, tags), each entry's README.md rendered as a document page (question, intake, outcome), and a View button that opens the entry's data.js summary, served read-only by the desk from the shed host.",
+    'Every shed the desk points at gets this for free.',
+    'Want: the desk serves only files under docs/register/ (resolve the path, refuse anything that escapes it, no directory writes), and the entry opens in a frame with a sandbox and no same-origin access.',
+    "Open question: the Elm Street desk targets one shed only, so the other three sheds' registers would not show there - needs either a second desk instance or the multi-shed targeting already named as a future direction.",
+    'Open question: exports embed member names verbatim, so serving registers publicly publishes that content - check whether the desk sits behind the shed login before exposing them.',
+    'Today: registers are reached through an ad-hoc file share on the shed laptop (does not survive a reboot) plus a shared link with a random address.',
+    'Suggested interim: a startup unit for the file share and a registers address on the existing desk host.',
+  ].join(' ') + '\n';
+const registerNote: NoteBody = extractNote(REGISTER_TEXT, { titled: false, path: REGISTER_PATH, lines: lineCount(REGISTER_TEXT) });
 
 /** A run list as text, with file and identifier runs bracketed so a test sees the marking. */
 function flat(runs: NoteRun[] | undefined): string {
@@ -139,21 +153,21 @@ describe('quick notes from the synthetic fixture', () => {
   });
 });
 
-describe('labelore sketches note (correction 1)', () => {
-  const note = read('lsk');
+describe('register note, the sketches-page shape (correction 1)', () => {
+  const note = registerNote;
   it('the first sentence is the title and the rest of the lead is a Then row', () => {
-    expect(plain(note.title)).toBe('Show sketches inside Labelore instead of a separate file server.');
+    expect(plain(note.title)).toBe('Show the tool register inside Lendshed instead of a separate spreadsheet.');
     expect(labels(note)).toEqual(['Then', 'Want', 'Open question', 'Open question', 'Today', 'Suggested interim']);
     expect(tones(note)).toEqual([null, null, 'missing', 'missing', null, null]); // 'Suggested interim' is not the whole label 'Suggested'; Open question is missing (029 A)
     const then = (note.rows as NoteRow[])[0];
     expect(then.label).toBeNull();
-    expect(plain(then.runs)).toMatch(/^`\.planning\/sketches\/` is a GSD artifact folder like any other/);
+    expect(plain(then.runs)).toMatch(/^`docs\/register\/` is a folder of exports like any other/);
   });
   it('a code span that is not a file stays whole in its text run; file references are marked', () => {
     const then = (note.rows as NoteRow[])[0];
     expect(then.runs[0]).toMatchObject({ kind: 'text' });
-    expect(then.runs[0].text.startsWith('`.planning/sketches/` is a GSD')).toBe(true);
-    expect(mentionPaths(note)).toEqual(['sketches/MANIFEST.md', 'README.md', 'data.js']);
+    expect(then.runs[0].text.startsWith('`docs/register/` is a folder')).toBe(true);
+    expect(mentionPaths(note)).toEqual(['register/MANIFEST.md', 'README.md', 'data.js']);
   });
 });
 
@@ -185,9 +199,8 @@ describe('explore notes', () => {
     const body = 'First sentence.\n\n```\n# not a heading\n```\n\n#hashtag is not one either.';
     expect(extractNote(body, { titled: false }).shape).toBe('quick');
   });
-  it('lperkind and lsurvey are documents', () => {
+  it('lperkind is a document', () => {
     expect(read('lperkind').shape).toBe('document');
-    expect(read('lsurvey').shape).toBe('document');
   });
 });
 
@@ -321,8 +334,8 @@ describe('quick notes: groups, first sentences, words, the file-name title (sket
   it('dcrop: Today problem, Decided decided, How ask, two limits', () => {
     expect(groups('dcrop')).toEqual(['problem', 'decided', 'ask', 'limit', 'limit']);
   });
-  it('lsketch: Then other, Want ask, Open question open twice, Today problem, Suggested interim other', () => {
-    expect(groups('lsk')).toEqual(['other', 'ask', 'open', 'open', 'problem', 'other']);
+  it('register: Then other, Want ask, Open question open twice, Today problem, Suggested interim other', () => {
+    expect((registerNote.rows ?? []).map((row) => row.group)).toEqual(['other', 'ask', 'open', 'open', 'problem', 'other']);
   });
   it('the other sketch notes keep the sketch groups', () => {
     expect(groups('dround')).toEqual(['problem', 'ask', 'decided', 'limit']);
@@ -332,13 +345,13 @@ describe('quick notes: groups, first sentences, words, the file-name title (sket
     expect(groups('pcap')).toEqual(['problem', 'ask', 'limit']);
   });
   it('an Open question label takes the missing tone; the other tones are unchanged', () => {
-    expect(tones(read('lsk'))).toEqual([null, null, 'missing', 'missing', null, null]);
+    expect(tones(registerNote)).toEqual([null, null, 'missing', 'missing', null, null]);
     expect(tones(read('dsfx'))).toEqual(['complete', 'complete', 'in-flight', null]);
   });
   it('words are counted across the body', () => {
     const words = (key: keyof typeof NOTE_FILES): number | undefined => read(key).words;
     expect([words('dcrop'), words('dround'), words('dsfx'), words('dcall'), words('dback'), words('pcap')]).toEqual([254, 188, 178, 192, 115, 116]);
-    expect([words('star'), words('sundo'), words('lsk')]).toEqual([11, 23, 240]);
+    expect([words('star'), words('sundo'), registerNote.words]).toEqual([11, 23, 219]);
   });
   it('the file-name title drops the date and .md, with spaces and a capital', () => {
     expect(read('dcrop').fileTitle).toBe('Crop tool photos and member avatars');
@@ -355,8 +368,8 @@ describe('quick notes: groups, first sentences, words, the file-name title (sket
     expect(extractNote('One.', { titled: false, lines: 2.5 })).not.toHaveProperty('lines');
   });
   it('each row carries its first sentence and the rest, which together equal the clause', () => {
-    for (const key of ['dcrop', 'dround', 'dsfx', 'dcall', 'dback', 'pcap', 'lsk'] as const) {
-      for (const row of read(key).rows as NoteRow[]) {
+    for (const note of [...(['dcrop', 'dround', 'dsfx', 'dcall', 'dback', 'pcap'] as const).map(read), registerNote]) {
+      for (const row of note.rows as NoteRow[]) {
         const joined = row.rest.length > 0 ? `${plain(row.first)} ${plain(row.rest)}` : plain(row.first);
         expect(joined).toBe(plain(row.runs));
       }
@@ -364,8 +377,8 @@ describe('quick notes: groups, first sentences, words, the file-name title (sket
     const rows = read('dcrop').rows as NoteRow[];
     expect(plain(rows[1].first)).toBe('photos only (no clips), no turning.');
     expect(plain(rows[2].first)).toMatch(/^the browser only picks the rectangle; it uploads the full-size original together with the rectangle/);
-    const then = (read('lsk').rows as NoteRow[])[0];
-    expect(plain(then.first)).toMatch(/^`\.planning\/sketches\/` is a GSD artifact folder like any other/);
+    const then = (registerNote.rows as NoteRow[])[0];
+    expect(plain(then.first)).toMatch(/^`docs\/register\/` is a folder of exports like any other/);
   });
   it('a one-sentence clause has an empty rest', () => {
     const rows = extractNote('Lead. Want: one thing only.', { titled: false }).rows as NoteRow[];
@@ -377,7 +390,6 @@ describe('quick notes: groups, first sentences, words, the file-name title (sket
 describe('explore notes: lede, sections, items, flags, figures and totals (sketch 029 A)', () => {
   const pbrief = read('pbrief');
   const lperkind = read('lperkind');
-  const lsurvey = read('lsurvey');
   const sec = (note: NoteBody, index: number): NoteSection => (note.sections as NoteSection[])[index];
   const flagsOf = (section: NoteSection): string[] => section.flags.map((flag) => `${flag.label}:${flag.tone}`);
   const figuresOf = (note: { figures?: NoteFigure[] }): string[] => (note.figures ?? []).map((figure) => `${figure.value} ${figure.unit}`);
@@ -441,27 +453,6 @@ describe('explore notes: lede, sections, items, flags, figures and totals (sketc
     expect(sec(lperkind, 3).side).toEqual([]);
     expect(sec(lperkind, 4).itemCount).toBe(1);
     expect(sec(lperkind, 4).key).toBe('[[artifact-chrome-drift]] — the container/reflow defect, independently shippable');
-  });
-  it('lsurvey: a long lede is cut to two sentences, the summary and totals', () => {
-    expect(lsurvey.lede?.startsWith("Measured across **425 markdown files** — 163 in this project's")).toBe(true);
-    expect(lsurvey.summary).toBe(
-      'Six sections: the partition, the primitives already exist, DISCUSSION-LOG, VERIFICATION, scope consequence and related.',
-    );
-    expect(lsurvey.flagTotals).toEqual({ all: 0, decided: 0, openOrBlocked: 0 });
-    expect([lsurvey.points, lsurvey.tables, lsurvey.lines]).toEqual([24, 2, 89]);
-    expect(figuresOf(lsurvey)).toEqual([
-      '425 markdown files',
-      '138/139 instances',
-      '39 keys',
-      '18 keys',
-      '149 frontmatter lines',
-      '60 %',
-      '11 lines',
-      '100 %',
-    ]);
-    expect(sec(lsurvey, 0).side).toEqual(['table · 4 rows']);
-    expect(sec(lsurvey, 0).figures).toHaveLength(6);
-    expect(sec(lsurvey, 4).items.map((item) => item.term)).toEqual(['1 new extractor', '2 existing extractors', '16 small manifests']);
   });
   it('a ## inside a fence is not a section; ### lines are subsections; a leading # line is dropped', () => {
     const body = '# Title\n\nThe lede sentence here.\n\n## One\n\n```\n## not a section\n```\n\n### Sub\n\n- **A.** First. More.\n## Two\n';

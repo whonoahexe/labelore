@@ -1,5 +1,5 @@
-// quick-261001-qk7 (QK7-01, QK7-09): extractUatSession over the sketch's synthetic testing doc, real
-// documents (Lendshed and Labelore's own), degenerate input and the T-qk7-01 growth guard. The corpus pins live in test/web/uat-session-corpus.test.ts.
+// quick-261001-qk7 (QK7-01, QK7-09): extractUatSession over the committed synthetic testing doc, real
+// documents (Lendshed), degenerate input and the T-qk7-01 growth guard. The corpus pins live in test/web/uat-session-corpus.test.ts.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { fxPath } from './helpers/fixture-project.ts';
@@ -8,11 +8,7 @@ import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
 import { extractUatSession } from '../src/planning-repo/handlers/uat-session.ts';
 import type { UatSession } from '../src/planning-repo/handlers/uat-session.ts';
 
-const SYN = new URL('../.planning/sketches/015-uat-page/synthetic-testing-UAT.md', import.meta.url);
-const LB02 = new URL(
-  '../.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-UAT.md',
-  import.meta.url,
-);
+const SYN = new URL('./fixtures/uat/synthetic-testing-UAT.md', import.meta.url);
 const FX103 = fxPath('milestones/v1.0-phases/03-catalogue-browsing/03-UAT.md');
 const FX2 = fxPath('phases/02-roles-and-permissions/02-UAT.md');
 
@@ -38,7 +34,7 @@ describe('extractUatSession — the synthetic testing doc', () => {
     const fields = Object.fromEntries(blocked.fields.map((f) => [f.key, f.value]));
     expect(fields.blocked_by).toBe('third-party');
     expect(fields.reason).toBe(
-      'Cloudflare tunnel is rate-limiting large downloads this morning; retry after the window resets',
+      'The reverse proxy is rate-limiting large downloads this morning; retry after the window resets',
     );
     expect(session.tests[4].resultRaw).toBe('[pending]');
   });
@@ -97,23 +93,6 @@ describe('extractUatSession — real documents', () => {
     expect(first.values.fix).toBeTruthy();
     expect(first.values.fix_deployed).toBeTruthy();
     expect(first.artifacts.map((a) => a.path)).toContain('server/routes.ts:64');
-  });
-
-  it('labelore v1.0/02: prose gap cards (one with a code block), four extras, the Result line', () => {
-    const session = sessionOf(LB02);
-    expect(session.tests).toHaveLength(16);
-    expect(session.gaps.mode).toBe('prose');
-    expect(session.gaps.cards).toHaveLength(12);
-    expect(session.gaps.cards[0].title?.startsWith('G-01 —')).toBe(true);
-    expect(session.gaps.cards.some((c) => c.blocks.some((b) => b.kind === 'code'))).toBe(true);
-    expect(session.extras.map((e) => e.heading)).toEqual([
-      'Result',
-      'Round-1 detail (historical)',
-      'Gap Reconciliation — 2026-09-09',
-      'Notes',
-    ]);
-    expect(session.currentLine).toBe('Gate **not approved**. Plan 02-09 stays open.');
-    expect(session.testsNote.length).toBeGreaterThan(0);
   });
 
   it('Lendshed phases/02: the current test comes from Resolution; four bullet cards', () => {

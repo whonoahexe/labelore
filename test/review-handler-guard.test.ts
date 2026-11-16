@@ -4,6 +4,7 @@
 // `structured.warnings` is exactly what the section projection returned before this item.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
+import { fxPath } from './helpers/fixture-project.ts';
 import { projectSections } from '../src/planning-repo/handlers/section-projection.ts';
 import type { ArtifactRef, RawArtifact } from '../src/planning-repo/types.ts';
 
@@ -56,14 +57,13 @@ describe('ReviewHandler', () => {
     expect((archived.structured as ParsedReview).review.quickId).toBe('260101-abc');
   });
 
-  it('keeps structured.warnings equal to the section projection on labelore\'s own reviews', async () => {
+  it('keeps structured.warnings equal to the section projection on the Lendshed archived reviews', async () => {
     const { ReviewHandler } = await import('../src/planning-repo/handlers/review.ts');
     for (const rel of [
-      'milestones/v1.0-phases/01-read-layer-domain-model/01-REVIEW.md',
-      'milestones/v1.1-phases/05-per-type-document-views/05-REVIEW.md',
+      'milestones/v1.0-phases/01-member-data-foundation/01-REVIEW.md',
+      'milestones/v1.0-phases/04-shed-to-shed-transfers/04-REVIEW.md',
     ]) {
-      const path = new URL(`../.planning/${rel}`, import.meta.url).pathname;
-      const text = readFileSync(path, 'utf8');
+      const text = readFileSync(fxPath(rel), 'utf8');
       const result = ReviewHandler.parse(rawOf(rel, text), refOf(rel, 'archived-phase'));
       const expected = projectSections('review', result.body).warnings;
       expect((result.structured as ParsedReview).warnings).toEqual(expected);

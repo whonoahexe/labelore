@@ -22,7 +22,6 @@ const ROLES_P2 = 'phases/02-roles-and-permissions/02-REVIEW.md'; // same-path re
 const CATALOGUE_V3 = 'milestones/v1.0-phases/03-catalogue-browsing/03-REVIEW.md'; // the large report
 const ROLES_P2_FIX = 'phases/02-roles-and-permissions/02-REVIEW-FIX.md';
 const TRANSFERS_V4_FIX = 'milestones/v1.0-phases/04-shed-to-shed-transfers/04-REVIEW-FIX.md';
-const LB = new URL('../.planning/milestones/', import.meta.url).pathname;
 
 function bodyOf(path: string): string {
   return tryParseFrontmatter(readFileSync(path, 'utf8')).body;
@@ -36,7 +35,6 @@ const admin = lendshed(ADMIN_P3);
 const roles = lendshed(ROLES_P2);
 const catalogue = lendshed(CATALOGUE_V3);
 const clean = extractReviewReport(bodyOf(`${FIXTURES}clean-REVIEW.md`));
-const lb04 = extractReviewReport(bodyOf(`${LB}v1.0-phases/04-portability-degradation-hardening/04-REVIEW.md`));
 const textOf = (blocks: { kind: string; text?: string }[]): string => blocks.map((b) => b.text ?? '').join(' ');
 
 describe('the review report', () => {
@@ -92,14 +90,6 @@ describe('the review report', () => {
     expect(wr03?.refs[0].spans.map((s) => `${s.from}-${s.to}`)).toEqual(['62-81', '140-147']);
   });
 
-  it('reads the empty narrative container as handled-or-blank and the reviewer', () => {
-    expect(lb04.findings.map((f) => f.id)).toEqual(['CR-01', 'CR-02', 'WR-01', 'WR-02', 'WR-03']);
-    const narrative = lb04.sections.find((s) => s.heading.startsWith('Narrative Findings'));
-    expect(narrative?.none).toBe(true);
-    expect(lb04.sections.filter((s) => !s.handled && !s.none)).toEqual([]);
-    expect(lb04.reviewer).toBe('the agent (gsd-code-reviewer)');
-  });
-
   it('reads a clean review: no findings, the Summary, the reviewer', () => {
     expect(clean.findings).toEqual([]);
     expect(clean.summary?.blocks.length).toBeGreaterThan(0);
@@ -147,7 +137,6 @@ describe('the review report', () => {
 describe('the fix report', () => {
   const sb = lendshedFix(ROLES_P2_FIX);
   const dd = lendshedFix(TRANSFERS_V4_FIX);
-  const lb = extractReviewFixReport(bodyOf(`${LB}v1.0-phases/01-read-layer-domain-model/01-REVIEW-FIX.md`));
 
   it('reads roles phase 2: four fixed entries and three skipped', () => {
     expect(sb.entries.filter((e) => e.outcome === 'fixed').map((e) => `${e.ids[0]} ${e.commit}`)).toEqual([
@@ -179,15 +168,6 @@ describe('the fix report', () => {
     expect(dd.sections.filter((s) => !s.handled).map((s) => s.heading)).toContain('Discoveries recorded rather than fixed');
     expect(dd.sections.filter((s) => !s.handled).map((s) => s.heading)).toContain('Not touched (per the known-and-accepted list)');
     expect(dd.fixScope).toBeNull();
-  });
-
-  it('reads labelore phase 1: five fixed, the deferred bullets and the fix scope', () => {
-    expect(lb.entries.filter((e) => e.outcome === 'fixed')).toHaveLength(5);
-    expect(lb.entries.filter((e) => e.outcome === 'skipped')).toHaveLength(0);
-    expect(lb.deferred.map((d) => d.ids[0])).toEqual(['IN-01', 'IN-02']);
-    expect(lb.deferred[0].note.startsWith('Duplicated title-derivation logic between `generic.ts` and `title.ts`')).toBe(true);
-    expect(lb.fixScope).toBe('critical_warning');
-    expect(lb.entries[0].commit).toBe('6efec5a');
   });
 
   it('reads a combined heading with commas, "and" and "&"', () => {

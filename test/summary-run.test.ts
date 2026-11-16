@@ -14,10 +14,6 @@ import { WarningCollector } from '../src/planning-repo/warnings.ts';
 import { InMemoryPlanningFilesystem } from '../src/planning-fs/in-memory-fs.ts';
 import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
 
-const LB = new URL('../.planning/', import.meta.url).pathname;
-const LB0501 = `${LB}milestones/v1.1-phases/05-per-type-document-views/05-01-SUMMARY.md`;
-const LB0X4 = `${LB}milestones/v1.0-quick/260910-0x4-close-every-tech-debt-item-in-planning-v/260910-0x4-SUMMARY.md`;
-const LB3US = `${LB}milestones/v2.0-quick/260922-3us-build-sketch-004-b3-folded-chapters-docu/260922-3us-SUMMARY.md`;
 const FX0406 = fxPath('phases/04-bulk-loan-export/04-06-SUMMARY.md');
 const FX0101 = fxPath('phases/01-member-sign-in-sessions/01-01-SUMMARY.md');
 const FX0106 = fxPath('phases/01-member-sign-in-sessions/01-06-SUMMARY.md');
@@ -58,86 +54,6 @@ describe('isNoneText', () => {
     expect(isNoneText('')).toBe(true);
     expect(isNoneText('Nonexistent things happened here')).toBe(false);
     expect(isNoneText('Set the API key.')).toBe(false);
-  });
-});
-
-describe('extractSummaryRun — 05-01 (labelore, canonical)', () => {
-  const run = extractSummaryRun(bodyOf(LB0501));
-
-  it('reads the H1, one-liner and performance', () => {
-    expect(run.h1).toBe('Phase 5 Plan 01: Discussion-log view, section-projection extractor, view registry Summary');
-    expect(run.oneLiner?.startsWith('A DISCUSSION-LOG document now opens as 15 questions')).toBe(true);
-    expect(run.oneLiner?.startsWith('**')).toBe(false);
-    expect(run.performance.started).toBe('2026-09-20T20:34:57+05:30 (base commit `7c38a88`)');
-    expect(run.performance.duration).toBe('26 min');
-  });
-
-  it('splits five accomplishments and finds the tasks', () => {
-    expect(run.accomplishments).toHaveLength(5);
-    expect(run.accomplishments[1].head).toBe('The client-side view registry');
-    expect(run.tasks.map((t) => [t.n, t.hashes, t.kinds])).toEqual([
-      [1, ['807003d'], ['feat']],
-      [2, ['e4f57d1'], ['feat']],
-    ]);
-    expect(run.taskSource).toBe('list');
-  });
-
-  it('reads no deviations with a note, the self-check, next and the other sections', () => {
-    expect(run.deviations?.none).toBe(true);
-    expect(run.deviations?.items).toEqual([]);
-    expect(run.deviations?.note?.startsWith('plan executed exactly as written')).toBe(true);
-    expect(run.selfCheck).toBe('passed');
-    expect(run.next).toContain('view-registry seam');
-    expect(run.others.map((o) => [o.title, o.none])).toEqual([
-      ['Known Stubs', false],
-      ['Issues Encountered', true],
-    ]);
-    expect(run.userSetup).toBeNull();
-    expect(run.decisionsBody).toBeNull();
-  });
-
-  it('maps every path of a multi-path file bullet to its note', () => {
-    const paths = run.fileNotes.map((n) => n.path);
-    expect(paths).toContain('src/planning-repo/handlers/section-projection.ts');
-    expect(paths).toContain('test/web/view-page-contract.test.ts');
-    expect(run.fileNotes.find((n) => n.path === 'test/section-projection.test.ts')?.note).toBe('new unit/contract suites');
-    expect(run.fileNotes).toHaveLength(15);
-  });
-
-  it('keeps a ledger of every section and what it claimed', () => {
-    expect(run.sections.map((s) => s.heading)).toContain('Accomplishments');
-    expect(run.sections.find((s) => s.heading === 'Known Stubs')?.claimed).toBe(false);
-    expect(run.sections.find((s) => s.heading === 'Performance')?.claimed).toBe(true);
-  });
-});
-
-describe('extractSummaryRun — labelore quick shapes', () => {
-  it('0x4: no task list, five deviations and the out-of-scope extra', () => {
-    const run = extractSummaryRun(bodyOf(LB0X4));
-    expect(run.h1).toBe('Quick Task 260910-0x4: Close Every Tech-Debt Item Summary');
-    expect(run.tasks).toEqual([]);
-    expect(run.deviations?.items).toHaveLength(5);
-    expect(run.deviations?.items.map((d) => d.rule)).toEqual([1, 3, 1, 1, 1]);
-    expect(run.deviations?.extras.map((e) => e.title)).toEqual(['Out-of-Scope (Not Fixed — Logged)']);
-    expect(run.others.filter((o) => !o.none).map((o) => o.title)).toEqual(['Fourteen-Item Outcome Table', 'Note on STATE.md']);
-    expect(run.accomplishments).toEqual([]);
-  });
-
-  it('3us: tasks from the table with names and short hashes, deviations in bullet form', () => {
-    const run = extractSummaryRun(bodyOf(LB3US));
-    expect(run.tasks.map((t) => [t.n, t.hashes[0], t.name?.slice(0, 18)])).toEqual([
-      [1, 'b51fca1', 'Shared B3 layout e'],
-      [2, '596b417', 'PLAN and VERIFICAT'],
-      [3, 'ed62ee0', 'Full e2e coverage,'],
-    ]);
-    expect(run.taskSource).toBe('table');
-    expect(run.deviations?.items.map((d) => [d.rule, d.type, d.title, d.found])).toEqual([
-      [1, 'bug', 'Item chips overflowed at 420px', null],
-      [3, 'blocking', 'Stale fixture paths', null],
-    ]);
-    expect(run.deviations?.items[0].text).toContain('The e2e run showed');
-    expect(run.selfCheck).toBeNull();
-    expect(run.others.map((o) => o.title)).toEqual(['Verification', 'Human check (pending)']);
   });
 });
 

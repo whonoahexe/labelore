@@ -1,15 +1,16 @@
 // Where the note corpus lives, for the tests that read real note files (quick-261023-61l): Lendshed (the
-// made-up fixture project), the dashboard's synthetic fixture and labelore's own `.planning/`. No other
-// project is ever read: there is no sibling root and no home-directory path (D-05).
+// made-up fixture project), the dashboard's synthetic fixture and the committed labelore todo fixture
+// (test/fixtures/todos/labelore). All three are committed; no other project is ever read: there is no
+// sibling root, no home-directory path (D-05) and never Labelore's own untracked `.planning/`.
 import { join } from 'node:path';
 import { FX_ROOT, fxPath } from './fixture-project.ts';
-import { LB_ROOT, SYNTHETIC_ROOT, loadFiles, planningFiles } from './todo-corpus.ts';
+import { LABELORE_FIXTURE_ROOT, LB_ROOT, SYNTHETIC_ROOT, loadFiles, planningFiles } from './todo-corpus.ts';
 import type { LoadedProject } from './todo-corpus.ts';
 
 export { LB_ROOT, SYNTHETIC_ROOT, FX_ROOT };
 
-/** The roots whose notes the guard reads: labelore, the synthetic fixture and Lendshed. */
-export const NOTE_ROOTS: string[] = [LB_ROOT, SYNTHETIC_ROOT, FX_ROOT];
+/** The roots whose notes the guard reads: the labelore todo fixture, the synthetic fixture and Lendshed. */
+export const NOTE_ROOTS: string[] = [LABELORE_FIXTURE_ROOT, SYNTHETIC_ROOT, FX_ROOT];
 
 /** The Lendshed heartbeat-on-start note: the shape that used to need a sibling project on the machine. */
 export const HEARTBEAT_NOTE: string = fxPath('notes/2026-03-25-kiosk-version-heartbeat-on-start.md');
@@ -26,9 +27,7 @@ export const NOTE_FILES = {
   heartbeat: '.planning/notes/2026-03-25-kiosk-version-heartbeat-on-start.md',
   star: '.planning/notes/2026-10-16-tariff-note-tooltips.md',
   sundo: '.planning/notes/2026-10-08-brokers-want-undo.md',
-  lsk: '.planning/notes/2026-10-23-sketches-page-in-labelore.md',
   lperkind: '.planning/notes/per-kind-artifact-rendering.md',
-  lsurvey: '.planning/notes/artifact-structure-survey.md',
 } as const;
 
 /** Where each note file lives (the root that holds it). */
@@ -43,9 +42,7 @@ export const NOTE_HOME: Record<keyof typeof NOTE_FILES, string> = {
   heartbeat: FX_ROOT,
   star: SYNTHETIC_ROOT,
   sundo: SYNTHETIC_ROOT,
-  lsk: LB_ROOT,
-  lperkind: LB_ROOT,
-  lsurvey: LB_ROOT,
+  lperkind: LABELORE_FIXTURE_ROOT,
 };
 
 export function noteFile(key: keyof typeof NOTE_FILES): string {
@@ -61,10 +58,10 @@ export function notesAndTodos(root: string): Record<string, string> {
   return out;
 }
 
-/** Lendshed, the synthetic notes and todos and labelore's own notes and todos, in one
+/** Lendshed, the synthetic notes and todos and the labelore fixture's notes and todos, in one
  * in-memory project (no path collides). */
 export function combinedFiles(): Record<string, string> {
-  return { ...notesAndTodos(FX_ROOT), ...notesAndTodos(SYNTHETIC_ROOT), ...notesAndTodos(LB_ROOT) };
+  return { ...notesAndTodos(FX_ROOT), ...notesAndTodos(SYNTHETIC_ROOT), ...notesAndTodos(LABELORE_FIXTURE_ROOT) };
 }
 
 export async function loadCombined(): Promise<LoadedProject> {

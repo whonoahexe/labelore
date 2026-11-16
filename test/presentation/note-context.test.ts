@@ -88,7 +88,7 @@ describe('the notes that became a todo', () => {
     });
   });
 
-  it('star and lsk: promoted word for word - Became, P2 / medium, general; star pending, lsk done', () => {
+  it('star: promoted word for word - Became, P2 / medium, general, pending', () => {
     const star = contextOf('star').todos;
     expect(star).toHaveLength(1);
     expect(star[0]).toMatchObject({
@@ -103,19 +103,6 @@ describe('the notes that became a todo', () => {
       title: "show the tariff schedule's own notes as tooltips on HS codes",
       resolution: null,
       batchedWith: [],
-    });
-    const lsk = contextOf('lsk').todos;
-    expect(lsk).toHaveLength(1);
-    // The todo also mentions the note; promoted wins.
-    expect(lsk[0]).toMatchObject({
-      path: `${TODO}completed/001-sketches-page-in-labelore.md`,
-      relation: 'became',
-      via: 'promoted',
-      status: 'done',
-      weight: 'P2',
-      level: 'medium',
-      area: 'general',
-      title: 'Show sketches inside Labelore instead of a separate file server',
     });
   });
 });
@@ -154,8 +141,8 @@ describe('related todos and the notes with none', () => {
     });
   });
 
-  it('dback, pcap, sundo and lsurvey have no todo', () => {
-    for (const key of ['dback', 'pcap', 'sundo', 'lsurvey'] as const) expect(contextOf(key).todos).toEqual([]);
+  it('dback, pcap and sundo have no todo', () => {
+    for (const key of ['dback', 'pcap', 'sundo'] as const) expect(contextOf(key).todos).toEqual([]);
   });
 
   it('a path that is not a note, or is missing, gives nothing and never throws', () => {

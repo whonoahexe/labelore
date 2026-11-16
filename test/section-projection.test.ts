@@ -10,60 +10,6 @@ import {
   SECTION_PROJECTIONS,
 } from '../src/planning-repo/handlers/section-projection.ts';
 
-async function fixtureBody(): Promise<string> {
-  const raw = await readFile(
-    new URL('../.planning/milestones/v1.1-phases/05-per-type-document-views/05-DISCUSSION-LOG.md', import.meta.url),
-    'utf8',
-  );
-  // The real fixture carries frontmatter-free markdown prose only (an audit-trail doc, not an
-  // artifact with YAML frontmatter) — the whole file is the body `extractDiscussionLog` consumes.
-  return raw;
-}
-
-async function readRepoFile(relativePath: string): Promise<string> {
-  return await readFile(new URL(`../${relativePath}`, import.meta.url), 'utf8');
-}
-
-/** Slices the real Phase 5 CONTEXT.md's `<decisions>` tag body, mirroring context.ts's own
- * extractTag discipline — bounded, non-greedy, single tag name. */
-function extractDecisionsTagBody(content: string): string | null {
-  const m = content.match(/<decisions>([\s\S]*?)<\/decisions>/);
-  return m ? m[1].trim() : null;
-}
-
-describe('extractDiscussionLog — real Phase 5 fixture (quick-260923-jxp: 15 questions, 4 topics)', () => {
-  it('extracts all 15 questions across 4 topics (Claude\'s Discretion/Deferred Ideas hold no questions), each chosen question with exactly one chosen option', async () => {
-    const body = await fixtureBody();
-    const { questions, topics } = extractDiscussionLog(body);
-
-    expect(questions).toHaveLength(15);
-    expect(topics).toHaveLength(4);
-
-    for (const question of questions) {
-      if (question.resolution === 'chosen') {
-        expect(question.chosenOption).toBeTruthy();
-        expect(question.options.filter((option) => option.chosen)).toHaveLength(1);
-      }
-    }
-  });
-
-  it('does not list non-question sections ("Claude\'s Discretion", "Deferred Ideas") as topics at all', async () => {
-    const body = await fixtureBody();
-    const { topics } = extractDiscussionLog(body);
-    const headings = topics.map((t) => t.heading);
-    expect(headings).not.toContain("Claude's Discretion");
-    expect(headings).not.toContain('Deferred Ideas');
-  });
-
-  it('captures the tolerant userChoice enrichment line for a real question', async () => {
-    const body = await fixtureBody();
-    const { questions } = extractDiscussionLog(body);
-    const q1 = questions.find((question) => question.question.startsWith('Q1'));
-    expect(q1?.userChoice).toBe('View is primary, source behind a toggle');
-    expect(q1?.resolution).toBe('chosen');
-  });
-});
-
 describe('extractDiscussionLog — S1 inline synthetic tables', () => {
   it('promotes the FIRST ✓ row when a table carries two (D-06, stable Array.prototype.find)', () => {
     const body = [
@@ -635,22 +581,6 @@ describe('SECTION_PROJECTIONS / projectSections', () => {
   });
 });
 
-describe('parseDecisionEntries — real Phase 5 CONTEXT.md <decisions> tag body', () => {
-  it('yields 15 entries D-01…D-15 in order, D-01 folding its Reversibility continuation and D-06 starting with "A manifest that promotes"', async () => {
-    const content = await readRepoFile('.planning/milestones/v1.1-phases/05-per-type-document-views/05-CONTEXT.md');
-    const tagBody = extractDecisionsTagBody(content);
-    const entries = parseDecisionEntries(tagBody);
-
-    expect(entries.map((entry) => entry.id)).toEqual(
-      Array.from({ length: 15 }, (_, i) => `D-${String(i + 1).padStart(2, '0')}`),
-    );
-    const d01 = entries.find((entry) => entry.id === 'D-01');
-    expect(d01?.text).toContain('Reversibility');
-    const d06 = entries.find((entry) => entry.id === 'D-06');
-    expect(d06?.text.startsWith('A manifest that promotes')).toBe(true);
-  });
-});
-
 describe('parseDecisionEntries — synthetic cases', () => {
   it('returns [] for null input', () => {
     expect(parseDecisionEntries(null)).toEqual([]);
@@ -681,21 +611,17 @@ describe('parseDecisionEntries — synthetic cases', () => {
   });
 });
 
-describe('extractReviewWarnings — real 01-REVIEW.md', () => {
-  it('yields four entries WR-01…WR-04, with WR-04 starting with the gray-matter finding title', async () => {
-    const body = await readRepoFile(
-      '.planning/milestones/v1.0-phases/01-read-layer-domain-model/01-REVIEW.md',
-    );
+describe('extractReviewWarnings — Lendshed 02-REVIEW.md', () => {
+  it('yields four entries WR-01…WR-04, with WR-04 starting with the missing-index finding title', async () => {
+    const body = await readFile(fxPath('phases/02-roles-and-permissions/02-REVIEW.md'), 'utf8');
     const { warnings } = extractReviewWarnings(body);
 
     expect(warnings.map((w) => w.id)).toEqual(['WR-01', 'WR-02', 'WR-03', 'WR-04']);
-    expect(warnings[3].title.startsWith('`gray-matter` is a runtime dependency')).toBe(true);
+    expect(warnings[3].title.startsWith('No index on `shed_id`')).toBe(true);
   });
 
   it('projectSections("review", ...) returns the same shape as extractReviewWarnings', async () => {
-    const body = await readRepoFile(
-      '.planning/milestones/v1.0-phases/01-read-layer-domain-model/01-REVIEW.md',
-    );
+    const body = await readFile(fxPath('phases/02-roles-and-permissions/02-REVIEW.md'), 'utf8');
     expect(projectSections('review', body)).toEqual(extractReviewWarnings(body));
   });
 });

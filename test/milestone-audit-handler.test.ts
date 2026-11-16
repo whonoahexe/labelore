@@ -1,5 +1,5 @@
 // Phase 9 (09-14): the milestone audit handler. It reads the audit shapes found on real projects - the
-// frontmatter-heavy Lendshed audit, this repo's own, the dense fixture's prose-only audits and the old
+// frontmatter-heavy Lendshed audit, the dense fixture's prose-only audits and the old
 // heading-and-one-sentence fixture - into `structured.audit`, frontmatter first.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
@@ -44,7 +44,6 @@ function textOf(url: URL): string {
 
 const DENSE_V2 = new URL('../fixtures/dense/.planning/milestones/v2.0-MILESTONE-AUDIT.md', import.meta.url);
 const OLD_SHAPE = new URL('./fixtures/dashboard/ledger/.planning/milestones/v1.0-MILESTONE-AUDIT.md', import.meta.url);
-const OWN_AUDIT = new URL('../.planning/milestones/v1.0-MILESTONE-AUDIT.md', import.meta.url);
 
 describe('MilestoneAuditHandler', () => {
   it('claims a milestone-audit ref ahead of the generic handler, and nothing else', () => {
@@ -79,12 +78,6 @@ describe('MilestoneAuditHandler', () => {
     expect(audit.verdict).toEqual({ status: null, raw: null, source: null });
     expect(audit.audited).toBeNull();
     expect(result.title).toBe('v1.0 audit');
-  });
-
-  it("reads this repo's own v1.0 audit: passed, with an ISO audited date", () => {
-    const audit = auditOf(textOf(OWN_AUDIT));
-    expect(audit.verdict).toEqual({ status: 'passed', raw: null, source: 'frontmatter' });
-    expect(audit.audited).toBe('2026-09-09');
   });
 
   it('reads the minimal frontmatter fixture', () => {
@@ -210,41 +203,6 @@ describe('extractMilestoneAudit - the Lendshed audit', () => {
     expect(audit.extras).toEqual([
       { key: 'supersedes', rows: [{ label: '', value: 'the 2026-03-18 gaps_found audit of this same milestone' }] },
     ]);
-  });
-});
-
-describe("extractMilestoneAudit - this repo's own audit", () => {
-  const audit = auditOf(textOf(OWN_AUDIT));
-
-  it('reads its four scores and three empty gap groups', () => {
-    expect(audit.scores.map((score) => `${score.key} ${score.n}/${score.m}`)).toEqual([
-      'requirements 45/45',
-      'phases 4/4',
-      'integration 7/7',
-      'flows 7/7',
-    ]);
-    expect(audit.gaps?.map((group) => group.items.length)).toEqual([0, 0, 0]);
-  });
-
-  it('counts every object debt item closed and keeps closed_by as a field', () => {
-    const items = (audit.techDebt ?? []).flatMap((group) => group.items);
-    expect(items.length).toBeGreaterThan(10);
-    expect(items.every((item) => item.closed && item.status === 'closed')).toBe(true);
-    expect(items[0].fields.map((field) => field.label)).toEqual(['closed_by']);
-  });
-
-  it('lists previously_blocking_now_closed, tech_debt_reconciliation and supersedes as labelled rows', () => {
-    const keys = audit.extras.map((extra) => extra.key);
-    expect(keys).toEqual(['supersedes', 'previously_blocking_now_closed', 'tech_debt_reconciliation']);
-    const blocking = audit.extras[1];
-    expect(blocking.rows.map((row) => row.label)).toEqual(['TGT-08', 'FIND-04', 'ATT-01', 'ATT-02', 'FLOW-G', 'FLOW-B']);
-    expect(audit.extras[2].rows.map((row) => row.label)).toContain('closed_count');
-  });
-
-  it('reads the Nyquist reason and overall though every list is empty', () => {
-    expect(audit.nyquist?.overall).toBe('not_applicable');
-    expect(audit.nyquist?.reason).toContain('workflow.nyquist_validation is false');
-    expect(audit.nyquist?.compliant).toEqual([]);
   });
 });
 

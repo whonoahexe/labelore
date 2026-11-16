@@ -2,15 +2,13 @@
 // committed fixture) through the real frontmatter parse, and the numbers pinned here are counted in the
 // fixture files themselves, never taken from this extractor's own output. The degrade cases follow the
 // debug-session idiom: no string makes the extractor throw, and a hostile body's cost grows linearly.
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
 import { extractTodoFile, levelOf, stampText } from '../src/planning-repo/handlers/todo-file.ts';
 import type { TodoBlock, TodoFileBody } from '../src/planning-repo/handlers/todo-file.ts';
 import { severityOf } from '../src/server/dashboard-ledger.ts';
 import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
-import { LB_ROOT, TODO_KEYS, readKeyed } from './helpers/todo-corpus.ts';
+import { TODO_KEYS, readKeyed } from './helpers/todo-corpus.ts';
 
 function read(key: string): TodoFileBody {
   const file = TODO_KEYS[key];
@@ -174,18 +172,6 @@ describe('extractTodoFile on the sketch todos', () => {
     for (const key of ['sretry', 'srec', 'sport', 'lfig']) {
       expect(read(key).noteRefs).toEqual({ listed: [], wiki: [], mentioned: [], promotedText: null });
     }
-  });
-
-  const live = join(LB_ROOT, '.planning/todos/completed/001-sketches-page-in-labelore.md');
-  it("reads labelore's own promoted todo (001)", () => {
-    const fm = tryParseFrontmatter(readFileSync(live, 'utf8'));
-    const todo = extractTodoFile({ body: fm.body, frontmatter: fm.data, path: '.planning/todos/completed/001-sketches-page-in-labelore.md' });
-    expect(todo).toMatchObject({ status: 'done', folder: 'completed', created: '2026-10-23', level: 'medium', priority: 'P2', theme: 'general' });
-    expect(todo.lead?.heading).toBe('Goal');
-    expect(todo.plan).toMatchObject({ kind: 'acceptance', checks: { done: 5, total: 7 } });
-    expect(todo.extras.map((extra) => extra.heading)).toEqual(['Context', 'Progress']);
-    expect(todo.noteRefs.promotedText).toHaveLength(1686);
-    expect(todo.noteRefs.mentioned).toContain('.planning/notes/2026-10-23-sketches-page-in-labelore.md');
   });
 });
 

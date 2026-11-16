@@ -1,4 +1,4 @@
-// quick-261003-528: extractUiReview on the sketch's synthetic doc, the real corpus rows, and the
+// quick-261003-528: extractUiReview on the committed synthetic doc, the Lendshed corpus rows, and the
 // degrade cases (empty body, no Overall line, an unclosed fence, a pillar heading with no score, a
 // Top 3 section with prose only, an orphan "See Priority Fix 9", and a 1 MB body holding one
 // 200k-character line that must grow no faster than linearly).
@@ -13,13 +13,7 @@ function bodyOf(path: URL | string): string {
   return tryParseFrontmatter(readFileSync(path, 'utf8')).body;
 }
 
-const SYN = new URL('../.planning/sketches/018-ui-review-page/synthetic-UI-REVIEW.md', import.meta.url);
-const LB05 = new URL('../.planning/milestones/v1.1-phases/05-per-type-document-views/05-UI-REVIEW.md', import.meta.url);
-const LB03 = new URL('../.planning/milestones/v1.0-phases/03-search-browsing-traceability/03-UI-REVIEW.md', import.meta.url);
-const LB04 = new URL(
-  '../.planning/milestones/v1.0-phases/04-portability-degradation-hardening/04-UI-REVIEW.md',
-  import.meta.url,
-);
+const SYN = new URL('./fixtures/ui-review/synthetic-UI-REVIEW.md', import.meta.url);
 const FX03 = fxPath('phases/03-account-admin-and-sessions/03-UI-REVIEW.md');
 
 describe('classify and fileRefs', () => {
@@ -98,21 +92,6 @@ describe('extractUiReview — synthetic doc', () => {
 });
 
 describe('extractUiReview — corpus rows', () => {
-  it('labelore 05: title-fallback fix links, notes, a code block, a sub-list, four file groups', () => {
-    const audit = extractUiReview(bodyOf(LB05));
-    expect(audit.fixes.map((f) => f.pillars)).toEqual([['Color', 'Experience Design'], ['Typography'], ['Visuals']]);
-    for (const pillar of audit.pillars) expect(pillar.notes).toHaveLength(2);
-    const color = audit.pillars[2].groups.flatMap((g) => g.items);
-    expect(color.some((i) => i.kind === 'flag' && i.code !== null && i.code.includes('card-veil'))).toBe(true);
-    const accent = audit.pillars[2].groups.flatMap((g) => g.items).find((i) => i.text.includes('Accent color usage'));
-    expect(accent?.sub).toHaveLength(5);
-    expect(audit.back.map((b) => b.heading)).toEqual(['Registry Safety', 'Files Audited', 'Summary']);
-    const files = audit.back[1].files;
-    expect(files?.groups).toHaveLength(4);
-    expect(files?.groups.reduce((n, g) => n + g.entries.length, 0)).toBe(24);
-    expect(files?.groups.reduce((n, g) => n + g.other.length, 0)).toBe(1);
-  });
-
   it('lendshed 03: no frontmatter, a dropped third fix, a lead sentence, a correction note', () => {
     const audit = extractUiReview(bodyOf(FX03));
     expect(audit.h1Phase).toBe('03');
@@ -125,33 +104,6 @@ describe('extractUiReview — corpus rows', () => {
     expect(summary?.parts.map((p) => p.heading)).toContain('Correction note');
   });
 
-  it('labelore 03: no fixes, history from the Supersession Notice, back sections in document order', () => {
-    const audit = extractUiReview(bodyOf(LB03));
-    expect(audit.fixes).toEqual([]);
-    expect(audit.fixesNote).toBeNull();
-    expect(audit.history.map((h) => h.when)).toEqual(['2026-09-02', '2026-09-10 early']);
-    expect(audit.back.map((b) => b.heading)).toEqual([
-      'Supersession Notice',
-      'Technical Verification',
-      'Summary',
-      'Files Audited',
-    ]);
-  });
-
-  it('labelore 04: the note in place of fixes, history from the header list, caption groups', () => {
-    const audit = extractUiReview(bodyOf(LB04));
-    expect(audit.fixes).toEqual([]);
-    expect(audit.fixesNote).toBe('All specification requirements met. No blocking issues.');
-    expect(audit.history.map((h) => h.score)).toEqual([22, 23]);
-    expect(audit.facts.map((f) => f.key)).toContain('This audit');
-    const files = audit.back.find((b) => b.heading === 'Files Audited')?.files;
-    expect(files?.groups.map((g) => g.caption)).toEqual([
-      'Core Phase 4 surfaces',
-      'Shared presentation layer',
-      'Styling and testing',
-    ]);
-    expect(files?.groups.reduce((n, g) => n + g.entries.length, 0)).toBe(13);
-  });
 });
 
 describe('extractUiReview — degrade', () => {

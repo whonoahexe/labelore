@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { Artifact } from '../../src/domain/model.ts';
 import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
+import { fxPath } from '../helpers/fixture-project.ts';
 import { buildPlanUrl } from '../../src/presentation/routes.ts';
 import { buildFrontmatterPanels } from '../../src/rendering/frontmatter-views.ts';
 import { createArtifactRenderer } from '../../src/rendering/markdown.ts';
@@ -89,17 +90,14 @@ Inside.
     expect(rendered.html).toMatch(/<li[^>]*id="requirement-future-02"/);
   });
 
-  it('renders the real Phase 1 plan as ordered semantic sections with nested Markdown', async () => {
+  it('renders a Lendshed plan as ordered semantic sections with nested Markdown', async () => {
     const renderer = await createArtifactRenderer();
-    const body = await readFile(
-      '.planning/milestones/v1.0-phases/01-read-layer-domain-model/01-04-PLAN.md',
-      'utf8',
-    );
+    const body = await readFile(fxPath('phases/01-member-sign-in-sessions/01-01-PLAN.md'), 'utf8');
     const rendered = await renderer.render(artifact(body.replace(/^---[\s\S]*?---\n/, ''), 'plan'));
 
     expect(rendered.html).toContain('data-plan-section="objective"');
     expect(rendered.html).toContain('data-plan-section="task"');
-    expect(rendered.html).toContain('Task 1: Eager cross-reference resolution');
+    expect(rendered.html).toContain('Task 1: End-to-end member session');
     expect(rendered.html).toContain('<ul>');
     expect(rendered.warnings).toEqual([]);
   });

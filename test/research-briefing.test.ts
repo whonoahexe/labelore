@@ -3,7 +3,6 @@
 // T-3x3-04 handler guard. Anchor counts were independently confirmed with awk/grep against the
 // source files (never copied from the extractor's own output).
 import { readFileSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { fxPath } from './helpers/fixture-project.ts';
 import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
@@ -24,113 +23,7 @@ import {
 import { ResearchHandler } from '../src/planning-repo/handlers/research.ts';
 import type { ArtifactRef, RawArtifact } from '../src/planning-repo/types.ts';
 
-const REPO_ROOT = new URL('../', import.meta.url);
-const LB02 = '.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-RESEARCH.md';
 const FX02 = fxPath('milestones/v1.0-phases/02-shed-inventory-health/02-RESEARCH.md');
-
-async function repoBody(path: string): Promise<string> {
-  return await readFile(new URL(path, REPO_ROOT), 'utf8');
-}
-
-describe('extractResearchBriefing — LB v1.0/02 (repo file)', () => {
-  it('meta, summary and recommendation', async () => {
-    const b = extractResearchBriefing(await repoBody(LB02));
-    expect(b.meta.phase).toBe('2');
-    expect(b.meta.title).toBe('Situational Awareness & Artifact Reading');
-    expect(b.meta.researched).toBe('2026-08-25');
-    expect(b.meta.confidence?.level).toBe('MIXED');
-    expect(b.meta.breakdown.map((r) => r.level)).toEqual([
-      'MEDIUM',
-      'HIGH',
-      'HIGH',
-      'MEDIUM',
-      'MEDIUM-LOW',
-    ]);
-    expect(b.meta.breakdown[0].area).toBe('Standard stack');
-    expect(b.meta.validUntil?.startsWith('2026-09-01 for package versions')).toBe(true);
-    expect(b.summary?.paragraphs).toHaveLength(3);
-    expect(b.summary?.recommendation?.startsWith('Build one reusable')).toBe(true);
-  });
-
-  it('stack, alternatives and audit', async () => {
-    const b = extractResearchBriefing(await repoBody(LB02));
-    const [core, supporting] = b.stack?.groups ?? [];
-    expect(core.kind).toBe('core');
-    expect(core.packages).toHaveLength(6);
-    expect(supporting.kind).toBe('supporting');
-    expect(supporting.packages).toHaveLength(15);
-    expect(b.stack?.groups.flatMap((g) => g.packages).filter((p) => p.sus)).toHaveLength(10);
-    expect(core.packages[0]).toMatchObject({ name: 'vite', version: '8.2.2', date: '2026-08-20', sus: true });
-    // All five were options not chosen; none says it is viable, so none reads as an endorsement.
-    expect(b.stack?.alternatives.map((a) => a.verdict)).toEqual([
-      'rejected',
-      'rejected',
-      'rejected',
-      'rejected',
-      'rejected',
-    ]);
-    expect(b.stack?.installation).toBe(true);
-
-    const audit = b.audit;
-    expect(audit?.applicable).toBe(true);
-    expect(audit?.rows).toHaveLength(30);
-    expect(audit?.rows.filter((r) => r.verdict === 'SUS')).toHaveLength(12);
-    expect(audit?.rows.filter((r) => r.verdict === 'SUS').every((r) => r.rule === 'too-new')).toBe(true);
-    const ok = audit?.rows.filter((r) => r.verdict === 'OK') ?? [];
-    expect(ok).toHaveLength(18);
-    expect(ok.every((r) => r.plainApproval)).toBe(true);
-    expect(audit?.rows.filter((r) => r.verdict === 'SLOP')).toHaveLength(0);
-    expect(audit?.removed).toHaveLength(0);
-    expect(audit?.susNote?.startsWith('The planner must place')).toBe(true);
-  });
-
-  it('architecture, hand-roll, pitfalls, questions, environment, sources', async () => {
-    const b = extractResearchBriefing(await repoBody(LB02));
-    expect(b.architecture?.diagram?.lang).toBe('text');
-    expect(b.architecture?.structure).not.toBeNull();
-    expect(b.architecture?.patterns).toHaveLength(8);
-    expect(b.architecture?.antiPatterns).toHaveLength(9);
-    expect(b.handRoll?.rows).toHaveLength(8);
-    expect(b.handRoll?.insight?.startsWith('The only justified custom parsers')).toBe(true);
-    expect(b.pitfalls?.items).toHaveLength(9);
-    expect(b.pitfalls?.items.every((p) => p.severity === null)).toBe(true);
-    expect(b.questions?.headingResolved).toBe(true);
-    expect(b.questions?.items).toHaveLength(3);
-    expect(b.questions?.items.every((q) => q.resolved)).toBe(true);
-    expect(b.environment?.rows).toHaveLength(7);
-    expect(b.environment?.rows.filter((r) => r.available === 'no')).toHaveLength(2);
-    expect(b.environment?.rows.filter((r) => r.blocking)).toHaveLength(0);
-    expect(b.environment?.notes).toHaveLength(2);
-    expect(b.sources?.tiers.map((t) => `${t.tier}:${t.items.length}`)).toEqual([
-      'primary:5',
-      'secondary:12',
-      'tertiary:1',
-    ]);
-  });
-
-  it('user constraints, back-matter tables and the source-only list in document order', async () => {
-    const b = extractResearchBriefing(await repoBody(LB02));
-    expect(b.userConstraints?.lockedGroups.reduce((n, g) => n + g.ids.length, 0)).toBe(17);
-    expect(b.userConstraints?.lockedGroups).toHaveLength(4);
-    expect(b.userConstraints?.lockedGroups[0]).toEqual({
-      group: 'Landing-Page Hierarchy',
-      ids: ['D-01', 'D-02', 'D-03', 'D-04'],
-    });
-    expect(b.userConstraints?.discretion).toHaveLength(4);
-    expect(b.userConstraints?.deferred).toHaveLength(1);
-    expect(b.requirements?.rows).toHaveLength(23);
-    expect(b.responsibilityMap?.rows).toHaveLength(8);
-    expect(b.sourceOnly.map((s) => s.label)).toEqual([
-      'Installation',
-      'Code Examples',
-      'State of the Art',
-      'Verification Strategy',
-      'Assumptions Log',
-      'Security Domain',
-      'Metadata',
-    ]);
-  });
-});
 
 describe('extractResearchBriefing — LS02_SHAPE fixture', () => {
   const b = extractResearchBriefing(LS02_SHAPE);
@@ -283,19 +176,22 @@ describe('fence awareness', () => {
     expect(splitFenceAware(body, 2).map((s) => s.heading)).toEqual(['A', 'B']);
   });
 
-  it("LB v1.1/05's in-fence `### Q1 — …` is not a subsection and not in sourceOnly", async () => {
-    const b = extractResearchBriefing(
-      await repoBody('.planning/milestones/v1.1-phases/05-per-type-document-views/05-RESEARCH.md'),
-    );
-    expect(b.sourceOnly.some((s) => s.label.includes('Q1'))).toBe(false);
-  });
-
-  it("LB v1.0/01's unknown ### lands in sourceOnly as Parent › Child", async () => {
-    const b = extractResearchBriefing(
-      await repoBody('.planning/milestones/v1.0-phases/01-read-layer-domain-model/01-RESEARCH.md'),
-    );
+  it('an unknown ### inside a known ## lands in sourceOnly as Parent › Child', () => {
+    const body = [
+      '# Phase 3: Loans - Research',
+      '',
+      '## Architecture Patterns',
+      '',
+      'Loans are recorded before a tool leaves the shed.',
+      '',
+      '### Deposit Handling (Claude\'s Discretion - recommendation)',
+      '',
+      'Hold the deposit until the tool comes back.',
+      '',
+    ].join('\n');
+    const b = extractResearchBriefing(body);
     expect(b.sourceOnly.map((s) => s.label)).toContain(
-      "Architecture Patterns › Structured-Extraction Depth (Claude's Discretion — recommendation)",
+      "Architecture Patterns › Deposit Handling (Claude's Discretion - recommendation)",
     );
   });
 

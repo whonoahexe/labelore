@@ -17,12 +17,6 @@ import {
   splitIdeaLead,
 } from '../src/planning-repo/handlers/context-brief.ts';
 
-const REPO_ROOT = new URL('../', import.meta.url);
-
-async function repoBody(relativePath: string): Promise<string> {
-  return await readFile(new URL(relativePath, REPO_ROOT), 'utf8');
-}
-
 /** The text of a Lendshed CONTEXT file, read through fxPath (a missing file throws, never skips). */
 async function fxBody(relativeToPlanning: string): Promise<string> {
   return await readFile(fxPath(relativeToPlanning), 'utf8');
@@ -32,7 +26,6 @@ const FX01 = 'phases/01-member-sign-in-sessions/01-CONTEXT.md';
 const FX02 = 'phases/02-roles-and-permissions/02-CONTEXT.md';
 const FX03 = 'phases/03-account-admin-and-sessions/03-CONTEXT.md';
 const FX04 = 'phases/04-bulk-loan-export/04-CONTEXT.md';
-const LB05_PATH = '.planning/milestones/v1.1-phases/05-per-type-document-views/05-CONTEXT.md';
 
 describe('extractContextBrief — Lendshed phases/01 boundary', () => {
   it('parses statement, inList, outList and drift (Lendshed fixture)', async () => {
@@ -87,21 +80,34 @@ describe('extractContextBrief — Lendshed phases/01 boundary', () => {
   });
 });
 
-describe('extractContextBrief — Labelore v1.1/05 prose boundary', () => {
-  it('splits a multi-clause "This phase does not…" paragraph into 4 verbatim items', async () => {
-    const body = await repoBody(LB05_PATH);
+describe('extractContextBrief — prose boundary', () => {
+  it('splits a multi-clause "This phase does not…" paragraph into 4 verbatim items', () => {
+    const body = [
+      '# Phase 3: X - Context',
+      '',
+      '<domain>',
+      '## Phase Boundary',
+      '',
+      'This phase does not add a late-fee schedule (rejected 2026-04-02), does not adopt',
+      '`shedctl sync`, does not rewrite the loan, catalogue or member pages — they are',
+      'the reference this conforms to — and does not add deposit refunds (PAY-08), tool',
+      'reservations (RES-01), waitlists (WAIT-06) or barcode scanning (SCAN-01).',
+      '',
+      '</domain>',
+      '',
+    ].join('\n');
     const brief = extractContextBrief(body);
     expect(brief.boundary?.outFromProse).toBe(true);
     expect(brief.boundary?.outList.map((i) => i.text)).toEqual([
-      'add a purpose/category taxonomy (rejected 2026-09-20)',
-      'adopt `gsd-tools query`',
-      'rewrite the dashboard, roadmap, traceability or search pages — they are the reference this conforms to',
-      'add plan-vs-outcome deviation pairing (READ-08), backlinks (BACK-01), faceted search (FIND-06) or file watching (PLAT-01)',
+      'add a late-fee schedule (rejected 2026-04-02)',
+      'adopt `shedctl sync`',
+      'rewrite the loan, catalogue or member pages — they are the reference this conforms to',
+      'add deposit refunds (PAY-08), tool reservations (RES-01), waitlists (WAIT-06) or barcode scanning (SCAN-01)',
     ]);
-    expect(brief.boundary?.outSource).toContain('This phase does not add a purpose/category taxonomy');
+    expect(brief.boundary?.outSource).toContain('This phase does not add a late-fee schedule');
   });
 
-  it('keeps a single-sentence multi-item "does not" paragraph as ONE item when it has under 2 boundaries', async () => {
+  it('keeps a single-sentence multi-item "does not" paragraph as ONE item when it has under 2 boundaries', () => {
     const [items] = [
       extractContextBrief(
         '# Phase 2: X - Context\n\n<domain>\n## Phase Boundary\n\nThis phase does not add search, ranking, or a rich dependency-graph canvas. Those remain later or future capabilities.\n\n</domain>\n',

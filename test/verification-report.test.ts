@@ -1,6 +1,6 @@
 // quick-261017-18a (sketch 021 E): the VERIFICATION body extractor - pinned against the synthetic template
-// report (test/fixtures/verification/), four made-up Lendshed reports (D-01, D-06), labelore's own phase 1
-// and phase 5 reports, the tolerant degrade paths and the T-18a-02 growth bound. Every Lendshed pin was
+// report (test/fixtures/verification/), four made-up Lendshed reports (D-01, D-06),
+// the tolerant degrade paths and the T-18a-02 growth bound. Every Lendshed pin was
 // recounted by grep and awk in the made-up file itself (R5), never copied from the extractor's output.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -15,7 +15,6 @@ import { fxPath } from './helpers/fixture-project.ts';
 import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 
 const FIXTURES = new URL('./fixtures/verification/', import.meta.url).pathname;
-const LB = new URL('../.planning/', import.meta.url).pathname;
 
 function bodyOf(path: string): string {
   return tryParseFrontmatter(readFileSync(path, 'utf8')).body;
@@ -28,8 +27,6 @@ const lx01 = extractVerificationReport(bodyOf(fxPath('milestones/v1.0-phases/01-
 const lxq = extractVerificationReport(
   bodyOf(fxPath('quick/260327-h4w-move-the-live-status-socket-into-a-provider/260327-h4w-VERIFICATION.md')),
 );
-const lb01 = extractVerificationReport(bodyOf(`${LB}milestones/v1.0-phases/01-read-layer-domain-model/01-VERIFICATION.md`));
-const lb05 = extractVerificationReport(bodyOf(`${LB}milestones/v1.1-phases/05-per-type-document-views/05-VERIFICATION.md`));
 
 const alsoOf = (r: ReturnType<typeof extractVerificationReport>): string[] =>
   r.sections.filter((s) => !s.handled && !s.blank).map((s) => s.heading.replace(/\s*\(.*?\)\s*$/, ''));
@@ -206,22 +203,6 @@ describe('the other reports', () => {
     expect(lxq.humanChecks[0].title).toBe('One socket survives in-app navigation');
     expect(lxq.humanChecks[0].test).toContain('network panel on the WS filter');
     expect(lxq.truths).toHaveLength(5);
-  });
-
-  it('labelore 05 keeps four bold-list titles and a warning anti-pattern', () => {
-    expect(lb05.humanTitles).toHaveLength(4);
-    expect(lb05.humanChecks).toEqual([]);
-    expect(lb05.antiPatterns.map((a) => a.severity)).toEqual(['warning', 'info', 'info']);
-    expect(lb05.antiPatterns[0].impact).toContain('Reachable via');
-    expect(lb05.truths.map((t) => t.n)).toEqual(['1', '2', '3', '4a', '4b', '5a', '5b']);
-    expect(lb05.truths.map((t) => t.status).filter((s) => s === 'unverified')).toHaveLength(2);
-  });
-
-  it('labelore v1.0/01 reads a same-level numbered check and leaves the Resolved section', () => {
-    expect(lb01.humanChecks).toHaveLength(1);
-    expect(lb01.humanChecks[0].title).toMatch(/^Manual smoke test against /);
-    expect(lb01.humanChecks[0].test).toContain('npm run snapshot');
-    expect(alsoOf(lb01)).toContain('Human Verification — Resolved 2026-09-09');
   });
 });
 
