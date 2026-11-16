@@ -1,8 +1,6 @@
-// The project research lift (quick-261024-k8u): Labelore's current research files for today's shape,
-// its archived v1.0 research for the template shape today's files no longer use, the synthetic
-// fixtures for drift, garbage that must never throw, and a growth bound.
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+// The project research lift (quick-261024-k8u): made-up Lendshed research in the canonical template
+// shape, the synthetic fixtures for drift, garbage that must never throw, and a growth bound. No real
+// research is read.
 import { describe, expect, it } from 'vitest';
 import {
   extractProjectResearch,
@@ -25,14 +23,13 @@ import {
   DRIFT_SCALING,
   DRIFT_STACK,
   DRIFT_SUMMARY,
+  TEMPLATE_ARCHITECTURE,
+  TEMPLATE_FEATURES,
+  TEMPLATE_PITFALLS,
+  TEMPLATE_STACK,
+  TEMPLATE_SUMMARY,
 } from './helpers/project-research-fixtures.ts';
 import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
-
-const RESEARCH_DIR = join(import.meta.dirname, '..', '.planning', 'research');
-const real = (name: string): string => readFileSync(join(RESEARCH_DIR, `${name}.md`), 'utf8');
-// The v1.0 research, archived when v2.1 research began. Shipped, so it no longer changes.
-const ARCHIVE_DIR = join(import.meta.dirname, '..', '.planning', 'milestones', 'v1.0-research');
-const archived = (name: string): string => readFileSync(join(ARCHIVE_DIR, `${name}.md`), 'utf8');
 
 describe('splitTopLevel', () => {
   it('splits at top-level semicolons only, never inside parentheses, backticks or quotes', () => {
@@ -50,147 +47,59 @@ describe('splitTopLevel', () => {
   });
 });
 
-describe("Labelore's current research files (v2.1)", () => {
-  it('SUMMARY: head, nine gaps and the confidence table; the phase list is in a shape the lift leaves empty', () => {
-    const lift = liftSummary(real('SUMMARY'));
-    expect(lift.head.project).toBe('Labelore');
-    expect(lift.head.researched).toBe('2026-10-25');
-    expect(lift.head.confidence.level).toBe('HIGH');
-    expect(lift.phases).toHaveLength(0);
-    expect(lift.rationale).toHaveLength(0);
-    expect(lift.gaps).toHaveLength(9);
-    expect(lift.gaps[0].lead).toBe('About 14 never-seen types');
-    expect(lift.areas.map((area) => [area.area, area.level])).toEqual([
-      ['Stack', 'HIGH'],
-      ['Features', 'HIGH'],
-      ['Architecture', 'HIGH'],
-      ['Pitfalls', 'HIGH'],
-    ]);
-    expect(lift.exec).toHaveLength(3);
-    expect(lift.keyFindings.architecture).toMatch(/^Current pipeline: CLI argument/);
-  });
-
-  it('STACK: no decision headline, two layers of 6 and 2, and nine alternatives', () => {
-    const lift = liftStack(real('STACK'));
-    expect(lift.decision).toBeNull();
-    expect(lift.layers.map((layer) => [layer.title, layer.items.length])).toEqual([
-      ['Core Technologies', 6],
-      ['Development Tools', 2],
-    ]);
-    expect(lift.layers.map((layer) => layer.whyLabel)).toEqual(['Why', 'Notes']);
-    expect(lift.layers[0].items[0]).toMatchObject({ name: '@base-ui/react', version: '1.7.0' });
-    expect(lift.alternatives?.kind).toBe('when');
-    expect(lift.alternatives?.rows).toHaveLength(9);
-  });
-
-  it('FEATURES: 10 expected, 6 differentiators, 7 anti-features, no competitor table', () => {
-    const lift = liftFeatures(real('FEATURES'));
-    expect(lift.expected.items).toHaveLength(10);
-    expect(lift.differentiators.items).toHaveLength(6);
-    expect(lift.anti.items).toHaveLength(7);
-    expect(lift.expected.items.every((item) => item.group === null)).toBe(true);
-    expect(lift.expected.items[0].complexity).toBe('MEDIUM');
-    expect(lift.competitors).toBeNull();
-  });
-
-  it('ARCHITECTURE: six anti-patterns with only an instead, and no overview, structure or build order', () => {
-    const lift = liftArchitecture(real('ARCHITECTURE'));
-    expect(lift.overview).toBeNull();
-    expect(lift.structure).toBeNull();
-    expect(lift.components).toBe(0);
-    expect(lift.buildOrder).toBeNull();
-    expect(lift.antiPatterns).toHaveLength(6);
-    expect(lift.antiPatterns.every((pattern) => !pattern.does && !pattern.why && pattern.instead)).toBe(true);
-  });
-
-  it('ARCHITECTURE scaling: a concerns x tiers matrix of five concerns across three tiers', () => {
-    const scaling = liftArchitecture(real('ARCHITECTURE')).scaling!;
-    expect(scaling.byRow).toBe(false);
-    expect(scaling.lead).toBeNull();
-    expect(scaling.axis).toBe('Concern');
-    expect(scaling.tiers).toEqual(['1 project (today)', '~5-10 projects, several hundred files each', 'Many large or remote projects']);
-    expect(scaling.concerns.map((concern) => concern.name)).toEqual(['Memory', 'Startup', 'Search', 'Folder scan', 'Refresh']);
-    expect(scaling.concerns.every((concern) => concern.cells.length === 3)).toBe(true);
-    expect(scaling.priorities).toEqual([]);
-  });
-
-  it('PITFALLS: the performance, security and UX tables with their headers', () => {
-    const { tables } = liftPitfalls(real('PITFALLS'));
-    expect(tables.map((table) => [table.kind, table.rows.length])).toEqual([
-      ['performance', 7],
-      ['security', 8],
-      ['ux', 9],
-    ]);
-    expect(tables[0].head).toEqual(['Trap', 'Symptoms', 'Prevention', 'When It Breaks']);
-    expect(tables[1].head).toEqual(['Mistake', 'Risk', 'Prevention']);
-    expect(tables[2].head).toEqual(['Pitfall', 'User Impact', 'Better Approach']);
-    expect(tables.every((table) => table.lead === null)).toBe(true);
-  });
-
-  it('PITFALLS: 33 numbered pitfalls with no how-likely line, and 13 checks', () => {
-    const lift = liftPitfalls(real('PITFALLS'));
-    expect(lift.pitfalls).toHaveLength(33);
-    expect(lift.pitfalls[0].short).toBe('URL is identity');
-    expect(lift.pitfalls[0].likely).toBeNull();
-    expect(lift.pitfalls[0].signs).toHaveLength(4);
-    expect(lift.pitfalls.every((pitfall) => pitfall.likely === null)).toBe(true);
-    expect(lift.checks).toHaveLength(13);
-  });
-});
-
-describe("Labelore's archived v1.0 research files (the template shape)", () => {
+describe('the template shape (made-up Lendshed research)', () => {
   it('SUMMARY: head, phases, rationale, gaps and the confidence table', () => {
-    const lift = liftSummary(archived('SUMMARY'));
-    expect(lift.head.project).toBe('Labelore');
-    expect(lift.head.researched).toBe('2026-08-21');
+    const lift = liftSummary(TEMPLATE_SUMMARY);
+    expect(lift.head.project).toBe('Lendshed');
+    expect(lift.head.researched).toBe('2026-05-14');
     expect(lift.head.confidence.level).toBe('HIGH');
-    expect(lift.phases).toHaveLength(4);
+    expect(lift.phases).toHaveLength(3);
     expect(lift.phases.every((phase) => phase.gate === null && phase.parallelWith === null)).toBe(true);
-    expect(lift.phases[0].name).toBe('Data Layer & Domain Model Foundation');
-    expect(lift.phases[0].delivers).toHaveLength(6);
-    expect(lift.phases[0].avoids).toEqual([1, 3, 4, 9]);
+    expect(lift.phases[0].name).toBe('Loan Ledger and Member Model');
+    expect(lift.phases[0].delivers).toHaveLength(5);
+    expect(lift.phases[0].avoids).toEqual([1, 2, 4]);
     expect(lift.rationale).toHaveLength(4);
-    expect(lift.gaps).toHaveLength(4);
-    expect(lift.gaps[0].lead).toBe('gsd-tools query API vs. self-contained parser');
+    expect(lift.gaps).toHaveLength(2);
+    expect(lift.gaps[0].lead).toBe('Offline queue limits');
     expect(lift.areas.map((area) => [area.area, area.level])).toEqual([
       ['Stack', 'HIGH'],
       ['Features', 'HIGH'],
       ['Architecture', 'HIGH'],
       ['Pitfalls', 'HIGH'],
     ]);
-    expect(lift.exec.length).toBeGreaterThan(1);
+    expect(lift.exec).toHaveLength(4);
     expect(lift.keyFindings.architecture).toMatch(/two clean layers/);
   });
 
-  it('STACK: the decision, three layers of 6, 13 and 6, and ten alternatives', () => {
-    const lift = liftStack(archived('STACK'));
-    expect(lift.decision?.verdict).toBe('Vite 8 + React 19 SPA, served by a thin Hono/Node API server, over Next.js 16.');
+  it('STACK: the decision, three layers of 4, 5 and 2, and six alternatives', () => {
+    const lift = liftStack(TEMPLATE_STACK);
+    expect(lift.decision?.verdict).toBe('Rust API with a React kiosk app, over a Rails monolith.');
     expect(lift.decision?.reasons).toHaveLength(3);
     expect(lift.layers.map((layer) => [layer.title, layer.items.length])).toEqual([
-      ['Core Technologies', 6],
-      ['Supporting Libraries', 13],
-      ['Development Tools', 6],
+      ['Core Technologies', 4],
+      ['Supporting Libraries', 5],
+      ['Development Tools', 2],
     ]);
     expect(lift.layers.map((layer) => layer.whyLabel)).toEqual(['Why', 'When to use', 'Notes']);
-    expect(lift.layers[2].items[0]).toMatchObject({ name: '@vitejs/plugin-react', version: '6.1.0' });
+    expect(lift.layers[2].items[0]).toMatchObject({ name: 'cargo-nextest', version: '0.9.99' });
     expect(lift.alternatives?.kind).toBe('when');
-    expect(lift.alternatives?.rows).toHaveLength(10);
+    expect(lift.alternatives?.rows).toHaveLength(6);
   });
 
-  it('FEATURES: 11 expected, 7 differentiators, 9 anti-features, two rivals plus ours', () => {
-    const lift = liftFeatures(archived('FEATURES'));
-    expect(lift.expected.items).toHaveLength(11);
-    expect(lift.differentiators.items).toHaveLength(7);
-    expect(lift.anti.items).toHaveLength(9);
+  it('FEATURES: 5 expected, 3 differentiators, 4 anti-features, two rivals plus ours', () => {
+    const lift = liftFeatures(TEMPLATE_FEATURES);
+    expect(lift.expected.items).toHaveLength(5);
+    expect(lift.differentiators.items).toHaveLength(3);
+    expect(lift.anti.items).toHaveLength(4);
     expect(lift.expected.items.every((item) => item.group === null)).toBe(true);
     expect(lift.expected.items[0].complexity).toBe('LOW');
     expect(lift.competitors?.rivals).toHaveLength(2);
-    expect(lift.competitors?.ours).toBe("Labelore's approach");
-    expect(lift.competitors?.rows).toHaveLength(7);
+    expect(lift.competitors?.ours).toBe("Lendshed's approach");
+    expect(lift.competitors?.rows).toHaveLength(3);
   });
 
   it('ARCHITECTURE: overview, structure, three anti-patterns and the A to D prose build order', () => {
-    const lift = liftArchitecture(archived('ARCHITECTURE'));
+    const lift = liftArchitecture(TEMPLATE_ARCHITECTURE);
     expect(lift.overview).toContain('+');
     expect(lift.structure).toContain('src/');
     expect(lift.structure).not.toContain('Structure Rationale');
@@ -203,7 +112,7 @@ describe("Labelore's archived v1.0 research files (the template shape)", () => {
   });
 
   it('ARCHITECTURE scaling: a Scale | Adjustments table is one concern across three tiers', () => {
-    const scaling = liftArchitecture(archived('ARCHITECTURE')).scaling!;
+    const scaling = liftArchitecture(TEMPLATE_ARCHITECTURE).scaling!;
     expect(scaling.byRow).toBe(true);
     expect(scaling.lead).toBeNull();
     expect(scaling.tiers).toHaveLength(3);
@@ -231,26 +140,26 @@ describe("Labelore's archived v1.0 research files (the template shape)", () => {
   });
 
   it('PITFALLS: the performance, security and UX tables with their headers and the security lead', () => {
-    const { tables } = liftPitfalls(archived('PITFALLS'));
+    const { tables } = liftPitfalls(TEMPLATE_PITFALLS);
     expect(tables.map((table) => [table.kind, table.rows.length])).toEqual([
-      ['performance', 3],
+      ['performance', 2],
       ['security', 3],
-      ['ux', 5],
+      ['ux', 4],
     ]);
     expect(tables[0].head).toEqual(['Trap', 'Symptoms', 'Prevention', 'When It Breaks']);
     expect(tables[2].head).toEqual(['Pitfall', 'User Impact', 'Better Approach']);
     expect(tables[0].lead).toBeNull();
-    expect(tables[1].lead).toMatch(/^Even for a single-user, local-only tool/);
+    expect(tables[1].lead).toMatch(/^Even for a one-shed pilot/);
   });
 
-  it('PITFALLS: ten pitfalls with how-likely, short names from the mapping, and ten checks', () => {
-    const lift = liftPitfalls(archived('PITFALLS'));
-    expect(lift.pitfalls).toHaveLength(10);
+  it('PITFALLS: four pitfalls with how-likely, short names from the mapping, and three checks', () => {
+    const lift = liftPitfalls(TEMPLATE_PITFALLS);
+    expect(lift.pitfalls).toHaveLength(4);
     expect(lift.pitfalls[0].short).toMatch(/^Overfit to /);
     expect(lift.pitfalls[0].likely?.level).toBe('Very high');
     expect(lift.pitfalls[0].signs.length).toBeGreaterThan(1);
     expect(lift.pitfalls.every((pitfall) => pitfall.likely !== null)).toBe(true);
-    expect(lift.checks).toHaveLength(10);
+    expect(lift.checks).toHaveLength(3);
     expect(lift.checks.some((check) => check.pitfalls.includes(2))).toBe(true);
   });
 });
