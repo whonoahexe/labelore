@@ -1,5 +1,5 @@
 // Phase 9 (09-16): the four analog-built pages (windows ledger, review ledger, milestone audit, coverage)
-// in a real browser. Each is opened on its made-up Lendshed or Shapes input, at 1280px and 390px in light and dark, screenshot into test-results/phase-09/
+// in a real browser. Each is opened on its made-up Lendshed or Shapes input, at 1280px and 390px in light and dark, one test per input and width with a light leg then a dark leg, screenshot into test-results/phase-09/
 // (<page>-<input>-<width>-<theme>.png) for the post-build review with the user (D-13), and checked
 // against the UI-SPEC rules: exactly one h1, no sideways page scroll at 390px, no destructive or warning
 // tone on document content, and at most four distinct rendered font sizes inside the page. The four-size
@@ -7,8 +7,8 @@
 // folded narrative (the shared document body, accepted at force-approval) and the shipped review threads
 // (outside this phase's cap per UI-SPEC Typography). Nothing about a private project is read here: a real
 // project's long documents are only ever photographed by hand into a temporary folder.
-import { expect, test, type Page } from '@playwright/test';
-import { existsSync, mkdirSync } from 'node:fs';
+import { expect, test, type Browser, type Page } from '@playwright/test';
+import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { projectUrl } from './app-url.ts';
@@ -199,50 +199,48 @@ async function expectRulesHold(page: Page, width: number): Promise<void> {
   expect(sizes.length, `font sizes on the page: ${sizes.join(', ')}`).toBeLessThanOrEqual(MAX_FONT_SIZES);
 }
 
-async function openSubject(page: Page, subject: Subject): Promise<void> {
+async function openSubject(page: Page, subject: Subject, expects: (page: Page) => Promise<void>): Promise<void> {
   await page.goto(await projectUrl(subject.base, subject.address));
   // A lazy route chunk shows a loading main first; the page is up once its h1 is.
   await expect(page.locator('h1')).toHaveCount(1);
-  await subject.expects(page);
+  await expects(page);
 }
 
-test.describe('phase 9 analog pages', () => {
-  // The tracer: one page, one width, the whole path from the served project to a file on disk.
-  test('tracer: the Lendshed windows ledger leads with 2 open and is photographed', async ({ browser }) => {
-    const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
-    await context.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
-    const page = await context.newPage();
-    try {
-      await page.goto(await projectUrl(FIXTURE_BASE_URL, '/windows'));
-      await leadChip(page, '2 open');
-      await expect(page.locator('h1')).toHaveCount(1);
-      await shoot(page, 'windows-lendshed-tracer.png');
-      expect(existsSync(join(SHOTS, 'windows-lendshed-tracer.png'))).toBe(true);
-    } finally {
-      await context.close();
-    }
-  });
+/** One theme's pass over a subject: open it, check the theme and the page rules, photograph it. */
+async function runLeg(
+  browser: Browser,
+  subject: Subject,
+  size: { width: number; height: number },
+  theme: 'light' | 'dark',
+  expects: (page: Page) => Promise<void>,
+): Promise<void> {
+  const context = await browser.newContext({ viewport: size });
+  await context.addInitScript((value: string) => window.localStorage.setItem('labelore-theme', value), theme);
+  const page = await context.newPage();
+  try {
+    await openSubject(page, subject, expects);
+    expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(theme === 'dark');
+    await expectRulesHold(page, size.width);
+    await shoot(page, `${subject.page}-${subject.input}-${size.width}-${theme}.png`);
+  } finally {
+    await context.close();
+  }
+}
 
+/** The dark leg opens the same page and data, so the subject's content is checked once, in the light leg. */
+const contentCheckedInLight = async (): Promise<void> => {};
+
+test.describe('phase 9 analog pages', () => {
   for (const subject of SUBJECTS) {
     for (const [width, height] of [
       [1280, 800],
       [390, 844],
     ] as const) {
-      for (const theme of ['light', 'dark'] as const) {
-        test(`${subject.page} ${subject.input} at ${width}px in ${theme}`, async ({ browser }) => {
-          const context = await browser.newContext({ viewport: { width, height } });
-          await context.addInitScript((value: string) => window.localStorage.setItem('labelore-theme', value), theme);
-          const page = await context.newPage();
-          try {
-            await openSubject(page, subject);
-            expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(theme === 'dark');
-            await expectRulesHold(page, width);
-            await shoot(page, `${subject.page}-${subject.input}-${width}-${theme}.png`);
-          } finally {
-            await context.close();
-          }
-        });
-      }
+      test(`${subject.page} ${subject.input} at ${width}px`, async ({ browser }) => {
+        test.setTimeout(120_000);
+        await test.step('light', () => runLeg(browser, subject, { width, height }, 'light', subject.expects));
+        await test.step('dark', () => runLeg(browser, subject, { width, height }, 'dark', contentCheckedInLight));
+      });
     }
   }
 });

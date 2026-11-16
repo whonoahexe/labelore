@@ -8,7 +8,7 @@
 // (10-06 approved four for the Codebase page, no exception). The four-size count looks at visible elements
 // inside main that hold text of their own. Nothing about a private project is read here: the two other
 // repositories' Codebase pages are only ever photographed by hand into a temporary folder (T-10-46).
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Browser, type Page } from '@playwright/test';
 import { cpSync, mkdirSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -221,33 +221,47 @@ test.describe('phase 10 pages', () => {
     return SHAPES_BASE_URL;
   }
 
-  async function openSubject(page: Page, subject: Subject): Promise<void> {
+  async function openSubject(page: Page, subject: Subject, expects: (page: Page) => Promise<void>): Promise<void> {
     await page.goto(await projectUrl(baseOf(subject.where), subject.address));
     // A lazy route chunk shows a loading main first; the page is up once its h1 is.
     await expect(page.locator('h1')).toHaveCount(1);
-    await subject.expects(page);
+    await expects(page);
   }
+
+  /** One theme's pass over a subject: open it, check the theme and the page rules, photograph it. */
+  async function runLeg(
+    browser: Browser,
+    subject: Subject,
+    size: { width: number; height: number },
+    theme: 'light' | 'dark',
+    expects: (page: Page) => Promise<void>,
+  ): Promise<void> {
+    const context = await browser.newContext({ viewport: size });
+    await context.addInitScript((value: string) => window.localStorage.setItem('labelore-theme', value), theme);
+    const page = await context.newPage();
+    try {
+      await openSubject(page, subject, expects);
+      expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(theme === 'dark');
+      await expectRulesHold(page, size.width);
+      await shoot(page, `${subject.page}-${subject.input}-${size.width}-${theme}.png`);
+    } finally {
+      await context.close();
+    }
+  }
+
+  /** The dark leg opens the same page and data, so the subject's content is checked once, in the light leg. */
+  const contentCheckedInLight = async (): Promise<void> => {};
 
   for (const subject of SUBJECTS) {
     for (const [width, height] of [
       [1280, 800],
       [390, 844],
     ] as const) {
-      for (const theme of ['light', 'dark'] as const) {
-        test(`${subject.page} ${subject.input} at ${width}px in ${theme}`, async ({ browser }) => {
-          const context = await browser.newContext({ viewport: { width, height } });
-          await context.addInitScript((value: string) => window.localStorage.setItem('labelore-theme', value), theme);
-          const page = await context.newPage();
-          try {
-            await openSubject(page, subject);
-            expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(theme === 'dark');
-            await expectRulesHold(page, width);
-            await shoot(page, `${subject.page}-${subject.input}-${width}-${theme}.png`);
-          } finally {
-            await context.close();
-          }
-        });
-      }
+      test(`${subject.page} ${subject.input} at ${width}px`, async ({ browser }) => {
+        test.setTimeout(120_000);
+        await test.step('light', () => runLeg(browser, subject, { width, height }, 'light', subject.expects));
+        await test.step('dark', () => runLeg(browser, subject, { width, height }, 'dark', contentCheckedInLight));
+      });
     }
   }
 });
