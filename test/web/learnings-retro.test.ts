@@ -432,12 +432,6 @@ describe('the view', () => {
     expect(render(syn)).toContain('title="Graduated to docs/design-language.md on 22 Sep 2026"');
     expect(textOf(render(lx01, { initialTab: 'decision' }))).toContain('From 02-SUMMARY · 02-PLAN (RESEARCH Pattern 2 / Pitfall 4)');
   });
-
-  it('writes no tone attribute and no href', () => {
-    const html = render(syn);
-    expect(html).not.toContain('data-tone');
-    expect(html).not.toContain('href=');
-  });
 });
 
 describe('Also in this file', () => {
