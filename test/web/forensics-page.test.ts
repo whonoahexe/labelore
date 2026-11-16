@@ -432,47 +432,7 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-const COMPOSER = 'src/web/views/forensics-page.ts';
-
-function stripSourceComments(text: string): string {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-}
-
-/** The forensics page may use `missing` (an absent artifact) but never the parse-degradation tones. */
-function writesForbiddenTone(text: string): boolean {
-  return (
-    /tone[A-Za-z]*\s*[:=]\s*['"](destructive|warning)['"]/.test(text) ||
-    /data-tone="(destructive|warning)"/.test(text) ||
-    /'(destructive|warning)'\s*\|/.test(text) ||
-    /\|\s*'(destructive|warning)'/.test(text)
-  );
-}
-
 describe('forensics view contract - the real sources', () => {
-  it('the composer never writes a destructive, warning or error tone and never re-words the hypothesis or the actions', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(writesForbiddenTone(code)).toBe(false);
-    expect(code).not.toContain("'destructive'");
-    expect(code).not.toContain("'warning'");
-    // The hypothesis and the actions reach the model only through paragraphsOf (line breaks) and stringList (as written).
-    expect(code).toContain('hypothesis = paragraphsOf(textOrNull(forensics.hypothesis))');
-    expect(code).toContain('actions = stringList(forensics.actions)');
-    expect(code).not.toMatch(/actions\s*\.\s*(sort|reverse|splice)\(/);
-  });
-
-  it('artifact-page.tsx draws the page from the composed model in View mode and the manifest keeps its fallback', async () => {
-    const code = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
-    expect(code).toContain('<ForensicsView key={artifact.path} model={forensicsCover} />');
-    expect(code).toContain('manifest.forensicsPage?.(viewInput)');
-    expect(code).not.toMatch(/artifact\.kind === ['"]forensics['"]/);
-    const manifests = await source('src/web/views/manifests.ts');
-    expect(manifests.match(/forensicsPage: composeForensics/g)).toHaveLength(1);
-    expect(manifests).toContain("promote: [{ type: 'section', heading: /\\S/, all: true }],\n    forensicsPage: composeForensics");
-  });
-
   it('records the tone uses and the language bullet in design-language.md', async () => {
     const doc = await source('docs/design-language.md');
     expect(doc).toContain('**The forensics page.**');

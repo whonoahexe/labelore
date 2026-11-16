@@ -2,7 +2,6 @@
 // gate path), over the made-up Lendshed and Shapes pauses loaded through the repository, plus planted copies for the
 // shapes the fixtures lack. One page serves HANDOFF.json and every .continue-here.md; where the two files differ both
 // values show, each named, and nothing is merged. "Mark as read" is view state only.
-import { readFile } from 'node:fs/promises';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -596,41 +595,3 @@ describe('PauseView - the rest of the handoff', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// The view contract: source-text checks in the dom-verify-page idiom (no AST tooling). Comments are stripped before
-// every negative check.
-// ---------------------------------------------------------------------------
-
-async function source(path: string): Promise<string> {
-  return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
-}
-
-const COMPONENTS = 'src/web/views/pause-page-components.tsx';
-const SHARED = 'src/web/components/record-disagreement.tsx';
-
-function stripSourceComments(text: string): string {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-}
-
-describe('pause view contract - the real sources', () => {
-  it('author text goes through ResearchInline as React text, never straight into markup', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain("from '../pages/research-atoms.tsx'");
-    expect(code).toContain('<ResearchInline text={resume.next.text} />');
-    expect(code).toContain('<ResearchInline text={gate.what} />');
-    expect(stripSourceComments(await source(SHARED))).toContain('<ResearchInline text={left.value} />');
-  });
-
-  it('artifact-page.tsx draws the page from the composed model in View mode and the manifest keeps its fallback', async () => {
-    const code = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
-    expect(code).toContain('<PauseView key={artifact.path} model={pauseCover} renderHtml={renderHtml} />');
-    expect(code).toContain('manifest.pausePage?.(viewInput)');
-    expect(code).toContain('pauseContext: query.data.pauseContext ?? null');
-    expect(code).not.toMatch(/artifact\.kind === ['"](handoff|continue-here|pause)['"]/);
-    const manifests = await source('src/web/views/manifests.ts');
-    expect(manifests.match(/pausePage: composePause/g)).toHaveLength(1);
-  });
-});

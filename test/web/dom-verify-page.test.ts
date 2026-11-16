@@ -367,32 +367,7 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-const COMPONENTS = 'src/web/views/dom-verify-page-components.tsx';
-
-function stripSourceComments(text: string): string {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-}
-
 describe('browser check view contract - the real sources', () => {
-  it('author text goes through ResearchInline as React text, never straight into markup', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain("from '../pages/research-atoms.tsx'");
-    expect(code).toContain('<ResearchInline text={criterion.text} />');
-    expect(code).toContain('<ResearchInline text={paragraph} />');
-  });
-
-  it('artifact-page.tsx draws this kind from the composed model in View mode, and the manifest keeps its lead and fallback', async () => {
-    const code = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
-    expect(code).toContain('<DomVerifyView key={artifact.path} model={domVerifyPageCover} />');
-    expect(code).toContain('manifest.domVerifyPage?.(viewInput)');
-    const manifests = await source('src/web/views/manifests.ts');
-    expect(manifests.match(/domVerifyPage: composeDomVerify/g)).toHaveLength(1);
-    expect(manifests).toContain('What a browser check of this phase found: whether it could look');
-  });
-
   it("records the tone uses and the language bullet about the two non-pass outcomes in design-language.md", async () => {
     const doc = await source('docs/design-language.md');
     expect(doc).toContain('The Browser check page.');

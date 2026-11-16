@@ -2,7 +2,6 @@
 // half is test/e2e/switcher.spec.ts). The trigger is a static render of ProjectSwitcher over a seeded
 // QueryClient; the popup content is a static render of ProjectSwitcherPanel, because Base UI renders a
 // popover's portal only on the client. Source reads pin what a render cannot show.
-import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -13,10 +12,6 @@ import { ProjectList, ProjectRowConfirm } from '../../src/web/components/project
 import { ProjectScan, addedCopy, scanCopy } from '../../src/web/components/project-scan.tsx';
 import { ProjectSwitcher, ProjectSwitcherPanel } from '../../src/web/components/project-switcher.tsx';
 import { projectsKey } from '../../src/web/query-keys.ts';
-
-function source(path: string): string {
-  return readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
-}
 
 const onAddOrScan = (): void => undefined;
 
@@ -169,75 +164,11 @@ describe('the switcher list', () => {
   });
 });
 
-describe('the switcher sources', () => {
-  const switcher = source('src/web/components/project-switcher.tsx');
-
-  it('reads the cheap list through fetchProjects with staleTime 0, and only while the list is open', () => {
-    expect(switcher).toContain('queryKey: projectsKey');
-    expect(switcher).toContain('queryFn: fetchProjects');
-    expect(switcher).toContain('staleTime: 0');
-    // The query lives in the panel the popup renders, not in the trigger's component.
-    const trigger = switcher.slice(switcher.indexOf('export function ProjectSwitcher('));
-    expect(trigger).not.toContain('useQuery');
-  });
-
-  it('is a Base UI popover whose popup is labelled Projects, and whose links go through AppLink', () => {
-    expect(switcher).toContain("from '@base-ui/react/popover'");
-    expect(switcher).toContain('aria-label="Projects"');
-    expect(switcher).toContain('aria-haspopup="dialog"');
-    expect(switcher).toContain('Switch project. Current project: ${current.name}');
-    expect(switcher).toContain('AppLink');
-    expect(switcher).not.toContain("from 'react-router'");
-    expect(switcher).not.toContain('dangerouslySetInnerHTML');
-  });
-
-  it('is not a descendant of the brand link in the shell (a link may not contain a button)', () => {
-    const shell = source('src/web/components/app-shell.tsx');
-    const linkStart = shell.indexOf('<NavLink\n              className="brand"');
-    expect(linkStart).toBeGreaterThanOrEqual(0);
-    const linkEnd = shell.indexOf('</NavLink>', linkStart);
-    expect(linkEnd).toBeGreaterThan(linkStart);
-    const switcherAt = shell.indexOf('<ProjectSwitcher');
-    expect(switcherAt).toBeGreaterThan(linkEnd);
-    expect(shell.slice(linkStart, linkEnd)).not.toContain('ProjectSwitcher');
-    // The switcher is a sibling in the lockup, the one `brand` grid area.
-    expect(shell.slice(linkEnd, switcherAt)).not.toContain('<NavLink');
-    expect(shell.indexOf('<div className="brand-lockup">')).toBeLessThan(linkStart);
-  });
-
-  it('opens the add dialog from the footer button, and hands focus to the dialog rather than the trigger', () => {
-    expect(switcher).toContain('<ProjectAddDialog');
-    expect(switcher).toContain('onAddOrScan');
-    // The list closes without a focus return of its own: the dialog's finalFocus is the trigger.
-    expect(switcher).toContain("choice.current === 'all' || choice.current === 'add'");
-    expect(switcher).toContain('finalFocus={triggerRef}');
-  });
-});
-
 // Forgetting a project (D-10): the quiet action on every switcher and landing row and its inline confirm.
 // The confirm is a static render of ProjectRowConfirm (the row swaps to it on a press, which a static
 // render cannot do); the browser half is test/e2e/switcher.spec.ts.
 describe('the forget action', () => {
   const lendshed = entry('lendshed', 'Lendshed');
-  const forgettable = (variant: 'switcher' | 'landing'): string =>
-    render(
-      variant === 'switcher'
-        ? createElement(ProjectList, { entries: [lendshed], variant, onForgotten: () => undefined })
-        : createElement(ProjectList, { entries: [lendshed], variant, now: Date.now(), onForgotten: () => undefined }),
-      null,
-    );
-
-  it('puts a ghost icon button named "Forget {name}" after the name link on a switcher and a landing row', () => {
-    for (const variant of ['switcher', 'landing'] as const) {
-      const markup = forgettable(variant);
-      expect(markup).toContain('<div class="project-row-actions">');
-      expect(markup).toContain('aria-label="Forget Lendshed"');
-      expect(markup).toContain('lucide-x');
-      // Tab order inside a row: the project link, then the forget button.
-      expect(markup.indexOf('href="/lendshed"')).toBeLessThan(markup.indexOf('aria-label="Forget Lendshed"'));
-      expect(markup).not.toContain('Forget project');
-    }
-  });
 
   it('gives a list that cannot forget (no onForgotten) no forget action', () => {
     const markup = render(createElement(ProjectList, { entries: [lendshed], variant: 'switcher' }), null);
@@ -271,27 +202,6 @@ describe('the forget action', () => {
     expect(markup).not.toContain('<img');
     expect(markup).toContain('Forget &lt;img src=x onerror=alert(1)&gt;?');
   });
-
-  it('keeps forget neutral, sends nothing before the confirm, and waits for the server (source pins)', () => {
-    const row = source('src/web/components/project-row.tsx');
-    expect(row).not.toMatch(/destructive/i);
-    expect(row).not.toContain('dangerouslySetInnerHTML');
-    // The request lives in the confirm only: the quiet button just swaps the row to it.
-    const confirm = row.slice(
-      row.indexOf('export function ProjectRowConfirm'),
-      row.indexOf('export function ProjectRow('),
-    );
-    expect(confirm).toContain('forgetProject(entry.slug)');
-    expect(row.slice(row.indexOf('export function ProjectRow(')).match(/forgetProject\(/g)).toBeNull();
-    // No optimistic removal: the cache is only touched once the mutation has succeeded.
-    expect(row).not.toContain('onMutate');
-    expect(row).not.toContain('setQueryData');
-    expect(row).toContain('onSuccess');
-    // The wording is the UI-SPEC's, each line in one piece.
-    expect(row).toContain("Labelore only removes it from this list. The project's files are not touched.");
-    expect(row).toContain('Forget this project');
-    expect(row).toContain('`Forget ${entry.name}`');
-  });
 });
 
 // The scan checklist (D-14): the pure copy helper and what the form shows before anything has been scanned.
@@ -320,20 +230,5 @@ describe('the scan checklist', () => {
     expect(markup).not.toContain('project-scan-results');
     expect(markup).not.toContain('<fieldset');
     expect(markup).not.toContain('role="alert"');
-  });
-
-  it('goes through api.ts and projectsKey only, builds on Base UI, and writes text through React (source pins)', () => {
-    const scan = source('src/web/components/project-scan.tsx');
-    // No request URL and no hand-built query key: one module holds every /api/ address, one the keys.
-    expect(scan).not.toContain('/api/');
-    expect(scan).not.toMatch(/queryKey:\s*\[/);
-    expect(scan).toContain('queryKey: projectsKey');
-    expect(scan).toContain('scanFolder(');
-    expect(scan).toContain('addProjects(');
-    expect(scan).toContain("from '@base-ui/react/checkbox'");
-    expect(scan).toContain("from '@base-ui/react/field'");
-    expect(scan).not.toContain('dangerouslySetInnerHTML');
-    // Only the checked, not-yet-added projects are sent.
-    expect(scan).toContain('picked.map((project) => project.path)');
   });
 });

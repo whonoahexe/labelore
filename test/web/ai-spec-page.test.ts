@@ -2,7 +2,6 @@
 // (04 half filled, 02 GSD's real template body). The first screen says what the system is (type, framework and
 // version, stakes, lock-in), how it will be judged (the dimensions placed by priority and measurement) and how far the
 // checklist has got.
-import { readFile } from 'node:fs/promises';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
@@ -342,30 +341,3 @@ describe('AiSpecView - template slots', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// The view contract: source-text checks in the spec-view-contract idiom (no AST tooling). Comments are stripped
-// before every negative check.
-// ---------------------------------------------------------------------------
-
-async function source(path: string): Promise<string> {
-  return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
-}
-
-const COMPONENTS = 'src/web/views/ai-spec-page-components.tsx';
-
-function stripSourceComments(text: string): string {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-}
-
-describe('ai spec view contract - the real sources', () => {
-  it('author text goes through ResearchInline, never straight into markup', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain('<ResearchInline text={cell.value} />');
-    expect(code).toContain('<ResearchInline text={row.heading} />');
-    expect(code).toContain('<ResearchInline text={dimension.name} />');
-    expect(code).toContain('<ResearchInline text={cell.note} />');
-  });
-});

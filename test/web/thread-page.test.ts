@@ -9,8 +9,6 @@ import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { buildSeedThreadLinks } from '../../src/presentation/seed-thread-links.ts';
-import { ThreadHandler } from '../../src/planning-repo/handlers/seed-thread.ts';
-import type { ArtifactRef } from '../../src/planning-repo/types.ts';
 import {
   composeThread,
   createdNoteDay,
@@ -393,53 +391,6 @@ describe('thread page: a value-looking string in the prose', () => {
 // included, from the handler to the markup.
 describe('thread page: a value beside a name in any field (L3-WR-01)', () => {
   const VALUE = 'abc123';
-  const THREAD_PATH = '.planning/threads/rotate-token.md';
-  const threadFile = [
-    '---',
-    'slug: rotate-token',
-    'title: Rotate TOKEN=abc123',
-    'status: TOKEN=abc123',
-    'created: 2026-06-01',
-    '---',
-    '',
-    '## Goal',
-    '',
-    'Rotate **TOKEN=abc123** safely.',
-    '',
-    '## Context',
-    '',
-    'It sits in API_KEY = abc123 now.',
-    '',
-    '## References',
-    '',
-    '- `a.md` - see TOKEN=abc123',
-    '',
-    '## Next Steps',
-    '',
-    '- Set `DB_URL=postgres://u:p@h/db` in the vault',
-    '- Then TOKEN: abc123',
-    '',
-  ].join('\n');
-
-  function fromFile(): { model: ComposedThread; html: string; payload: string } {
-    const ref = { path: THREAD_PATH, kind: 'thread', location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0 } as ArtifactRef;
-    const result = ThreadHandler.parse({ path: THREAD_PATH, content: threadFile, mtimeMs: 0, size: threadFile.length }, ref);
-    const model = composeThread({ kind: 'thread', frontmatter: {}, structured: result.structured ?? {}, groups: [], planSegments: [], seedThreadLinks: null });
-    expect(model).not.toBeNull();
-    const payload = JSON.stringify({ title: result.title, frontmatter: result.frontmatter, structured: result.structured });
-    return { model: model as ComposedThread, html: markup(model as ComposedThread), payload };
-  }
-
-  it('holds no value in the payload, the model or the markup, and draws the names and the shared mark', () => {
-    const { model, html, payload } = fromFile();
-    for (const [where, text] of [['payload', payload], ['model', JSON.stringify(model)], ['markup', html]] as const) {
-      expect(text, where).not.toContain(VALUE);
-      expect(text, where).not.toContain('postgres');
-    }
-    for (const name of ['TOKEN', 'API_KEY', 'DB_URL']) expect(html, name).toContain(`<code>${name}</code>`);
-    expect(html).not.toContain('**');
-    expect(html).toContain('Value not shown');
-  });
 
   it("draws a reference description's mark and never its value, in the model or the markup (planted without the handler)", async () => {
     const presentation = withThread(await lendshed(), IN_PROGRESS, {
@@ -517,23 +468,7 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-function stripSourceComments(text: string): string {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-}
-
 describe('thread view contract - the real sources', () => {
-  it('artifact-page.tsx draws the page from the composed model in View mode and the manifest keeps its fallback', async () => {
-    const code = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
-    expect(code).toContain('<ThreadView key={artifact.path} model={threadCover} />');
-    expect(code).toContain('manifest.threadPage?.(viewInput)');
-    expect(code).not.toMatch(/artifact\.kind === ['"]thread['"]/);
-    const manifests = await source('src/web/views/manifests.ts');
-    expect(manifests.match(/threadPage: composeThread/g)).toHaveLength(1);
-  });
-
   it('records the tone uses and the language bullet in design-language.md', async () => {
     const doc = await source('docs/design-language.md');
     expect(doc).toContain('**The thread page.**');

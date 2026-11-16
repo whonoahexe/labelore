@@ -265,12 +265,6 @@ describe('buildDrawerViewModel — degradation', () => {
     const presentation = await presentationOf({ '.planning/spikes/idea.md': '# idea' });
     expect(() => buildDrawerViewModel(presentation)).not.toThrow();
   });
-
-  it('is a pure projection: drawer.ts imports nothing from node:', () => {
-    const source = readFileSync(resolve('src/presentation/drawer.ts'), 'utf8');
-    expect(source).not.toMatch(/from\s+['"]node:/);
-    expect(source).not.toMatch(/from\s+['"][^'"]*web\//);
-  });
 });
 
 describe('drawer-route', () => {

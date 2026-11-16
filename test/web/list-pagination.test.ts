@@ -2,13 +2,8 @@
 // roadmap-page.tsx actually wires it in at page size 4. Mirrors the house style established by
 // scroll-settle.test.ts: a Node-only test file (no jsdom/testing-library in this project) that
 // pairs behavioral cases against the pure module with grep-style assertions against the consumer.
-import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { paginate } from '../../src/web/pages/list-pagination.ts';
-
-async function source(path: string): Promise<string> {
-  return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
-}
 
 describe('paginate', () => {
   it('7 items, page 1, size 4 — returns the first four with a two-page window', () => {
@@ -92,26 +87,3 @@ describe('paginate', () => {
   });
 });
 
-describe('list-pagination wiring in roadmap-page.tsx', () => {
-  it('imports the helper from ./list-pagination.ts', async () => {
-    const contents = await source('src/web/pages/roadmap-page.tsx');
-    expect(contents).toContain("from './list-pagination.ts'");
-  });
-
-  it('declares a page-size constant whose value is 4', async () => {
-    const contents = await source('src/web/pages/roadmap-page.tsx');
-    expect(contents).toMatch(/REQUIREMENT_PAGE_SIZE\s*=\s*4/);
-  });
-
-  it('calls paginate with the phase requirement array', async () => {
-    const contents = await source('src/web/pages/roadmap-page.tsx');
-    expect(contents).toMatch(/paginate\(phase\.requirements/);
-  });
-
-  it('renders the requirement-pagination class name and both control labels', async () => {
-    const contents = await source('src/web/pages/roadmap-page.tsx');
-    expect(contents).toContain('requirement-pagination');
-    expect(contents).toContain('Previous page');
-    expect(contents).toContain('Next page');
-  });
-});

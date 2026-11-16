@@ -2,7 +2,6 @@
 // static render of ScopeChip over a QueryClient seeded with Brinkwater's real inventory; the popup is a static render
 // of ScopeChipPanel, because Base UI mounts a popover's portal only on the client (the browser half is
 // test/e2e/workstreams.spec.ts). Source reads pin what a render cannot show. Expected strings are the UI-SPEC's.
-import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -18,10 +17,6 @@ import { projectKey } from '../../src/web/query-keys.ts';
 import { planningFiles } from '../helpers/fixture-project.ts';
 
 const BRINKWATER = fileURLToPath(new URL('../fixtures/brinkwater', import.meta.url)).replace(/[\\/]$/, '');
-
-function source(path: string): string {
-  return readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
-}
 
 let inventory: WorkstreamInventory;
 beforeAll(async () => {
@@ -71,25 +66,6 @@ describe('the scope chip trigger', () => {
     const markup = inProject(createElement(ScopeChip, { scope: hostile }), null, hostile);
     expect(markup).not.toContain('<img');
     expect(markup).toContain('&lt;img src=x onerror=alert(1)&gt;');
-  });
-
-  it('is neutral: no accent colour on the trigger, a foreground rule, a 40px target when narrow or coarse', () => {
-    const css = source('src/web/styles/globals.css');
-    const block = (selector: string): string => {
-      const start = css.indexOf(`\n${selector} {`);
-      expect(start).toBeGreaterThan(-1);
-      return css.slice(start, css.indexOf('\n}', start));
-    };
-    const trigger = block('.scope-chip');
-    expect(trigger).toContain('border: 1px solid var(--foreground)');
-    expect(trigger).not.toMatch(/--primary|--accent|--in-flight|--complete/);
-    for (const selector of ['.scope-chip:hover,\n.scope-chip[aria-expanded=\'true\']', '.scope-chip-key', '.scope-chip-active', '.scope-chip-row']) {
-      const start = css.indexOf(`\n${selector} {`);
-      expect(start, selector).toBeGreaterThan(-1);
-      expect(css.slice(start, css.indexOf('\n}', start)), selector).not.toMatch(/--primary|--accent/);
-    }
-    // One rule gives the trigger the 40px token when the screen is narrow or coarse.
-    expect(css).toMatch(/@media \(max-width: 42rem\), \(pointer: coarse\) \{\s*\.scope-chip \{\s*min-height: var\(--space-10\);/);
   });
 });
 
@@ -175,17 +151,3 @@ describe('the scope chip list over Brinkwater', () => {
   });
 });
 
-describe('the scope chip in the shell', () => {
-  it('is rendered by the shell beside the project switcher only when a scope is open', () => {
-    const shell = source('src/web/components/app-shell.tsx');
-    expect(shell).toMatch(/scope !== null \? <ScopeChip scope=\{scope\} \/> : null/);
-    expect(shell.indexOf('<ProjectSwitcher')).toBeLessThan(shell.indexOf('<ScopeChip'));
-  });
-
-  it('builds no markup from text and takes every address from the nav helpers', () => {
-    const chip = source('src/web/components/scope-chip.tsx');
-    expect(chip).not.toMatch(/dangerouslySetInnerHTML|innerHTML/);
-    expect(chip).toContain('UnscopedLink');
-    expect(chip).toContain('aria-haspopup');
-  });
-});

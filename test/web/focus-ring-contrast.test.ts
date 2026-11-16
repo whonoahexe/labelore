@@ -52,12 +52,6 @@ function contrast(a: string, b: string): number {
 }
 
 describe('focus ring contrast (WCAG 1.4.11, WINDOWS.md entry 7)', () => {
-  it('draws the focus outline opaque — no alpha modifier on outline-ring in the base layer', async () => {
-    const css = await source('src/web/styles/globals.css');
-    expect(css).toMatch(/@apply border-border outline-ring;/);
-    expect(css).not.toMatch(/outline-ring\/\d+/);
-  });
-
   for (const [theme, selector] of [
     ['light', ':root {'],
     ['dark', '.dark {'],

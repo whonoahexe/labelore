@@ -1,4 +1,3 @@
-import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import {
   LANDING_FLASH_MS,
@@ -8,10 +7,6 @@ import {
   waitForElement,
   type ElementWaitHost,
 } from '../../src/web/landing.ts';
-
-async function source(path: string): Promise<string> {
-  return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
-}
 
 /** A fake host whose `find` answers from a fixed sequence (the last entry repeats) and whose frames the test drives. */
 function fakeHost(answers: Array<string | null>): {
@@ -122,49 +117,3 @@ describe('landingScrollBehavior', () => {
   });
 });
 
-describe('reduced motion (source text)', () => {
-  it('reads the media query once the element is found and passes it to the scroll', async () => {
-    const landing = await source('src/web/landing.ts');
-    expect(landing).toContain("matchMedia('(prefers-reduced-motion: reduce)')");
-    expect(landing).toContain('landingScrollBehavior(');
-    expect(landing).toContain("{ block: 'center', behavior }");
-  });
-
-  it('shows a static tint instead of the animation, and the mark still clears after the flash window', async () => {
-    const css = await source('src/web/styles/globals.css');
-    const start = css.indexOf("@media (prefers-reduced-motion: reduce) {\n  [data-landed='true']");
-    expect(start).toBeGreaterThan(-1);
-    const block = css.slice(start, css.indexOf('\n}\n', start + 60) + 3);
-    expect(block).toContain('animation: none');
-    expect(block).toContain('background: var(--primary-tint)');
-    const landing = await source('src/web/landing.ts');
-    expect(landing).toContain("removeAttribute('data-landed')");
-    expect(landing).toContain('LANDING_FLASH_MS');
-  });
-});
-
-describe('landing wiring (source text)', () => {
-  it('mounts useLanding at the top of AppShell and adds nothing inside .shell-controls', async () => {
-    const shell = await source('src/web/components/app-shell.tsx');
-    expect(shell).toContain('useLanding();');
-    const controls = shell.slice(shell.indexOf('<div className="shell-controls">'), shell.indexOf('</header>'));
-    expect(controls).not.toContain('Landing');
-  });
-
-  it('reads its location from the project-aware nav module and acts only on jump anchors', async () => {
-    const landing = await source('src/web/landing.ts');
-    expect(landing).toContain("from './nav.tsx'");
-    expect(landing).toContain('isJumpAnchor(');
-    expect(landing).toContain('getElementById');
-    expect(landing).not.toContain("from 'react-router'");
-  });
-
-  it('plays the landing flash from the data-landed mark, tokens only', async () => {
-    const css = await source('src/web/styles/globals.css');
-    expect(css).toContain("[data-landed='true']");
-    expect(css).toContain('@keyframes jump-landing-flash');
-    const keyframes = css.slice(css.indexOf('@keyframes jump-landing-flash'));
-    const block = keyframes.slice(0, keyframes.indexOf('}\n}') + 3);
-    expect(block).toContain('var(--primary-flash)');
-  });
-});

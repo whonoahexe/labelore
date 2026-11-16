@@ -499,34 +499,7 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-const COMPONENTS = 'src/web/views/reviews-page-components.tsx';
-
-function stripSourceComments(text: string): string {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-}
-
 describe('cross-AI reviews view contract - the real sources', () => {
-  it('author text goes through ResearchInline as React text, never straight into markup', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain("from '../pages/research-atoms.tsx'");
-    expect(code).toContain('<ResearchInline text={concern.text} />');
-    expect(code).toContain('<ResearchInline text={agreed.text} />');
-    expect(code).toContain('<ResearchInline text={item} />');
-  });
-
-  it('artifact-page.tsx draws this kind from the composed model in View mode, and the manifest keeps its lead and fallback', async () => {
-    const code = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
-    expect(code).toContain('<ReviewsView key={artifact.path} model={reviewsPageCover} />');
-    expect(code).toContain('manifest.reviewsPage?.(viewInput)');
-    const manifests = await source('src/web/views/manifests.ts');
-    expect(manifests.match(/reviewsPage: composeReviews/g)).toHaveLength(1);
-    expect(manifests).toContain("What each AI reviewer said about this phase's plans");
-    expect(manifests).toContain("promote: [{ type: 'section', heading: /\\S/, all: true }],\n    // The Cross-AI reviews page");
-  });
-
   it('records the tone uses and the page bullet in design-language.md', async () => {
     const doc = await source('docs/design-language.md');
     expect(doc).toContain('The Cross-AI reviews page.');

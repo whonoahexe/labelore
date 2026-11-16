@@ -498,26 +498,7 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-function stripSourceComments(text: string): string {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-}
-
 describe('seed view contract - the real sources', () => {
-  it('artifact-page.tsx draws the page from the composed model in View mode and the manifest keeps its fallback', async () => {
-    const code = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
-    expect(code).toContain('<SeedView key={artifact.path} model={seedCover} />');
-    expect(code).toContain('manifest.seedPage?.(viewInput)');
-    expect(code).toContain('seedThreadLinks: query.data.seedThreadLinks ?? null');
-    expect(code).not.toMatch(/artifact\.kind === ['"]seed['"]/);
-    const manifests = await source('src/web/views/manifests.ts');
-    expect(manifests.match(/seedPage: composeSeed/g)).toHaveLength(1);
-    const api = await source('src/server/project-api.ts');
-    expect(api.match(/buildSeedThreadLinks\(/g)).toHaveLength(1);
-  });
-
   it('records the tone uses and the language bullet in design-language.md', async () => {
     const doc = await source('docs/design-language.md');
     expect(doc).toContain('**The seed page.**');

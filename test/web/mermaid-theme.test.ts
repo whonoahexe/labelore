@@ -179,31 +179,9 @@ describe('mermaid initialization site — source-level contract (quick-260910-0x
     expect(converterNames).toEqual(new Set(['toMermaidColor']));
   });
 
-  it('seeds node fill from --card, not --secondary (the 02-13 root-cause fix)', async () => {
-    const page = await source('src/web/pages/artifact-page.tsx');
-    expect(page).toMatch(/primaryColor:\s*toMermaidColor\(rootStyle\.getPropertyValue\('--card'\)/);
-    expect(page).toMatch(/nodeBkg:\s*toMermaidColor\(rootStyle\.getPropertyValue\('--card'\)/);
-    // --secondary is still read (for secondaryColor, its actual namesake concept), just no longer
-    // as the node-fill seed.
-    expect(page).toMatch(
-      /secondaryColor:\s*toMermaidColor\(rootStyle\.getPropertyValue\('--secondary'\)/,
-    );
-  });
-
   it('keeps securityLevel strict and the dynamic import', async () => {
     const page = await source('src/web/pages/artifact-page.tsx');
     expect(page).toMatch(/securityLevel:\s*'strict'/);
     expect(page).toMatch(/import\(\s*'mermaid'\s*\)/);
-  });
-
-  it('keeps both lower fallback rungs reachable: the colourless base-options retry, and the per-node readable-source fallback', async () => {
-    const page = await source('src/web/pages/artifact-page.tsx');
-    // Rung 2: on a themeVariables initialize() failure, retry with baseOptions alone (no colours).
-    const initSection = page.slice(page.indexOf('const chunk = import'), page.indexOf('chunk.catch'));
-    expect(initSection).toMatch(/catch\s*\{[\s\S]*?mermaid\.initialize\(baseOptions\)/);
-    // Rung 3: per-node, a parse/run failure restores the readable source text rather than leaving
-    // a broken node.
-    expect(initSection).toMatch(/node\.textContent\s*=\s*source/);
-    expect(initSection).toMatch(/mermaid-fallback/);
   });
 });

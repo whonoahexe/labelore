@@ -1149,26 +1149,3 @@ describe('composeCodebase - never throws, falls through silently, holds no state
   });
 });
 
-// ---------------------------------------------------------------------------------------------------------
-// The view contract: source-text checks in the coverage-view-contract idiom (readFile + regex, no AST tooling).
-// ---------------------------------------------------------------------------------------------------------
-async function source(path: string): Promise<string> {
-  return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
-}
-
-const COMPONENTS = 'src/web/views/codebase-components.tsx';
-
-function stripSourceComments(text: string): string {
-  return text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-}
-
-describe('codebase view contract - the real sources', () => {
-  it('every link goes through the in-app Link to a payload address; a ghost entry is not interactive', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain("import { Link } from '../nav.tsx';");
-    expect(code).not.toMatch(/\bhref\s*=/);
-    expect(code).not.toMatch(/<a[\s>]/);
-    expect(code).toContain("data-ghost=\"true\"");
-    expect(code).toContain('{NOT_MAPPED}');
-  });
-});

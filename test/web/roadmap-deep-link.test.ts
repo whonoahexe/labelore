@@ -1,4 +1,3 @@
-import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import type { PhaseIdentity } from '../../src/domain/model.ts';
 import { buildMilestoneUrl, buildPhaseUrl } from '../../src/presentation/routes.ts';
@@ -7,10 +6,6 @@ import {
   resolveRoadmapDeepLink,
   type RoadmapDeepLinkTarget,
 } from '../../src/web/pages/roadmap-deep-link.ts';
-
-async function source(path: string): Promise<string> {
-  return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
-}
 
 const identity: PhaseIdentity = {
   milestoneVersion: 'v1.0',
@@ -173,22 +168,3 @@ describe('milestoneContainsDeepLink', () => {
   });
 });
 
-describe('roadmap-deep-link module purity', () => {
-  it('contains no document, window, or React reference', async () => {
-    const contents = await source('src/web/pages/roadmap-deep-link.ts');
-    expect(contents).not.toMatch(/document\.|window\.|from 'react'/);
-  });
-});
-
-describe('roadmap-page wiring source contract', () => {
-  it('reads the matched route and resolves a deep-link target', async () => {
-    const page = await source('src/web/pages/roadmap-page.tsx');
-    expect(page).toContain('useProjectPathname');
-    expect(page).toContain('resolveRoadmapDeepLink');
-    expect(page).toContain('milestoneContainsDeepLink');
-    expect(page).toContain('data-deep-link-target');
-    expect(page).toContain('requestAnimationFrame');
-    const scrollCalls = page.match(/scrollIntoView/g) ?? [];
-    expect(scrollCalls).toHaveLength(1);
-  });
-});

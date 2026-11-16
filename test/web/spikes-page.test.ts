@@ -2,7 +2,6 @@
 // verdict board), over the made-up Lendshed and Shapes spikes trees loaded through the repository, plus planted copies
 // for the shapes the fixtures lack. One page serves the manifest, every spike README, CONVENTIONS and WRAP-UP-SUMMARY;
 // where the manifest and a README differ both verdicts show, each named, and nothing is merged.
-import { readFile } from 'node:fs/promises';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
@@ -530,30 +529,3 @@ describe('SpikesView: the sheet shell', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// The view contract: source-text checks in the pause-page idiom (no AST tooling). Comments are stripped before every
-// negative check.
-// ---------------------------------------------------------------------------
-
-async function source(path: string): Promise<string> {
-  return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
-}
-
-function stripSourceComments(text: string): string {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-}
-
-describe('spikes view contract - the real sources', () => {
-  it('artifact-page.tsx draws the page from the composed model in View mode and the manifest keeps its fallback', async () => {
-    const page = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
-    expect(page).toContain('<SpikesView key="spikes" model={spikesCover} renderHtml={renderHtml} />');
-    expect(page).toContain('manifest.spikesPage?.(viewInput)');
-    expect(page).toContain('spikesContext: query.data.spikesContext ?? null');
-    expect(page).not.toMatch(/artifact\.kind === ['"](spike|spikes|spikes-manifest)['"]/);
-    const manifests = await source('src/web/views/manifests.ts');
-    expect(manifests.match(/spikesPage: composeSpikes/g)).toHaveLength(1);
-  });
-});

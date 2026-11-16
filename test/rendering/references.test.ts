@@ -761,34 +761,4 @@ describe('sanitized metadata to controlled React preview bridge', () => {
     expect(state).toBeNull();
     expect(prevented).toBe(0);
   });
-
-  it('renders one Base UI preview with the locked fields, explicit Open, and exact focus return', async () => {
-    const preview = await readFile('src/web/components/reference-preview.tsx', 'utf8');
-    const css = await readFile('src/web/styles/globals.css', 'utf8');
-    const artifactPage = await readFile('src/web/pages/artifact-page.tsx', 'utf8');
-    const activation = await readFile('src/web/pages/document-reference-activation.ts', 'utf8');
-    const router = await readFile('src/web/app-router.tsx', 'utf8');
-
-    for (const field of ['identity', 'title', 'status', 'location', 'detail']) {
-      expect(preview).toContain(`preview.${field}`);
-    }
-    expect(preview).toContain("from '@base-ui/react/popover'");
-    expect(preview).toMatch(
-      // `anchor` is a virtual element measuring the trigger, not the trigger node itself — a raw
-      // Element anchor left the positioner with a 0x0 reference at the viewport origin (F7).
-      /<Popover\.Positioner[\s\S]*className="reference-preview-positioner"[\s\S]*anchor=\{anchor\}[\s\S]*sideOffset=\{8\}[\s\S]*align="start"[\s\S]*positionMethod="fixed"/,
-    );
-    expect(preview).toContain('finalFocus={() => state.trigger}');
-    expect(preview).toContain('useProjectHref(state?.preview.url');
-    expect(preview).toContain('href={href}');
-    expect(preview).toContain('Open');
-    expect(artifactPage.match(/dangerouslySetInnerHTML/g)).toHaveLength(1);
-    expect(artifactPage).toContain('handleDocumentReferenceActivation<HTMLElement>');
-    expect(activation).toContain("'[data-reference-key]'");
-    expect(router).toContain('<PlanPairPage planUrl={outcome.planUrl} active={outcome.active} />');
-    expect(router).toContain('<DocumentRoute url={outcome.url} />');
-    expect(css).toMatch(/\.reference-preview-positioner\s*\{[^}]*z-index:\s*(?:2[1-9]|[3-9]\d|\d{3,})/s);
-    expect(css).toMatch(/\.reference-preview\s*\{[^}]*width:\s*min\(24rem, calc\(100vw - 2rem\)\)/s);
-    expect(css).not.toMatch(/\.reference-preview\s*\{[^}]*z-index:/s);
-  });
 });

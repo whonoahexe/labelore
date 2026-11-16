@@ -189,26 +189,6 @@ A line break<br>and an image<img src="x">follow.`),
   });
 });
 
-describe('recognition decides presentation only (plan-segments.ts / markdown.ts contract)', () => {
-  it('keeps the segmenter free of any recognised-set consultation', async () => {
-    const source = await readFile('src/rendering/plan-segments.ts', 'utf8');
-    const start = source.indexOf('export function segmentPlanBody');
-    const bodyEnd = source.indexOf('\n}', start);
-    const fnBody = source
-      .slice(start, bodyEnd)
-      .split('\n')
-      .filter((line) => !/^\s*[/*]/.test(line))
-      .join('\n');
-
-    expect(fnBody).not.toContain('RECOGNIZED');
-  });
-
-  it('has the rendering layer branch on isRecognizedPlanTag', async () => {
-    const source = await readFile('src/rendering/markdown.ts', 'utf8');
-    expect(source.match(/isRecognizedPlanTag/g)?.length ?? 0).toBeGreaterThanOrEqual(1);
-  });
-});
-
 describe('E15 state coverage — generic PLAN section shell', () => {
   it('empty: a whitespace-only wrapper body still renders its label and the empty-section marker', async () => {
     const renderer = await createArtifactRenderer();

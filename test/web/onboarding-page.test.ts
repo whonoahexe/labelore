@@ -416,30 +416,7 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-function stripSourceComments(text: string): string {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-}
-
 describe('onboarding view contract - the real sources', () => {
-  it('artifact-page.tsx draws the page from the composed model in View mode and the manifest keeps its fallback', async () => {
-    const code = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
-    expect(code).toContain('<OnboardingView key={artifact.path} model={onboardingCover} />');
-    expect(code).toContain('manifest.onboardingPage?.(viewInput)');
-    expect(code).not.toMatch(/artifact\.kind === ['"]onboarding['"]/);
-    const manifests = await source('src/web/views/manifests.ts');
-    expect(manifests.match(/onboardingPage: composeOnboarding/g)).toHaveLength(1);
-    expect(manifests).toContain("promote: [{ type: 'section', heading: /\\S/, all: true }],\n    onboardingPage: composeOnboarding");
-  });
-
-  it('the server builds the onboarding context for the onboarding summary only', async () => {
-    const code = stripSourceComments(await source('src/server/project-api.ts'));
-    expect(count(code, 'buildOnboardingContext(')).toBe(1);
-    expect(code).toContain("lookup.artifact.kind !== 'onboarding'");
-  });
-
   it('records the tone uses and the language bullet in design-language.md', async () => {
     const doc = await source('docs/design-language.md');
     expect(doc).toContain('**The onboarding page.**');

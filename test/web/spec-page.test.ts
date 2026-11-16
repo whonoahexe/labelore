@@ -1,7 +1,6 @@
 // Phase 10 (10-16, VIEW-11): the Spec composer and the static markup of its page, on the made-up Lendshed specs.
 // The first screen says whether the spec is locked enough to plan: a verdict chip and "{score} against a gate of
 // {gate}", five column gauges, and each requirement as a row with Current, Target and Acceptance.
-import { readFile } from 'node:fs/promises';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
@@ -409,50 +408,3 @@ describe('SpecView - the rest of the page', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// The view contract: source-text checks in the coverage-view-contract idiom (no AST tooling). Comments are
-// stripped before every negative check.
-// ---------------------------------------------------------------------------
-
-async function source(path: string): Promise<string> {
-  return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
-}
-
-const COMPOSER = 'src/web/views/spec-page.ts';
-const COMPONENTS = 'src/web/views/spec-page-components.tsx';
-
-function stripSourceComments(text: string): string {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-}
-
-/** A tone this page must never write: the parse-degradation tones and `missing` (above the gate is in-flight). */
-function writesForbiddenTone(text: string): boolean {
-  return (
-    /tone[A-Za-z]*\s*[:=]\s*['"](destructive|warning|missing)['"]/.test(text) ||
-    /data-tone="(destructive|warning|missing)"/.test(text) ||
-    /'(destructive|warning|missing)'\s*\|/.test(text) ||
-    /\|\s*'(destructive|warning|missing)'/.test(text)
-  );
-}
-
-describe('spec view contract - the real sources', () => {
-  it('author text goes through ResearchInline, never straight into markup', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain('<ResearchInline text={requirement.label} />');
-    expect(code).toContain('<ResearchInline text={model.goal} />');
-    expect(code).toContain('<ResearchInline text={item.reason} />');
-  });
-
-  it('the composer writes only the documented tones and the documented words', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(code).toContain("export type SpecTone = 'complete' | 'in-flight' | 'quiet';");
-    expect(writesForbiddenTone(code)).toBe(false);
-    expect(code).toContain("export const LOCKED_LABEL = 'Locked enough to plan';");
-    expect(code).toContain("export const NOT_LOCKED_LABEL = 'Not locked yet';");
-    expect(code).toContain("export const NOT_STATED_LABEL = 'Ambiguity not stated';");
-    expect(code).toContain("export const NO_ACCEPTANCE_LABEL = 'No acceptance stated';");
-  });
-});

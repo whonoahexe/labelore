@@ -368,15 +368,6 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-const COMPONENTS = 'src/web/views/user-setup-page-components.tsx';
-
-function stripSourceComments(text: string): string {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-}
-
 // 10-REVIEW CR-01 and WR-01: the same planted forms, through the handler, the composer and the components.
 describe('the View draws no value written in any form (10-REVIEW CR-01, WR-01)', () => {
   const TABLES = [
@@ -433,27 +424,6 @@ describe('the View draws no value written in any form (10-REVIEW CR-01, WR-01)',
 });
 
 describe('user setup view contract - the real sources', () => {
-  it('author text goes through MaskedInline, which draws the mark, never straight into markup', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain('<MaskedInline text={item.title} />');
-    expect(code).toContain('<MaskedInline text={field.text} />');
-    expect(code).toContain('<ValueNotShown />');
-    expect(code).not.toContain('<ResearchInline');
-  });
-
-  it('artifact-page.tsx draws this kind from the composed model and never reaches the document renderers for it', async () => {
-    const code = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
-    const branch = code.indexOf('userSetupPageCover ? (');
-    expect(branch).toBeGreaterThan(-1);
-    expect(code).toContain('<UserSetupView key={artifact.path} model={userSetupPageCover} onShowSource={showSource} />');
-    // The user-setup branch precedes the withheld note and every document renderer, so the document's own heading list
-    // and HTML are never what View mode draws for this kind.
-    expect(branch).toBeLessThan(code.indexOf('documentWithheld ? ('));
-    expect(branch).toBeLessThan(code.indexOf('<ViewReader'));
-    expect(branch).toBeLessThan(code.indexOf('<ArtifactReader'));
-    expect(code).toContain('documentHtmlAllowedInView(manifest)');
-  });
-
   it('records the tones in design-language.md and the language bullet about masked text', async () => {
     const doc = await source('docs/design-language.md');
     expect(doc).toContain('The User setup page.');

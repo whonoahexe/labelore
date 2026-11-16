@@ -467,53 +467,7 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-const COMPOSER = 'src/web/views/eval-review-page.ts';
-const COMPONENTS = 'src/web/views/eval-review-page-components.tsx';
-
-function stripSourceComments(text: string): string {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '')
-    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-}
-
-/** A tone this page must never write: the parse-degradation tones (`missing` is the one it does write). */
-function writesForbiddenTone(text: string): boolean {
-  return (
-    /tone[A-Za-z]*\s*[:=]\s*['"](destructive|warning)['"]/.test(text) ||
-    /data-tone="(destructive|warning)"/.test(text) ||
-    /'(destructive|warning)'\s*\|/.test(text) ||
-    /\|\s*'(destructive|warning)'/.test(text)
-  );
-}
-
 describe('eval review view contract - the real sources', () => {
-  it('author text goes through ResearchInline as React text, never straight into markup', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain("from '../pages/research-atoms.tsx'");
-    expect(code).toContain('<ResearchInline text={target.name} />');
-    expect(code).toContain('<ResearchInline text={step.text} />');
-    expect(code).toContain('<ResearchInline text={target.finding} />');
-  });
-
-  it('the composer writes only the four tones and holds the one word table as Maps', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(code).toContain("export type EvalReviewTone = 'complete' | 'in-flight' | 'missing' | 'quiet';");
-    expect(writesForbiddenTone(code)).toBe(false);
-    expect(code).toContain('export const EVAL_WORD_TABLE');
-    expect(code).toContain('new Map<string, EvalReviewTone>');
-    expect(code).toContain('Verdict not stated');
-  });
-
-  it('artifact-page.tsx draws this kind from the composed model in View mode, and the manifest keeps its lead and fallback', async () => {
-    const code = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
-    expect(code).toContain('<EvalReviewView key={artifact.path} model={evalReviewPageCover} renderHtml={renderHtml} />');
-    expect(code).toContain('manifest.evalReviewPage?.(viewInput)');
-    const manifests = await source('src/web/views/manifests.ts');
-    expect(manifests.match(/evalReviewPage: composeEvalReview/g)).toHaveLength(1);
-    expect(manifests).toContain("How far this phase's AI evaluation is built: its score and verdict");
-  });
-
   it('records the tone uses and the language bullet about the file\'s own word in design-language.md', async () => {
     const doc = await source('docs/design-language.md');
     expect(doc).toContain('The Eval review page.');

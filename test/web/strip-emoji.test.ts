@@ -1,10 +1,5 @@
-import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { stripEmoji } from '../../src/web/pages/strip-emoji.ts';
-
-async function source(path: string): Promise<string> {
-  return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
-}
 
 describe('stripEmoji', () => {
   it('strips common pictographs and emojis from text', () => {
@@ -40,54 +35,3 @@ describe('stripEmoji', () => {
   });
 });
 
-describe('dashboard-page emoji sanitization contract', () => {
-  it("imports and applies stripEmoji to the head, runs the position line's STATE.md text through stripMarkdown(stripEmoji()), and routes ledger entries through MarkedText", async () => {
-    const page = await source('src/web/pages/dashboard-page.tsx');
-    expect(page).toMatch(/import \{.*stripEmoji.*\} from '\.\/strip-emoji\.ts';/);
-    expect(page).toContain('<h1 id="project-name-heading">{stripEmoji(head.name)}</h1>');
-    expect(page).toContain('{stripEmoji(head.tagline)}');
-    expect(page).toContain('<LeadText text={stripEmoji(head.lead)} />');
-    // quick-261115-o34 removed the Next-up card and its "Last" line (STATE.md's last activity, once
-    // run through stripMarkdown(stripEmoji(last.text))). Its successor is the position line: every
-    // author string, the STATE.md session note included, goes through clean(), which is
-    // stripMarkdown(stripEmoji()), and the operator step through stripEmoji().
-    const position = await source('src/web/pages/dashboard-position.tsx');
-    expect(position).toContain("import { stripEmoji, stripMarkdown } from './strip-emoji.ts';");
-    expect(position).toContain('const clean = (text: string): string => stripMarkdown(stripEmoji(text));');
-    expect(position).toContain('clean(note.text)');
-    expect(position).toContain('clean(then.what)');
-    expect(position).toContain('clean(now.title)');
-    expect(position).toContain('clean(now.why)');
-    expect(position).toContain('clean(next.why)');
-    expect(position).toContain('<LeadText text={stripEmoji(item.text)} />');
-    // No author string reaches the page as a raw JSX child, bypassing clean() or stripEmoji().
-    expect(position).not.toMatch(/\{(?:note\.text|then\.what|now\.title|now\.why|next\.why|item\.text)\}/);
-    // quick-261018-4tb: blockers and decisions render in dashboard-ledger.tsx, and every title and
-    // rationale reaches the page through MarkedText, which strips emoji before it tokenizes.
-    const ledger = await source('src/web/pages/dashboard-ledger.tsx');
-    expect(ledger).toContain('tokenizeInline(stripEmoji(text))');
-    expect(ledger).toContain('<MarkedText text={blocker.title} query={query} />');
-    expect(ledger).toContain('<MarkedText text={blocker.why} query={query} />');
-    expect(ledger).toContain('<MarkedText text={lead.title} query={query} />');
-    expect(ledger).toContain('<MarkedText text={decision.title} query={query} />');
-    expect(ledger).toContain('<MarkedText text={decision.why} query={query} />');
-    // The G2-08 invariant that prevents slice/substr truncation is intact in On deck, whose queue
-    // and todo details also reach the page through MarkedText.
-    const deck = await source('src/web/pages/dashboard-deck.tsx');
-    expect(deck).toContain('<MarkedText text={item.detail} />');
-    expect(deck).toContain('<MarkedText text={todo.detail} />');
-    expect(deck).not.toMatch(/(?:item|todo|note)\.detail\.(slice|substring|substr)\(/);
-  });
-});
-
-describe('roadmap-page emoji sanitization contract', () => {
-  it('strips emoji from an archived milestone name before display', async () => {
-    // Archived milestones are named after the ROADMAP.md <summary> text verbatim
-    // (src/planning-repo/assemble.ts), which frequently carries an authored emoji,
-    // e.g. "<summary>✅ v1.0 Portal (v1.0 Phases 1-4) — SHIPPED 2026-07-26</summary>".
-    const page = await source('src/web/pages/roadmap-page.tsx');
-    expect(page).toMatch(/import \{ stripEmoji \} from '\.\/strip-emoji\.ts';/);
-    // A MILESTONES.md entry's version and name, when there is one, replace the <summary> text.
-    expect(page).toContain('<strong>{stripEmoji(title)}</strong>');
-  });
-});

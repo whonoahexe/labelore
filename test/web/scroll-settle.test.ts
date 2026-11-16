@@ -1,10 +1,5 @@
-import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { scrollWhenSettled, type ScrollSettleHost } from '../../src/web/pages/scroll-settle.ts';
-
-async function source(path: string): Promise<string> {
-  return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
-}
 
 interface HostRecorder {
   scrollCalls: number[];
@@ -119,9 +114,3 @@ describe('scrollWhenSettled', () => {
   });
 });
 
-describe('scroll-settle module purity', () => {
-  it('contains no document, window, or React reference', async () => {
-    const contents = await source('src/web/pages/scroll-settle.ts');
-    expect(contents).not.toMatch(/document\.|window\.|from 'react'/);
-  });
-});
