@@ -36,10 +36,6 @@ describe('view registry completeness (VIEW-05)', () => {
     describe(`kind: ${kind}`, () => {
       const manifest = VIEW_MANIFESTS[kind];
 
-      it('has a registered manifest', () => {
-        expect(manifest).toBeDefined();
-      });
-
       it('manifest.kind matches the registry key', () => {
         expect(manifest?.kind).toBe(kind);
       });
