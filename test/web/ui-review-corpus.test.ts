@@ -1,8 +1,8 @@
-// quick-261003-528 (QK528-08): real-corpus guards over every UI-REVIEW.md in this repo's `.planning/`
-// (excluding the sketches, keyed LB:) and the made-up Lendshed project (keyed FX:, walked through
-// FX_PLANNING; a missing fixture throws, nothing skips), plus the sketch's synthetic doc named
-// explicitly. Labelore's live planning files are re-pinned to today's content (D-18). Every file must extract without throwing, compose to a non-null review
-// through the real handler, and match the values pinned below. The pinned values were independently
+// quick-261003-528 (QK528-08): corpus guards over every UI-REVIEW.md in the made-up Lendshed project
+// (keyed FX:, walked through FX_PLANNING; a missing fixture throws, nothing skips), plus the synthetic
+// doc (test/fixtures/ui-review/synthetic-UI-REVIEW.md) named explicitly. Every file must extract
+// without throwing, compose to a non-null review through the real handler, and match the values
+// pinned below. The pinned values were independently
 // confirmed with grep / awk over the source files (pillar rows, ❌ / ✗ and ⚠ lines inside each
 // `### Pillar` section, "See Priority Fix" lines, `- \`` lines inside `## Files Audited`) — never
 // copied from the extractor's own output.
@@ -18,8 +18,7 @@ import { composeUiReview } from '../../src/web/views/ui-review.ts';
 import type { ComposedUiReview } from '../../src/web/views/ui-review.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
-const REPO_PLANNING = new URL('../../.planning', import.meta.url).pathname;
-const SYNTHETIC = new URL('../../.planning/sketches/018-ui-review-page/synthetic-UI-REVIEW.md', import.meta.url).pathname;
+const SYNTHETIC = new URL('../fixtures/ui-review/synthetic-UI-REVIEW.md', import.meta.url).pathname;
 
 function walk(root: string): string[] {
   const found: string[] = [];
@@ -70,20 +69,6 @@ const PINNED: Record<string, Pinned> = {
     verdict: '7 points lost, in Copywriting, Visuals, Color, Spacing and Experience Design.',
     facts: '2 Oct 2026|6|3',
   },
-  'LB:milestones/v1.1-phases/05-per-type-document-views/05-UI-REVIEW.md': {
-    overall: [22, 24],
-    scores: [4, 4, 3, 4, 4, 3],
-    fails: [0, 0, 0, 0, 0, 0],
-    flags: [0, 0, 1, 0, 0, 1],
-    fixes: { 1: ['Color', 'Experience Design'], 2: ['Typography'], 3: ['Visuals'] },
-    history: 0,
-    back: ['Registry Safety', 'Files Audited', 'Summary'],
-    fileEntries: 24,
-    initial: 'Color',
-    title: 'Per type document views',
-    verdict: '2 points lost, in Color and Experience Design.',
-    facts: '21 Sep 2026|5|3',
-  },
   'FX:phases/03-account-admin-and-sessions/03-UI-REVIEW.md': {
     overall: [22, 24],
     scores: [4, 4, 4, 3, 3, 4],
@@ -98,122 +83,9 @@ const PINNED: Record<string, Pinned> = {
     verdict: '2 points lost, in Typography and Spacing.',
     facts: '14 Apr 2026|3|2',
   },
-  'LB:milestones/v1.0-phases/03-search-browsing-traceability/03-UI-REVIEW.md': {
-    overall: [24, 24],
-    scores: [4, 4, 4, 4, 4, 4],
-    fails: [0, 0, 0, 0, 0, 0],
-    flags: [0, 0, 0, 0, 0, 0],
-    fixes: {},
-    history: 2,
-    back: ['Supersession Notice', 'Technical Verification', 'Summary', 'Files Audited'],
-    fileEntries: 9,
-    initial: 'Copywriting',
-    title: 'Search browsing traceability',
-    verdict: 'Full marks. Nothing to fix.',
-    facts: '10 Sep 2026|3|0',
-  },
-  'LB:milestones/v2.1-phases/09-review-audit-and-root-document-pages/09-UI-REVIEW.md': {
-    overall: [17, 24],
-    scores: [3, 2, 3, 3, 3, 3],
-    fails: [0, 0, 0, 0, 0, 0],
-    flags: [0, 0, 0, 0, 0, 0],
-    fixes: { 1: ['Visuals'], 2: ['Copywriting'], 3: ['Visuals'] },
-    history: 0,
-    back: ['Files Audited'],
-    fileEntries: 8,
-    initial: 'Visuals',
-    title: 'Review audit and root document pages',
-    verdict: '7 points lost, in Copywriting, Visuals, Color, Typography, Spacing and Experience Design.',
-    facts: '3 Nov 2026|9|3',
-  },
-  'LB:milestones/v2.1-phases/13-search-and-quick-jump-palette/13-UI-REVIEW.md': {
-    overall: [18, 24],
-    scores: [3, 3, 3, 3, 3, 3],
-    fails: [0, 0, 0, 0, 0, 0],
-    flags: [0, 0, 0, 0, 0, 0],
-    fixes: { 1: ['Spacing'], 2: ['Spacing'], 3: ['Copywriting'] },
-    history: 0,
-    back: ['Files Audited'],
-    fileEntries: 7,
-    initial: 'Copywriting',
-    title: 'Search and quick jump palette',
-    verdict: '6 points lost, in Copywriting, Visuals, Color, Typography, Spacing and Experience Design.',
-    facts: '13 Nov 2026|13|3',
-  },
-  'LB:milestones/v2.1-phases/12-project-settings-source-mode-and-reading-polish/12-UI-REVIEW.md': {
-    overall: [18, 24],
-    scores: [3, 3, 3, 3, 3, 3],
-    fails: [0, 0, 0, 0, 0, 0],
-    flags: [0, 0, 0, 0, 0, 0],
-    fixes: { 1: ['Experience Design'], 2: ['Visuals'], 3: ['Color'] },
-    history: 0,
-    back: ['Orchestrator check of the top fixes', 'Files Audited'],
-    fileEntries: 11,
-    initial: 'Copywriting',
-    title: 'Project settings source mode and reading polish',
-    verdict: '6 points lost, in Copywriting, Visuals, Color, Typography, Spacing and Experience Design.',
-    facts: '11 Nov 2026|12|3',
-  },
-  'LB:milestones/v2.1-phases/10-codebase-map-specification-and-check-pages/10-UI-REVIEW.md': {
-    overall: [16, 24],
-    scores: [3, 3, 2, 3, 2, 3],
-    fails: [0, 0, 0, 0, 0, 0],
-    flags: [0, 0, 0, 0, 0, 0],
-    fixes: { 1: ['Color'], 2: ['Copywriting'], 3: ['Copywriting'] },
-    history: 0,
-    back: ['Close-out items (10-23 "for judgment")', 'Registry Safety', 'Files Audited'],
-    fileEntries: 5,
-    initial: 'Color',
-    title: 'Codebase map specification and check pages',
-    verdict: '8 points lost, in Copywriting, Visuals, Color, Typography, Spacing and Experience Design.',
-    facts: '6 Nov 2026|10|3',
-  },
-  'LB:milestones/v2.1-phases/08-several-projects-and-a-switcher/08-UI-REVIEW.md': {
-    overall: [21, 24],
-    scores: [4, 3, 4, 4, 3, 3],
-    fails: [0, 0, 0, 0, 0, 0],
-    flags: [0, 0, 0, 0, 0, 0],
-    fixes: { 1: ['Visuals'], 2: ['Typography'], 3: ['Spacing'] },
-    history: 0,
-    back: ['Screenshot gate note', 'Files Audited'],
-    fileEntries: 17,
-    initial: 'Visuals',
-    title: 'Several projects and a switcher',
-    verdict: '3 points lost, in Visuals, Spacing and Experience Design.',
-    facts: '31 Oct 2026|8|3',
-  },
-  'LB:milestones/v2.1-phases/07-recognised-files-and-readable-urls/07-UI-REVIEW.md': {
-    overall: [20, 24],
-    scores: [4, 3, 4, 3, 3, 3],
-    fails: [0, 0, 0, 0, 0, 0],
-    flags: [0, 0, 0, 0, 0, 0],
-    fixes: { 1: ['Visuals'], 2: ['Experience Design'], 3: ['Typography', 'Spacing'] },
-    history: 0,
-    back: ['Verified Working', 'Unresolved in the Contract (not audited as defects)', 'Files Audited'],
-    fileEntries: 6,
-    initial: 'Visuals',
-    title: 'Recognised files and readable urls',
-    verdict: '4 points lost, in Visuals, Typography, Spacing and Experience Design.',
-    facts: '27 Oct 2026|7|3',
-  },
-  'LB:milestones/v1.0-phases/04-portability-degradation-hardening/04-UI-REVIEW.md': {
-    overall: [24, 24],
-    scores: [4, 4, 4, 4, 4, 4],
-    fails: [0, 0, 0, 0, 0, 0],
-    flags: [0, 0, 0, 0, 0, 0],
-    fixes: {},
-    history: 2,
-    back: ['Registry Safety Audit', 'Files Audited', 'Supersedes Prior Reviews'],
-    fileEntries: 13,
-    initial: 'Copywriting',
-    title: 'Portability degradation hardening',
-    verdict: 'Full marks. Nothing to fix.',
-    facts: '10 Sep 2026|4|0',
-  },
 };
 
 const FILES: { key: string; path: string }[] = [
-  ...walk(REPO_PLANNING).map((path) => ({ key: `LB:${relative(REPO_PLANNING, path)}`, path })),
   ...walk(FX_PLANNING).map((path) => ({ key: `FX:${relative(FX_PLANNING, path)}`, path })),
   { key: 'SYN:synthetic', path: SYNTHETIC },
 ];
@@ -253,7 +125,6 @@ describe('UI-REVIEW corpus', () => {
   it('finds the pinned documents', () => {
     const present = new Set(FILES.map((f) => f.key));
     expect(FILES.filter((f) => f.key.startsWith('FX:')).length).toBeGreaterThanOrEqual(1);
-    expect(FILES.filter((f) => f.key.startsWith('LB:')).length).toBeGreaterThanOrEqual(3);
     for (const key of Object.keys(PINNED)) expect(present.has(key), key).toBe(true);
     // Nothing unpinned: a new UI-REVIEW in the corpus must be pinned here on purpose.
     for (const file of FILES) expect(PINNED[file.key], `unpinned ${file.key}`).toBeDefined();

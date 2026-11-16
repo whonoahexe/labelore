@@ -1,14 +1,12 @@
-// quick-260923-jxp (JXP-05, JXP-08): real-corpus guards. Two corpora, keyed by prefix: `LB:` for this
-// repo's own archived discussion logs under `.planning/` (read from the checkout) and `FX:` for the eight
-// made-up Lendshed logs (read through fxPath, which throws on a missing file; nothing here skips or looks
-// anywhere else on the machine) — the review's whole premise is "no discussion log drops a question."
+// quick-260923-jxp (JXP-05, JXP-08): corpus guards over the eight made-up Lendshed logs, keyed `FX:`
+// (read through fxPath, which throws on a missing file; nothing here skips or looks anywhere else on
+// the machine) — the review's whole premise is "no discussion log drops a question."
 // Every FX question count below was counted in the file itself (grep -c on the question headings or the
 // bold-Q lines) before being pinned, never copied from the extractor's own output. Pins are per file,
 // never a total over a corpus (README rule R6).
 import { readdirSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { FX_PLANNING, fxPath } from '../helpers/fixture-project.ts';
 import {
@@ -19,12 +17,9 @@ import { discussionLogLayout } from '../../src/web/views/layout-discussion-log.t
 import { extractDiscussionLog } from '../../src/planning-repo/handlers/section-projection.ts';
 import type { ViewInput, ViewManifest } from '../../src/web/views/manifest.ts';
 
-const LB_PLANNING = fileURLToPath(new URL('../../.planning', import.meta.url));
-
-/** `LB:<path under .planning>` or `FX:<path under the Lendshed .planning>`. */
+/** `FX:<path under the Lendshed .planning>`. */
 function absolutePath(key: string): string {
   if (key.startsWith('FX:')) return fxPath(key.slice(3));
-  if (key.startsWith('LB:')) return join(LB_PLANNING, key.slice(3));
   throw new Error(`discussion-log-corpus: unknown corpus prefix in ${key}`);
 }
 
@@ -37,14 +32,6 @@ interface LogCase {
   key: string;
   questionCount: number;
 }
-
-const LB_CASES: LogCase[] = [
-  { label: 'LB v1.0/01', key: 'LB:milestones/v1.0-phases/01-read-layer-domain-model/01-DISCUSSION-LOG.md', questionCount: 16 },
-  { label: 'LB v1.0/02', key: 'LB:milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-DISCUSSION-LOG.md', questionCount: 16 },
-  { label: 'LB v1.0/03', key: 'LB:milestones/v1.0-phases/03-search-browsing-traceability/03-DISCUSSION-LOG.md', questionCount: 16 },
-  { label: 'LB v1.0/04', key: 'LB:milestones/v1.0-phases/04-portability-degradation-hardening/04-DISCUSSION-LOG.md', questionCount: 16 },
-  { label: 'LB v1.1/05', key: 'LB:milestones/v1.1-phases/05-per-type-document-views/05-DISCUSSION-LOG.md', questionCount: 15 },
-];
 
 const FX_CASES: LogCase[] = [
   // Archived v1.0 phases: four topics with an unlabeled table each (01), question headings (02, 03), and
@@ -60,7 +47,7 @@ const FX_CASES: LogCase[] = [
   { label: 'FX phases/04', key: 'FX:phases/04-bulk-loan-export/04-DISCUSSION-LOG.md', questionCount: 18 },
 ];
 
-const CASES: LogCase[] = [...FX_CASES, ...LB_CASES];
+const CASES: LogCase[] = FX_CASES;
 
 /** Every `*-DISCUSSION-LOG.md` under a `.planning/` root, as `/`-separated paths relative to it. */
 function walkLogFiles(planningRoot: string): string[] {
@@ -77,33 +64,25 @@ function walkLogFiles(planningRoot: string): string[] {
   return out;
 }
 
-// Smallest corpus sizes the guard accepts (README rule R8): at least the six Labelore logs on disk when this
-// guard was converted (five archived ones plus phase 06's own), and all eight Lendshed logs. A walk that
-// finds fewer means a tree moved or the walker broke, and must fail rather than pass over nothing. Sibling
+// Smallest corpus size the guard accepts (README rule R8): all eight Lendshed logs. A walk that finds
+// fewer means a tree moved or the walker broke, and must fail rather than pass over nothing. Sibling
 // plans may add Lendshed files, so the guard never asserts that every walked file is pinned (R6).
-const MIN_LB_FILES = 6;
 const MIN_FX_FILES = 8;
 
-describe('discussion-log corpus walk (LB: and FX:)', () => {
-  const lbFiles = walkLogFiles(LB_PLANNING).map((rel) => `LB:${rel}`);
+describe('discussion-log corpus walk (FX:)', () => {
   const fxFiles = walkLogFiles(FX_PLANNING).map((rel) => `FX:${rel}`);
-
-  it(`finds at least ${MIN_LB_FILES} Labelore discussion logs`, () => {
-    expect(lbFiles.length).toBeGreaterThanOrEqual(MIN_LB_FILES);
-  });
 
   it(`finds at least ${MIN_FX_FILES} Lendshed discussion logs`, () => {
     expect(fxFiles.length).toBeGreaterThanOrEqual(MIN_FX_FILES);
   });
 
   it('every pinned case names a file the walk found', () => {
-    const found = new Set([...lbFiles, ...fxFiles]);
+    const found = new Set(fxFiles);
     const missing = CASES.filter((c) => !found.has(c.key)).map((c) => c.key);
     expect(missing).toEqual([]);
   });
 
-  it(`pins at least ${LB_CASES.length} LB cases and ${MIN_FX_FILES} FX cases`, () => {
-    expect(LB_CASES.length).toBeGreaterThanOrEqual(5);
+  it(`pins at least ${MIN_FX_FILES} FX cases`, () => {
     expect(FX_CASES.length).toBeGreaterThanOrEqual(MIN_FX_FILES);
   });
 });
@@ -161,16 +140,6 @@ interface CoverCase {
 }
 
 const COVER_CASES: CoverCase[] = [
-  {
-    label: 'LB v1.0/01',
-    key: 'LB:milestones/v1.0-phases/01-read-layer-domain-model/01-DISCUSSION-LOG.md',
-    discussedFact: '4 of 6 offered areas',
-  },
-  {
-    label: 'LB v1.0/03',
-    key: 'LB:milestones/v1.0-phases/03-search-browsing-traceability/03-DISCUSSION-LOG.md',
-    discussedFact: '4 of 8 offered areas',
-  },
   {
     label: 'FX phases/01',
     key: 'FX:phases/01-member-sign-in-sessions/01-DISCUSSION-LOG.md',

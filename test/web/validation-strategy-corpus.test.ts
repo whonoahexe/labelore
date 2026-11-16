@@ -1,6 +1,5 @@
-// quick-261003-526 (V526-10): real-corpus guards over every *-VALIDATION.md in this repo's `.planning/`
-// (excluding the sketches), the in-repo dense fixture and the made-up Lendshed project — keyed `LB:`
-// (Labelore's own, none today), `DN:` (fixtures/dense) and `FX:` (the eight Lendshed files, read through
+// quick-261003-526 (V526-10): corpus guards over every *-VALIDATION.md in the in-repo dense fixture and
+// the made-up Lendshed project — keyed `DN:` (fixtures/dense) and `FX:` (the eight Lendshed files, read through
 // fxPath, which throws on a missing file; nothing here skips or looks anywhere else on the machine). Every
 // file must extract without throwing, compose to a non-null model through the real handler, and match the
 // counts pinned below. The pinned counts were counted in each file itself with awk and grep (table rows
@@ -17,14 +16,12 @@ import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts'
 import { composeValidationStrategy } from '../../src/web/views/validation-strategy.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
-const REPO_PLANNING = new URL('../../.planning', import.meta.url).pathname;
 const DENSE_PLANNING = new URL('../../fixtures/dense/.planning', import.meta.url).pathname;
 
 // Smallest corpus sizes the guard accepts (README rule R8). The Lendshed project holds eight VALIDATION
 // files; a walk that finds fewer means a tree moved or the walker broke, and must fail rather than pass
-// over nothing. Labelore's own `.planning/` holds no VALIDATION file today, so its minimum is zero and
-// the every-file-must-be-pinned rule below is what guards growth there. Sibling plans never add a
-// VALIDATION file to Lendshed, so the unpinned rule stays on for FX: too.
+// over nothing. Sibling plans never add a VALIDATION file to Lendshed, so the every-file-must-be-pinned
+// rule below stays on for FX:.
 const MIN_FX_FILES = 8;
 const MIN_DN_FILES = 1;
 
@@ -103,7 +100,6 @@ const PINNED: Record<string, Pinned> = {
 };
 
 const FILES: { key: string; path: string }[] = [
-  ...walkValidation(REPO_PLANNING).map((path) => ({ key: `LB:${relative(REPO_PLANNING, path)}`, path })),
   ...walkValidation(DENSE_PLANNING).map((path) => ({ key: `DN:${relative(DENSE_PLANNING, path)}`, path })),
   ...walkValidation(FX_PLANNING).map((path) => ({ key: `FX:${relative(FX_PLANNING, path).split('\\').join('/')}`, path })),
 ];

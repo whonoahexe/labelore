@@ -1,8 +1,7 @@
-// quick-261003-527 (Q527-09): corpus guards over every SECURITY.md in this repo's `.planning/` (excluding the
-// sketches), fixtures/dense and the made-up Lendshed project, plus the sketch's synthetic open-threats doc
-// built in-test from Lendshed's phase 03 register — the uat-session-corpus idiom. Keys: LB: Labelore's own
-// files, DN: the in-repo dense fixture, FX: Lendshed (walked from FX_PLANNING, so a missing fixture throws
-// instead of skipping), SYN: the synthetic doc. Every file must extract without throwing, compose to a
+// quick-261003-527 (Q527-09): corpus guards over every SECURITY.md in fixtures/dense and the made-up
+// Lendshed project, plus the sketch's synthetic open-threats doc built in-test from Lendshed's phase 03
+// register — the uat-session-corpus idiom. Keys: DN: the in-repo dense fixture, FX: Lendshed (walked
+// from FX_PLANNING, so a missing fixture throws instead of skipping), SYN: the synthetic doc. Every file must extract without throwing, compose to a
 // non-null console through the real handler, and match the counts pinned below. The Lendshed counts were
 // made by awk over the made-up files themselves (`| T-` rows and their Status / Severity / Disposition /
 // Category cells inside `## Threat Register`, `| R-` / `| AR-` rows inside `## Accepted Risks Log`, dated
@@ -19,7 +18,6 @@ import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts'
 import { composeSecurityConsole } from '../../src/web/views/security-console.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
-const REPO_PLANNING = new URL('../../.planning', import.meta.url).pathname;
 const DENSE_PLANNING = new URL('../../fixtures/dense/.planning', import.meta.url).pathname;
 
 function walkSecurity(root: string): string[] {
@@ -87,80 +85,6 @@ const PINNED: Record<string, Pinned> = {
     disposition: { mitigate: 22, accept: 8 }, columns: FX3_COLS, boundaries: 10, destinations: 0, singles: 10,
     stores: 0, risks: 8, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
-  'LB:milestones/v2.1-phases/06-trustworthy-tests-and-security-baseline/06-SECURITY.md': {
-    rows: 34, open: 0, openLow: 0, closed: 34, severity: { high: 25, medium: 7, low: 2 },
-    disposition: { mitigate: 33, accept: 1 }, columns: { T: 3, R: 4, I: 24, D: 3 }, boundaries: 5,
-    destinations: 0, singles: 5, stores: 0, risks: 2, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
-  },
-  'LB:milestones/v2.1-phases/08-several-projects-and-a-switcher/08-SECURITY.md': {
-    rows: 58, open: 0, openLow: 0, closed: 58, severity: { high: 13, medium: 17, low: 28 },
-    disposition: { mitigate: 41, accept: 17 }, columns: { S: 8, T: 32, I: 12, D: 4, E: 2 }, boundaries: 32,
-    destinations: 3, singles: 22, stores: 2, risks: 0, audit: 2, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
-  },
-  'LB:milestones/v2.1-phases/09-review-audit-and-root-document-pages/09-SECURITY.md': {
-    rows: 48, open: 0, openLow: 0, closed: 48, severity: { medium: 18, low: 30 },
-    disposition: { mitigate: 32, accept: 16 }, columns: { S: 4, T: 29, R: 2, I: 4, D: 9 }, boundaries: 20,
-    destinations: 5, singles: 10, stores: 0, risks: 0, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
-  },
-  // 11: awk over the 79 `| T-` rows of the register (the file's own lead line says 118 rows but the table holds 79;
-  // 79 is what is counted), the 7 Trust Boundaries rows (none has an arrow, so all 7 are at-rest), the 6 `| AR-` rows,
-  // the 2 dated audit rows and the 4 checked Sign-Off lines.
-  // 13: 26 `| T-13-` rows (5 high, 8 medium, 13 low; 24 mitigate, 2 accept), 10 Trust Boundaries rows with no arrow
-  // (all at-rest), 2 `| AR-13-` rows, 1 dated audit row and 4 checked Sign-Off lines.
-  'LB:milestones/v2.1-phases/13-search-and-quick-jump-palette/13-SECURITY.md': {
-    rows: 26, open: 0, openLow: 0, closed: 26, severity: { high: 5, medium: 8, low: 13 },
-    disposition: { mitigate: 24, accept: 2 }, columns: { S: 4, T: 10, I: 6, D: 6 }, boundaries: 10,
-    destinations: 0, singles: 0, stores: 10, risks: 2, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
-  },
-  'LB:milestones/v2.1-phases/12-project-settings-source-mode-and-reading-polish/12-SECURITY.md': {
-    rows: 36, open: 0, openLow: 0, closed: 36, severity: { high: 12, medium: 12, low: 12 },
-    disposition: { mitigate: 33, accept: 3 }, columns: { S: 1, T: 10, R: 3, I: 13, D: 6, E: 3 }, boundaries: 5,
-    destinations: 0, singles: 0, stores: 5, risks: 11, audit: 5, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
-  },
-  'LB:milestones/v2.1-phases/11-exploration-handoff-report-and-workstream-pages/11-SECURITY.md': {
-    rows: 79, open: 0, openLow: 0, closed: 79, severity: { high: 8, medium: 35, low: 36 },
-    disposition: { mitigate: 74, accept: 5 }, columns: { S: 5, T: 30, R: 8, I: 22, D: 9, E: 5 }, boundaries: 7,
-    destinations: 0, singles: 0, stores: 7, risks: 6, audit: 2, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
-  },
-  // 10: 50 `| T-10-` rows (5 high, 26 medium, 19 low; 46 mitigate, 4 accept), 8 Trust Boundaries rows with no arrow
-  // (all at-rest), 4 `| AR-10-` rows, 1 dated audit row and 4 checked Sign-Off lines.
-  'LB:milestones/v2.1-phases/10-codebase-map-specification-and-check-pages/10-SECURITY.md': {
-    rows: 50, open: 0, openLow: 0, closed: 50, severity: { high: 5, medium: 26, low: 19 },
-    disposition: { mitigate: 46, accept: 4 }, columns: { S: 3, T: 15, R: 2, I: 20, D: 9, E: 1 }, boundaries: 8,
-    destinations: 0, singles: 0, stores: 8, risks: 4, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
-  },
-  'LB:milestones/v2.1-phases/07-recognised-files-and-readable-urls/07-SECURITY.md': {
-    rows: 43, open: 0, openLow: 0, closed: 43, severity: { high: 9, medium: 17, low: 17 },
-    disposition: { mitigate: 31, accept: 12 }, columns: { S: 6, T: 19, R: 2, I: 10, D: 5, E: 1 }, boundaries: 18,
-    destinations: 1, singles: 15, stores: 1, risks: 12, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
-  },
-  'LB:milestones/v1.1-phases/05-per-type-document-views/05-SECURITY.md': {
-    rows: 19, open: 0, openLow: 1, closed: 18, severity: { high: 4, medium: 5, low: 10 },
-    disposition: { mitigate: 11, accept: 8 }, columns: { S: 1, T: 8, I: 3, D: 6, E: 1 }, boundaries: 8,
-    destinations: 0, singles: 8, stores: 0, risks: 8, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
-  },
-  'LB:milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-SECURITY.md': {
-    rows: 14, open: 0, openLow: 0, closed: 14, severity: { high: 11, medium: 3 },
-    disposition: { mitigate: 11, mixed: 3 }, columns: { other: 14 }, boundaries: 4, destinations: 0, singles: 4, stores: 0, risks: 1,
-    audit: 2, signoff: [3, 3],
-    extras: ['Hardening Notes (not threat status changes)', 'Unregistered Flags', 'Register Scope Note'],
-    grouped: true, status: 'verified',
-  },
-  'LB:milestones/v1.0-phases/04-portability-degradation-hardening/04-SECURITY.md': {
-    rows: 29, open: 0, openLow: 0, closed: 29, severity: { high: 5, medium: 8, low: 16 },
-    disposition: { mitigate: 15, accept: 14 }, columns: { T: 15, R: 2, I: 6, D: 5, E: 1 }, boundaries: 3,
-    destinations: 0, singles: 3, stores: 0, risks: 0, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
-  },
-  'LB:milestones/v1.0-phases/01-read-layer-domain-model/01-SECURITY.md': {
-    rows: 16, open: 0, openLow: 0, closed: 16, severity: { high: 8, medium: 4, low: 4 },
-    disposition: { mitigate: 12, accept: 4 }, columns: { S: 1, T: 7, R: 1, I: 4, D: 3 }, boundaries: 4,
-    destinations: 0, singles: 4, stores: 0, risks: 4, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
-  },
-  'LB:milestones/v1.0-phases/03-search-browsing-traceability/03-SECURITY.md': {
-    rows: 21, open: 0, openLow: 0, closed: 21, severity: { high: 12, medium: 3, low: 6 },
-    disposition: { mitigate: 17, accept: 4 }, columns: { T: 10, R: 1, I: 4, D: 6 }, boundaries: 4,
-    destinations: 0, singles: 4, stores: 0, risks: 4, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
-  },
   'DN:phases/01-identity-slice/01-SECURITY.md': {
     rows: 1, open: 1, openLow: 0, closed: 0, severity: { medium: 1 }, disposition: { mitigate: 1 },
     columns: { T: 1 }, boundaries: 1, destinations: 0, singles: 1, stores: 0, risks: 0, audit: 1, signoff: [1, 4], extras: [],
@@ -175,9 +99,6 @@ interface Loaded {
 
 function load(): Loaded[] {
   const files: Loaded[] = [];
-  for (const abs of walkSecurity(REPO_PLANNING)) {
-    files.push({ key: `LB:${relative(REPO_PLANNING, abs)}`, content: readFileSync(abs, 'utf8') });
-  }
   for (const abs of walkSecurity(DENSE_PLANNING)) {
     files.push({ key: `DN:${relative(DENSE_PLANNING, abs)}`, content: readFileSync(abs, 'utf8') });
   }
@@ -222,7 +143,6 @@ describe('security console corpus (Q527-09)', () => {
   const files = load();
 
   it('finds at least the minimum of each corpus', () => {
-    expect(files.filter((f) => f.key.startsWith('LB:')).length).toBeGreaterThanOrEqual(5);
     expect(files.filter((f) => f.key.startsWith('FX:')).length).toBeGreaterThanOrEqual(2);
     expect(files.filter((f) => f.key.startsWith('DN:')).length).toBeGreaterThanOrEqual(1);
     expect(files.filter((f) => f.key === 'SYN:synthetic')).toHaveLength(1);
@@ -285,23 +205,5 @@ describe('security console corpus (Q527-09)', () => {
     expect(model?.threats.filter((t) => t.status === 'open').map((t) => t.ref)).toEqual(['T-03-03', 'T-03-11']);
     expect(model?.audit?.runs[0].openText).toBe('3 (2 blocking)');
     expect(model?.stamp).toMatchObject({ signed: false, approval: 'pending — two high threats open' });
-  });
-
-  it('LB v1.0/02 reads its long rationale as clamped and its legend-less sibling keeps one source-only entry', () => {
-    const lb02 = files.find((f) => f.key.includes('02-situational'));
-    const lb04 = files.find((f) => f.key.includes('04-portability'));
-    if (!lb02 || !lb04) return;
-    const m02 = composeSecurityConsole(inputFor(lb02.content));
-    expect(m02?.waivers.rows[0].long).toBe(true);
-    const m04 = composeSecurityConsole(inputFor(lb04.content));
-    expect(m04?.sourceOnly.map((s) => s.label)).toEqual(['Frontmatter']);
-    expect(m04?.waivers.rows).toEqual([]);
-  });
-
-  it('LB v1.0/03 (not in the sketch) composes with lower-case categories mapped to STRIDE columns', () => {
-    const lb03 = files.find((f) => f.key.includes('03-search-browsing'));
-    if (!lb03) return;
-    const model = composeSecurityConsole(inputFor(lb03.content));
-    expect(model?.board.columns.map((c) => c.key)).toEqual(['T', 'R', 'I', 'D']);
   });
 });

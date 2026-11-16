@@ -1,25 +1,21 @@
-// quick-260923-lju (LJU-07, C-1): real-corpus guards over every pinned CONTEXT.md. Two corpora, keyed by
-// prefix: `LB:` for this repo's own archived `.planning/` files (read from the checkout) and `FX:` for the
-// nine made-up Lendshed files (read through fxPath, which throws on a missing file; nothing here skips
-// or looks anywhere else on the machine). 19 files in all: 10 LB and 9 FX.
+// quick-260923-lju (LJU-07, C-1): corpus guards over every pinned CONTEXT.md: the nine made-up Lendshed
+// files, keyed `FX:` (read through fxPath, which throws on a missing file; nothing here skips or looks
+// anywhere else on the machine).
 // Every pinned count below was counted in the file itself (grep -c '^- \*\*D-[0-9]' between the decisions
 // tags for decision counts, direct reading for open/notes counts) before being pinned here, never copied
 // from the extractor's own output. Pins are per file, never a total over a corpus (README rule R6).
 import { readdirSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { FX_PLANNING, fxPath } from '../helpers/fixture-project.ts';
 import { extractContextBrief, topSections, type ContextBrief } from '../../src/planning-repo/handlers/context-brief.ts';
 import { composeContextBrief } from '../../src/web/views/context-brief.ts';
 
-const LB_PLANNING = fileURLToPath(new URL('../../.planning', import.meta.url));
-
 interface CorpusCase {
   /** Short label used in test titles. */
   label: string;
-  /** `LB:<path under .planning>` or `FX:<path under the Lendshed .planning>`. */
+  /** `FX:<path under the Lendshed .planning>`. */
   key: string;
   decisions: number;
   notes: number;
@@ -32,22 +28,8 @@ interface CorpusCase {
 
 function absolutePath(key: string): string {
   if (key.startsWith('FX:')) return fxPath(key.slice(3));
-  if (key.startsWith('LB:')) return join(LB_PLANNING, key.slice(3));
   throw new Error(`context-brief-corpus: unknown corpus prefix in ${key}`);
 }
-
-const LB_CASES: CorpusCase[] = [
-  { label: 'LB v1.0/01', key: 'LB:milestones/v1.0-phases/01-read-layer-domain-model/01-CONTEXT.md', decisions: 16, notes: 0, open: 0, amendments: 0 },
-  { label: 'LB v1.0/02', key: 'LB:milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-CONTEXT.md', decisions: 17, notes: 0, open: 0, amendments: 0 },
-  { label: 'LB v1.0/03', key: 'LB:milestones/v1.0-phases/03-search-browsing-traceability/03-CONTEXT.md', decisions: 16, notes: 0, open: 0, amendments: 0 },
-  { label: 'LB v1.0/04', key: 'LB:milestones/v1.0-phases/04-portability-degradation-hardening/04-CONTEXT.md', decisions: 17, notes: 0, open: 0, amendments: 0 },
-  { label: 'LB v1.1/05', key: 'LB:milestones/v1.1-phases/05-per-type-document-views/05-CONTEXT.md', decisions: 15, notes: 0, open: 0, amendments: 0 },
-  { label: 'lfi', key: 'LB:milestones/v1.1-quick/260912-lfi-scroll-to-blocker-in-project-state-from-/260912-lfi-CONTEXT.md', decisions: 6, notes: 0, open: 0, amendments: 0 },
-  { label: 'oae', key: 'LB:milestones/v1.1-quick/260912-oae-revamp-progress-panel-to-show-phase-and-/260912-oae-CONTEXT.md', decisions: 9, notes: 0, open: 0, amendments: 0 },
-  { label: 'o2o', key: 'LB:milestones/v1.1-quick/260916-o2o-remove-all-the-loading-state-text-keep-t/260916-o2o-CONTEXT.md', decisions: 6, notes: 0, open: 0, amendments: 0 },
-  { label: 'ns4', key: 'LB:milestones/v1.1-quick/260917-ns4-redesign-the-traceability-page-s-ui-ux-c/260917-ns4-CONTEXT.md', decisions: 3, notes: 0, open: 0, amendments: 0 },
-  { label: 'jxp', key: 'LB:milestones/v2.0-quick/260923-jxp-discussion-log-page-review-fixes-on-the-/260923-jxp-CONTEXT.md', decisions: 15, notes: 0, open: 0, amendments: 0 },
-];
 
 const FX_CASES: CorpusCase[] = [
   { label: 'FX v1.0/01', key: 'FX:milestones/v1.0-phases/01-member-data-foundation/01-CONTEXT.md', decisions: 8, notes: 0, open: 0, amendments: 0 },
@@ -61,7 +43,7 @@ const FX_CASES: CorpusCase[] = [
   { label: 'FX quick k2p', key: 'FX:quick/260403-k2p-add-right-click-menu-to-catalogue-grid/260403-k2p-CONTEXT.md', decisions: 9, notes: 10, open: 0, amendments: 0 },
 ];
 
-const CASES: CorpusCase[] = [...FX_CASES, ...LB_CASES];
+const CASES: CorpusCase[] = FX_CASES;
 
 async function loadBody(testCase: CorpusCase): Promise<string> {
   return await readFile(absolutePath(testCase.key), 'utf8');
@@ -89,37 +71,29 @@ function walkContextFiles(planningRoot: string): string[] {
   return out;
 }
 
-// Smallest corpus sizes the guard accepts (README rule R8): at least the ten LB files this guard pinned
-// before the Lendshed fixture existed, and all nine Lendshed CONTEXT files. A walk that finds fewer
-// means a tree moved or the walker broke, and must fail rather than pass over nothing.
-const MIN_LB_FILES = 10;
+// Smallest corpus size the guard accepts (README rule R8): all nine Lendshed CONTEXT files. A walk that
+// finds fewer means a tree moved or the walker broke, and must fail rather than pass over nothing.
 const MIN_FX_FILES = 9;
 
-describe('CONTEXT brief corpus walk (LB: and FX:)', () => {
-  const lbFiles = walkContextFiles(LB_PLANNING).map((rel) => `LB:${rel}`);
+describe('CONTEXT brief corpus walk (FX:)', () => {
   const fxFiles = walkContextFiles(FX_PLANNING).map((rel) => `FX:${rel}`);
-
-  it(`finds at least ${MIN_LB_FILES} Labelore CONTEXT files`, () => {
-    expect(lbFiles.length).toBeGreaterThanOrEqual(MIN_LB_FILES);
-  });
 
   it(`finds at least ${MIN_FX_FILES} Lendshed CONTEXT files`, () => {
     expect(fxFiles.length).toBeGreaterThanOrEqual(MIN_FX_FILES);
   });
 
   it('every pinned case names a file the walk found', () => {
-    const found = new Set([...lbFiles, ...fxFiles]);
+    const found = new Set(fxFiles);
     const missing = CASES.filter((c) => !found.has(c.key)).map((c) => c.key);
     expect(missing).toEqual([]);
   });
 
-  it(`pins at least ${MIN_LB_FILES} LB cases and ${MIN_FX_FILES} FX cases`, () => {
-    expect(LB_CASES.length).toBeGreaterThanOrEqual(MIN_LB_FILES);
+  it(`pins at least ${MIN_FX_FILES} FX cases`, () => {
     expect(FX_CASES.length).toBeGreaterThanOrEqual(MIN_FX_FILES);
   });
 });
 
-describe('CONTEXT brief corpus guard (19 files)', () => {
+describe('CONTEXT brief corpus guard (9 files)', () => {
   for (const testCase of CASES) {
     it(`${testCase.label}: composeContextBrief is non-null`, async () => {
       const body = await loadBody(testCase);

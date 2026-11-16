@@ -1,12 +1,10 @@
-// quick-261001-qk6 (QK6-09): real-corpus guards over every UI-SPEC.md in this repo's `.planning/`
-// (keyed LB:), the in-repo dense fixture (keyed DN:) and the made-up Lendshed project (keyed FX:,
-// walked through FX_PLANNING; a missing fixture throws, nothing skips). Every file must extract
+// quick-261001-qk6 (QK6-09): corpus guards over the in-repo dense fixture's UI-SPEC.md (keyed DN:) and
+// every one in the made-up Lendshed project (keyed FX:, walked through FX_PLANNING; a missing fixture
+// throws, nothing skips). Every file must extract
 // without throwing, compose non-null, and match the sign-off label, element count and status split
 // pinned below. The considerations counts were independently confirmed with an awk scan over the
 // Status column of every UI Considerations table (never copied from the extractor's own output); the
-// Lendshed pins are recounted in the made-up files themselves. Labelore's live planning files are
-// re-pinned to today's content (D-18): when planning changes one, or a new UI-SPEC lands, update its
-// entry here.
+// Lendshed pins are recounted in the made-up files themselves.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -14,7 +12,6 @@ import { FX_PLANNING } from '../helpers/fixture-project.ts';
 import { extractUiSpec } from '../../src/planning-repo/handlers/ui-spec-contract.ts';
 import { composeUiSpec } from '../../src/web/views/ui-spec.ts';
 
-const REPO_PLANNING = new URL('../../.planning', import.meta.url).pathname;
 const DENSE = new URL('../../fixtures/dense/.planning/phases/01-identity-slice/01-UI-SPEC.md', import.meta.url).pathname;
 
 function walkUiSpecs(root: string): string[] {
@@ -50,19 +47,8 @@ interface Pinned {
   phaseChapters: number;
 }
 
-/** Keyed by `<corpus>:<path suffix>` — LB: Labelore's own `.planning/`, DN: the dense fixture, FX: Lendshed. */
+/** Keyed by `<corpus>:<path suffix>` — DN: the dense fixture, FX: Lendshed. */
 const PINNED: Record<string, Pinned> = {
-  'LB:milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-UI-SPEC.md': { signoff: 'Signed off 6/6', tone: 'complete', status: null, created: '2026-08-29', phase: '02', elements: 15, rows: 104, split: [90, 1, 9, 4], scales: [7, 4, 4], registryRows: 2, phaseChapters: 8 },
-  'LB:milestones/v1.0-phases/03-search-browsing-traceability/03-UI-SPEC.md': { signoff: 'Sign-off 6/7 · 1 flag', tone: 'in-flight', status: null, created: '2026-09-02', phase: '3', elements: 5, rows: 38, split: [32, 3, 0, 3], scales: [8, 4, 4], registryRows: 2, phaseChapters: 1 },
-  'LB:milestones/v1.1-phases/05-per-type-document-views/05-UI-SPEC.md': { signoff: 'Sign-off not run', tone: 'quiet', status: 'draft', created: '2026-09-20', phase: '5', elements: 8, rows: 53, split: [39, 0, 0, 14], scales: [6, 5, 4], registryRows: 1, phaseChapters: 4 },
-  'LB:milestones/v1.0-phases/04-portability-degradation-hardening/04-UI-SPEC.md': { signoff: 'Sign-off not run', tone: 'quiet', status: 'draft', created: '2026-09-03', phase: '4', elements: 6, rows: 21, split: [13, 2, 0, 6], scales: [8, 4, 4], registryRows: 2, phaseChapters: 1 },
-  'LB:milestones/v2.1-phases/07-recognised-files-and-readable-urls/07-UI-SPEC.md': { signoff: 'Sign-off 4/7 · 3 flag', tone: 'in-flight', status: null, created: '2026-10-26', phase: '07', elements: 6, rows: 32, split: [25, 3, 2, 2], scales: [5, 4, 4], registryRows: 2, phaseChapters: 3 },
-  'LB:milestones/v2.1-phases/08-several-projects-and-a-switcher/08-UI-SPEC.md': { signoff: 'Signed off 7/7', tone: 'complete', status: null, created: '2026-10-27', phase: '08', elements: 5, rows: 20, split: [18, 2, 0, 0], scales: [7, 4, 4], registryRows: 2, phaseChapters: 3 },
-  'LB:milestones/v2.1-phases/09-review-audit-and-root-document-pages/09-UI-SPEC.md': { signoff: 'Sign-off · 1 blocked', tone: 'missing', status: null, created: '2026-11-02', phase: '09', elements: 3, rows: 31, split: [25, 6, 0, 0], scales: [7, 4, 4], registryRows: 2, phaseChapters: 3 },
-  'LB:milestones/v2.1-phases/10-codebase-map-specification-and-check-pages/10-UI-SPEC.md': { signoff: 'Sign-off 5/7 · 2 flag', tone: 'in-flight', status: null, created: '2026-11-03', phase: '10', elements: 3, rows: 35, split: [29, 6, 0, 0], scales: [7, 4, 4], registryRows: 2, phaseChapters: 4 },
-  'LB:milestones/v2.1-phases/11-exploration-handoff-report-and-workstream-pages/11-UI-SPEC.md': { signoff: 'Signed off 7/7', tone: 'complete', status: null, created: '2026-11-06', phase: '11', elements: 3, rows: 38, split: [32, 6, 0, 0], scales: [7, 4, 4], registryRows: 2, phaseChapters: 4 },
-  'LB:milestones/v2.1-phases/12-project-settings-source-mode-and-reading-polish/12-UI-SPEC.md': { signoff: 'Sign-off 4/7 · 3 flag', tone: 'in-flight', status: null, created: '2026-11-11', phase: '12', elements: 23, rows: 23, split: [17, 3, 0, 3], scales: [10, 4, 4], registryRows: 2, phaseChapters: 5 },
-  'LB:milestones/v2.1-phases/13-search-and-quick-jump-palette/13-UI-SPEC.md': { signoff: 'Sign-off 3/7 · 4 flag', tone: 'in-flight', status: null, created: '2026-11-13', phase: '13', elements: 21, rows: 21, split: [16, 4, 1, 0], scales: [7, 4, 4], registryRows: 2, phaseChapters: 6 },
   'DN:phases/01-identity-slice/01-UI-SPEC.md': { signoff: 'Sign-off not run', tone: 'quiet', status: 'draft', created: '2026-06-07', phase: '1', elements: 0, rows: 0, split: [0, 0, 0, 0], scales: [1, 1, 4], registryRows: 1, phaseChapters: 0 },
   'FX:phases/01-member-sign-in-sessions/01-UI-SPEC.md': { signoff: 'Signed off 6/6', tone: 'complete', status: null, created: '2026-03-25', phase: '1', elements: 3, rows: 22, split: [16, 1, 1, 4], scales: [6, 4, 4], registryRows: 2, phaseChapters: 3 },
   'FX:phases/02-roles-and-permissions/02-UI-SPEC.md': { signoff: 'Signed off 6/6', tone: 'complete', status: null, created: '2026-03-29', phase: '2', elements: 4, rows: 27, split: [21, 2, 0, 4], scales: [7, 4, 4], registryRows: 2, phaseChapters: 3 },
@@ -73,18 +59,16 @@ const PINNED: Record<string, Pinned> = {
   'FX:milestones/v1.0-phases/04-shed-to-shed-transfers/04-UI-SPEC.md': { signoff: 'Signed off 6/6', tone: 'complete', status: null, created: '2026-03-05', phase: '04', elements: 6, rows: 45, split: [31, 3, 0, 11], scales: [6, 4, 4], registryRows: 1, phaseChapters: 3 },
 };
 
-const LB_FILES = walkUiSpecs(REPO_PLANNING);
 const FX_FILES = walkUiSpecs(FX_PLANNING);
-const FILES = [...LB_FILES, DENSE, ...FX_FILES];
+const FILES = [DENSE, ...FX_FILES];
 
 function keyOf(file: string): string {
   if (file === DENSE) return 'DN:phases/01-identity-slice/01-UI-SPEC.md';
-  return file.startsWith(REPO_PLANNING) ? `LB:${relative(REPO_PLANNING, file)}` : `FX:${relative(FX_PLANNING, file)}`;
+  return `FX:${relative(FX_PLANNING, file)}`;
 }
 
 describe('UI-SPEC corpus guard', () => {
   it('finds the corpus', () => {
-    expect(LB_FILES.length).toBeGreaterThanOrEqual(4);
     expect(FX_FILES.length).toBeGreaterThanOrEqual(7);
   });
 

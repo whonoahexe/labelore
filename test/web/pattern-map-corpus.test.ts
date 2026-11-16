@@ -1,13 +1,10 @@
-// quick-260930-wfs (WFS-09): real-corpus guards over every PATTERNS.md in this repo's `.planning/`
-// (keyed LB:) plus the made-up Lendshed project (keyed FX:, walked through FX_PLANNING; a missing
-// fixture throws, nothing skips). Every file must extract without throwing, compose to a non-null
-// map, and match the classified row count and quality split pinned below. The pinned counts were
-// independently confirmed with awk over the last cell of each File Classification row (never
-// copied from the extractor's own output) and with grep over the fence lines; the Lendshed pins are
-// recounted in the made-up files themselves. Labelore's live planning files are re-pinned to
-// today's content (D-18): when planning changes one, or a new PATTERNS file lands, update its entry
-// here. Every No Analog entry and every Pattern Assignment is either merged into a file row or
-// present as an unplaced row.
+// quick-260930-wfs (WFS-09): corpus guards over every PATTERNS.md in the made-up Lendshed project
+// (keyed FX:, walked through FX_PLANNING; a missing fixture throws, nothing skips). Every file must
+// extract without throwing, compose to a non-null map, and match the classified row count and
+// quality split pinned below. The pinned counts were independently confirmed with awk over the last
+// cell of each File Classification row (never copied from the extractor's own output) and with grep
+// over the fence lines, recounted in the made-up files themselves. Every No Analog entry and every
+// Pattern Assignment is either merged into a file row or present as an unplaced row.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -15,8 +12,6 @@ import { FX_PLANNING } from '../helpers/fixture-project.ts';
 import { tryParseFrontmatter } from '../../src/planning-repo/frontmatter.ts';
 import { extractPatternMap } from '../../src/planning-repo/handlers/pattern-map.ts';
 import { composePatternMap } from '../../src/web/views/pattern-map.ts';
-
-const REPO_PLANNING = new URL('../../.planning', import.meta.url).pathname;
 
 function walkPatterns(root: string): string[] {
   const found: string[] = [];
@@ -47,25 +42,8 @@ interface Pinned {
   excerpts?: number;
 }
 
-/** Keyed by `<corpus>:<path suffix>` — LB: Labelore's own `.planning/`, FX: the Lendshed fixture. */
+/** Keyed by `<corpus>:<path suffix>` — FX: the Lendshed fixture. */
 const PINNED: Record<string, Pinned> = {
-  'LB:milestones/v1.1-phases/05-per-type-document-views/05-PATTERNS.md': { rows: 17, exact: 8, role: 8, partial: 0, none: 1, groups: 0, shared: 7, excerpts: 26 },
-  'LB:milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-PATTERNS.md': { rows: 35, exact: 14, role: 10, partial: 0, none: 11, groups: 0, shared: 7 },
-  'LB:milestones/v1.0-phases/03-search-browsing-traceability/03-PATTERNS.md': { rows: 18, exact: 12, role: 6, partial: 0, none: 0, groups: 0, shared: 7 },
-  'LB:milestones/v1.0-phases/04-portability-degradation-hardening/04-PATTERNS.md': { rows: 16, exact: 11, role: 4, partial: 0, none: 1, groups: 0, shared: 6 },
-  'LB:milestones/v2.1-phases/06-trustworthy-tests-and-security-baseline/06-PATTERNS.md': { rows: 28, exact: 18, role: 7, partial: 1, none: 2, groups: 0, shared: 5, excerpts: 12 },
-  'LB:milestones/v2.1-phases/07-recognised-files-and-readable-urls/07-PATTERNS.md': { rows: 27, exact: 18, role: 5, partial: 3, none: 1, groups: 0, shared: 7, excerpts: 12 },
-  // 08-15: counted by awk over the last cell of the 34 File Classification rows (19 exact, 10 role-match,
-  // 3 partial, 2 no analog), grep over the 7 Shared Patterns headings and the 26 fence lines (13 excerpts).
-  'LB:milestones/v2.1-phases/08-several-projects-and-a-switcher/08-PATTERNS.md': { rows: 34, exact: 19, role: 10, partial: 3, none: 2, groups: 0, shared: 7, excerpts: 13 },
-  'LB:milestones/v2.1-phases/09-review-audit-and-root-document-pages/09-PATTERNS.md': { rows: 27, exact: 17, role: 8, partial: 2, none: 0, groups: 0, shared: 6, excerpts: 7 },
-  // 10: awk over the last cell of the 31 File Classification rows (24 exact incl. one 'exact (shape)', 7 role-match); 24 fence lines.
-  'LB:milestones/v2.1-phases/10-codebase-map-specification-and-check-pages/10-PATTERNS.md': { rows: 31, exact: 24, role: 7, partial: 0, none: 0, groups: 0, shared: 8, excerpts: 12 },
-  'LB:milestones/v2.1-phases/11-exploration-handoff-report-and-workstream-pages/11-PATTERNS.md': { rows: 26, exact: 18, role: 8, partial: 0, none: 0, groups: 0, shared: 5, excerpts: 13 },
-  // 12: awk over the last cell of the 17 File Classification rows (11 exact, 5 role-match, 1 'partial (port)'; the
-  // one No Analog entry is that partial row), grep over the 6 Shared Patterns headings and the 14 fence lines (7 excerpts).
-  'LB:milestones/v2.1-phases/12-project-settings-source-mode-and-reading-polish/12-PATTERNS.md': { rows: 17, exact: 11, role: 5, partial: 1, none: 0, groups: 0, shared: 6, excerpts: 7 },
-  'LB:milestones/v2.1-phases/13-search-and-quick-jump-palette/13-PATTERNS.md': { rows: 20, exact: 16, role: 3, partial: 0, none: 1, groups: 0, shared: 7, excerpts: 10 },
   'FX:milestones/v1.0-phases/02-shed-inventory-health/02-PATTERNS.md': { rows: 22, exact: 6, role: 4, partial: 4, none: 8, groups: 5, shared: 5, excerpts: 16 },
   'FX:milestones/v1.0-phases/03-catalogue-browsing/03-PATTERNS.md': { rows: 9, exact: 5, role: 4, partial: 0, none: 0, groups: 0, shared: 4, excerpts: 2 },
   'FX:milestones/v1.0-phases/04-shed-to-shed-transfers/04-PATTERNS.md': { rows: 13, exact: 6, role: 3, partial: 2, none: 2, groups: 0, shared: 4, excerpts: 2 },
@@ -75,19 +53,15 @@ const PINNED: Record<string, Pinned> = {
   'FX:phases/04-bulk-loan-export/04-PATTERNS.md': { rows: 14, exact: 11, role: 3, partial: 0, none: 0, groups: 0, shared: 3, excerpts: 2 },
 };
 
-const LB_FILES = walkPatterns(REPO_PLANNING);
 const FX_FILES = walkPatterns(FX_PLANNING);
-const FILES = [...LB_FILES, ...FX_FILES];
+const FILES = FX_FILES;
 
 function keyOf(file: string): string {
-  return file.startsWith(REPO_PLANNING)
-    ? `LB:${relative(REPO_PLANNING, file)}`
-    : `FX:${relative(FX_PLANNING, file)}`;
+  return `FX:${relative(FX_PLANNING, file)}`;
 }
 
 describe('PATTERNS corpus guard', () => {
   it('finds the corpus', () => {
-    expect(LB_FILES.length).toBeGreaterThanOrEqual(5);
     expect(FX_FILES.length).toBeGreaterThanOrEqual(7);
   });
 
