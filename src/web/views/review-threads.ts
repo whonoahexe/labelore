@@ -613,7 +613,7 @@ function phaseNumberOf(phase: string): string | null {
   return whole;
 }
 
-/** "01-identity-persistence-foundation" -> "Identity persistence foundation"; a quick id or a bare
+/** "01-widget-catalog-foundation" -> "Widget catalog foundation"; a quick id or a bare
  * number leaves no words, so null. */
 function slugTitle(phase: string): string | null {
   const quick = quickIdIn(phase);

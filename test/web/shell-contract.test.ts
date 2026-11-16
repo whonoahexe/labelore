@@ -1,4 +1,6 @@
 import { readFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { dashboardSources } from '../helpers/dashboard-sources.ts';
 
@@ -6,7 +8,7 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-describe('authorized reference-portal shell contract', () => {
+describe('authorized reference-theme shell contract', () => {
   it('keeps the locked base-sera, neutral, CSS-variable, and lucide configuration', async () => {
     const components = JSON.parse(await source('components.json')) as Record<string, unknown>;
     expect(components).toMatchObject({
@@ -26,7 +28,13 @@ describe('authorized reference-portal shell contract', () => {
     expect(css).toContain('--primary: oklch(0.47 0.157 37.304);');
     expect(css).toMatch(/:root\s*\{/);
     expect(css).toMatch(/\.dark\s*\{/);
-    expect(css).not.toMatch(/(studio|user)-portal\//);
+    // The theme is loaded from local assets only: bare package imports, and fonts from /fonts/ or inline.
+    const imports = [...css.matchAll(/@import\s+['"]([^'"]+)['"]/g)].map((m) => m[1]);
+    expect(imports.length).toBeGreaterThan(0);
+    expect(imports.filter((spec) => /^[./~]/.test(spec))).toEqual([]);
+    const urls = [...css.matchAll(/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/g)].map((m) => m[1]);
+    expect(urls.length).toBeGreaterThanOrEqual(2);
+    expect(urls.filter((target) => !target.startsWith('/fonts/') && !target.startsWith('data:'))).toEqual([]);
   });
 
   it('uses the DOM dark class as the theme truth and keeps storage failure non-fatal', async () => {
@@ -49,7 +57,7 @@ describe('authorized reference-portal shell contract', () => {
     expect(css).not.toMatch(/(?:html|body)[^{]*\{[^}]*overflow-x:\s*(?:hidden|clip)/);
   });
 
-  it('loads local theme CSS and canonical shell navigation without runtime portal imports', async () => {
+  it('loads local theme CSS and canonical shell navigation without runtime imports from another checkout', async () => {
     const files = await Promise.all([
       source('src/web/main.tsx'),
       source('src/web/components/app-shell.tsx'),
@@ -61,10 +69,25 @@ describe('authorized reference-portal shell contract', () => {
     expect(files[1]).toContain('presentationRoutePatterns.dashboard');
     expect(files[1]).toContain('presentationRoutePatterns.roadmap');
     expect(files[2]).toContain('rounded-none');
-    expect(files.join('\n')).not.toContain('/home/user/codebases/reference-portal');
+    const joined = files.join('\n');
+    expect(joined).not.toMatch(/\/(?:home|Users)\//);
+    expect(joined).not.toContain('~/');
+
+    // Every import in the shell entry files stays inside src/ or comes from a package.
+    const srcRoot = fileURLToPath(new URL('../../src/', import.meta.url));
+    const entries = ['src/web/main.tsx', 'src/web/components/app-shell.tsx', 'src/web/components/ui/button.tsx'];
+    const specifiers = entries.flatMap((path, i) => {
+      const folder = dirname(fileURLToPath(new URL(`../../${path}`, import.meta.url)));
+      const found = [...files[i].matchAll(/\bfrom\s+'([^']+)'|^\s*import\s+'([^']+)'/gm)];
+      return found.map((m) => ({ folder, spec: m[1] ?? m[2] }));
+    });
+    const relative = specifiers.filter(({ spec }) => spec.startsWith('.'));
+    expect(relative.length).toBeGreaterThan(0);
+    expect(relative.filter(({ folder, spec }) => !resolve(folder, spec).startsWith(srcRoot))).toEqual([]);
+    expect(specifiers.filter(({ spec }) => /^[/~]/.test(spec))).toEqual([]);
   });
 
-  it('uses local copies of the same reference-portal font families', async () => {
+  it('uses local copies of the reference theme font families', async () => {
     const css = await source('src/web/styles/globals.css');
     expect(css).toContain("font-family: 'Space Grotesk'");
     expect(css).toContain("url('/fonts/space-grotesk-latin.woff2')");

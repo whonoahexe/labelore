@@ -41,14 +41,9 @@ interface Exemption {
   reason: string;
 }
 
-/** Test sources that must name private text to forbid it: each exempt for one kind, with a reason. */
+/** The one test source that must hold the public tool-tell list to forbid it: exempt for one kind, with a reason. */
 const SOURCE_EXEMPTIONS: Exemption[] = [
   { path: 'test/fixture-leak.test.ts', kind: 'tool', reason: 'holds the public tool-tell list and plants it' },
-  {
-    path: 'test/web/shell-contract.test.ts',
-    kind: 'word',
-    reason: 'names the authorized reference theme in its titles and asserts the built shell never references it',
-  },
 ];
 
 type Scope = 'fixture' | 'test' | 'source';
@@ -162,7 +157,7 @@ describe('fixture, test-source and app-source leak guard (TEST-03, quick-261116-
   });
 
   it('keeps every exemption list frozen at its decided length', () => {
-    expect(SOURCE_EXEMPTIONS).toHaveLength(2);
+    expect(SOURCE_EXEMPTIONS).toHaveLength(1);
     expect(SOURCE_EXEMPTIONS.every((e) => e.reason.length > 0)).toBe(true);
   });
 

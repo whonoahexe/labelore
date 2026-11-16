@@ -26,7 +26,6 @@ interface Exemption {
 /** Frozen: growing this list is a decision, not an edit. */
 const EXEMPTIONS: Exemption[] = [
   { path: 'test/no-skips.test.ts', reason: 'names the constructs and paths it forbids' },
-  { path: 'test/web/shell-contract.test.ts', reason: 'names path patterns the built shell must never reference' },
   { path: 'test/server/remote-source.test.ts', reason: 'the generous 3,000 ms hang detector for a fake ssh, kept on purpose' },
   { path: 'test/helpers/growth.test.ts', reason: 'tests the growth harness against timed workloads' },
 ];
@@ -150,8 +149,8 @@ describe('no-skips and real-path guard (D-05, TEST-01, TEST-04)', () => {
     expect(testFiles).toContain('playwright.config.ts');
   });
 
-  it('keeps the exemption list frozen at four entries', () => {
-    expect(EXEMPTIONS).toHaveLength(4);
+  it('keeps the exemption list frozen at three entries', () => {
+    expect(EXEMPTIONS).toHaveLength(3);
     expect(EXEMPTIONS.every((e) => e.reason.length > 0)).toBe(true);
   });
 
