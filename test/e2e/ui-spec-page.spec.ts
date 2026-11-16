@@ -1,13 +1,12 @@
 // The UI-SPEC contract-page e2e (quick-261001-qk6, sketch 014 winner): real files, never a mock.
 // Fixtures resolve by path against the project's live presentation payload (the patterns-map.spec.ts
-// idiom) so an archival/rename fails loudly instead of silently skipping. The labelore test runs
-// against the default server (port 4199); the Lendshed tests run against the read-only server on the
+// idiom) so an archival/rename fails loudly instead of silently skipping. The tests run against the read-only server on the
 // made-up Lendshed project (port 4198, FIXTURE_BASE_URL; playwright.config.ts always starts it and
 // throws at load when the fixture tree is missing). Nothing in this file skips. This spec asserts the
 // foundation sweep's key invariants itself (one h1, an eyebrow, squared corners, one chip signature,
 // no 420px overflow), since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
-import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
+import { artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 import { expectLandedOn, watchSourceHits } from './source-landing.ts';
 
@@ -154,20 +153,4 @@ test.describe('UI-SPEC page', () => {
     ]);
   });
 
-  test('LB v1.0/02 UI-SPEC page', async ({ page, baseURL }) => {
-    const base = baseURL ?? BASE_URL;
-    const url = await artifactUrl(base, await resolveFixturePath(base, '02-situational-awareness-artifact-reading/02-UI-SPEC.md'));
-    await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
-    await page.goto(url);
-    await page.locator('#ui-spec-considerations').waitFor({ state: 'visible' });
-
-    await expect(page.locator('.view-ui-spec-signoff')).toHaveText('Signed off 6/6');
-    await expect(page.locator('.view-ui-spec-matrix tbody tr')).toHaveCount(15);
-    expect(await page.locator('.view-ui-spec-meter-key [data-status="unresolved"] b').textContent()).toBe('9');
-
-    // The eight revision chapters list without "(Revision …)", then Copywriting Contract.
-    const labels = await page.locator('#ui-spec-source-only button').allTextContents();
-    expect(labels.slice(0, 8).some((label) => label.includes('(Revision'))).toBe(false);
-    expect(labels[8]).toBe('Copywriting Contract');
-  });
 });

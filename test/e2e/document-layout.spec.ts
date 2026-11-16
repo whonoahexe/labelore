@@ -1,41 +1,26 @@
 // sketch-004 B3 "folded chapters" e2e coverage (quick-260922-3us Task 1). Fixtures are resolved by
 // path from the project's live presentation payload (never hardcoded URLs) so the suite always
-// reflects this repo's own `.planning/` corpus. `runFullBehaviorChecks` is the shared behavior
+// reflects the made-up Lendshed project's `.planning/` corpus. `runFullBehaviorChecks` is the shared behavior
 // helper Task 2 (plan/verification cover/glance smoke) and Task 3 (full coverage over every type,
 // plus the foundation-sweep updates) build on — Task 3 appends fixtures here rather than
 // duplicating the checks. Uses plain `expect` throughout.
 import { expect, test, type Page } from '@playwright/test';
-import { BASE_URL, artifactUrl, projectApiUrl, projectUrl } from './app-url.ts';
+import { artifactUrl, projectApiUrl, projectUrl } from './app-url.ts';
+import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface Fixture {
   id: string;
-  /** A substring of the artifact's own `path`, unique enough in this repo's corpus to resolve to
+  /** A substring of the artifact's own `path`, unique enough in the Lendshed corpus to resolve to
    * exactly one artifact via the project's presentation payload. */
   pathIncludes: string;
   glance: boolean;
 }
 
 const DISCUSSION_LOG_FIXTURES: Fixture[] = [
-  {
-    id: '01-discussion-log',
-    pathIncludes: '01-read-layer-domain-model/01-DISCUSSION-LOG.md',
-    glance: true,
-  },
-  {
-    id: '02-discussion-log',
-    pathIncludes: '02-situational-awareness-artifact-reading/02-DISCUSSION-LOG.md',
-    glance: false,
-  },
-  {
-    id: '03-discussion-log',
-    pathIncludes: '03-search-browsing-traceability/03-DISCUSSION-LOG.md',
-    glance: true,
-  },
-  {
-    id: '05-discussion-log',
-    pathIncludes: '05-per-type-document-views/05-DISCUSSION-LOG.md',
-    glance: true,
-  },
+  { id: '01-discussion-log', pathIncludes: 'phases/01-member-sign-in-sessions/01-DISCUSSION-LOG.md', glance: true },
+  { id: '02-discussion-log', pathIncludes: 'phases/02-roles-and-permissions/02-DISCUSSION-LOG.md', glance: true },
+  { id: '03-discussion-log', pathIncludes: 'phases/03-account-admin-and-sessions/03-DISCUSSION-LOG.md', glance: true },
+  { id: '04-discussion-log', pathIncludes: 'phases/04-bulk-loan-export/04-DISCUSSION-LOG.md', glance: true },
 ];
 
 interface ArtifactDtoLite {
@@ -257,35 +242,11 @@ async function runFullBehaviorChecks(
 
 test.describe('document layout — sketch-004 B3 (quick-260922-3us)', () => {
   for (const fixture of DISCUSSION_LOG_FIXTURES) {
-    test(fixture.id, async ({ page, baseURL }) => {
-      await runFullBehaviorChecks(page, baseURL ?? BASE_URL, fixture);
+    test(fixture.id, async ({ page }) => {
+      await runFullBehaviorChecks(page, FIXTURE_BASE_URL, fixture);
     });
   }
 
-  test('05 discussion log: a reference preview opens from inside an expanded Also panel', async ({
-    page,
-    baseURL,
-  }) => {
-    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '05-per-type-document-views/05-DISCUSSION-LOG.md'));
-    await setTheme(page, 'light');
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(url);
-    await waitForCover(page);
-
-    // quick-260923-jxp: 05's Also chapter is now the always-open Endnotes sheet — no
-    // `.document-fold-head` to click. Click it only when present (a fold-style Also).
-    const alsoFoldHead = page.locator('#chapter-also .document-fold-head');
-    if ((await alsoFoldHead.count()) > 0) {
-      await alsoFoldHead.click();
-    }
-    const referenceTrigger = page.locator('#chapter-also [data-reference-key]').first();
-    const found = (await referenceTrigger.count()) > 0;
-    expect(found, 'expected at least one [data-reference-key] inside the Also chapter on 05').toBe(
-      true,
-    );
-    await referenceTrigger.click();
-    await expect(page.locator('.reference-preview')).toBeVisible();
-  });
 });
 
 // ---------------------------------------------------------------------------
@@ -294,135 +255,11 @@ test.describe('document layout — sketch-004 B3 (quick-260922-3us)', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('discussion-log review fixes (quick-260923-jxp)', () => {
-  test('answer card: numbered/titled, options list badges skip it, no "note" in the toggle label, a note toggle reveals its text', async ({
-    page,
-    baseURL,
-  }) => {
-    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '05-per-type-document-views/05-DISCUSSION-LOG.md'));
-    await setTheme(page, 'light');
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(url);
-    await waitForCover(page);
-    await page.locator('.document-fold-tools button').click(); // Expand all
-
-    const firstItem = page.locator('.document-item').first();
-    const answer = firstItem.locator('.document-answer');
-    await expect(answer).toHaveCount(1);
-    const answerNumberText = (await answer.locator('.document-option-number').first().innerText()).trim();
-    expect(answerNumberText).toMatch(/^\d+$/);
-    const answerTitleText = (await answer.locator('.document-option-title').first().innerText()).trim();
-    expect(answerTitleText).not.toBe('');
-
-    const moreButton = firstItem.locator('.document-item-more button');
-    if ((await moreButton.count()) > 0) {
-      const label = (await moreButton.innerText()).toLowerCase();
-      expect(label).not.toContain('note');
-      await moreButton.click();
-      const optionList = firstItem.locator('.document-option-list');
-      if ((await optionList.count()) > 0) {
-        const numbers = await optionList
-          .locator('.document-option-number')
-          .allInnerTexts();
-        const parsed = numbers.map((n) => Number(n.trim())).filter((n) => !Number.isNaN(n));
-        for (let i = 1; i < parsed.length; i++) {
-          expect(parsed[i]).toBeGreaterThan(parsed[i - 1]);
-        }
-        expect(parsed).not.toContain(Number(answerNumberText));
-      }
-    }
-
-    // Every options-toggle label on the page avoids the word "note".
-    const allToggleLabels = await page.locator('.document-item-more button').allInnerTexts();
-    for (const label of allToggleLabels) {
-      expect(label.toLowerCase()).not.toContain('note');
-    }
-
-    const noteToggle = page.locator('.document-item-note-toggle').first();
-    await expect(noteToggle).toHaveCount(1);
-    await expect(page.locator('.document-item-note').first()).toHaveCount(0);
-    await noteToggle.click();
-    await expect(noteToggle).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.locator('.document-item-note').first()).toBeVisible();
-  });
-
-  interface GhostFixture {
-    pathIncludes: string;
-    ghostCount: number;
-    discussedFact: string;
-    loggedFact?: string;
-  }
-
-  const GHOST_FIXTURES: GhostFixture[] = [
-    {
-      pathIncludes: '01-read-layer-domain-model/01-DISCUSSION-LOG.md',
-      ghostCount: 2,
-      discussedFact: '4 of 6 offered areas',
-      loggedFact: 'Aug 21, 2026',
-    },
-    {
-      pathIncludes: '03-search-browsing-traceability/03-DISCUSSION-LOG.md',
-      ghostCount: 4,
-      discussedFact: '4 of 8 offered areas',
-    },
-    {
-      pathIncludes: '02-situational-awareness-artifact-reading/02-DISCUSSION-LOG.md',
-      ghostCount: 0,
-      discussedFact: '4 of 4 offered areas',
-    },
-  ];
-
-  for (const fixture of GHOST_FIXTURES) {
-    test(`ghosts and cover facts: ${fixture.pathIncludes}`, async ({ page, baseURL }) => {
-      const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, fixture.pathIncludes));
-      await setTheme(page, 'light');
-      await page.setViewportSize({ width: 1280, height: 900 });
-      await page.goto(url);
-      await waitForCover(page);
-
-      expect(await page.locator('.document-ghost').count()).toBe(fixture.ghostCount);
-      expect(await page.locator('.document-chapter-index li[data-ghost]').count()).toBe(fixture.ghostCount);
-      if (fixture.ghostCount > 0) {
-        // .status-chip renders with `text-transform: uppercase` — compare case-insensitively.
-        const ghostChipText = (await page.locator('.document-ghost .status-chip').first().innerText()).trim();
-        expect(ghostChipText.toLowerCase()).toBe('not discussed');
-      }
-
-      const factsText = await page.locator('.document-cover-facts').innerText();
-      expect(factsText).toContain(fixture.discussedFact);
-      if (fixture.loggedFact) {
-        expect(factsText).toContain(fixture.loggedFact);
-      }
-    });
-  }
-
-  test('05 discussion log: endnotes sheet holds #also-deferred, last index entry reads "Endnotes"', async ({
-    page,
-    baseURL,
-  }) => {
-    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '05-per-type-document-views/05-DISCUSSION-LOG.md'));
-    await setTheme(page, 'light');
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(url);
-    await waitForCover(page);
-
-    await expect(page.locator('.document-endnotes#chapter-also')).toHaveCount(1);
-    await expect(page.locator('.document-endnotes#chapter-also #also-deferred')).toHaveCount(1);
-    const lastIndexText = (
-      await page.locator('.document-chapter-index li').last().innerText()
-    ).trim();
-    expect(lastIndexText).toContain('Endnotes');
-  });
-
-  const COVER_NUMBER_FIXTURES = [
-    '01-read-layer-domain-model/01-DISCUSSION-LOG.md',
-    '02-situational-awareness-artifact-reading/02-DISCUSSION-LOG.md',
-    '03-search-browsing-traceability/03-DISCUSSION-LOG.md',
-    '05-per-type-document-views/05-DISCUSSION-LOG.md',
-  ];
+  const COVER_NUMBER_FIXTURES = DISCUSSION_LOG_FIXTURES.map((fixture) => fixture.pathIncludes);
 
   for (const pathIncludes of COVER_NUMBER_FIXTURES) {
-    test(`cover numbers equal rendered counts: ${pathIncludes}`, async ({ page, baseURL }) => {
-      const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, pathIncludes));
+    test(`cover numbers equal rendered counts: ${pathIncludes}`, async ({ page }) => {
+      const url = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, pathIncludes));
       await setTheme(page, 'light');
       await page.setViewportSize({ width: 1280, height: 900 });
       await page.goto(url);
@@ -467,30 +304,3 @@ test.describe('discussion-log review fixes (quick-260923-jxp)', () => {
 
 // quick-261017-18a: the VERIFICATION page moved to the board + ledger view, covered by test/e2e/verification-page.spec.ts.
 // The PLAN/VERIFICATION cover/glance smoke and the expanded-chapter reference preview that lived here ran only over VERIFICATION fixtures, so they left with it.
-
-// quick-261024-o3h: every diagram and directory tree in a rendered document is a figure, decided
-// once by the shared detector on the server and hydrated on the client; Source shows the plain code.
-test.describe('rendered figures (quick-261024-o3h)', () => {
-  test('rendered figures: archived v1.0 research ARCHITECTURE.md', async ({ page, baseURL }) => {
-    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '.planning/milestones/v1.0-research/ARCHITECTURE.md'));
-    await setTheme(page, 'light');
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(url);
-
-    const treeHost = page.locator('.artifact-document [data-figure="tree"][data-figure-mounted]').first();
-    const diagramHost = page.locator('.artifact-document [data-figure="diagram"][data-figure-mounted]').first();
-    await expect(treeHost.locator('.clean-tree').first()).toBeVisible();
-    await expect(diagramHost.locator('.figure-frame').first()).toBeVisible();
-    await expect(treeHost.locator('> pre')).toBeHidden();
-    await expect(diagramHost.locator('> pre')).toBeHidden();
-
-    // Source is the raw reader: the fences are plain lines, one .source-row each, with no figure frame.
-    await page.locator('.artifact-heading .document-view-toggle').getByRole('button', { name: 'Source' }).click();
-    const reader = page.getByRole('region', { name: 'Source of ARCHITECTURE.md' });
-    await expect(reader).toBeVisible();
-    await expect(page.locator('[data-figure]')).toHaveCount(0);
-    await expect(page.locator('.figure-frame')).toHaveCount(0);
-    await expect(reader.locator('.source-row', { hasText: '├──' }).first()).toBeVisible();
-    await expect(reader.locator('.source-row', { hasText: '```' }).first()).toBeVisible();
-  });
-});

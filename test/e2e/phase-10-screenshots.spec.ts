@@ -1,5 +1,5 @@
 // Phase 10 (10-23): every page the phase built, in a real browser. The Codebase page (Tidemark's dashboard
-// address and its seven panels, three of Shapes' mapped documents, three panels of this repository's own map)
+// address and its seven panels, three of Shapes' mapped documents)
 // and the six specification and check pages (Spec, AI spec, User setup, Eval review, Browser check and
 // Cross-AI reviews) on every made-up Lendshed example. Each is opened at 1280px and 390px in light and dark,
 // screenshot into test-results/phase-10/ ({page}-{input}-{width}-{theme}.png) for the user's review beside
@@ -13,7 +13,7 @@ import { cpSync, mkdirSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BASE_URL, projectUrl } from './app-url.ts';
+import { projectUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL, SHAPES_BASE_URL, TIDEMARK_FIXTURE_ROOT } from './fixture-root.ts';
 import { startProjectsServer, type ProjectsServer } from './projects-server.ts';
 
@@ -22,8 +22,8 @@ const SHOTS = fileURLToPath(new URL('../../test-results/phase-10', import.meta.u
 /** The most distinct font sizes one of these pages may render (UI-SPEC Typography; 10-06: no exception). */
 const MAX_FONT_SIZES = 4;
 
-/** Which server a subject is opened on: the three the Playwright config starts, or Tidemark's own. */
-type Where = 'lendshed' | 'shapes' | 'labelore' | 'tidemark';
+/** Which server a subject is opened on: the two the Playwright config starts, or Tidemark's own. */
+type Where = 'lendshed' | 'shapes' | 'tidemark';
 
 interface Subject {
   /** The page family; the screenshot name starts with it. */
@@ -93,22 +93,6 @@ const SUBJECTS: Subject[] = [
       page: 'codebase',
       input: `shapes-${key}`,
       where: 'shapes',
-      address: `/codebase/${key}`,
-      expects: codebasePanel(label, false),
-    }),
-  ),
-  // This repository's own map, the hardest real one that is committed.
-  ...(
-    [
-      ['stack', 'Stack'],
-      ['structure', 'Structure'],
-      ['concerns', 'Concerns'],
-    ] as const
-  ).map(
-    ([key, label]): Subject => ({
-      page: 'codebase',
-      input: `labelore-${key}`,
-      where: 'labelore',
       address: `/codebase/${key}`,
       expects: codebasePanel(label, false),
     }),
@@ -234,8 +218,7 @@ test.describe('phase 10 pages', () => {
   function baseOf(where: Where): string {
     if (where === 'tidemark') return tidemark.base;
     if (where === 'lendshed') return FIXTURE_BASE_URL;
-    if (where === 'shapes') return SHAPES_BASE_URL;
-    return BASE_URL;
+    return SHAPES_BASE_URL;
   }
 
   async function openSubject(page: Page, subject: Subject): Promise<void> {

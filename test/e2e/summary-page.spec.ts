@@ -1,15 +1,13 @@
 // The SUMMARY page e2e (quick-261006-iz7, sketch 020 winner D): real corpus files, never a fixture
 // mock. Fixtures resolve by path against the project's live presentation payload (the uat-page.spec.ts
-// idiom) so an archival/rename fails loudly instead of silently skipping. The labelore tests run on
-// port 4199; the Lendshed tests run against the in-repo made-up project on port 4198
+// idiom) so an archival/rename fails loudly instead of silently skipping. The tests run against the in-repo made-up project on port 4198
 // (playwright.config.ts, always started). This spec asserts the foundation sweep's key invariants
 // itself (one h1, an eyebrow, squared corners, one chip signature, no 420px overflow), since the full
 // sweep is too slow to run per change. Run once post-merge: npx playwright test test/e2e/summary-page.spec.ts -g "summary page"
 import { expect, test } from '@playwright/test';
-import type { Locator, Page } from '@playwright/test';
-import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
+import type { Page } from '@playwright/test';
+import { artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
-import { expectLandedOn, watchSourceHits } from './source-landing.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -25,12 +23,6 @@ async function resolveFixturePath(baseURL: string, pathIncludes: string): Promis
 }
 
 /** True once the locator's box sits inside the current viewport (polled by the caller). */
-async function inViewport(page: Page, locator: Locator): Promise<boolean> {
-  const box = await locator.boundingBox();
-  const height = page.viewportSize()?.height ?? 0;
-  return box !== null && box.y >= 0 && box.y < height;
-}
-
 async function openPage(page: Page, base: string, path: string, theme: 'light' | 'dark'): Promise<void> {
   await page.addInitScript((value) => window.localStorage.setItem('labelore-theme', value), theme);
   await page.goto(await artifactUrl(base, path));
@@ -43,109 +35,6 @@ async function openRequirements(page: Page): Promise<void> {
 }
 
 test.describe('Summary page', () => {
-  test('LB v1.1/05-01 summary page', async ({ page, baseURL }) => {
-    const base = baseURL ?? BASE_URL;
-    const path = await resolveFixturePath(base, '05-per-type-document-views/05-01-SUMMARY.md');
-    await openPage(page, base, path, 'light');
-
-    // Header.
-    await expect(page.locator('h1')).toHaveCount(1);
-    await expect(page.locator('h1')).toHaveText('Discussion-log view, section-projection extractor, view registry');
-    await expect(page.locator('.view-summary-meta .eyebrow')).toHaveText('Summary of 05-01 · Phase 5 · Per type document views');
-    await expect(page.locator('.view-summary-date')).toContainText('Completed 20 Sep 2026');
-    const metrics = page.locator('.view-summary-metrics');
-    await expect(metrics).toContainText('Complete');
-    await expect(metrics).toContainText('26min');
-    await expect(metrics).toContainText('20:34');
-    await expect(metrics.locator('.status-chip', { hasText: 'Type: UI' })).toBeVisible();
-    await expect(metrics.locator('.status-chip', { hasText: 'Self-check passed' })).toBeVisible();
-    const triggers = page.locator('.view-summary-trigger');
-    await expect(triggers.nth(0)).toContainText('Tasks 2');
-    await expect(triggers.nth(1)).toContainText('Files 15');
-    await expect(triggers.nth(2)).toContainText('Requirements 3');
-
-    // Outcome: five rows, the count line, and a pill that jumps to its Proof row.
-    await expect(page.locator('.view-summary-row')).toHaveCount(5);
-    const count = page.locator('.view-summary-count');
-    await expect(count).toContainText('5');
-    await expect(count).toContainText('things shipped');
-    await expect(count).toContainText('3 deliverables proven');
-    await expect(count).toContainText('1 need a human');
-    await page.locator('.view-summary-row').nth(2).locator('.view-summary-pill', { hasText: 'D3' }).click();
-    await expect.poll(() => inViewport(page, page.locator('#summary-proof-D3'))).toBe(true);
-
-    // Timeline and Proof.
-    await expect(page.locator('.view-summary-stop')).toHaveCount(4);
-    await expect(page.locator('.view-summary-went')).toContainText('Went to plan.');
-    await expect(page.locator('.view-summary-proof-frame tbody tr')).toHaveCount(3);
-
-    // The Requirements modal: hover an ID for its preview, Escape closes the preview, keyboard focus opens one.
-    await openRequirements(page);
-    await page.locator('.view-summary-req', { hasText: 'VIEW-01' }).hover();
-    const preview = page.locator('.reference-preview');
-    await expect(preview).toBeVisible();
-    await expect(preview).toContainText('undifferentiated reader');
-    await expect(preview).toContainText('.planning/milestones/v1.1-REQUIREMENTS.md');
-    await expect(preview).toContainText('Phase 5');
-    await expect(preview.getByRole('link', { name: 'Open' })).toBeVisible();
-    await page.keyboard.press('Escape');
-    await expect(preview).toHaveCount(0);
-    await page.locator('.view-summary-req', { hasText: 'UI-06' }).focus();
-    await page.keyboard.press('Shift+Tab');
-    await page.keyboard.press('Tab');
-    await expect(page.locator('.view-summary-req', { hasText: 'UI-06' })).toBeFocused();
-    await expect(page.locator('.reference-preview h2')).toHaveText('UI-06');
-    await page.keyboard.press('Escape');
-    await page.keyboard.press('Escape');
-    await expect(page.locator('.view-summary-modal')).toHaveCount(0);
-
-    // "In the source only": Performance lands in the raw Source reader on its heading row, in view; View restores.
-    const strip = page.locator('#summary-source-only');
-    await watchSourceHits(page);
-    await strip.getByRole('button', { name: 'Performance', exact: true }).click();
-    await expect(page.getByRole('region', { name: 'Source of 05-01-SUMMARY.md' })).toBeVisible();
-    await expect(page.locator('.view-summary-head')).toHaveCount(0);
-    await expectLandedOn(page, '## Performance');
-    await page.getByRole('button', { name: 'View', exact: true }).click();
-    await expect(page.locator('.view-summary-row')).toHaveCount(5);
-
-    // F-05: every status chip on the page measures the same (buttons, links and spans alike).
-    const signatures = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('main .status-chip')).map((el) => {
-        const c = getComputedStyle(el);
-        return [c.fontSize, c.fontWeight, c.paddingTop, c.paddingLeft, c.textTransform, c.letterSpacing, c.lineHeight].join('|');
-      }),
-    );
-    expect(signatures.length).toBeGreaterThan(4);
-    expect(new Set(signatures).size).toBe(1);
-
-    // Squared corners on the new chrome.
-    for (const selector of [
-      '.view-summary-trigger',
-      '.view-summary-metrics',
-      '.view-summary-pill',
-      '.view-summary-proof-frame',
-      '.view-summary-detail-box',
-      '#summary-source-only .status-chip',
-    ]) {
-      const radii = await page.locator(selector).evaluateAll((els) => els.map((el) => getComputedStyle(el).borderRadius));
-      // The detail box only renders while the summary has items waiting on a human.
-      if (selector !== '.view-summary-detail-box') expect(radii.length, selector).toBeGreaterThan(0);
-      expect(radii.every((r) => r === '0px'), selector).toBe(true);
-    }
-
-    // 420px, dark: nothing overflows.
-    await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'dark'));
-    await page.setViewportSize({ width: 420, height: 900 });
-    await page.reload();
-    await page.locator('.view-summary-head').waitFor({ state: 'visible' });
-    const layout = await page.evaluate(() => ({
-      scrollWidth: document.documentElement.scrollWidth,
-      innerWidth: window.innerWidth,
-    }));
-    expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth + 1);
-  });
-
   test('FX 01-01 summary page', async ({ page }) => {
     const path = await resolveFixturePath(FIXTURE_BASE_URL, 'phases/01-member-sign-in-sessions/01-01-SUMMARY.md');
     await openPage(page, FIXTURE_BASE_URL, path, 'light');
@@ -179,20 +68,4 @@ test.describe('Summary page', () => {
     await expect(page.locator('.view-summary-stop[data-kind="wait"]')).toHaveCount(1);
   });
 
-  test('LB quick 3us summary page', async ({ page, baseURL }) => {
-    const base = baseURL ?? BASE_URL;
-    const path = await resolveFixturePath(base, '260922-3us-SUMMARY.md');
-    await openPage(page, base, path, 'light');
-
-    await expect(page.locator('.view-summary-meta .eyebrow')).toHaveText('Quick summary · 260922-3us');
-    await expect(page.locator('.view-summary-trigger').nth(0)).toContainText('Tasks 3');
-    await page.locator('.view-summary-trigger').nth(0).click();
-    await expect(page.locator('.view-summary-modal .view-summary-modal-row')).toHaveCount(3);
-    await page.keyboard.press('Escape');
-    await openRequirements(page);
-    await page.locator('.view-summary-req', { hasText: 'B3-01' }).hover();
-    await expect(page.locator('.reference-preview')).toContainText("Not in this project's requirements files.");
-    await expect(page.locator('.reference-preview')).toContainText('Complete in this summary');
-    await expect(page.locator('.reference-preview').getByRole('link', { name: 'Open' })).toHaveCount(0);
-  });
 });

@@ -1,9 +1,9 @@
-// Phase 8 (08-15): the built switcher, landing page and add dialog against the sketches the user chose.
-// The winner of each sketch is read from its README (039 project-switcher, 040 projects-landing), and the
-// layout-contract facts of that winner are asserted on the build with bounding boxes at 1280px and 390px,
-// in light and dark. For every surface, width and theme the build and the winning sketch are screenshot
-// side by side into test-results/phase-08/ (<surface>-<width>-<theme>.png and ...-sketch.png), the pairs a
-// person looks at beside the numbers (UI-SPEC populated and long-text backstops). Names and slugs come
+// Phase 8 (08-15): the built switcher, landing page and add dialog against the layout contracts of the
+// sketches the user chose. The winner of each sketch is written once in WINNERS below (039 project-switcher,
+// 040 projects-landing), and the layout-contract facts of that winner are asserted on the build with
+// bounding boxes at 1280px and 390px, in light and dark. For every surface, width and theme the build is
+// screenshot into test-results/phase-08/ (<surface>-<width>-<theme>.png) for a person to look at beside the
+// numbers (UI-SPEC populated and long-text backstops). Names and slugs come
 // from the running server's own list; the long-text project is a throwaway folder built here.
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
@@ -13,7 +13,6 @@ import { fileURLToPath } from 'node:url';
 import { projectUrl } from './app-url.ts';
 import { FIXTURE_ROOT, SHAPES_FIXTURE_ROOT } from './fixture-root.ts';
 import { startProjectsServer, type ProjectsServer } from './projects-server.ts';
-import { openSketch, sketchWinner } from './sketch-file.ts';
 
 const SHOTS = fileURLToPath(new URL('../../test-results/phase-08', import.meta.url));
 
@@ -282,11 +281,14 @@ const LANDING_CONTRACTS: Record<string, LandingAsserts> = {
   },
 };
 
+/** The chosen variant of each sketch, written once here: 039 project-switcher is A, 040 projects-landing is B. */
+const WINNERS: Record<string, string> = { '039-project-switcher': 'A', '040-projects-landing': 'B' };
+
 /** The contract of the sketch's winner, or a failure that names the winner nothing asserts. */
 function contractOf<T>(sketch: string, contracts: Record<string, T>): T {
-  const winner = sketchWinner(sketch);
-  const found = contracts[winner];
-  if (!found) throw new Error(`${sketch}: its README names winner ${winner}, but no layout facts are asserted for it`);
+  const winner = WINNERS[sketch];
+  const found = winner === undefined ? undefined : contracts[winner];
+  if (!found) throw new Error(`${sketch}: its winner ${winner ?? '(none)'} has no layout facts asserted`);
   return found;
 }
 
@@ -317,7 +319,6 @@ test.describe('built pages against the chosen sketches', () => {
           window.localStorage.setItem('labelore-theme', value);
         }, theme);
         const page = await context.newPage();
-        const sketch = await context.newPage();
         const label = (surface: string): string => `${surface}-${width}-${theme}`;
         const onTheme = async (): Promise<boolean> => page.evaluate(() => document.documentElement.classList.contains('dark'));
 
@@ -331,8 +332,6 @@ test.describe('built pages against the chosen sketches', () => {
           await expect(popup.locator('.project-row', { hasText: long.portal.name }).getByText('Opening…')).toBeVisible();
           // Photographed first: the contract below hovers and focuses rows.
           await shoot(page, `${label('switcher')}.png`);
-          await openSketch(sketch, '039-project-switcher', { theme, query: { state: 'popup', long: '1' } });
-          await shoot(sketch, `${label('switcher')}-sketch.png`);
           await contractOf('039-project-switcher', SWITCHER_CONTRACTS)(page, width, long.lendshed, popup);
           // What the 390px header leaves the trigger beside the brand (08-11's observation), recorded with the run.
           const triggerButton = triggerFor(page, long.lendshed);
@@ -355,8 +354,6 @@ test.describe('built pages against the chosen sketches', () => {
           await expect(rows.filter({ hasText: 'Opening…' })).toHaveCount(1);
           await expect(rows.filter({ hasText: 'ssh://' })).toHaveCount(1);
           await shoot(page, `${label('landing')}.png`, true);
-          await openSketch(sketch, '040-projects-landing', { theme });
-          await shoot(sketch, `${label('landing')}-sketch.png`, true);
           await contractOf('040-projects-landing', LANDING_CONTRACTS)(page, width);
 
           // The add dialog, opened from the switcher's footer.
@@ -374,8 +371,6 @@ test.describe('built pages against the chosen sketches', () => {
           expect(dialogBox.x + dialogBox.width).toBeLessThanOrEqual(width + 0.5);
           expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
           await shoot(page, `${label('add-dialog')}.png`);
-          await openSketch(sketch, '039-project-switcher', { theme, query: { state: 'add' } });
-          await shoot(sketch, `${label('add-dialog')}-sketch.png`);
         } finally {
           await context.close();
         }

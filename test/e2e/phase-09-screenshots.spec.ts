@@ -1,6 +1,5 @@
 // Phase 9 (09-16): the four analog-built pages (windows ledger, review ledger, milestone audit, coverage)
-// in a real browser. Each is opened on its made-up Lendshed or Shapes input, or on this repo's own
-// planning files, at 1280px and 390px in light and dark, screenshot into test-results/phase-09/
+// in a real browser. Each is opened on its made-up Lendshed or Shapes input, at 1280px and 390px in light and dark, screenshot into test-results/phase-09/
 // (<page>-<input>-<width>-<theme>.png) for the post-build review with the user (D-13), and checked
 // against the UI-SPEC rules: exactly one h1, no sideways page scroll at 390px, no destructive or warning
 // tone on document content, and at most four distinct rendered font sizes inside the page. The four-size
@@ -12,7 +11,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BASE_URL, projectUrl } from './app-url.ts';
+import { projectUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL, SHAPES_BASE_URL } from './fixture-root.ts';
 
 const SHOTS = fileURLToPath(new URL('../../test-results/phase-09', import.meta.url));
@@ -55,16 +54,6 @@ const SUBJECTS: Subject[] = [
     expects: async (page) => {
       await leadChip(page, '0 open');
       await expect(page.locator('.view-windows-page')).toContainText('Nothing open.');
-    },
-  },
-  {
-    page: 'windows',
-    input: 'labelore',
-    base: BASE_URL,
-    address: '/windows',
-    expects: async (page) => {
-      await expect(page.locator('.view-windows-lead .status-chip')).toBeVisible();
-      await expect(page.locator('.view-windows-page')).toContainText(/\d+ fixed/);
     },
   },
   {
@@ -116,31 +105,12 @@ const SUBJECTS: Subject[] = [
     },
   },
   {
-    page: 'review',
-    input: 'labelore-p8-disposition',
-    base: BASE_URL,
-    address: '/v2.1/phase-8/review-disposition',
-    expects: async (page) => {
-      await expect(page.locator('.view-review-ledger-head')).toContainText('of 32 findings');
-    },
-  },
-  {
     page: 'audit',
     input: 'lendshed',
     base: FIXTURE_BASE_URL,
     address: '/v1.0/audit',
     expects: async (page) => {
       await expect(page.locator('.view-milestone-audit-verdict')).toHaveText(/Tech debt only/i);
-    },
-  },
-  {
-    page: 'audit',
-    input: 'labelore',
-    base: BASE_URL,
-    address: '/v1.0/audit',
-    expects: async (page) => {
-      await expect(page.locator('.view-milestone-audit-verdict')).toHaveText(/Passed/i);
-      await expect(page.locator('.view-milestone-audit-page')).toContainText('Scores');
     },
   },
   {

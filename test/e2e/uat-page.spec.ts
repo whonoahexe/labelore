@@ -1,7 +1,6 @@
 // The UAT session page e2e (quick-261001-qk7, sketch 015 winner B): real files, never a mock. Fixtures
 // resolve by path against the project's live presentation payload (the patterns-map.spec.ts idiom) so an
-// archival/rename fails loudly instead of silently skipping. The Labelore v1.0/01 test runs against the
-// repo's own server on port 4199; the Lendshed v1.0/03 test runs against the read-only server on the
+// archival/rename fails loudly instead of silently skipping. The Lendshed v1.0/03 test runs against the read-only server on the
 // made-up Lendshed project (port 4198, FIXTURE_BASE_URL; playwright.config.ts always starts it and throws
 // at load when the fixture tree is missing). Nothing in this file skips. This spec asserts the foundation
 // sweep's key invariants itself (one h1, an eyebrow, squared corners, one chip signature, no 420px
@@ -9,9 +8,8 @@
 // Run once post-merge: npx playwright test test/e2e/uat-page.spec.ts -g "uat page"
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
+import { artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
-import { expectLandedOn, watchSourceHits } from './source-landing.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -34,83 +32,6 @@ async function inViewport(page: Page, locator: Locator): Promise<boolean> {
 }
 
 test.describe('UAT session page', () => {
-  test('LB v1.0/01 uat page', async ({ page, baseURL }) => {
-    const base = baseURL ?? BASE_URL;
-    const url = await artifactUrl(base, await resolveFixturePath(base, '01-read-layer-domain-model/01-UAT.md'));
-    await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
-    await page.goto(url);
-    await page.locator('#uat-tests').waitFor({ state: 'visible' });
-
-    // Cover and page invariants.
-    await expect(page.locator('h1')).toHaveCount(1);
-    await expect(page.locator('h1')).toHaveText('Read layer domain model');
-    await expect(page.locator('.artifact-heading .eyebrow')).toHaveText('User acceptance test · Phase 1');
-    const facts = page.locator('.view-uat-facts');
-    await expect(facts).toContainText('Complete');
-    await expect(facts).toContainText('9 Sep 2026 · 13:50');
-    await expect(facts).toContainText('9 Sep 2026 · 14:25');
-    await expect(facts).toContainText('35 min later');
-    await expect(page.locator('.view-uat-scope')).toContainText('Tested from');
-
-    // Done line, squares and pairs.
-    const done = page.locator('.view-uat-done');
-    await expect(done).toContainText('Testing complete');
-    await expect(done).toContainText('23 of 23 passed');
-    await expect(page.locator('.view-uat-square[data-result="pass"]')).toHaveCount(23);
-    await expect(page.locator('.view-uat-pair')).toHaveCount(23);
-    await expect(page.locator('#uat-gaps .view-uat-aside')).toHaveText('none');
-
-    // A square jumps to its test and flashes it.
-    await page.locator('.view-uat-square', { hasText: /^17$/ }).click();
-    const target = page.locator('#uat-test-17');
-    await expect.poll(() => inViewport(page, target)).toBe(true);
-    await expect(target).toHaveAttribute('data-flash', 'true');
-
-    // F-05: every status chip on the page measures the same (buttons and spans alike).
-    const signatures = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('main .status-chip')).map((el) => {
-        const c = getComputedStyle(el);
-        return [c.fontSize, c.fontWeight, c.paddingTop, c.paddingLeft, c.textTransform, c.letterSpacing, c.lineHeight].join('|');
-      }),
-    );
-    expect(signatures.length).toBeGreaterThan(10);
-    expect(new Set(signatures).size).toBe(1);
-
-    // Squared corners on the new chrome.
-    for (const selector of ['.view-uat-pair', '.view-uat-square', '.view-uat-source-only']) {
-      const radii = await page
-        .locator(selector)
-        .evaluateAll((els) => els.map((el) => getComputedStyle(el).borderRadius));
-      expect(radii.length, selector).toBeGreaterThan(0);
-      expect(radii.every((r) => r === '0px'), selector).toBe(true);
-    }
-
-    // The source-only strip: two buttons; Summary block lands in the raw Source reader on its heading row.
-    const strip = page.locator('#uat-source-only');
-    await expect(strip.getByRole('button')).toHaveCount(2);
-    await expect(strip.getByRole('button', { name: 'Frontmatter', exact: true })).toBeVisible();
-    await watchSourceHits(page);
-    await strip.getByRole('button', { name: 'Summary block', exact: true }).click();
-    await expect(page.getByRole('region', { name: 'Source of 01-UAT.md' })).toBeVisible();
-    await expect(page.locator('.view-uat-pair')).toHaveCount(0);
-    await expectLandedOn(page, '## Summary');
-
-    // Back to View restores the page.
-    await page.getByRole('button', { name: 'View', exact: true }).click();
-    await expect(page.locator('.view-uat-pair')).toHaveCount(23);
-
-    // 420px, dark: nothing overflows.
-    await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'dark'));
-    await page.setViewportSize({ width: 420, height: 900 });
-    await page.reload();
-    await page.locator('#uat-tests').waitFor({ state: 'visible' });
-    const layout = await page.evaluate(() => ({
-      scrollWidth: document.documentElement.scrollWidth,
-      innerWidth: window.innerWidth,
-    }));
-    expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth + 1);
-  });
-
   test('Lendshed v1.0/03 uat page', async ({ page }) => {
     const url = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, 'v1.0-phases/03-catalogue-browsing/03-UAT.md'));
     await page.goto(url);

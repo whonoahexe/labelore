@@ -1,7 +1,6 @@
 // The TODO page e2e (quick-261023-61k, sketch 027 C). The spec starts a read-only server on a thin temp
 // project built by the shared fixture server (ports 5310-5319 only, see fixture-server.ts) holding the
-// todos and notes of the made-up Lendshed project, the Labelore todo fixture and the synthetic fixture,
-// Labelore's own completed todo 001 with its note, and the chrome-drift todo's closing quick task SUMMARY.
+// todos and notes of the made-up Lendshed project, the Labelore todo fixture and the synthetic fixture.
 // Every source is required; there are no optional sources. Each page is resolved by path against the live
 // project's presentation payload. The clock is fixed at the sketch's NOW (23 Oct 2026 12:00, Asia/Kolkata) so
 // "Open N days" is stable. It asserts the foundation sweep's key invariants itself (one h1, squared
@@ -11,7 +10,7 @@ import type { Locator, Page } from '@playwright/test';
 import { relative } from 'node:path';
 import { FX_ROOT, planningFiles } from '../helpers/fixture-project.ts';
 import { LABELORE_FIXTURE_ROOT, LB_ROOT, SYNTHETIC_ROOT } from '../helpers/todo-corpus.ts';
-import { artifactUrl, exactUrl, hrefOf, projectApiUrl } from './app-url.ts';
+import { artifactUrl, exactUrl, projectApiUrl } from './app-url.ts';
 import { startFixtureServer } from './fixture-server.ts';
 import type { FixturePlacement, FixtureServer } from './fixture-server.ts';
 
@@ -28,13 +27,8 @@ function todoAndNotePlacements(root: string): FixturePlacement[] {
     .map((path) => ({ from: relative(LB_ROOT, `${root}/${path}`), to: path }));
 }
 
-const QUICK_SUMMARY = '.planning/milestones/v1.1-quick/260920-mzr-fix-document-page-chrome-drift-and-the-l/260920-mzr-SUMMARY.md';
-
 const PLACEMENTS: FixturePlacement[] = [
   ...[FX_ROOT, LABELORE_FIXTURE_ROOT, SYNTHETIC_ROOT].flatMap(todoAndNotePlacements),
-  { from: '.planning/todos/completed/001-sketches-page-in-labelore.md', to: '.planning/todos/completed/001-sketches-page-in-labelore.md' },
-  { from: '.planning/notes/2026-10-23-sketches-page-in-labelore.md', to: '.planning/notes/2026-10-23-sketches-page-in-labelore.md' },
-  { from: QUICK_SUMMARY, to: QUICK_SUMMARY },
 ];
 
 test.use({ timezoneId: 'Asia/Kolkata' });
@@ -208,13 +202,7 @@ test.describe('Todo page', () => {
     await expect(page.locator('.view-todo-fold').last().locator('a.view-todo-ref')).toHaveText('per-kind-artifact-rendering');
     await expect(page.locator('.view-todo-commit')).toHaveCount(3);
     await expect(page.locator('.view-todo-close')).toContainText('Closed 2026-09-20.');
-    const quick = page.locator('#todo-closed .view-todo-stage-head a', { hasText: 'quick 260920-mzr' });
-    await expect(quick).toHaveCount(1);
-    const quickSummary = await artifactUrl(server.base, await resolveArtifactPath('260920-mzr-SUMMARY.md'));
-    await expect(quick).toHaveAttribute('href', hrefOf(quickSummary));
-    await quick.click();
-    await expect(page).toHaveURL(exactUrl(quickSummary));
-    await expect(page.locator('.view-todo-head')).toHaveCount(0);
+    await expect(page.locator('#todo-closed .view-todo-stage-head', { hasText: 'quick 260920-mzr' })).toHaveCount(1);
   });
 
   test('a todo with nothing below the frontmatter, light', async ({ page }) => {

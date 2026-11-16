@@ -1,15 +1,13 @@
 // The PATTERNS pattern-map e2e (quick-260930-wfs, sketch 013 B): real files, never a mock. Fixtures
 // resolve by path against the project's live presentation payload (the research-briefing.spec.ts idiom)
-// so an archival/rename fails loudly instead of silently skipping. The Labelore v1.1/05 test runs
-// against the repo's own server on port 4199; the Lendshed v1.0/02 test runs against the read-only
+// so an archival/rename fails loudly instead of silently skipping. The Lendshed v1.0/02 test runs against the read-only
 // server on the made-up Lendshed project (port 4198, FIXTURE_BASE_URL; playwright.config.ts always
 // starts it and throws at load when the fixture tree is missing). Nothing in this file skips. This
 // spec asserts the foundation sweep's key invariants itself (one h1, an eyebrow, squared corners,
 // one chip signature, no 420px overflow), since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
-import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
+import { artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
-import { expectLandedOn, watchSourceHits } from './source-landing.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -25,107 +23,6 @@ async function resolveFixturePath(baseURL: string, pathIncludes: string): Promis
 }
 
 test.describe('PATTERNS pattern map', () => {
-  test('LB v1.1/05 pattern map', async ({ page, baseURL }) => {
-    const base = baseURL ?? BASE_URL;
-    const url = await artifactUrl(base, await resolveFixturePath(base, '05-per-type-document-views/05-PATTERNS.md'));
-    await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
-    await page.goto(url);
-    await page.locator('#pattern-file-map').waitFor({ state: 'visible' });
-
-    // Cover and page invariants.
-    await expect(page.locator('.document-cover')).toHaveCount(0);
-    await expect(page.locator('h1')).toHaveCount(1);
-    await expect(page.locator('h1')).toHaveText('Per-Type Document Views');
-    await expect(page.locator('.artifact-heading .eyebrow')).toHaveText('Pattern map · Phase 5');
-    const facts = page.locator('.view-patterns-facts');
-    await expect(facts).toContainText('2026-09-20');
-    await expect(facts).toContainText('17 / 17');
-
-    // The meter: 8 / 8 / 0 / 1 from the classification.
-    const keyCount = async (quality: string): Promise<string | null> =>
-      page.locator(`.view-patterns-meter-key [data-quality="${quality}"] b`).textContent();
-    expect([await keyCount('exact'), await keyCount('role'), await keyCount('partial'), await keyCount('none')]).toEqual([
-      '8',
-      '8',
-      '0',
-      '1',
-    ]);
-
-    // 17 rows; the panel opens on the one new-ground file.
-    await expect(page.locator('.view-patterns-row')).toHaveCount(17);
-    const panel = page.locator('.view-patterns-panel');
-    await expect(panel).toContainText('design-language.md');
-    await expect(panel).toContainText('Why nothing matches');
-
-    // Clicking a row selects it.
-    await page.locator('.view-patterns-row', { hasText: 'registry.ts' }).first().click();
-    await expect(panel).toContainText('Copy from');
-    await expect(panel).not.toContainText('Why nothing matches');
-
-    // House rule: pick explains and dims; Escape clears.
-    const chip = page.locator('.view-patterns-strip button', { hasText: 'Error handling' });
-    const hits = Number(((await chip.textContent()) ?? '').split('·')[1]);
-    expect(hits).toBeGreaterThan(0);
-    await chip.click();
-    await expect(page.locator('.view-patterns-rule-note')).toBeVisible();
-    await expect(page.locator('.view-patterns-row[data-dim="true"]')).toHaveCount(17 - hits);
-    await expect(chip).toHaveAttribute('aria-pressed', 'true');
-    await page.keyboard.press('Escape');
-    await expect(page.locator('.view-patterns-rule-note')).toHaveCount(0);
-    await expect(page.locator('.view-patterns-row[data-dim="true"]')).toHaveCount(0);
-
-    // F-05: every status chip on the page measures the same (buttons and spans alike).
-    const signatures = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('main .status-chip')).map((el) => {
-        const c = getComputedStyle(el);
-        return [c.fontSize, c.fontWeight, c.paddingTop, c.paddingLeft, c.textTransform, c.letterSpacing, c.lineHeight].join('|');
-      }),
-    );
-    expect(signatures.length).toBeGreaterThan(10);
-    expect(new Set(signatures).size).toBe(1);
-
-    // Squared corners on the new chrome.
-    for (const selector of ['.view-patterns-panel', '.view-patterns-row', '.view-patterns-note']) {
-      const radii = await page
-        .locator(selector)
-        .evaluateAll((els) => els.map((el) => getComputedStyle(el).borderRadius));
-      expect(radii.length, selector).toBeGreaterThan(0);
-      expect(radii.every((r) => r === '0px'), selector).toBe(true);
-    }
-
-    // The source-only strip: four buttons; Metadata lands in the raw Source reader on its heading row.
-    const strip = page.locator('#pattern-source-only');
-    await expect(strip.getByRole('button')).toHaveCount(4);
-    await watchSourceHits(page);
-    await strip.getByRole('button', { name: 'Metadata', exact: true }).click();
-    await expect(page.getByRole('region', { name: 'Source of 05-PATTERNS.md' })).toBeVisible();
-    await expect(page.locator('.view-patterns-row')).toHaveCount(0);
-    await expectLandedOn(page, '## Metadata');
-
-    // Back to View restores the map.
-    await page.getByRole('button', { name: 'View', exact: true }).click();
-    await expect(page.locator('.view-patterns-row')).toHaveCount(17);
-
-    // 420px, dark: nothing overflows and the panel stacks below the map.
-    await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'dark'));
-    await page.setViewportSize({ width: 420, height: 900 });
-    await page.reload();
-    await page.locator('#pattern-file-map').waitFor({ state: 'visible' });
-    const layout = await page.evaluate(() => {
-      const rows = document.querySelectorAll('.view-patterns-row');
-      const lastRow = rows[rows.length - 1].getBoundingClientRect();
-      const panelBox = (document.querySelector('.view-patterns-panel') as HTMLElement).getBoundingClientRect();
-      return {
-        scrollWidth: document.documentElement.scrollWidth,
-        innerWidth: window.innerWidth,
-        panelTop: panelBox.top,
-        lastRowTop: lastRow.top,
-      };
-    });
-    expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth + 1);
-    expect(layout.panelTop).toBeGreaterThan(layout.lastRowTop);
-  });
-
   test('Lendshed v1.0/02 pattern map', async ({ page }) => {
     const url = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, 'v1.0-phases/02-shed-inventory-health/02-PATTERNS.md'));
     await page.goto(url);

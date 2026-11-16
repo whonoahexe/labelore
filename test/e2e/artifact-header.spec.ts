@@ -3,7 +3,8 @@
 // (discussion log, PLAN), a plain-header page (SUMMARY) and a plan-pair page. Fixtures resolved
 // from the project's presentation payload, never hardcoded URLs — same discipline as document-layout.spec.ts.
 import { expect, test, type Page } from '@playwright/test';
-import { BASE_URL, artifactUrl, projectApiUrl, projectUrl } from './app-url.ts';
+import { artifactUrl, projectApiUrl, projectUrl } from './app-url.ts';
+import { FIXTURE_BASE_URL } from './fixture-root.ts';
 import { buildPageMatrix } from './pages.ts';
 
 interface ArtifactDtoLite {
@@ -85,10 +86,10 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
     permissions: ['clipboard-read', 'clipboard-write'],
   });
 
-  test('cover-layout discussion log: copy button present, no raw path caption', async ({ page, baseURL }) => {
+  test('cover-layout discussion log: copy button present, no raw path caption', async ({ page }) => {
     const { url, path } = await resolveArtifact(
-      baseURL ?? BASE_URL,
-      '01-read-layer-domain-model/01-DISCUSSION-LOG.md',
+      FIXTURE_BASE_URL,
+      '01-member-sign-in-sessions/01-DISCUSSION-LOG.md',
     );
     await setTheme(page, 'light');
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -99,10 +100,10 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
 
   // quick-261006-iz6: the PLAN page moved from the B3 cover to the task navigator; the copy-path
   // contract is unchanged.
-  test('navigator PLAN: copy button present, no raw path caption', async ({ page, baseURL }) => {
+  test('navigator PLAN: copy button present, no raw path caption', async ({ page }) => {
     const { url, path } = await resolveArtifact(
-      baseURL ?? BASE_URL,
-      '01-read-layer-domain-model/01-01-PLAN.md',
+      FIXTURE_BASE_URL,
+      '01-member-sign-in-sessions/01-01-PLAN.md',
     );
     await setTheme(page, 'light');
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -111,8 +112,8 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
     await assertCopyPathContract(page, path);
   });
 
-  test('plain-header SUMMARY: copy button present, no raw path caption', async ({ page, baseURL }) => {
-    const { url, path } = await findFirstSummaryArtifact(baseURL ?? BASE_URL);
+  test('plain-header SUMMARY: copy button present, no raw path caption', async ({ page }) => {
+    const { url, path } = await findFirstSummaryArtifact(FIXTURE_BASE_URL);
     await setTheme(page, 'light');
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(url);
@@ -121,16 +122,13 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
     await assertCopyPathContract(page, path);
   });
 
-  test('plan-pair page: copy button present on the plan tab header, no raw path caption', async ({
-    page,
-    baseURL,
-  }) => {
-    const matrix = await buildPageMatrix(baseURL ?? BASE_URL);
+  test('plan-pair page: copy button present on the plan tab header, no raw path caption', async ({ page }) => {
+    const matrix = await buildPageMatrix(FIXTURE_BASE_URL);
     const planPair = matrix.pages.find((p) => p.family === 'plan-pair');
     expect(planPair, 'expected a plan-pair fixture in this corpus').toBeDefined();
     await setTheme(page, 'light');
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(await projectUrl(baseURL ?? BASE_URL, planPair!.url));
+    await page.goto(await projectUrl(FIXTURE_BASE_URL, planPair!.url));
     // The pair opens on its Plan tab: the PLAN's own per-type page with the pair switch first.
     await page.locator('.plan-pair-switch').first().waitFor({ state: 'visible' });
     await page.locator('.artifact-heading').first().waitFor({ state: 'visible' });
@@ -147,13 +145,12 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
 
   test('renders without throwing when clipboard permissions are not granted', async ({
     browser,
-    baseURL,
   }) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const { url } = await resolveArtifact(
-      baseURL ?? BASE_URL,
-      '01-read-layer-domain-model/01-DISCUSSION-LOG.md',
+      FIXTURE_BASE_URL,
+      '01-member-sign-in-sessions/01-DISCUSSION-LOG.md',
     );
     await setTheme(page, 'light');
     await page.goto(url);
@@ -166,13 +163,10 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
     await context.close();
   });
 
-  test('420px, light and dark: no horizontal overflow with the copy button present', async ({
-    page,
-    baseURL,
-  }) => {
+  test('420px, light and dark: no horizontal overflow with the copy button present', async ({ page }) => {
     const { url } = await resolveArtifact(
-      baseURL ?? BASE_URL,
-      '01-read-layer-domain-model/01-DISCUSSION-LOG.md',
+      FIXTURE_BASE_URL,
+      '01-member-sign-in-sessions/01-DISCUSSION-LOG.md',
     );
     for (const theme of ['light', 'dark'] as const) {
       await setTheme(page, theme);

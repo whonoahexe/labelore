@@ -1,6 +1,6 @@
 // quick-261024-vty: the two-column planning-files drawer (sketch 038 C). Every target, count and
-// label is resolved from the project's drawer payload, never hardcoded, so the spec follows whatever this repo's
-// own `.planning/` holds.
+// label is resolved from the project's drawer payload, never hardcoded, so the spec follows whatever the
+// served dense fixture project's `.planning/` holds (the 4199 server, the config's baseURL).
 import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -82,7 +82,7 @@ test.describe('planning files drawer', () => {
   test('keeps every quick task in one place, grouped by milestone, each row opening its plan with a Plan / Summary switch', async ({ page, baseURL }) => {
     const model = await fetchDrawer(baseURL!);
     const quick = model.quick;
-    // This repository holds the shipped v2.0 quick tasks, so the quick-task place is never empty here.
+    // The dense fixture project holds shipped quick tasks, so the quick-task place is never empty here.
     expect(quick.count).toBeGreaterThan(0);
 
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -104,7 +104,7 @@ test.describe('planning files drawer', () => {
     const task = quick.groups
       .flatMap((group) => group.tasks)
       .find((candidate) => fileNamed(candidate, 'plan') && fileNamed(candidate, 'summary'));
-    // This repository's shipped v2.0 quick tasks each hold a plan and a summary.
+    // The dense fixture's shipped quick tasks each hold a plan and a summary.
     expect(task, 'a quick task with both a plan and a summary').toBeDefined();
     const planFile = fileNamed(task!, 'plan')!;
     const summaryFile = fileNamed(task!, 'summary')!;
