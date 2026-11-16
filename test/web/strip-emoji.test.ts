@@ -41,11 +41,27 @@ describe('stripEmoji', () => {
 });
 
 describe('dashboard-page emoji sanitization contract', () => {
-  it('imports and applies stripEmoji to the head, and routes STATE.md entries through MarkedText', async () => {
+  it("imports and applies stripEmoji to the head, runs the position line's STATE.md text through stripMarkdown(stripEmoji()), and routes ledger entries through MarkedText", async () => {
     const page = await source('src/web/pages/dashboard-page.tsx');
     expect(page).toMatch(/import \{.*stripEmoji.*\} from '\.\/strip-emoji\.ts';/);
-    expect(page).toContain('stripMarkdown(stripEmoji(last.text))');
     expect(page).toContain('<h1 id="project-name-heading">{stripEmoji(head.name)}</h1>');
+    expect(page).toContain('{stripEmoji(head.tagline)}');
+    expect(page).toContain('<LeadText text={stripEmoji(head.lead)} />');
+    // quick-261115-o34 removed the Next-up card and its "Last" line (STATE.md's last activity, once
+    // run through stripMarkdown(stripEmoji(last.text))). Its successor is the position line: every
+    // author string, the STATE.md session note included, goes through clean(), which is
+    // stripMarkdown(stripEmoji()), and the operator step through stripEmoji().
+    const position = await source('src/web/pages/dashboard-position.tsx');
+    expect(position).toContain("import { stripEmoji, stripMarkdown } from './strip-emoji.ts';");
+    expect(position).toContain('const clean = (text: string): string => stripMarkdown(stripEmoji(text));');
+    expect(position).toContain('clean(note.text)');
+    expect(position).toContain('clean(then.what)');
+    expect(position).toContain('clean(now.title)');
+    expect(position).toContain('clean(now.why)');
+    expect(position).toContain('clean(next.why)');
+    expect(position).toContain('<LeadText text={stripEmoji(item.text)} />');
+    // No author string reaches the page as a raw JSX child, bypassing clean() or stripEmoji().
+    expect(position).not.toMatch(/\{(?:note\.text|then\.what|now\.title|now\.why|next\.why|item\.text)\}/);
     // quick-261018-4tb: blockers and decisions render in dashboard-ledger.tsx, and every title and
     // rationale reaches the page through MarkedText, which strips emoji before it tokenizes.
     const ledger = await source('src/web/pages/dashboard-ledger.tsx');

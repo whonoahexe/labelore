@@ -62,13 +62,17 @@ describe('empty-state contract (D-06, D-07, D-08, D-09)', () => {
     expect(artifact).toMatch(/\{panels\.length > 0 \? \([\s\S]*?\) : null\}/);
   });
 
-  it('leaves dashboard-page.tsx untouched — its all-clear sentences and on-deck sentence still exist (scope rule)', async () => {
+  it("keeps the dashboard's own absence sentences (the head's no-position sentence, the position line's, the ledger's all-clear and the on-deck sentence) and never EmptyState (scope rule)", async () => {
     // The dashboard's sections moved into dashboard-*.tsx modules (quick-261018-4tb); the
-    // sentences are read from the page and its modules together.
+    // sentences are read from the page and its modules together. quick-261115-o34 replaced the
+    // Next-up card with the position line (dashboard-position.tsx); the card's no-step sentence went
+    // with it, and the head's no-position sentence in dashboard-page.tsx succeeds it.
     const dashboard = dashboardSources();
     expect(dashboard).toContain(
-      'No dependency-ready work is reported in the active milestone.',
+      '<p className="empty-note">No roadmap or phase on disk yet — nothing to place.</p>',
     );
+    expect(dashboard).toContain('Nothing on disk for this stage.');
+    expect(dashboard).toContain('Nothing on disk is dated yet.');
     expect(dashboard).toContain('No decisions are recorded.');
     expect(dashboard).toContain('No open blockers are recorded');
     expect(dashboard).toContain('Nothing is queued after the next step.');
