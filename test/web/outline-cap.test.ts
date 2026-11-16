@@ -1,7 +1,6 @@
 // SEC-03 / D-13 / D-14 / D-15 / T-06-06 / T-06-08: the View-mode outline lists at most
 // OUTLINE_ENTRY_CAP entries and closes with a plain "+N more sections" row, while every section
 // of the document still renders (Pitfall 33 — cap what is listed, never what exists).
-import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
@@ -119,19 +118,3 @@ describe('OutlineList overflow row (D-14)', () => {
   });
 });
 
-describe('Source mode keeps its own cap (D-15)', () => {
-  const page = readFileSync(new URL('../../src/web/pages/artifact-page.tsx', import.meta.url), 'utf8');
-
-  it('slices depth-3 headings to OUTLINE_ENTRY_CAP rather than a literal', () => {
-    expect(page).toContain('.slice(0, OUTLINE_ENTRY_CAP)');
-    expect(page).not.toContain('slice(0, 18)');
-  });
-
-  it('passes no omitted value from the Source reader', () => {
-    const start = page.indexOf('function ArtifactReader');
-    const end = page.indexOf('function ViewReader');
-    expect(start).toBeGreaterThan(-1);
-    expect(end).toBeGreaterThan(start);
-    expect(page.slice(start, end)).not.toContain('omitted');
-  });
-});

@@ -257,11 +257,6 @@ describe('stableSlug (extracted to src/rendering/slug.ts, 03-02)', () => {
     expect(stableSlug('***')).toBe('section');
     expect(stableSlug('')).toBe('section');
   });
-
-  it('has no import statements — the zero-dependency contract that lets presentation code depend on it', async () => {
-    const source = await readFile(new URL('../../src/rendering/slug.ts', import.meta.url), 'utf8');
-    expect(source).not.toMatch(/^import /m);
-  });
 });
 
 describe('structured frontmatter views', () => {

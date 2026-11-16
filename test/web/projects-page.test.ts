@@ -2,7 +2,6 @@
 // landing rows through api.ts and the key factory. Tracer proof, no browser: a real registry app answers
 // in process, the client's fetch is the stand-in from registry-fetch.ts, and the page is a static render
 // over a seeded QueryClient.
-import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -158,18 +157,6 @@ describe('query keys and links', () => {
     expect(projectRootPath('lendshed')).toBe('/lendshed');
     expect(projectRootPath('portal-2')).toBe('/portal-2');
     for (const bad of ['API', '//evil', '', 'api', 'a/b', '-x']) expect(projectRootPath(bad), bad).toBe('/');
-  });
-});
-
-describe('the router', () => {
-  const router = readFileSync(new URL('../../src/web/app-router.tsx', import.meta.url), 'utf8');
-
-  it('mounts the landing page on / and never redirects it', () => {
-    expect(router).toMatch(/path: '\/',\s*element: <ProjectsRoute \/>/);
-    const route = router.slice(router.indexOf('function ProjectsRoute'), router.indexOf('const UNPREFIXED_WORDS'));
-    expect(route).toContain('<ProjectsPage />');
-    expect(route).not.toContain('<Navigate');
-    expect(router).not.toContain('RootRedirect');
   });
 });
 

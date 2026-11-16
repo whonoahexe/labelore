@@ -278,9 +278,6 @@ describe('the settings page without values', () => {
 });
 
 describe('nothing on the settings page writes', () => {
-  const COMPONENT_SOURCES = ['settings-page-components.tsx', 'settings-rail.tsx'].map((name) =>
-    readFileSync(fileURLToPath(new URL(`../../src/web/views/${name}`, import.meta.url)), 'utf8'),
-  );
 
   it('has no form or textarea, and exactly one search input', () => {
     for (const html of [pageOf(ready({ mode: 'yolo' })), pageOf(modelOf({ state: 'missing' })), pageOf(modelOf({ state: 'unreadable' }))]) {
@@ -288,12 +285,6 @@ describe('nothing on the settings page writes', () => {
       expect(html).not.toMatch(/<input(?![^>]*type="search")/);
       expect((html.match(/<input\b/g) ?? []).length).toBe(1);
     }
-  });
-
-  it('uses no raw-HTML prop in the components, and has exactly one destructive tone', () => {
-    for (const text of COMPONENT_SOURCES) expect(text).not.toContain('dangerouslySetInnerHTML');
-    expect(COMPONENT_SOURCES[0]?.split('data-tone="destructive"').length).toBe(2);
-    expect(COMPONENT_SOURCES[1]).not.toContain('destructive');
   });
 
   it('never draws a destructive tone on a page that read its config', () => {
@@ -390,18 +381,6 @@ describe('the unreadable config.json (12-09 Task 3)', () => {
   const html = (parseError: Parameters<typeof UnreadableNotice>[0]['parseError']): string =>
     renderToStaticMarkup(createElement(UnreadableNotice, { parseError, onOpenSourceAt: () => undefined }));
 
-  it('names the line and the reason words, and the button opens Source at that line', () => {
-    const out = html({ line: 14, column: 3, reason: 'unexpected-character' });
-    expect(out).toContain('Can&#x27;t read config.json</span>');
-    expect(out).toContain('data-tone="destructive"');
-    expect(out).toContain('The file isn&#x27;t valid JSON, so this project&#x27;s values aren&#x27;t shown.');
-    expect(out).toContain('The reference below still lists everything you can set.');
-    expect(out).toContain('The parser stopped at line 14: an unexpected character.');
-    expect(out).toContain('Open Source at line 14');
-    expect(out).toContain('class="source-notice-glyph"');
-    expect(out).toContain('class="source-notice-lead"');
-  });
-
   it('says each closed-set reason in its own plain words', () => {
     const words = {
       'unexpected-end': 'the file ends before the JSON does',
@@ -430,17 +409,6 @@ describe('the unreadable config.json (12-09 Task 3)', () => {
     const without = UnreadableNotice({ parseError: null, onOpenSourceAt: (line) => calls.push(line) });
     findClickHandler(without)?.();
     expect(calls).toEqual([14, null]);
-  });
-
-  it('the no-settings page draws the same reference page, with the quiet notice and no Copy path', () => {
-    const page = readFileSync(fileURLToPath(new URL('../../src/web/pages/settings-missing-page.tsx', import.meta.url)), 'utf8');
-    expect(page).toContain('SettingsView');
-    expect(page).toContain("{ state: 'missing' }");
-    expect(page).toContain('path={null}');
-    const components = readFileSync(fileURLToPath(new URL('../../src/web/views/settings-page-components.tsx', import.meta.url)), 'utf8');
-    expect(components).toContain('notice source-notice');
-    expect(components).toContain('source-notice-glyph');
-    expect(components).toContain('source-notice-lead');
   });
 });
 

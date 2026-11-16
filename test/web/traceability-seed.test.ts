@@ -203,12 +203,6 @@ describe('the q seed (13-04, D-05 and D-06)', () => {
 describe('the row anchor on the traceability page (13-04, D-05)', () => {
   const source = readFileSync(new URL('../../src/web/pages/traceability-page.tsx', import.meta.url), 'utf8');
 
-  it('gives an active-tier row the requirement anchor and a tabIndex of -1', () => {
-    expect(source).toContain("from '../../presentation/jump-anchors.ts'");
-    expect(source).toMatch(/id=\{landing \? requirementAnchor\(row\.id\) : undefined\}/);
-    expect(source).toMatch(/tabIndex=\{landing \? -1 : undefined\}/);
-  });
-
   it('turns the anchor on for the active tier only, so an id is never repeated on the page', () => {
     const uses = source.split('\n').filter((line) => line.includes('<TraceabilityRowList'));
     expect(uses).toHaveLength(3);

@@ -64,6 +64,7 @@ const NO_REGEXP: string[] = [
   'src/presentation/review-ledger.ts',
   'src/presentation/todo-context.ts',
   'src/presentation/todo-notes.ts',
+  'src/web/components/source-reader.tsx',
   'src/web/views/ai-spec-page.ts',
   'src/web/views/codebase-page.ts',
   'src/web/views/coverage-matrix.ts',

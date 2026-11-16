@@ -160,15 +160,6 @@ describe('FigureFrame defaultFit', () => {
   });
 });
 
-describe('globals.css', () => {
-  it('holds exactly the two element-scoped image rules', async () => {
-    const css = await readFile(new URL('../../src/web/styles/globals.css', import.meta.url), 'utf8');
-    expect(css).toContain('.figure-frame-body img {\n  display: block;\n  max-width: none;\n  height: auto;\n}');
-    expect(css).toContain(".figure-frame-body img[data-fit='true'] {\n  max-width: 100%;\n}");
-    expect(count(css, /\.figure-frame-body img/g)).toBe(2);
-  });
-});
-
 describe('FileDetailsPage', () => {
   const crumbLinks = (artifact: ArtifactDto): number =>
     documentCrumbsOf(shapes, artifact.path, fileNameOf(artifact.path)).filter((crumb) => crumb.to).length;

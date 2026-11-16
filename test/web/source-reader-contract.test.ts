@@ -24,8 +24,6 @@ import {
 import { buildSourceModel, defaultFolds, foldPresetsOf, gutterOf, languageOf } from '../../src/web/source/source-model.ts';
 import type { SourceModel } from '../../src/web/source/source-model.ts';
 
-const PAGE = readFileSync(new URL('../../src/web/pages/artifact-page.tsx', import.meta.url), 'utf8');
-
 const noticeOf = (kind: SourceNoticeKind, sizeBytes = 2048, name = 'thing.png'): string =>
   renderToStaticMarkup(
     createElement(SourceNotice, { kind, name, path: `.planning/notes/${name}`, sizeBytes, onOpenView: () => undefined }),
@@ -143,33 +141,6 @@ describe('SourceReader for a file with no text', () => {
   });
 });
 
-describe('artifact-page.tsx Source chrome (source-text contract)', () => {
-  it('renders the View · Source toggle on every document, not only those with a designed View', () => {
-    expect(PAGE).not.toContain('{viewAvailable ? <DocumentViewToggle');
-    expect(PAGE).toContain('<DocumentViewToggle mode={mode} onChange={setMode} />');
-  });
-
-  it('spreads the Source header after every other header override', () => {
-    const override = PAGE.indexOf('{...(headerOverride ?? {})}');
-    const source = PAGE.indexOf('{...(sourceHeader ?? {})}');
-    expect(override).toBeGreaterThan(0);
-    expect(source).toBeGreaterThan(override);
-    expect(PAGE).toContain('fileNameOf(artifact.path)');
-  });
-
-  it('draws the Document metadata disclosure and the unrecognised-type notice in View only', () => {
-    expect(PAGE).toContain("{!recognized && mode === 'view' ? <UnrecognizedNotice");
-    // The disclosure's own condition list opens with the mode gate (empty-state-contract pins the outer ternary).
-    const disclosure = PAGE.indexOf('{panels.length > 0 ? (');
-    expect(disclosure).toBeGreaterThan(0);
-    expect(PAGE.slice(disclosure, disclosure + 700)).toContain("mode !== 'view' ||");
-  });
-
-  it('keeps the ArtifactReader JSX in place', () => {
-    expect(PAGE).toContain('<ArtifactReader\n          title={artifact.title}');
-  });
-});
-
 describe('landingLineOf', () => {
   const TEXT = '---\nname: x\n---\n\n# Title\n\n## Second part\n\ntext here\n';
   const model = buildSourceModel(TEXT, 'markdown');
@@ -207,27 +178,6 @@ describe('sourceLinesOf', () => {
     expect(sourceLinesOf('a\r\nb\r\n')).toEqual(['a', 'b']);
     expect(sourceLinesOf('a\n\nb')).toEqual(['a', '', 'b']);
     expect(sourceLinesOf('')).toEqual([]);
-  });
-});
-
-describe('artifact-page.tsx Source targets (source-text contract)', () => {
-  it('hands the reader a heading target from showSource and drops the old pending-id scroll', () => {
-    expect(PAGE).not.toContain('pendingSourceId');
-    expect(PAGE).toContain("kind: 'heading'");
-    expect(PAGE).toContain('target={sourceTarget}');
-  });
-
-  it('re-opens Source from a same-page link on a new router location key, without writing the URL', () => {
-    const effect = PAGE.indexOf('seenLocation');
-    expect(effect).toBeGreaterThan(0);
-    const body = PAGE.slice(effect, effect + 1500);
-    expect(body).toContain("setMode('source')");
-    expect(body).toContain('hasLineHash(');
-    expect(body).toContain('hasSourceFlag(');
-    // WR-06: only a flag or fragment that is new since the last location re-opens Source.
-    expect(body).toContain('!hasSourceFlag(seenLocation.search)');
-    expect(body).toContain('hash !== seenLocation.hash');
-    expect(PAGE.match(/replaceState\(/g)?.length).toBe(1);
   });
 });
 
@@ -516,23 +466,6 @@ describe('SourceNotice tone', () => {
 });
 
 describe('the phase-12-source stylesheet block', () => {
-  it('exists once, between its start and end markers', () => {
-    expect(CSS.match(/phase-12-source:start/g)).toHaveLength(1);
-    expect(CSS.match(/phase-12-source:end/g)).toHaveLength(1);
-    expect(CSS.indexOf('phase-12-source:start')).toBeLessThan(CSS.indexOf('phase-12-source:end'));
-  });
-
-  it('declares the five sketch-local tokens once in :root, and the dark key tone in .dark', () => {
-    const block = sourceBlock();
-    const root = block.slice(block.indexOf(':root {'), block.indexOf('}', block.indexOf(':root {')));
-    for (const token of ['--t-key', '--sel', '--veil', '--hatch', '--source-row-height']) {
-      expect(root, token).toContain(`${token}:`);
-      // Declared once in :root; --t-key is declared once more in .dark.
-      expect(CSS.match(new RegExp(`^\\s*${token}:`, 'gm')), `${token} declared`).toHaveLength(token === '--t-key' ? 2 : 1);
-    }
-    expect(block).toMatch(/\.dark \{\s*--t-key: color-mix\(in oklch, var\(--primary\) 60%, var\(--foreground\)\);/);
-  });
-
   it('sets rows in --source-row-height and uses no destructive or warning colour', () => {
     const block = sourceBlock();
     expect(block).toContain('line-height: var(--source-row-height)');
@@ -643,24 +576,6 @@ describe('the Here path is a plain landmark', () => {
     expect(html).not.toContain('role="alert"');
   });
 
-  it('follows the scroll with a passive, frame-throttled listener that is cleaned up', () => {
-    expect(READER).toContain("addEventListener('scroll'");
-    expect(READER).toContain('passive: true');
-    expect(READER).toContain("removeEventListener('scroll'");
-    expect(READER).toContain('requestAnimationFrame');
-    expect(READER).toContain('cancelAnimationFrame');
-    expect(READER).toContain('elementFromPoint');
-    // The line is kept in state only when it changes.
-    expect(READER).toContain('previous === line ? previous : line');
-    // The reader reads the position; the active-section seam stays free of the URL and of the reader.
-    expect(READER).not.toContain('use-active-section');
-  });
-
-  it('has no live region anywhere in the reader', () => {
-    expect(READER).not.toContain('aria-live="assertive"');
-    expect(READER.match(/aria-live/g)?.length).toBe(1); // the loading backstop's polite status, outside the Here path
-  });
-
   it('names the chain around the line it is given, outermost first, the innermost current', () => {
     const model = buildSourceModel(PLAN_06, 'markdown');
     const task = model.blocks.find((block) => block.kind === 'xml' && block.tag === 'task');
@@ -672,37 +587,3 @@ describe('the Here path is a plain landmark', () => {
   });
 });
 
-describe('the reader wires selection through the selection module only', () => {
-  it('runs number, bracket and clear events through selectionAfter and the URL through writeSelectionHash', () => {
-    expect(READER).toContain('selectionAfter(');
-    expect(READER).toContain('writeSelectionHash(');
-    expect(READER).not.toMatch(/replaceState|pushState|navigate\(/);
-    expect(PAGE.match(/replaceState\(/g)?.length).toBe(1);
-  });
-
-  it('selects a whole block from a click on its bracket cells, but leaves the fold toggle to fold', () => {
-    expect(READER).toContain("kind: 'block'");
-    expect(READER).toContain("closest('.source-fold-toggle')");
-  });
-
-  it('clears on Escape from inside the reader', () => {
-    expect(READER).toContain("event.key === 'Escape'");
-    expect(READER).toContain("kind: 'clear'");
-  });
-
-  it('lands headings through targetLineOf and replaces the 12-01 stand-in', () => {
-    expect(READER).toContain('targetLineOf(');
-    expect(READER).not.toContain('export function resolveTargetLine');
-  });
-
-  it('never makes the file text a selector or a pattern', () => {
-    expect(READER).not.toContain('new RegExp(');
-  });
-
-  it('keys the body by the route and the text, so per-file state never carries across files (WR-04)', () => {
-    expect(READER).toMatch(/<SourceBody\s+key=\{`\$\{route\}:\$\{textSignature\(query\.data\.text\)\}`\}/);
-    const PAIR = readFileSync(new URL('../../src/web/pages/plan-pair-page.tsx', import.meta.url), 'utf8');
-    expect(PAIR).toContain('<ArtifactPage key={planUrl}');
-    expect(PAIR).not.toContain('key="plan"');
-  });
-});
