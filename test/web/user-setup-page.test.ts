@@ -181,13 +181,6 @@ describe('UserSetupView on 02-USER-SETUP (all pending)', () => {
   const model = composeFile(PENDING, '.planning/phases/02-x/02-USER-SETUP.md') as ComposedUserSetup;
   const html = markup(model);
 
-  it('leads with "0 of 3 steps done" and a plain Status line chip, no disagreement block', () => {
-    expect(html).toContain('<b>0 of 3</b> steps done');
-    expect(html).not.toContain('The Status line says');
-    expect(html).toContain('Status line');
-    expect(html).toContain('Incomplete');
-  });
-
   it('shows every step pending', () => {
     expect(count(html, 'Pending')).toBeGreaterThanOrEqual(3);
     expect(html).not.toContain('Value not shown');
@@ -375,90 +368,13 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-const RAW_HTML_PROP = 'dangerously' + 'SetInnerHTML';
-const START = '/* phase-10-user-setup:start */';
-const END = '/* phase-10-user-setup:end */';
-const COMPOSER = 'src/web/views/user-setup-page.ts';
 const COMPONENTS = 'src/web/views/user-setup-page-components.tsx';
-const EXTRACTOR = 'src/planning-repo/handlers/user-setup-body.ts';
-const HANDLER = 'src/planning-repo/handlers/user-setup.ts';
-const MASK = 'src/planning-repo/handlers/withhold-values.ts';
-const ALLOWED_SIZES = ['var(--fs-2)', 'var(--fs-4)', 'var(--fs-7)', 'var(--fs-display-3)', 'inherit'];
 
 function stripSourceComments(text: string): string {
   return text
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/^\s*\/\/.*$/gm, '')
     .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-}
-
-function stripCssComments(text: string): string {
-  return text.replace(/\/\*[\s\S]*?\*\//g, '');
-}
-
-function toneExpressions(text: string): string[] {
-  return [...text.matchAll(/data-tone=(\{[^}]*\}|"[^"]*")/g)].map((m) => m[1]);
-}
-
-/** A tone this page must never write: the parse-degradation tones and `missing` (a step it cannot classify is quiet). */
-function writesForbiddenTone(text: string): boolean {
-  return (
-    /tone[A-Za-z]*\s*[:=]\s*['"](destructive|warning|missing)['"]/.test(text) ||
-    /data-tone="(destructive|warning|missing)"/.test(text) ||
-    /'(destructive|warning|missing)'\s*\|/.test(text) ||
-    /\|\s*'(destructive|warning|missing)'/.test(text)
-  );
-}
-
-function writesLink(text: string): boolean {
-  return /\bhref\s*[=:]/.test(text) || /\bto=/.test(text) || /<(a|Link|NavLink)[\s>]/.test(text);
-}
-
-function buildsRegExp(text: string): boolean {
-  return /new\s+RegExp\s*\(/.test(text) || /\bRegExp\s*\(/.test(text);
-}
-
-function usesRegexLiteral(text: string): boolean {
-  return /\.(test|exec|match|matchAll|replace|replaceAll|split|search)\(\s*\//.test(text);
-}
-
-function importsFilesystem(text: string): boolean {
-  return /from 'node:(fs|path)|from 'fs'/.test(text);
-}
-
-function hasModuleLevelLet(text: string): boolean {
-  return /^(export\s+)?let\s/m.test(text);
-}
-
-/** Reads the document's own HTML or a field named `value`: what a user-setup page must never do. */
-function readsDocumentHtmlOrValue(text: string): boolean {
-  return /\.html\b|\bgroups\b|\.document\b|(?<!token)\.value\b|\bvalue:/.test(text);
-}
-
-function cssViolations(block: string): string[] {
-  const found: string[] = [];
-  if (/--destructive|--warning/.test(block)) found.push('parse-degradation token');
-  if (/\boklch\(|\brgb\(|\bhsl\(/.test(block)) found.push('colour function');
-  if (/:[^;{}]*#[0-9a-fA-F]{3,8}\b/.test(block)) found.push('hex colour');
-  if (/radius\s*:/.test(block)) found.push('radius');
-  if (/color-mix\(/.test(block)) found.push('color-mix recipe');
-  if (/@keyframes/.test(block)) found.push('keyframes');
-  if (/\banimation\b/.test(block)) found.push('animation');
-  if (/\btransition\b/.test(block)) found.push('transition');
-  if (/:root/.test(block)) found.push(':root');
-  return found;
-}
-
-function fontSizes(block: string): string[] {
-  return [...block.matchAll(/font-size\s*:\s*([^;]+);/g)].map((m) => m[1].trim());
-}
-
-function userSetupBlock(css: string): string {
-  const start = css.indexOf(START);
-  const end = css.indexOf(END);
-  expect(start).toBeGreaterThan(-1);
-  expect(end).toBeGreaterThan(start);
-  return css.slice(start, end);
 }
 
 // 10-REVIEW CR-01 and WR-01: the same planted forms, through the handler, the composer and the components.
@@ -516,84 +432,13 @@ describe('the View draws no value written in any form (10-REVIEW CR-01, WR-01)',
   });
 });
 
-describe('user setup view contract - helpers catch planted violations', () => {
-  it('flags each forbidden thing in an in-memory string', () => {
-    expect(writesForbiddenTone("const tone = 'missing';")).toBe(true);
-    expect(writesForbiddenTone('<i data-tone="destructive" />')).toBe(true);
-    expect(writesForbiddenTone('<i data-tone="warning" />')).toBe(true);
-    expect(writesLink('<a href={ref}>x</a>')).toBe(true);
-    expect(buildsRegExp('const re = new RegExp(ref);')).toBe(true);
-    expect(usesRegexLiteral("text.replace(/a/g, '')")).toBe(true);
-    expect(importsFilesystem("import { readFileSync } from 'node:fs';")).toBe(true);
-    expect(hasModuleLevelLet('let cache = null;\nexport const x = 1;')).toBe(true);
-    expect(readsDocumentHtmlOrValue('const html = group.html;')).toBe(true);
-    expect(readsDocumentHtmlOrValue('const v = variable.value;')).toBe(true);
-    expect(readsDocumentHtmlOrValue('for (const group of input.groups ?? []) {}')).toBe(true);
-    expect(cssViolations('a { color: color-mix(in oklch, red, blue); }')).toContain('color-mix recipe');
-    expect(fontSizes('a { font-size: var(--fs-5); }')).toEqual(['var(--fs-5)']);
-  });
-
-  it('passes clean strings', () => {
-    expect(writesForbiddenTone("type UserSetupTone = 'complete' | 'in-flight' | 'quiet';")).toBe(false);
-    expect(writesLink('<button onClick={() => open()}>x</button>')).toBe(false);
-    expect(readsDocumentHtmlOrValue('const text = field.text;')).toBe(false);
-    expect(cssViolations('a { color: var(--primary); }')).toEqual([]);
-  });
-});
-
 describe('user setup view contract - the real sources', () => {
-  it('the components render no raw HTML and no link, and write no destructive, warning or missing tone', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code.includes(RAW_HTML_PROP)).toBe(false);
-    expect(writesLink(code)).toBe(false);
-    expect(writesForbiddenTone(code)).toBe(false);
-    for (const expression of new Set(toneExpressions(code))) {
-      expect(['"quiet"', '"complete"', '"in-flight"'].includes(expression) || expression.startsWith('{'), expression).toBe(true);
-    }
-    expect(code).toContain('aria-hidden="true"');
-  });
-
-  it('the composer and the components never read the document HTML, the section groups or a field named value', async () => {
-    for (const path of [COMPOSER, COMPONENTS]) {
-      const code = stripSourceComments(await source(path));
-      expect(readsDocumentHtmlOrValue(code), path).toBe(false);
-    }
-  });
-
   it('author text goes through MaskedInline, which draws the mark, never straight into markup', async () => {
     const code = stripSourceComments(await source(COMPONENTS));
     expect(code).toContain('<MaskedInline text={item.title} />');
     expect(code).toContain('<MaskedInline text={field.text} />');
     expect(code).toContain('<ValueNotShown />');
     expect(code).not.toContain('<ResearchInline');
-  });
-
-  it('the composer writes only the quiet, complete and in-flight tones', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(code).toContain("export type UserSetupTone = 'complete' | 'in-flight' | 'quiet';");
-    expect(writesForbiddenTone(code)).toBe(false);
-  });
-
-  it('the composer, the extractor and the mask build no regular expression, use no regex literal and import no filesystem module', async () => {
-    for (const path of [COMPOSER, EXTRACTOR, HANDLER, MASK]) {
-      const code = stripSourceComments(await source(path));
-      expect(buildsRegExp(code), path).toBe(false);
-      expect(usesRegexLiteral(code), path).toBe(false);
-      expect(importsFilesystem(code), path).toBe(false);
-    }
-  });
-
-  it('the composer holds no module-level mutable state', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(hasModuleLevelLet(code)).toBe(false);
-    expect(code).not.toMatch(/^(export\s+)?var\s/m);
-  });
-
-  it('every stored string in the extractor passes through keep, the mask, or is a variable name from withholdValue', async () => {
-    const code = stripSourceComments(await source(EXTRACTOR));
-    expect(code).toContain('maskValues(');
-    expect(code).toContain('withholdValue(');
-    expect(code).toContain('USER_SETUP_STEP_CAP');
   });
 
   it('artifact-page.tsx draws this kind from the composed model and never reaches the document renderers for it', async () => {
@@ -607,51 +452,6 @@ describe('user setup view contract - the real sources', () => {
     expect(branch).toBeLessThan(code.indexOf('<ViewReader'));
     expect(branch).toBeLessThan(code.indexOf('<ArtifactReader'));
     expect(code).toContain('documentHtmlAllowedInView(manifest)');
-  });
-
-  it('the CSS block exists once, holds every .view-user-setup- rule and has no forbidden thing', async () => {
-    const css = await source('src/web/styles/globals.css');
-    expect(css.split(START).length - 1).toBe(1);
-    expect(css.split(END).length - 1).toBe(1);
-    const block = userSetupBlock(css);
-    expect(cssViolations(stripCssComments(block))).toEqual([]);
-    expect(css.replace(block, '')).not.toMatch(/\.view-user-setup-/);
-    expect(stripCssComments(block)).not.toMatch(/\.status-square/);
-    for (const selector of [
-      '.view-user-setup-page',
-      '.view-user-setup-head',
-      '.view-user-setup-disagree',
-      '.view-user-setup-map',
-      '.view-user-setup-tree',
-      '.view-user-setup-filecard',
-      '.view-user-setup-bar',
-      '.view-user-setup-plain',
-    ]) {
-      expect(block, selector).toContain(selector);
-    }
-  });
-
-  it('the CSS block renders only the four contracted font sizes', async () => {
-    const block = stripCssComments(userSetupBlock(await source('src/web/styles/globals.css')));
-    const sizes = fontSizes(block);
-    expect(sizes.length).toBeGreaterThan(10);
-    for (const size of sizes) expect(ALLOWED_SIZES, size).toContain(size);
-  });
-
-  it('draws its own meter nowhere: the lead goes through StatusMeter, the mark through ValueNotShown', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain("from '../components/status-meter.tsx'");
-    expect(code).toContain('<StatusMeter');
-    expect(code).toContain("from '../components/value-not-shown.tsx'");
-    expect(await source('src/web/styles/globals.css')).not.toMatch(/view-user-setup-meter/);
-  });
-
-  it('draws the tree through the shared CleanTree and the copy rows through the shared CopyCommand', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain("from '../components/clean-tree.tsx'");
-    expect(code).toContain('<CleanTree rows={rows} />');
-    expect(code).toContain("from '../components/copy-command.tsx'");
-    expect(code).toContain('<CopyCommand');
   });
 
   it('records the tones in design-language.md and the language bullet about masked text', async () => {

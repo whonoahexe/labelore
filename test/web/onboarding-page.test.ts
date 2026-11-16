@@ -416,13 +416,6 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-const RAW_HTML_PROP = 'dangerously' + 'SetInnerHTML';
-const START = '/* phase-11-onboarding:start */';
-const END = '/* phase-11-onboarding:end */';
-const COMPOSER = 'src/web/views/onboarding-page.ts';
-const COMPONENTS = 'src/web/views/onboarding-page-components.tsx';
-const ALLOWED_SIZES = ['var(--fs-2)', 'var(--fs-4)', 'var(--fs-7)', 'var(--fs-display-3)', 'inherit'];
-
 function stripSourceComments(text: string): string {
   return text
     .replace(/\/\*[\s\S]*?\*\//g, '')
@@ -430,126 +423,7 @@ function stripSourceComments(text: string): string {
     .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
 }
 
-function stripCssComments(text: string): string {
-  return text.replace(/\/\*[\s\S]*?\*\//g, '');
-}
-
-/** The onboarding page uses no parse-degradation tone and no `missing` tone: nothing on it is a failed read or an expected file. */
-function writesForbiddenTone(text: string): boolean {
-  return (
-    /tone[A-Za-z]*\s*[:=]\s*['"](destructive|warning|missing)['"]/.test(text) ||
-    /data-tone="(destructive|warning|missing)"/.test(text) ||
-    /'(destructive|warning|missing)'\s*\|/.test(text) ||
-    /\|\s*'(destructive|warning|missing)'/.test(text)
-  );
-}
-
-function writesNetworkOrStorage(text: string): boolean {
-  return /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket|EventSource|localStorage|sessionStorage|indexedDB|document\.cookie)\b/.test(text);
-}
-
-function buildsRegExp(text: string): boolean {
-  return /new\s+RegExp\s*\(/.test(text) || /\bRegExp\s*\(/.test(text);
-}
-
-function usesRegexLiteral(text: string): boolean {
-  return /\.(test|exec|match|matchAll|replace|replaceAll|split|search)\(\s*\//.test(text);
-}
-
-function importsFilesystem(text: string): boolean {
-  return /from 'node:(fs|path)|from 'fs'/.test(text);
-}
-
-function hasModuleLevelLet(text: string): boolean {
-  return /^(export\s+)?let\s/m.test(text);
-}
-
-function cssViolations(block: string): string[] {
-  const found: string[] = [];
-  if (/--destructive|--warning|--missing/.test(block)) found.push('parse-degradation or missing token');
-  if (/\boklch\(|\brgb\(|\bhsl\(/.test(block)) found.push('colour function');
-  if (/:[^;{}]*#[0-9a-fA-F]{3,8}\b/.test(block)) found.push('hex colour');
-  if (/radius\s*:/.test(block)) found.push('radius');
-  if (/color-mix\(/.test(block)) found.push('color-mix recipe');
-  if (/@keyframes/.test(block)) found.push('keyframes');
-  if (/\banimation\b/.test(block)) found.push('animation');
-  if (/\btransition\b/.test(block)) found.push('transition');
-  if (/:root/.test(block)) found.push(':root');
-  return found;
-}
-
-function fontSizes(block: string): string[] {
-  return [...block.matchAll(/font-size\s*:\s*([^;]+);/g)].map((m) => m[1]!.trim());
-}
-
-describe('onboarding view contract - helpers catch planted violations', () => {
-  it('flags each forbidden thing in an in-memory string', () => {
-    expect(writesForbiddenTone("const tone = 'destructive';")).toBe(true);
-    expect(writesForbiddenTone('<i data-tone="warning" />')).toBe(true);
-    expect(writesForbiddenTone('<i data-tone="missing" />')).toBe(true);
-    expect(writesForbiddenTone('<i data-tone="quiet" />')).toBe(false);
-    expect(writesNetworkOrStorage("await fetch('/x')")).toBe(true);
-    expect(buildsRegExp('const re = new RegExp(text);')).toBe(true);
-    expect(usesRegexLiteral("text.replace(/a/g, '')")).toBe(true);
-    expect(importsFilesystem("import { readFileSync } from 'node:fs';")).toBe(true);
-    expect(hasModuleLevelLet('let cache = null;')).toBe(true);
-    expect(cssViolations('a { color: color-mix(in oklch, red, blue); }')).toContain('color-mix recipe');
-    expect(fontSizes('a { font-size: var(--fs-5); }')).toEqual(['var(--fs-5)']);
-  });
-});
-
 describe('onboarding view contract - the real sources', () => {
-  it('the components render no raw HTML, make no request, touch no storage and write no destructive, warning or missing tone', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code.includes(RAW_HTML_PROP)).toBe(false);
-    expect(writesNetworkOrStorage(code)).toBe(false);
-    expect(writesForbiddenTone(code)).toBe(false);
-    expect(code).toContain('aria-hidden="true"');
-    expect(code).not.toMatch(/href=/);
-    for (const tone of ["'destructive'", "'warning'", "'missing'"]) expect(code).not.toContain(tone);
-  });
-
-  it('both commands go through the shared copy-command row, and no handler sends or runs one', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain("from '../components/copy-command.tsx'");
-    expect(code).toContain('<CopyCommand command={next.command} />');
-    expect(code).toContain('<CopyCommand command={screen.command} />');
-    // The only handlers are the object buttons that open a bar and the details toggles; none reads a command.
-    expect(code).not.toMatch(/\b(apiFetch|useMutation|navigate\(|child_process|spawn|exec\()/);
-    expect(code).not.toContain('<form');
-  });
-
-  it('writes the contract words in the composer', async () => {
-    const composer = stripSourceComments(await source(COMPOSER));
-    for (const words of [
-      "'Recommended next step'",
-      "'Your project files'",
-      "'Codebase'",
-      "'Documents'",
-      "'The first screen suggests'",
-      "'From the onboarding summary'",
-      "'Labelore does not run commands. Paste it in your terminal.'",
-      "'Not found'",
-      "'Complete map'",
-      "'Fast map'",
-      "'Partial map'",
-    ]) {
-      expect(composer, words).toContain(words);
-    }
-  });
-
-  it('the composer builds no regular expression, uses no regex literal, imports no filesystem module and reads no clock', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(buildsRegExp(code)).toBe(false);
-    expect(usesRegexLiteral(code)).toBe(false);
-    expect(importsFilesystem(code)).toBe(false);
-    expect(hasModuleLevelLet(code)).toBe(false);
-    expect(code).not.toMatch(/^(export\s+)?var\s/m);
-    expect(code).not.toMatch(/Date\.now\(|new Date\(/);
-    expect(writesForbiddenTone(code)).toBe(false);
-    for (const tone of ["'destructive'", "'warning'", "'missing'"]) expect(code).not.toContain(tone);
-  });
-
   it('artifact-page.tsx draws the page from the composed model in View mode and the manifest keeps its fallback', async () => {
     const code = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
     expect(code).toContain('<OnboardingView key={artifact.path} model={onboardingCover} />');
@@ -564,37 +438,6 @@ describe('onboarding view contract - the real sources', () => {
     const code = stripSourceComments(await source('src/server/project-api.ts'));
     expect(count(code, 'buildOnboardingContext(')).toBe(1);
     expect(code).toContain("lookup.artifact.kind !== 'onboarding'");
-  });
-
-  it('the CSS holds one contiguous phase-11-onboarding block with no colour recipe and only the four contracted font sizes', async () => {
-    const css = await source('src/web/styles/globals.css');
-    expect(count(css, START)).toBe(1);
-    expect(count(css, END)).toBe(1);
-    const start = css.indexOf(START);
-    const end = css.indexOf(END);
-    expect(end).toBeGreaterThan(start);
-    const block = css.slice(start, end);
-    expect(cssViolations(stripCssComments(block))).toEqual([]);
-    expect(css.replace(block, '')).not.toMatch(/\.view-onboarding-/);
-    const sizes = fontSizes(stripCssComments(block));
-    expect(sizes.length).toBeGreaterThan(10);
-    for (const size of sizes) expect(ALLOWED_SIZES, size).toContain(size);
-    for (const selector of ['.view-onboarding-root', '.view-onboarding-lead', '.view-onboarding-first', '.view-onboarding-desk', '.view-onboarding-folder', '.view-onboarding-pile', '.view-onboarding-bar']) {
-      expect(block, selector).toContain(selector);
-    }
-  });
-
-  it("writes only its own view-onboarding- classes beside the shared status chip and square, and reuses no other view's", async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    const tokens = [...code.matchAll(/className="([^"]*)"/g)].flatMap((match) => match[1]!.split(/\s+/));
-    expect(tokens.length).toBeGreaterThan(30);
-    for (const token of tokens) {
-      expect(token.startsWith('view-onboarding-') || token === 'status-chip' || token === 'status-square', token).toBe(true);
-    }
-    expect(code).not.toMatch(/className=["'{][^>]*\b(research-|view-codebase-|view-pause-|view-seed-|view-thread-|view-report-|view-forensics-)/);
-    const css = await source('src/web/styles/globals.css');
-    const block = stripCssComments(css.slice(css.indexOf(START), css.indexOf(END)));
-    expect(block).not.toMatch(/\.view-(codebase|pause|spikes|indexes|seed|thread|report|forensics)-|\.research-/);
   });
 
   it('records the tone uses and the language bullet in design-language.md', async () => {

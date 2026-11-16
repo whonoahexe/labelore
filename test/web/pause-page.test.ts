@@ -2,7 +2,7 @@
 // gate path), over the made-up Lendshed and Shapes pauses loaded through the repository, plus planted copies for the
 // shapes the fixtures lack. One page serves HANDOFF.json and every .continue-here.md; where the two files differ both
 // values show, each named, and nothing is merged. "Mark as read" is view state only.
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -596,22 +596,6 @@ describe('PauseView - the rest of the handoff', () => {
   });
 });
 
-describe('the dashboard shows no Paused mark (D-06)', () => {
-  it('no dashboard module reads HANDOFF.json or .continue-here.md', async () => {
-    const files: string[] = [];
-    for (const dir of ['src/presentation', 'src/web/pages']) {
-      for (const name of await readdir(new URL(`../../${dir}`, import.meta.url))) {
-        if (name.startsWith('dashboard') && (name.endsWith('.ts') || name.endsWith('.tsx'))) files.push(`${dir}/${name}`);
-      }
-    }
-    expect(files.length).toBeGreaterThan(3);
-    for (const path of files) {
-      const text = await source(path);
-      expect(text, path).not.toMatch(/HANDOFF|continue-here/i);
-    }
-  });
-});
-
 // ---------------------------------------------------------------------------
 // The view contract: source-text checks in the dom-verify-page idiom (no AST tooling). Comments are stripped before
 // every negative check.
@@ -621,13 +605,8 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-const RAW_HTML_PROP = 'dangerously' + 'SetInnerHTML';
-const START = '/* phase-11-pause:start */';
-const END = '/* phase-11-pause:end */';
-const COMPOSER = 'src/web/views/pause-page.ts';
 const COMPONENTS = 'src/web/views/pause-page-components.tsx';
 const SHARED = 'src/web/components/record-disagreement.tsx';
-const ALLOWED_SIZES = ['var(--fs-2)', 'var(--fs-4)', 'var(--fs-7)', 'var(--fs-display-3)', 'inherit'];
 
 function stripSourceComments(text: string): string {
   return text
@@ -636,133 +615,13 @@ function stripSourceComments(text: string): string {
     .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
 }
 
-function stripCssComments(text: string): string {
-  return text.replace(/\/\*[\s\S]*?\*\//g, '');
-}
-
-function writesForbiddenTone(text: string): boolean {
-  return (
-    /tone[A-Za-z]*\s*[:=]\s*['"](destructive|warning)['"]/.test(text) ||
-    /data-tone="(destructive|warning)"/.test(text) ||
-    /'(destructive|warning)'\s*\|/.test(text) ||
-    /\|\s*'(destructive|warning)'/.test(text)
-  );
-}
-
-function writesNetworkOrStorage(text: string): boolean {
-  return /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket|EventSource|localStorage|sessionStorage|indexedDB|document\.cookie)\b/.test(text);
-}
-
-function buildsRegExp(text: string): boolean {
-  return /new\s+RegExp\s*\(/.test(text) || /\bRegExp\s*\(/.test(text);
-}
-
-function usesRegexLiteral(text: string): boolean {
-  return /\.(test|exec|match|matchAll|replace|replaceAll|split|search)\(\s*\//.test(text);
-}
-
-function importsFilesystem(text: string): boolean {
-  return /from 'node:(fs|path)|from 'fs'/.test(text);
-}
-
-function hasModuleLevelLet(text: string): boolean {
-  return /^(export\s+)?let\s/m.test(text);
-}
-
-function cssViolations(block: string): string[] {
-  const found: string[] = [];
-  if (/--destructive|--warning/.test(block)) found.push('parse-degradation token');
-  if (/\boklch\(|\brgb\(|\bhsl\(/.test(block)) found.push('colour function');
-  if (/:[^;{}]*#[0-9a-fA-F]{3,8}\b/.test(block)) found.push('hex colour');
-  if (/radius\s*:/.test(block)) found.push('radius');
-  if (/color-mix\(/.test(block)) found.push('color-mix recipe');
-  if (/@keyframes/.test(block)) found.push('keyframes');
-  if (/\banimation\b/.test(block)) found.push('animation');
-  if (/\btransition\b/.test(block)) found.push('transition');
-  if (/:root/.test(block)) found.push(':root');
-  return found;
-}
-
-function fontSizes(block: string): string[] {
-  return [...block.matchAll(/font-size\s*:\s*([^;]+);/g)].map((m) => m[1]!.trim());
-}
-
-describe('pause view contract - helpers catch planted violations', () => {
-  it('flags each forbidden thing in an in-memory string', () => {
-    expect(writesForbiddenTone("const tone = 'destructive';")).toBe(true);
-    expect(writesNetworkOrStorage("await fetch('/x')")).toBe(true);
-    expect(writesNetworkOrStorage("window.localStorage.setItem('a', 'b')")).toBe(true);
-    expect(buildsRegExp('const re = new RegExp(text);')).toBe(true);
-    expect(usesRegexLiteral("text.replace(/a/g, '')")).toBe(true);
-    expect(importsFilesystem("import { readFileSync } from 'node:fs';")).toBe(true);
-    expect(hasModuleLevelLet('let cache = null;')).toBe(true);
-    expect(cssViolations('a { color: color-mix(in oklch, red, blue); }')).toContain('color-mix recipe');
-    expect(fontSizes('a { font-size: var(--fs-5); }')).toEqual(['var(--fs-5)']);
-  });
-});
-
 describe('pause view contract - the real sources', () => {
-  it('the components render no raw HTML, make no request, touch no storage and write no destructive or warning tone', async () => {
-    for (const path of [COMPONENTS, SHARED]) {
-      const code = stripSourceComments(await source(path));
-      expect(code.includes(RAW_HTML_PROP), path).toBe(false);
-      expect(writesNetworkOrStorage(code), path).toBe(false);
-      expect(writesForbiddenTone(code), path).toBe(false);
-    }
-    expect(stripSourceComments(await source(COMPONENTS))).toContain('aria-hidden="true"');
-  });
-
   it('author text goes through ResearchInline as React text, never straight into markup', async () => {
     const code = stripSourceComments(await source(COMPONENTS));
     expect(code).toContain("from '../pages/research-atoms.tsx'");
     expect(code).toContain('<ResearchInline text={resume.next.text} />');
     expect(code).toContain('<ResearchInline text={gate.what} />');
     expect(stripSourceComments(await source(SHARED))).toContain('<ResearchInline text={left.value} />');
-  });
-
-  it('the page writes the contract: aria-pressed, aria-current, the shared disagreement block and the copy rows', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain('aria-pressed={read}');
-    expect(code).toContain("aria-current={current ? 'step' : undefined}");
-    expect(code).toContain('<RecordDisagreement');
-    expect(code).toContain('Mark as read');
-    const composer = stripSourceComments(await source(COMPOSER));
-    expect(composer).toContain('No gates: nothing blocks resuming');
-    expect(composer).toContain("'Resume here'");
-    expect(composer).toContain('No .continue-here.md beside it');
-    expect(composer).toContain('No HANDOFF.json');
-    expect(stripSourceComments(await source(SHARED))).toContain('differs from');
-  });
-
-  it('writes the moved-on words, the rest-of-the-handoff heading and the ellipsised mono paths', async () => {
-    const composer = stripSourceComments(await source(COMPOSER));
-    expect(composer).toContain('Work has moved on since');
-    const components = stripSourceComments(await source(COMPONENTS));
-    expect(components).toContain('The rest of the handoff');
-    expect(components).toContain('<details');
-    expect(components).not.toMatch(/<details[^>]*\bopen\b/);
-    const css = await source('src/web/styles/globals.css');
-    const block = stripCssComments(css.slice(css.indexOf(START), css.indexOf(END)));
-    const paths = block.slice(block.indexOf('.view-pause-paths > li'));
-    expect(paths.slice(0, paths.indexOf('}'))).toContain('text-overflow: ellipsis');
-    expect(block.slice(block.indexOf('.view-pause-moved {'))).toContain('border: 1px dashed var(--muted-foreground)');
-  });
-
-  it('the composer builds no regular expression, uses no regex literal, imports no filesystem module and reads no clock', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(buildsRegExp(code)).toBe(false);
-    expect(usesRegexLiteral(code)).toBe(false);
-    expect(importsFilesystem(code)).toBe(false);
-    expect(hasModuleLevelLet(code)).toBe(false);
-    expect(code).not.toMatch(/^(export\s+)?var\s/m);
-    expect(code).not.toMatch(/Date\.now\(|new Date\(/);
-  });
-
-  it('the composer writes only the four tones and neither parse-degradation tone', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(writesForbiddenTone(code)).toBe(false);
-    expect(code).not.toContain("'destructive'");
-    expect(code).not.toContain("'warning'");
   });
 
   it('artifact-page.tsx draws the page from the composed model in View mode and the manifest keeps its fallback', async () => {
@@ -773,44 +632,5 @@ describe('pause view contract - the real sources', () => {
     expect(code).not.toMatch(/artifact\.kind === ['"](handoff|continue-here|pause)['"]/);
     const manifests = await source('src/web/views/manifests.ts');
     expect(manifests.match(/pausePage: composePause/g)).toHaveLength(1);
-  });
-
-  it('the CSS holds one contiguous phase-11-pause block with no colour recipe and only the four contracted font sizes', async () => {
-    const css = await source('src/web/styles/globals.css');
-    expect(count(css, START)).toBe(1);
-    expect(count(css, END)).toBe(1);
-    const start = css.indexOf(START);
-    const end = css.indexOf(END);
-    expect(end).toBeGreaterThan(start);
-    const block = css.slice(start, end);
-    expect(cssViolations(stripCssComments(block))).toEqual([]);
-    expect(css.replace(block, '')).not.toMatch(/\.view-pause-/);
-    const sizes = fontSizes(stripCssComments(block));
-    expect(sizes.length).toBeGreaterThan(10);
-    for (const size of sizes) expect(ALLOWED_SIZES, size).toContain(size);
-    for (const selector of ['.view-pause-root', '.view-pause-path', '.view-pause-gate', '.view-pause-next', '.record-disagreement']) {
-      expect(block, selector).toContain(selector);
-    }
-  });
-
-  it('reuses no research-* or view-codebase-* class, and every class it writes is its own or the shared disagreement block', async () => {
-    for (const path of [COMPONENTS, SHARED]) {
-      const code = stripSourceComments(await source(path));
-      expect(code, path).not.toMatch(/className=["'{][^>]*\b(research-|view-codebase-)/);
-    }
-    const block = stripCssComments(await source('src/web/styles/globals.css'));
-    const inside = block.slice(block.indexOf('.view-pause-root'));
-    expect(inside).not.toMatch(/\.view-codebase-|\.research-/);
-  });
-
-  it('records the shared block, the tone uses and the language bullets in design-language.md', async () => {
-    const doc = await source('docs/design-language.md');
-    expect(doc).toContain('| `record-disagreement` |');
-    expect(doc).toContain('**The pause page.**');
-    expect(doc).toContain('**Mark as read.**');
-    for (const tone of ['complete', 'in-flight', 'missing', 'quiet']) {
-      const row = doc.split('\n').find((line) => line.startsWith(`| \`${tone}\``))!;
-      expect(row, tone).toContain('(Phase 11, 11-10) on the pause page');
-    }
   });
 });

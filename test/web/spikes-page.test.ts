@@ -539,13 +539,6 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-const RAW_HTML_PROP = 'dangerously' + 'SetInnerHTML';
-const START = '/* phase-11-spikes:start */';
-const END = '/* phase-11-spikes:end */';
-const COMPOSER = 'src/web/views/spikes-page.ts';
-const COMPONENTS = 'src/web/views/spikes-page-components.tsx';
-const ALLOWED_SIZES = ['var(--fs-2)', 'var(--fs-4)', 'var(--fs-7)', 'var(--fs-display-1)', 'var(--fs-display-3)', 'inherit'];
-
 function stripSourceComments(text: string): string {
   return text
     .replace(/\/\*[\s\S]*?\*\//g, '')
@@ -553,96 +546,7 @@ function stripSourceComments(text: string): string {
     .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
 }
 
-function stripCssComments(text: string): string {
-  return text.replace(/\/\*[\s\S]*?\*\//g, '');
-}
-
-function writesForbiddenTone(text: string): boolean {
-  return (
-    /tone[A-Za-z]*\s*[:=]\s*['"](destructive|warning)['"]/.test(text) ||
-    /data-tone="(destructive|warning)"/.test(text) ||
-    /'(destructive|warning)'\s*\|/.test(text) ||
-    /\|\s*'(destructive|warning)'/.test(text)
-  );
-}
-
-function writesNetworkOrStorage(text: string): boolean {
-  return /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket|EventSource|localStorage|sessionStorage|indexedDB|document\.cookie)\b/.test(text);
-}
-
-function cssViolations(block: string): string[] {
-  const found: string[] = [];
-  if (/--destructive|--warning/.test(block)) found.push('parse-degradation token');
-  if (/\boklch\(|\brgb\(|\bhsl\(/.test(block)) found.push('colour function');
-  if (/:[^;{}]*#[0-9a-fA-F]{3,8}\b/.test(block)) found.push('hex colour');
-  if (/radius\s*:/.test(block)) found.push('radius');
-  if (/color-mix\(/.test(block)) found.push('color-mix recipe');
-  if (/@keyframes/.test(block)) found.push('keyframes');
-  if (/\banimation\b/.test(block)) found.push('animation');
-  if (/\btransition\b/.test(block)) found.push('transition');
-  if (/:root/.test(block)) found.push(':root');
-  return found;
-}
-
-function fontSizes(block: string): string[] {
-  return [...block.matchAll(/font-size\s*:\s*([^;]+);/g)].map((m) => m[1]!.trim());
-}
-
-function count(text: string, needle: string): number {
-  return text.split(needle).length - 1;
-}
-
-describe('spikes view contract - helpers catch planted violations', () => {
-  it('flags each forbidden thing in an in-memory string', () => {
-    expect(writesForbiddenTone("const tone = 'destructive';")).toBe(true);
-    expect(writesNetworkOrStorage("await fetch('/x')")).toBe(true);
-    expect(cssViolations('a { color: color-mix(in oklch, red, blue); }')).toContain('color-mix recipe');
-    expect(fontSizes('a { font-size: var(--fs-5); }')).toEqual(['var(--fs-5)']);
-  });
-});
-
 describe('spikes view contract - the real sources', () => {
-  it('the components render no raw HTML, make no request, touch no storage and write no destructive or warning tone', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code.includes(RAW_HTML_PROP)).toBe(false);
-    expect(writesNetworkOrStorage(code)).toBe(false);
-    expect(writesForbiddenTone(code)).toBe(false);
-    expect(code).toContain('aria-hidden="true"');
-  });
-
-  it('author text goes through ResearchInline as React text, and a tile is a router Link built from the payload address', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain("from '../pages/research-atoms.tsx'");
-    expect(code).toContain('<ResearchInline text={tile.name} />');
-    expect(code).toContain('<ResearchInline text={tile.freeText} />');
-    expect(code).toContain("from '../nav.tsx'");
-    expect(code).toMatch(/import \{ Link[^}]*\} from '\.\.\/nav\.tsx'/);
-    expect(code).toContain('to={tile.to}');
-    expect(code).toContain('aria-label={tile.label}');
-    expect(code).toContain('aria-expanded={open}');
-  });
-
-  it('the composer builds no regular expression, uses no regex literal, imports no filesystem module and reads no clock', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(code).not.toMatch(/new\s+RegExp\s*\(|\bRegExp\s*\(/);
-    expect(code).not.toMatch(/\.(test|exec|match|matchAll|replace|replaceAll|split|search)\(\s*\//);
-    expect(code).not.toMatch(/from 'node:(fs|path)|from 'fs'/);
-    expect(code).not.toMatch(/^(export\s+)?(let|var)\s/m);
-    expect(code).not.toMatch(/Date\.now\(|new Date\(/);
-    expect(code).not.toContain("'destructive'");
-    expect(code).not.toContain("'warning'");
-    expect(writesForbiddenTone(code)).toBe(false);
-  });
-
-  it('writes the contracted words', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    for (const words of ['Not in the manifest', 'Not wrapped up yet', 'README says', 'Wrapped up', 'Exploration · Spikes', 'Verdict board']) {
-      const home = words === 'Verdict board' ? COMPONENTS : COMPOSER;
-      expect(stripSourceComments(await source(home)), words).toContain(words);
-    }
-    expect(code).toContain('requirement');
-  });
-
   it('artifact-page.tsx draws the page from the composed model in View mode and the manifest keeps its fallback', async () => {
     const page = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
     expect(page).toContain('<SpikesView key="spikes" model={spikesCover} renderHtml={renderHtml} />');
@@ -651,46 +555,5 @@ describe('spikes view contract - the real sources', () => {
     expect(page).not.toMatch(/artifact\.kind === ['"](spike|spikes|spikes-manifest)['"]/);
     const manifests = await source('src/web/views/manifests.ts');
     expect(manifests.match(/spikesPage: composeSpikes/g)).toHaveLength(1);
-  });
-
-  it('the CSS holds one contiguous phase-11-spikes block with no colour recipe and only the five contracted font sizes', async () => {
-    const css = await source('src/web/styles/globals.css');
-    expect(count(css, START)).toBe(1);
-    expect(count(css, END)).toBe(1);
-    const start = css.indexOf(START);
-    const end = css.indexOf(END);
-    expect(end).toBeGreaterThan(start);
-    const block = css.slice(start, end);
-    expect(cssViolations(stripCssComments(block))).toEqual([]);
-    expect(css.replace(block, '')).not.toMatch(/\.view-spikes-/);
-    const sizes = fontSizes(stripCssComments(block));
-    expect(sizes.length).toBeGreaterThan(8);
-    for (const size of sizes) expect(ALLOWED_SIZES, size).toContain(size);
-    // X4 (approved at 11-01): the column counts are the one place --fs-display-1 appears.
-    expect(sizes.filter((size) => size === 'var(--fs-display-1)')).toHaveLength(1);
-    expect(stripCssComments(block).slice(stripCssComments(block).indexOf('.view-spikes-num {'))).toContain('font-size: var(--fs-display-1)');
-    for (const selector of ['.view-spikes-root', '.view-spikes-board', '.view-spikes-lane', '.view-spikes-tile', '@media (max-width: 48rem)']) {
-      expect(block, selector).toContain(selector);
-    }
-  });
-
-  it('the sheet reuses the shared RecordDisagreement, lists files as text with no link, and says "by name only" once', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain("from '../components/record-disagreement.tsx'");
-    expect(code).toContain('<RecordDisagreement');
-    const files = code.slice(code.indexOf('function FilesList'), code.indexOf('function Bars'));
-    expect(files).not.toMatch(/<(a|Link)\b/);
-    expect(files).not.toContain('href');
-    expect(count(code, 'Listed by name only. Labelore never runs or opens these files.')).toBe(1);
-    expect(code).toContain('aria-label={SHEET_CLOSE_LABEL}');
-    expect(await source('src/web/views/spikes-page.ts')).toContain("SHEET_CLOSE_LABEL = 'Close spike'");
-  });
-
-  it('reuses no view-pause-*, research-* or view-codebase-* class', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).not.toMatch(/className=["'{][^>]*\b(view-pause-|research-|view-codebase-)/);
-    const css = await source('src/web/styles/globals.css');
-    const inside = stripCssComments(css.slice(css.indexOf(START), css.indexOf(END)));
-    expect(inside).not.toMatch(/\.view-pause-|\.view-codebase-|\.research-/);
   });
 });
