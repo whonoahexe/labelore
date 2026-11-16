@@ -584,6 +584,8 @@ function expectedPaths(model: DrawerViewModel, presentation: ProjectPresentation
     .map((artifact) => artifact.path);
 }
 
+const LENDSHED = fileURLToPath(new URL('../fixtures/lendshed', import.meta.url)).replace(/[\\/]$/, '');
+
 describe('buildDrawerViewModel — coverage', () => {
   it('places every placeable markdown file of fixtures/dense exactly once', async () => {
     const presentation = await fixturePresentation('dense');
@@ -593,33 +595,13 @@ describe('buildDrawerViewModel — coverage', () => {
     expect([...placed].sort()).toEqual([...expectedPaths(model, presentation)].sort());
   });
 
-  it("places every placeable markdown file of this repository's own .planning exactly once", async () => {
-    const presentation = await diskPresentation(resolve('.'));
+  it('places every placeable markdown file of Lendshed exactly once', async () => {
+    const presentation = await diskPresentation(LENDSHED);
     const model = buildDrawerViewModel(presentation);
     const placed = placedPaths(model, presentation);
-    expect(placed.length).toBeGreaterThan(200);
+    expect(placed.length).toBeGreaterThan(100);
     expect(new Set(placed).size).toBe(placed.length);
     expect([...placed].sort()).toEqual([...expectedPaths(model, presentation)].sort());
-  });
-
-  it("opens this repository's own corpus between milestones on v2.1, the newest shipped one", async () => {
-    const model = buildDrawerViewModel(await diskPresentation(resolve('.')));
-    // v2.1 closed 2026-11-13 and no milestone is in progress, so the drawer opens on the newest shipped place.
-    expect(model.current.version).toBeNull();
-    expect(model.current.phases).toHaveLength(0);
-    expect(model.defaultPlaceKey).toBe('m~v2.1');
-    // The shipped milestones, newest first, and what the drawer lists for each. The v2.0 folder holds
-    // quick tasks and no phases; every milestone is archived and no longer changes.
-    expect(model.shipped.map((milestone) => milestone.version)).toEqual(['v2.1', 'v2.0', 'v1.1', 'v1.0']);
-    expect(model.shipped.map((milestone) => milestone.phases.length)).toEqual([8, 0, 1, 4]);
-    for (const milestone of model.shipped) expect(milestone.shippedLabel).not.toBeNull();
-    const shippedQuick = model.quick.groups.filter((group) => !group.current);
-    expect(shippedQuick.map((group) => [group.version, group.tasks.length])).toEqual([
-      ['v2.1', 1],
-      ['v2.0', 40],
-      ['v1.1', 13],
-      ['v1.0', 5],
-    ]);
   });
 });
 

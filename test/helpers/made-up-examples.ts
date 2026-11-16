@@ -45,7 +45,7 @@ export const MADE_UP_EXAMPLE_KINDS: ReadonlySet<string> = new Set([
 ]);
 
 export interface ExemptRoot {
-  /** Repo-relative root, empty string for the repository itself. */
+  /** Repo-relative root. */
   path: string;
   reason: string;
 }
@@ -56,7 +56,6 @@ export const EXEMPT_ROOTS: readonly ExemptRoot[] = [
     path: 'fixtures/dense',
     reason: 'frozen golden test/__golden__/dense.json; its own index is fixtures/README.md',
   },
-  { path: '', reason: "Labelore's own real planning files, not made-up examples" },
 ];
 
 export interface MadeUpMarker {

@@ -11,8 +11,6 @@ import {
   ledgerFixMembers,
   MAX_FIX_MEMBERS,
 } from '../../src/presentation/review-ledger.ts';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
 import { ALL_FIXTURE_ROOTS } from '../helpers/fixture-roots.ts';
 import { fxRead, loadFiles, loadFixtureProject, loadProject } from '../helpers/fixture-project.ts';
 import type { LoadedProject } from '../helpers/fixture-project.ts';
@@ -203,25 +201,6 @@ describe('buildLedgerContext - the head takes open and total from the dispositio
     expect(head.total).toBe(7);
     expect(head.markedFixed).toBe(0);
     expect(marks).toEqual({});
-  });
-
-  it("this repo's own phase 8: the head open and total equal the disposition rows, never the review five", async () => {
-    const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
-    const LB_PLANNING = join(LB_ROOT, '.planning');
-    const project = await loadProject(LB_ROOT);
-    const path = '.planning/milestones/v2.1-phases/08-several-projects-and-a-switcher/08-REVIEW-DISPOSITION.md';
-    expect(
-      existsSync(
-        join(LB_PLANNING, 'milestones/v2.1-phases/08-several-projects-and-a-switcher/08-REVIEW-DISPOSITION.md'),
-      ),
-    ).toBe(true);
-    const context = contextOf(project, path)!;
-    const rows = context.disposition!.rows;
-    expect(rows.length).toBeGreaterThan(5);
-    expect(context.head.total).toBe(rows.length);
-    expect(context.head.open).toBe(rows.filter((row) => row.disposition === 'open').length);
-    const review = context.review;
-    if (review !== null) expect(context.head.total).not.toBe(review.findings.length);
   });
 });
 

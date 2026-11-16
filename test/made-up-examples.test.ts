@@ -21,7 +21,7 @@ import type { IndexRow } from './helpers/made-up-examples.ts';
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url)).replace(/[\\/]$/, '');
 const INDEX_PATH = join(REPO_ROOT, 'test/fixtures/README.md');
 
-const exemptAbsolute = new Set(EXEMPT_ROOTS.map((root) => (root.path === '' ? REPO_ROOT : join(REPO_ROOT, root.path))));
+const exemptAbsolute = new Set(EXEMPT_ROOTS.map((root) => join(REPO_ROOT, root.path)));
 const CHECKED_ROOTS = ALL_FIXTURE_ROOTS.filter((root) => !exemptAbsolute.has(root));
 
 const SHAPES_ROOT = join(REPO_ROOT, 'test/fixtures/shapes');
@@ -77,7 +77,7 @@ describe('made-up example markers and index (VIEW-21)', () => {
 
   it('exempts only the roots named with a reason', () => {
     for (const root of EXEMPT_ROOTS) expect(root.reason.length).toBeGreaterThan(0);
-    expect(EXEMPT_ROOTS.map((root) => root.path)).toEqual(['fixtures/dense', '']);
+    expect(EXEMPT_ROOTS.map((root) => root.path)).toEqual(['fixtures/dense']);
   });
 
   it('the real check sees Shapes rule-kind files: with no index each is a not-indexed problem', async () => {

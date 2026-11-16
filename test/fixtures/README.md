@@ -17,8 +17,8 @@ gsd-core version it was derived at):
 - A raw JSON file carries the same three keys at the top level or inside a top-level `_meta` object. A markdown
   file whose YAML fails to parse still counts when the three `key: value` lines sit inside its `---` fence.
 
-Two roots are exempt by name, each with a reason: `fixtures/dense` (a frozen golden, `test/__golden__/dense.json`,
-whose own ledger is `fixtures/README.md`) and this repository's own `.planning` (real planning files).
+One root is exempt by name, with a reason: `fixtures/dense` (a frozen golden, `test/__golden__/dense.json`,
+whose own ledger is `fixtures/README.md`).
 
 ## Index
 

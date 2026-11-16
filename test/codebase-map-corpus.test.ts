@@ -1,17 +1,17 @@
-// Phase 10 (10-05, VIEW-13, RESEARCH Pitfall 11): a shape-only guard over this repository's own fresh
-// codebase map (.planning/codebase, seven documents written by /gsd-map-codebase). Labelore's own map is the
-// only real map a test may read; it changes every time the map is refreshed, so no stamp, count or heading
-// is pinned here. Only the shape the lift promises is asserted.
+// Phase 10 (10-05, VIEW-13, RESEARCH Pitfall 11): a shape-only guard over the committed made-up Tidemark
+// codebase map (seven documents). It pins no stamp, count or heading. Only the shape the lift promises is
+// asserted.
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { CodebaseBody } from '../src/planning-repo/handlers/codebase-lift.ts';
 import { CODEBASE_MAP_FILES } from '../src/planning-repo/codebase-files.ts';
 import { loadProject } from './helpers/fixture-project.ts';
 
-const LB_ROOT = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
+const TIDEMARK_ROOT = fileURLToPath(new URL('./fixtures/tidemark', import.meta.url)).replace(/[\\/]$/, '');
 const DOCS = CODEBASE_MAP_FILES.map((file) => file.slice(0, -'.md'.length).toLowerCase());
 
 async function mapDocuments(): Promise<Map<string, CodebaseBody>> {
-  const { snapshot } = await loadProject(LB_ROOT);
+  const { snapshot } = await loadProject(TIDEMARK_ROOT);
   const found = new Map<string, CodebaseBody>();
   for (const [path, artifact] of Object.entries(snapshot.project?.artifacts ?? {})) {
     if (!path.startsWith('.planning/codebase/')) continue;
@@ -21,7 +21,7 @@ async function mapDocuments(): Promise<Map<string, CodebaseBody>> {
   return found;
 }
 
-describe("this repository's own codebase map", () => {
+describe('the Tidemark codebase map (seven documents)', () => {
   it('loads seven documents, each with its document name', async () => {
     const found = await mapDocuments();
     expect([...found.keys()].sort()).toEqual([...DOCS].sort());

@@ -1,6 +1,6 @@
-// The one list of committed fixture project roots, plus this repository itself. Tests that must hold on
-// every project Labelore is developed against (the walk-equals-model check, grammar audits) iterate this
-// list instead of each naming its own roots. Importing it throws when a listed root has no .planning
+// The one list of committed fixture project roots only. Labelore's own planning tree has been untracked
+// since a6859d3 and is never a test input. Tests that must hold on every committed fixture project (the
+// walk-equals-model check, grammar audits) iterate this list instead of each naming its own roots. Importing it throws when a listed root has no .planning
 // folder: a missing fixture is a failure, never a skip.
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -21,8 +21,8 @@ const RELATIVE_ROOTS = [
   'test/fixtures/todos/labelore',
 ];
 
-/** Absolute roots (no trailing slash) of every committed fixture project, then this repository. */
-export const ALL_FIXTURE_ROOTS: readonly string[] = [...RELATIVE_ROOTS.map((root) => join(REPO_ROOT, root)), REPO_ROOT];
+/** Absolute roots (no trailing slash) of every committed fixture project, and nothing else. */
+export const ALL_FIXTURE_ROOTS: readonly string[] = [...RELATIVE_ROOTS.map((root) => join(REPO_ROOT, root))];
 
 for (const root of ALL_FIXTURE_ROOTS) {
   if (!existsSync(join(root, '.planning'))) {
