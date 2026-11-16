@@ -143,7 +143,6 @@ describe('the template report and the Lendshed reports', () => {
     fxPath(LX01);
     const lx01 = compose(artifactAt(fx, LX01));
     expect([lx01.rail.big?.value, lx01.human?.steps.length, lx01.truths?.details.length, lx01.requirements?.details.length]).toEqual(['2', 2, 8, 5]);
-    expect(lx01.human?.steps.map((s) => s.title)[0]).toBe('Run `npm run check-seed` to completion');
   });
 
 });

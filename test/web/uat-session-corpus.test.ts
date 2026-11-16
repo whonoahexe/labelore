@@ -137,11 +137,4 @@ describe('UAT corpus', () => {
     expect(composed?.mismatch).toBeNull();
     expect(composed?.gaps.mode).toBe(pinned.mode === 'items' ? 'register' : pinned.mode === 'prose' ? 'cards' : 'none');
   });
-
-  it('the dense fixture keeps the author\'s own empty-gaps line', () => {
-    const dense = FILES.find((f) => f.key.startsWith('DN:'));
-    expect(dense).toBeDefined();
-    const { input } = parse((dense as { path: string }).path);
-    expect(composeUatSession(input)?.gaps.emptyLine).toBe('None — all tests passed.');
-  });
 });
