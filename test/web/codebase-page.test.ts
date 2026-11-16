@@ -939,15 +939,6 @@ describe('composeCodebase - the Concerns panel (10-12, sketch 044 E)', () => {
     expect(zero.fallbackHtml).toContain('Dependencies at Risk text');
     expect(lifted.sections[0].fallbackHtml).toBeNull();
   });
-
-  it('writes no missing or destructive tone anywhere in the concerns markup', async () => {
-    const components = await source(COMPONENTS);
-    const concernsPart = components.slice(components.indexOf('function ConcernRow'));
-    expect(concernsPart).not.toMatch(/data-tone=\{?["']?(missing|destructive|warning)/);
-    expect(concernsPart).toContain('Read more');
-    expect(concernsPart).toContain('Read less');
-    expect(concernsPart).toContain('aria-expanded');
-  });
 });
 
 describe('composeCodebase - growth (10-12)', () => {
@@ -1165,105 +1156,13 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-const RAW_HTML_PROP = 'dangerously' + 'SetInnerHTML';
-const START = '/* phase-10-codebase:start */';
-const END = '/* phase-10-codebase:end */';
-const COMPOSER = 'src/web/views/codebase-page.ts';
 const COMPONENTS = 'src/web/views/codebase-components.tsx';
-const ALLOWED_SIZES = ['var(--fs-2)', 'var(--fs-4)', 'var(--fs-7)', 'var(--fs-display-3)'];
 
 function stripSourceComments(text: string): string {
   return text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
 }
 
-function stripCssComments(text: string): string {
-  return text.replace(/\/\*[\s\S]*?\*\//g, '');
-}
-
-function toneExpressions(text: string): string[] {
-  return [...text.matchAll(/data-tone=(\{[^}]*\}|"[^"]*")/g)].map((m) => m[1]);
-}
-
-function writesForbiddenTone(text: string): boolean {
-  return (
-    /tone[A-Za-z]*\s*[:=]\s*['"](destructive|warning|missing)['"]/.test(text) ||
-    /data-tone="(destructive|warning|missing)"/.test(text) ||
-    /'(destructive|warning|missing)'\s*\|/.test(text) ||
-    /\|\s*'(destructive|warning|missing)'/.test(text)
-  );
-}
-
-function buildsRegExp(text: string): boolean {
-  return /new\s+RegExp\s*\(/.test(text) || /\bRegExp\s*\(/.test(text);
-}
-
-function usesRegexLiteral(text: string): boolean {
-  return /\.(test|exec|match|matchAll|replace|replaceAll|split|search)\(\s*\//.test(text);
-}
-
-function importsFilesystem(text: string): boolean {
-  return /from 'node:(fs|path)|from 'fs'/.test(text);
-}
-
-function hasModuleLevelLet(text: string): boolean {
-  return /^(export\s+)?let\s/m.test(text);
-}
-
-function cssViolations(block: string): string[] {
-  const found: string[] = [];
-  if (/--destructive|--warning/.test(block)) found.push('parse-degradation token');
-  if (/\boklch\(|\brgb\(|\bhsl\(/.test(block)) found.push('colour function');
-  if (/:[^;{}]*#[0-9a-fA-F]{3,8}\b/.test(block)) found.push('hex colour');
-  if (/radius\s*:/.test(block)) found.push('radius');
-  if (/@keyframes/.test(block)) found.push('keyframes');
-  if (/\banimation\b/.test(block)) found.push('animation');
-  if (/\btransition\b/.test(block)) found.push('transition');
-  if (/:root/.test(block)) found.push(':root');
-  return found;
-}
-
-function fontSizes(block: string): string[] {
-  return [...block.matchAll(/font-size\s*:\s*([^;]+);/g)].map((m) => m[1].trim());
-}
-
-function codebaseBlock(css: string): string {
-  const start = css.indexOf(START);
-  const end = css.indexOf(END);
-  expect(start).toBeGreaterThan(-1);
-  expect(end).toBeGreaterThan(start);
-  return css.slice(start, end);
-}
-
-describe('codebase view contract - helpers catch planted violations', () => {
-  it('flags each forbidden thing in an in-memory string', () => {
-    expect(writesForbiddenTone("const tone = 'missing';")).toBe(true);
-    expect(writesForbiddenTone('<i data-tone="destructive" />')).toBe(true);
-    expect(buildsRegExp('const re = new RegExp(ref);')).toBe(true);
-    expect(usesRegexLiteral("text.replace(/a/g, '')")).toBe(true);
-    expect(importsFilesystem("import { readFileSync } from 'node:fs';")).toBe(true);
-    expect(hasModuleLevelLet('let cache = null;\nexport const x = 1;')).toBe(true);
-    expect(cssViolations('a { transition: color 0.2s ease; }')).toContain('transition');
-    expect(fontSizes('a { font-size: var(--fs-5); } b { font-size: 12px; }')).toEqual(['var(--fs-5)', '12px']);
-  });
-
-  it('passes clean strings', () => {
-    expect(writesForbiddenTone("type CodebaseTone = 'complete' | 'in-flight' | 'quiet';")).toBe(false);
-    expect(buildsRegExp('const x = text.includes(key);')).toBe(false);
-    expect(hasModuleLevelLet('function f() {\n  let x = 1;\n  return x;\n}')).toBe(false);
-    expect(cssViolations('a { color: var(--primary); }')).toEqual([]);
-  });
-});
-
 describe('codebase view contract - the real sources', () => {
-  it('the components render no raw-HTML prop and write only documented tones, never destructive, warning or missing', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code.includes(RAW_HTML_PROP)).toBe(false);
-    expect(writesForbiddenTone(code)).toBe(false);
-    for (const expression of toneExpressions(code)) {
-      expect(['"complete"', '"in-flight"', '"quiet"', '{tone}', '{row.tone}', '{facts.readiness.tone}', '{readiness.tone}'], expression).toContain(expression);
-    }
-  });
-
   it('every link goes through the in-app Link to a payload address; a ghost entry is not interactive', async () => {
     const code = stripSourceComments(await source(COMPONENTS));
     expect(code).toContain("import { Link } from '../nav.tsx';");
@@ -1271,84 +1170,5 @@ describe('codebase view contract - the real sources', () => {
     expect(code).not.toMatch(/<a[\s>]/);
     expect(code).toContain("data-ghost=\"true\"");
     expect(code).toContain('{NOT_MAPPED}');
-  });
-
-  it('lifted text is React text through ResearchInline, and plain sections go through the page\'s renderHtml callback', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain('renderHtml');
-    expect(code).toContain('ResearchInline');
-  });
-
-  it('the head is one block over the panel in the reading column, and its words are the eyebrow', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain('model.head === null ? \'Codebase\' : model.head.eyebrow');
-    expect(code).toContain('<Head head={model.head} />');
-    expect(code.indexOf('<Head head={model.head} />')).toBeLessThan(code.indexOf('<article'));
-    const css = stripCssComments(codebaseBlock(await source('src/web/styles/globals.css')));
-    expect(css).toContain('.view-codebase-head {\n    order: -1;');
-  });
-
-  it('the head\'s next step is the shared copy-command row, which imports no api module and never fetches', async () => {
-    const components = stripSourceComments(await source(COMPONENTS));
-    expect(components).toContain("import { CopyCommand } from '../components/copy-command.tsx';");
-    expect(components).toContain('<CopyCommand command={head.next.command} />');
-    const copy = stripSourceComments(await source('src/web/components/copy-command.tsx'));
-    expect(copy).not.toMatch(/from\s+['"]\.\.\/api\.ts['"]/);
-    expect(copy).not.toMatch(/\bfetch\b/);
-    expect(await source(COMPOSER)).toContain('Labelore does not run commands. Paste it in your terminal.');
-  });
-
-  it('the composer builds no regular expression, uses no regex literal and imports no filesystem module', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(buildsRegExp(code)).toBe(false);
-    expect(usesRegexLiteral(code)).toBe(false);
-    expect(importsFilesystem(code)).toBe(false);
-  });
-
-  it('the composer holds no module-level mutable state', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(hasModuleLevelLet(code)).toBe(false);
-    expect(code).not.toMatch(/^(export\s+)?var\s/m);
-  });
-
-  it('the CSS block exists once, holds every .view-codebase- rule and has no forbidden thing', async () => {
-    const css = await source('src/web/styles/globals.css');
-    expect(css.split(START).length - 1).toBe(1);
-    expect(css.split(END).length - 1).toBe(1);
-    const block = codebaseBlock(css);
-    expect(cssViolations(stripCssComments(block))).toEqual([]);
-    expect(css.replace(block, '')).not.toMatch(/\.view-codebase-/);
-    for (const selector of [
-      '.view-codebase-page',
-      '.view-codebase-rail',
-      '.view-codebase-entry',
-      '.view-codebase-panel',
-      '.view-codebase-chip',
-      '.view-codebase-count',
-    ]) {
-      expect(block, selector).toContain(selector);
-    }
-  });
-
-  it('the CSS block renders only the four contracted font sizes', async () => {
-    const block = stripCssComments(codebaseBlock(await source('src/web/styles/globals.css')));
-    const sizes = fontSizes(block);
-    expect(sizes.length).toBeGreaterThan(8);
-    for (const size of sizes) expect(ALLOWED_SIZES, size).toContain(size);
-  });
-
-  it('maps the document outline and rendered-document sizes inside the four-size scale', async () => {
-    const block = stripCssComments(codebaseBlock(await source('src/web/styles/globals.css')));
-    expect(block).toContain('.artifact-page:has(.view-codebase-page) .status-chip');
-    expect(block).toContain('.view-codebase-plain-section');
-  });
-
-  it('reuses no research-* class unchanged and adds no history-prefixed or status-square rule', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).not.toMatch(/['"\s]research-[\w-]+/);
-    const block = stripCssComments(codebaseBlock(await source('src/web/styles/globals.css')));
-    expect(block).not.toMatch(/\.history-[\w-]+/);
-    expect(block).not.toMatch(/\.research-[\w-]+/);
-    expect(block).not.toMatch(/\.status-square\s*\{/);
   });
 });

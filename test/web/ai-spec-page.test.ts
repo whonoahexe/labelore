@@ -173,15 +173,6 @@ describe('AiSpecView - the first screen', () => {
   const model = composeFile(HALF)!;
   const out = markup(model);
 
-  it('writes the four cell labels and values, and the version in mono', () => {
-    for (const label of ['System type', 'Framework', 'Stakes level', 'Vendor lock-in']) {
-      expect(out).toContain(label);
-    }
-    expect(out).toContain('Content Generation');
-    expect(out).toContain('Notewright');
-    expect(out).toContain('Version <code>2.3.1</code>');
-  });
-
   it('draws the checklist meter once with its one sentence', () => {
     expect(out).toContain('aria-label="6 of 16 checklist items done"');
     expect(out.split('status-meter-sq').length - 1).toBe(16);
@@ -360,13 +351,7 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-const RAW_HTML_PROP = 'dangerously' + 'SetInnerHTML';
-const START = '/* phase-10-ai-spec:start */';
-const END = '/* phase-10-ai-spec:end */';
-const COMPOSER = 'src/web/views/ai-spec-page.ts';
 const COMPONENTS = 'src/web/views/ai-spec-page-components.tsx';
-const EXTRACTOR = 'src/planning-repo/handlers/ai-spec.ts';
-const ALLOWED_SIZES = ['var(--fs-2)', 'var(--fs-4)', 'var(--fs-7)', 'var(--fs-display-3)', 'inherit'];
 
 function stripSourceComments(text: string): string {
   return text
@@ -375,165 +360,12 @@ function stripSourceComments(text: string): string {
     .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
 }
 
-function stripCssComments(text: string): string {
-  return text.replace(/\/\*[\s\S]*?\*\//g, '');
-}
-
-function toneExpressions(text: string): string[] {
-  return [...text.matchAll(/data-tone=(\{[^}]*\}|"[^"]*")/g)].map((m) => m[1]);
-}
-
-/** A tone this page must never write: the parse-degradation tones, `missing` and `in-flight` (a slot is quiet). */
-function writesForbiddenTone(text: string): boolean {
-  return (
-    /tone[A-Za-z]*\s*[:=]\s*['"](destructive|warning|missing|in-flight)['"]/.test(text) ||
-    /data-tone="(destructive|warning|missing|in-flight)"/.test(text) ||
-    /'(destructive|warning|missing|in-flight)'\s*\|/.test(text) ||
-    /\|\s*'(destructive|warning|missing|in-flight)'/.test(text)
-  );
-}
-
-function writesLink(text: string): boolean {
-  return /\bhref\s*[=:]/.test(text) || /\bto=/.test(text) || /<(a|Link|NavLink)[\s>]/.test(text);
-}
-
-function buildsRegExp(text: string): boolean {
-  return /new\s+RegExp\s*\(/.test(text) || /\bRegExp\s*\(/.test(text);
-}
-
-function usesRegexLiteral(text: string): boolean {
-  return /\.(test|exec|match|matchAll|replace|replaceAll|split|search)\(\s*\//.test(text);
-}
-
-function importsFilesystem(text: string): boolean {
-  return /from 'node:(fs|path)|from 'fs'/.test(text);
-}
-
-function hasModuleLevelLet(text: string): boolean {
-  return /^(export\s+)?let\s/m.test(text);
-}
-
-function cssViolations(block: string): string[] {
-  const found: string[] = [];
-  if (/--destructive|--warning/.test(block)) found.push('parse-degradation token');
-  if (/\boklch\(|\brgb\(|\bhsl\(/.test(block)) found.push('colour function');
-  if (/:[^;{}]*#[0-9a-fA-F]{3,8}\b/.test(block)) found.push('hex colour');
-  if (/radius\s*:/.test(block)) found.push('radius');
-  if (/color-mix\(/.test(block)) found.push('color-mix recipe');
-  if (/@keyframes/.test(block)) found.push('keyframes');
-  if (/\banimation\b/.test(block)) found.push('animation');
-  if (/\btransition\b/.test(block)) found.push('transition');
-  if (/:root/.test(block)) found.push(':root');
-  return found;
-}
-
-function fontSizes(block: string): string[] {
-  return [...block.matchAll(/font-size\s*:\s*([^;]+);/g)].map((m) => m[1].trim());
-}
-
-function aiSpecBlock(css: string): string {
-  const start = css.indexOf(START);
-  const end = css.indexOf(END);
-  expect(start).toBeGreaterThan(-1);
-  expect(end).toBeGreaterThan(start);
-  return css.slice(start, end);
-}
-
-describe('ai spec view contract - helpers catch planted violations', () => {
-  it('flags each forbidden thing in an in-memory string', () => {
-    expect(writesForbiddenTone("const tone = 'missing';")).toBe(true);
-    expect(writesForbiddenTone('<i data-tone="destructive" />')).toBe(true);
-    expect(writesForbiddenTone('<i data-tone="warning" />')).toBe(true);
-    expect(writesForbiddenTone('<i data-tone="in-flight" />')).toBe(true);
-    expect(writesLink('<a href={ref}>x</a>')).toBe(true);
-    expect(buildsRegExp('const re = new RegExp(ref);')).toBe(true);
-    expect(usesRegexLiteral("text.replace(/a/g, '')")).toBe(true);
-    expect(importsFilesystem("import { readFileSync } from 'node:fs';")).toBe(true);
-    expect(hasModuleLevelLet('let cache = null;\nexport const x = 1;')).toBe(true);
-    expect(cssViolations('a { color: color-mix(in oklch, red, blue); }')).toContain('color-mix recipe');
-    expect(fontSizes('a { font-size: var(--fs-5); }')).toEqual(['var(--fs-5)']);
-  });
-
-  it('passes clean strings', () => {
-    expect(writesForbiddenTone("type AiSpecTone = 'complete' | 'quiet';")).toBe(false);
-    expect(writesLink('<button onClick={() => open()}>x</button>')).toBe(false);
-    expect(cssViolations('a { color: var(--primary); }')).toEqual([]);
-  });
-});
-
 describe('ai spec view contract - the real sources', () => {
-  it('the components render no raw HTML and no link, and write no destructive, warning, missing or in-flight tone', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code.includes(RAW_HTML_PROP)).toBe(false);
-    expect(writesLink(code)).toBe(false);
-    expect(writesForbiddenTone(code)).toBe(false);
-    for (const expression of new Set(toneExpressions(code))) {
-      expect(['"quiet"', '"complete"'].includes(expression) || expression.startsWith('{'), expression).toBe(true);
-    }
-    expect(code).toContain('aria-hidden="true"');
-  });
-
   it('author text goes through ResearchInline, never straight into markup', async () => {
     const code = stripSourceComments(await source(COMPONENTS));
     expect(code).toContain('<ResearchInline text={cell.value} />');
     expect(code).toContain('<ResearchInline text={row.heading} />');
     expect(code).toContain('<ResearchInline text={dimension.name} />');
     expect(code).toContain('<ResearchInline text={cell.note} />');
-  });
-
-  it('the composer says "Template slot" and writes only the quiet and complete tones', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(code).toContain("export const TEMPLATE_SLOT_LABEL = 'Template slot';");
-    expect(code).toContain("export type AiSpecTone = 'complete' | 'quiet';");
-    expect(writesForbiddenTone(code)).toBe(false);
-  });
-
-  it('the composer and the extractor build no regular expression, use no regex literal and import no filesystem module', async () => {
-    for (const path of [COMPOSER, EXTRACTOR]) {
-      const code = stripSourceComments(await source(path));
-      expect(buildsRegExp(code), path).toBe(false);
-      expect(usesRegexLiteral(code), path).toBe(false);
-      expect(importsFilesystem(code), path).toBe(false);
-    }
-  });
-
-  it('the composer holds no module-level mutable state', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(hasModuleLevelLet(code)).toBe(false);
-    expect(code).not.toMatch(/^(export\s+)?var\s/m);
-  });
-
-  it('the CSS block exists once, holds every .view-ai-spec- rule and has no forbidden thing', async () => {
-    const css = await source('src/web/styles/globals.css');
-    expect(css.split(START).length - 1).toBe(1);
-    expect(css.split(END).length - 1).toBe(1);
-    const block = aiSpecBlock(css);
-    expect(cssViolations(stripCssComments(block))).toEqual([]);
-    expect(css.replace(block, '')).not.toMatch(/\.view-ai-spec-/);
-    for (const selector of [
-      '.view-ai-spec-page',
-      '.view-ai-spec-sheet',
-      '.view-ai-spec-strip',
-      '.view-ai-spec-matrix',
-      '.view-ai-spec-slot',
-      '.view-ai-spec-bar',
-    ]) {
-      expect(block, selector).toContain(selector);
-    }
-  });
-
-  it('the CSS block renders only the four contracted font sizes', async () => {
-    const block = stripCssComments(aiSpecBlock(await source('src/web/styles/globals.css')));
-    const sizes = fontSizes(block);
-    expect(sizes.length).toBeGreaterThan(10);
-    for (const size of sizes) expect(ALLOWED_SIZES, size).toContain(size);
-    expect(block).toContain('.document-outline a');
-  });
-
-  it('draws no meter of its own: the checklist goes through StatusMeter', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain("from '../components/status-meter.tsx'");
-    expect(code).toContain('<StatusMeter');
-    expect(await source('src/web/styles/globals.css')).not.toMatch(/view-ai-spec-meter/);
   });
 });

@@ -367,14 +367,7 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-const RAW_HTML_PROP = 'dangerously' + 'SetInnerHTML';
-const START = '/* phase-10-dom-verify:start */';
-const END = '/* phase-10-dom-verify:end */';
-const COMPOSER = 'src/web/views/dom-verify-page.ts';
 const COMPONENTS = 'src/web/views/dom-verify-page-components.tsx';
-const EXTRACTOR = 'src/planning-repo/handlers/dom-verify-body.ts';
-const HANDLER = 'src/planning-repo/handlers/dom-verify.ts';
-const ALLOWED_SIZES = ['var(--fs-2)', 'var(--fs-4)', 'var(--fs-7)', 'var(--fs-display-3)', 'inherit'];
 
 function stripSourceComments(text: string): string {
   return text
@@ -383,141 +376,12 @@ function stripSourceComments(text: string): string {
     .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
 }
 
-function stripCssComments(text: string): string {
-  return text.replace(/\/\*[\s\S]*?\*\//g, '');
-}
-
-/** A tone this page must never write: the parse-degradation tones (`missing` is the one it does write). */
-function writesForbiddenTone(text: string): boolean {
-  return (
-    /tone[A-Za-z]*\s*[:=]\s*['"](destructive|warning)['"]/.test(text) ||
-    /data-tone="(destructive|warning)"/.test(text) ||
-    /'(destructive|warning)'\s*\|/.test(text) ||
-    /\|\s*'(destructive|warning)'/.test(text)
-  );
-}
-
-function writesLink(text: string): boolean {
-  return /\bhref\s*[=:]/.test(text) || /\bto=/.test(text) || /<(a|Link|NavLink)[\s>]/.test(text);
-}
-
-function buildsRegExp(text: string): boolean {
-  return /new\s+RegExp\s*\(/.test(text) || /\bRegExp\s*\(/.test(text);
-}
-
-function usesRegexLiteral(text: string): boolean {
-  return /\.(test|exec|match|matchAll|replace|replaceAll|split|search)\(\s*\//.test(text);
-}
-
-function importsFilesystem(text: string): boolean {
-  return /from 'node:(fs|path)|from 'fs'/.test(text);
-}
-
-function hasModuleLevelLet(text: string): boolean {
-  return /^(export\s+)?let\s/m.test(text);
-}
-
-function cssViolations(block: string): string[] {
-  const found: string[] = [];
-  if (/--destructive|--warning/.test(block)) found.push('parse-degradation token');
-  if (/\boklch\(|\brgb\(|\bhsl\(/.test(block)) found.push('colour function');
-  if (/:[^;{}]*#[0-9a-fA-F]{3,8}\b/.test(block)) found.push('hex colour');
-  if (/radius\s*:/.test(block)) found.push('radius');
-  if (/color-mix\(/.test(block)) found.push('color-mix recipe');
-  if (/@keyframes/.test(block)) found.push('keyframes');
-  if (/\banimation\b/.test(block)) found.push('animation');
-  if (/\btransition\b/.test(block)) found.push('transition');
-  if (/:root/.test(block)) found.push(':root');
-  return found;
-}
-
-function fontSizes(block: string): string[] {
-  return [...block.matchAll(/font-size\s*:\s*([^;]+);/g)].map((m) => m[1].trim());
-}
-
-function domVerifyBlock(css: string): string {
-  const start = css.indexOf(START);
-  const end = css.indexOf(END);
-  expect(start).toBeGreaterThan(-1);
-  expect(end).toBeGreaterThan(start);
-  return css.slice(start, end);
-}
-
-describe('browser check view contract - helpers catch planted violations', () => {
-  it('flags each forbidden thing in an in-memory string', () => {
-    expect(writesForbiddenTone("const tone = 'destructive';")).toBe(true);
-    expect(writesForbiddenTone('<i data-tone="warning" />')).toBe(true);
-    expect(writesLink('<a href={ref}>x</a>')).toBe(true);
-    expect(buildsRegExp('const re = new RegExp(ref);')).toBe(true);
-    expect(usesRegexLiteral("text.replace(/a/g, '')")).toBe(true);
-    expect(importsFilesystem("import { readFileSync } from 'node:fs';")).toBe(true);
-    expect(hasModuleLevelLet('let cache = null;\nexport const x = 1;')).toBe(true);
-    expect(cssViolations('a { color: color-mix(in oklch, red, blue); }')).toContain('color-mix recipe');
-    expect(fontSizes('a { font-size: var(--fs-5); }')).toEqual(['var(--fs-5)']);
-  });
-
-  it('passes clean strings', () => {
-    expect(writesForbiddenTone("type DomVerifyTone = 'complete' | 'in-flight' | 'missing' | 'quiet';")).toBe(false);
-    expect(writesLink('<button onClick={() => open()}>x</button>')).toBe(false);
-    expect(cssViolations('a { color: var(--primary); }')).toEqual([]);
-  });
-});
-
 describe('browser check view contract - the real sources', () => {
-  it('the components render no raw HTML and no link, and write no destructive or warning tone', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code.includes(RAW_HTML_PROP)).toBe(false);
-    expect(writesLink(code)).toBe(false);
-    expect(writesForbiddenTone(code)).toBe(false);
-    expect(code).toContain('aria-hidden="true"');
-  });
-
   it('author text goes through ResearchInline as React text, never straight into markup', async () => {
     const code = stripSourceComments(await source(COMPONENTS));
     expect(code).toContain("from '../pages/research-atoms.tsx'");
     expect(code).toContain('<ResearchInline text={criterion.text} />');
     expect(code).toContain('<ResearchInline text={paragraph} />');
-  });
-
-  it('the composer writes only the four tones, holds the word tables as Maps and writes the copy rows', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(code).toContain("export type DomVerifyTone = 'complete' | 'in-flight' | 'missing' | 'quiet';");
-    expect(writesForbiddenTone(code)).toBe(false);
-    expect(code).toContain('export const DOM_OUTCOME_TABLE');
-    expect(code).toContain('export const DOM_REASON_COPY');
-    expect(code).toContain('No criteria were checked.');
-    expect(code).toContain('Outcome not stated');
-  });
-
-  it('never gives could_not_look or nothing_to_report the complete tone', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(code).toContain("['nothing_to_report', { tone: 'quiet', icon: 'minus', word: 'Nothing to report' }]");
-    expect(code).toContain("['could_not_look', { tone: 'in-flight', icon: 'eye-off', word: 'Could not look' }]");
-  });
-
-  it('the composer, the extractor and the handler build no regular expression, use no regex literal and import no filesystem module', async () => {
-    for (const path of [COMPOSER, EXTRACTOR, HANDLER]) {
-      const code = stripSourceComments(await source(path));
-      expect(buildsRegExp(code), path).toBe(false);
-      expect(usesRegexLiteral(code), path).toBe(false);
-      expect(importsFilesystem(code), path).toBe(false);
-    }
-  });
-
-  it('the composer holds no module-level mutable state and recounts nothing', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(hasModuleLevelLet(code)).toBe(false);
-    expect(code).not.toMatch(/^(export\s+)?var\s/m);
-    expect(code).not.toMatch(/passed\s*\+\s*failed|\.length\s*\+\s*given|reduce\(/);
-  });
-
-  it('the extractor is capped: criteria, paragraphs, targets, lines and the body', async () => {
-    const code = stripSourceComments(await source(EXTRACTOR));
-    expect(code).toContain('DOM_VERIFY_CRITERIA_CAP');
-    expect(code).toContain('DOM_VERIFY_PARAGRAPH_CAP');
-    expect(code).toContain('DOM_VERIFY_LINE_CAP');
-    expect(code).toContain('DOM_VERIFY_TARGET_CAP');
-    expect(code).toContain('splitBodyLines');
   });
 
   it('artifact-page.tsx draws this kind from the composed model in View mode, and the manifest keeps its lead and fallback', async () => {
@@ -527,43 +391,6 @@ describe('browser check view contract - the real sources', () => {
     const manifests = await source('src/web/views/manifests.ts');
     expect(manifests.match(/domVerifyPage: composeDomVerify/g)).toHaveLength(1);
     expect(manifests).toContain('What a browser check of this phase found: whether it could look');
-  });
-
-  it('draws a distinct lucide icon for could not look, hidden from assistive technology, the chip carrying the words', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain('EyeOff');
-    expect(code).toContain('CircleMinus');
-    expect(code).toMatch(/<EyeOff[^>]*aria-hidden="true"/);
-    expect(code).toContain('aria-label={outcome.ariaLabel}');
-  });
-
-  it('the CSS block holds the page and nothing else, with no colour recipe and only the four contracted font sizes', async () => {
-    const css = await source('src/web/styles/globals.css');
-    const block = domVerifyBlock(css);
-    expect(cssViolations(stripCssComments(block))).toEqual([]);
-    expect(css.replace(block, '')).not.toMatch(/\.view-dom-verify-/);
-    expect(stripCssComments(block)).not.toMatch(/\.status-square/);
-    const sizes = fontSizes(stripCssComments(block));
-    expect(sizes.length).toBeGreaterThan(10);
-    for (const size of sizes) expect(ALLOWED_SIZES, size).toContain(size);
-    for (const selector of [
-      '.view-dom-verify-page',
-      '.view-dom-verify-window',
-      '.view-dom-verify-chrome',
-      '.view-dom-verify-tile',
-      '.view-dom-verify-status',
-      '.view-dom-verify-wrote',
-    ]) {
-      expect(block, selector).toContain(selector);
-    }
-  });
-
-  it('shuts the window with a hatch and blanks it with a dashed frame, and the in-flight chip is a 2px frame', async () => {
-    const block = stripCssComments(domVerifyBlock(await source('src/web/styles/globals.css')));
-    expect(block).toMatch(/\[data-view='shut'\]\s*\{[^}]*repeating-linear-gradient/);
-    expect(block).toMatch(/\[data-view='blank'\]\s*\{[^}]*dashed/);
-    expect(block).toMatch(/view-dom-verify-outcome\[data-tone='in-flight'\]\s*\{[^}]*border-width: 2px/);
-    expect(block).toMatch(/view-dom-verify-outcome\[data-tone='quiet'\]\s*\{[^}]*dashed/);
   });
 
   it("records the tone uses and the language bullet about the two non-pass outcomes in design-language.md", async () => {

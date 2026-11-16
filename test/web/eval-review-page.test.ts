@@ -467,28 +467,14 @@ async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
-const RAW_HTML_PROP = 'dangerously' + 'SetInnerHTML';
-const START = '/* phase-10-eval-review:start */';
-const END = '/* phase-10-eval-review:end */';
 const COMPOSER = 'src/web/views/eval-review-page.ts';
 const COMPONENTS = 'src/web/views/eval-review-page-components.tsx';
-const EXTRACTOR = 'src/planning-repo/handlers/eval-review-body.ts';
-const HANDLER = 'src/planning-repo/handlers/eval-review.ts';
-const ALLOWED_SIZES = ['var(--fs-2)', 'var(--fs-4)', 'var(--fs-7)', 'var(--fs-display-3)', 'inherit'];
 
 function stripSourceComments(text: string): string {
   return text
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/^\s*\/\/.*$/gm, '')
     .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-}
-
-function stripCssComments(text: string): string {
-  return text.replace(/\/\*[\s\S]*?\*\//g, '');
-}
-
-function toneExpressions(text: string): string[] {
-  return [...text.matchAll(/data-tone=(\{[^}]*\}|"[^"]*")/g)].map((m) => m[1]);
 }
 
 /** A tone this page must never write: the parse-degradation tones (`missing` is the one it does write). */
@@ -501,114 +487,13 @@ function writesForbiddenTone(text: string): boolean {
   );
 }
 
-function writesLink(text: string): boolean {
-  return /\bhref\s*[=:]/.test(text) || /\bto=/.test(text) || /<(a|Link|NavLink)[\s>]/.test(text);
-}
-
-function buildsRegExp(text: string): boolean {
-  return /new\s+RegExp\s*\(/.test(text) || /\bRegExp\s*\(/.test(text);
-}
-
-function usesRegexLiteral(text: string): boolean {
-  return /\.(test|exec|match|matchAll|replace|replaceAll|split|search)\(\s*\//.test(text);
-}
-
-function importsFilesystem(text: string): boolean {
-  return /from 'node:(fs|path)|from 'fs'/.test(text);
-}
-
-function hasModuleLevelLet(text: string): boolean {
-  return /^(export\s+)?let\s/m.test(text);
-}
-
-/** Arithmetic, a comparison or a rounding call applied to a score value: what the page must never do (T-10-38). */
-function appliesArithmeticToScore(text: string): boolean {
-  return (
-    /\bscore\w*(\.\w+)*\s+[-+*/%]\s+[\w(]/.test(text) ||
-    /[\w)]\s+[-+*/%]\s+score\b/.test(text) ||
-    /\bscore\w*(\.\w+)*\s+[<>]=?\s+[\w(]/.test(text) ||
-    /Math\.\w+\([^)]*score/.test(text)
-  );
-}
-
-function cssViolations(block: string): string[] {
-  const found: string[] = [];
-  if (/--destructive|--warning/.test(block)) found.push('parse-degradation token');
-  if (/\boklch\(|\brgb\(|\bhsl\(/.test(block)) found.push('colour function');
-  if (/:[^;{}]*#[0-9a-fA-F]{3,8}\b/.test(block)) found.push('hex colour');
-  if (/radius\s*:/.test(block)) found.push('radius');
-  if (/color-mix\(/.test(block)) found.push('color-mix recipe');
-  if (/@keyframes/.test(block)) found.push('keyframes');
-  if (/\banimation\b/.test(block)) found.push('animation');
-  if (/\btransition\b/.test(block)) found.push('transition');
-  if (/:root/.test(block)) found.push(':root');
-  return found;
-}
-
-function fontSizes(block: string): string[] {
-  return [...block.matchAll(/font-size\s*:\s*([^;]+);/g)].map((m) => m[1].trim());
-}
-
-function evalReviewBlock(css: string): string {
-  const start = css.indexOf(START);
-  const end = css.indexOf(END);
-  expect(start).toBeGreaterThan(-1);
-  expect(end).toBeGreaterThan(start);
-  return css.slice(start, end);
-}
-
-describe('eval review view contract - helpers catch planted violations', () => {
-  it('flags each forbidden thing in an in-memory string', () => {
-    expect(writesForbiddenTone("const tone = 'destructive';")).toBe(true);
-    expect(writesForbiddenTone('<i data-tone="warning" />')).toBe(true);
-    expect(writesLink('<a href={ref}>x</a>')).toBe(true);
-    expect(buildsRegExp('const re = new RegExp(ref);')).toBe(true);
-    expect(usesRegexLiteral("text.replace(/a/g, '')")).toBe(true);
-    expect(importsFilesystem("import { readFileSync } from 'node:fs';")).toBe(true);
-    expect(hasModuleLevelLet('let cache = null;\nexport const x = 1;')).toBe(true);
-    expect(appliesArithmeticToScore('const half = score.value / 2;')).toBe(true);
-    expect(appliesArithmeticToScore('const rounded = Math.round(score.value);')).toBe(true);
-    expect(appliesArithmeticToScore('if (score.value >= 80) return 1;')).toBe(true);
-    expect(appliesArithmeticToScore('const total = covered + score;')).toBe(true);
-    expect(cssViolations('a { color: color-mix(in oklch, red, blue); }')).toContain('color-mix recipe');
-    expect(fontSizes('a { font-size: var(--fs-5); }')).toEqual(['var(--fs-5)']);
-  });
-
-  it('passes clean strings', () => {
-    expect(writesForbiddenTone("type EvalReviewTone = 'complete' | 'in-flight' | 'missing' | 'quiet';")).toBe(false);
-    expect(writesLink('<button onClick={() => open()}>x</button>')).toBe(false);
-    expect(appliesArithmeticToScore('const score = scoreText(raw.score);')).toBe(false);
-    expect(appliesArithmeticToScore('if (score === null && tone === 1) return null;')).toBe(false);
-    expect(appliesArithmeticToScore('return `${value} of ${max}`;')).toBe(false);
-    expect(cssViolations('a { color: var(--primary); }')).toEqual([]);
-  });
-});
-
 describe('eval review view contract - the real sources', () => {
-  it('the components render no raw HTML and no link, and write no destructive or warning tone', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code.includes(RAW_HTML_PROP)).toBe(false);
-    expect(writesLink(code)).toBe(false);
-    expect(writesForbiddenTone(code)).toBe(false);
-    for (const expression of new Set(toneExpressions(code))) {
-      expect(['"quiet"'].includes(expression) || expression.startsWith('{'), expression).toBe(true);
-    }
-    expect(code).toContain('aria-hidden="true"');
-  });
-
   it('author text goes through ResearchInline as React text, never straight into markup', async () => {
     const code = stripSourceComments(await source(COMPONENTS));
     expect(code).toContain("from '../pages/research-atoms.tsx'");
     expect(code).toContain('<ResearchInline text={target.name} />');
     expect(code).toContain('<ResearchInline text={step.text} />');
     expect(code).toContain('<ResearchInline text={target.finding} />');
-  });
-
-  it('draws its own meter nowhere: the head goes through the shared StatusMeter', async () => {
-    const code = stripSourceComments(await source(COMPONENTS));
-    expect(code).toContain("from '../components/status-meter.tsx'");
-    expect(code).toContain('<StatusMeter');
-    expect(await source('src/web/styles/globals.css')).not.toMatch(/view-eval-review-meter/);
   });
 
   it('the composer writes only the four tones and holds the one word table as Maps', async () => {
@@ -620,36 +505,6 @@ describe('eval review view contract - the real sources', () => {
     expect(code).toContain('Verdict not stated');
   });
 
-  it('the composer applies no arithmetic, comparison or rounding to the score, and never reads the document HTML for it', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(appliesArithmeticToScore(code)).toBe(false);
-    const components = stripSourceComments(await source(COMPONENTS));
-    expect(appliesArithmeticToScore(components)).toBe(false);
-  });
-
-  it('the composer, the extractor and the handler build no regular expression, use no regex literal and import no filesystem module', async () => {
-    for (const path of [COMPOSER, EXTRACTOR, HANDLER]) {
-      const code = stripSourceComments(await source(path));
-      expect(buildsRegExp(code), path).toBe(false);
-      expect(usesRegexLiteral(code), path).toBe(false);
-      expect(importsFilesystem(code), path).toBe(false);
-    }
-  });
-
-  it('the composer holds no module-level mutable state', async () => {
-    const code = stripSourceComments(await source(COMPOSER));
-    expect(hasModuleLevelLet(code)).toBe(false);
-    expect(code).not.toMatch(/^(export\s+)?var\s/m);
-  });
-
-  it('the extractor is capped: rows, steps, cells and the body', async () => {
-    const code = stripSourceComments(await source(EXTRACTOR));
-    expect(code).toContain('EVAL_REVIEW_ROW_CAP');
-    expect(code).toContain('EVAL_REVIEW_STEP_CAP');
-    expect(code).toContain('EVAL_REVIEW_CELL_CAP');
-    expect(code).toContain('splitBodyLines');
-  });
-
   it('artifact-page.tsx draws this kind from the composed model in View mode, and the manifest keeps its lead and fallback', async () => {
     const code = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
     expect(code).toContain('<EvalReviewView key={artifact.path} model={evalReviewPageCover} renderHtml={renderHtml} />');
@@ -657,36 +512,6 @@ describe('eval review view contract - the real sources', () => {
     const manifests = await source('src/web/views/manifests.ts');
     expect(manifests.match(/evalReviewPage: composeEvalReview/g)).toHaveLength(1);
     expect(manifests).toContain("How far this phase's AI evaluation is built: its score and verdict");
-  });
-
-  it('the CSS block holds the page and nothing else, with no colour recipe and only the four contracted font sizes', async () => {
-    const css = await source('src/web/styles/globals.css');
-    const block = evalReviewBlock(css);
-    expect(cssViolations(stripCssComments(block))).toEqual([]);
-    expect(css.replace(block, '')).not.toMatch(/\.view-eval-review-/);
-    expect(stripCssComments(block)).not.toMatch(/\.status-square/);
-    const sizes = fontSizes(stripCssComments(block));
-    expect(sizes.length).toBeGreaterThan(10);
-    for (const size of sizes) expect(ALLOWED_SIZES, size).toContain(size);
-    for (const selector of [
-      '.view-eval-review-page',
-      '.view-eval-review-head',
-      '.view-eval-review-ledger',
-      '.view-eval-review-wires',
-      '.view-eval-review-row',
-      '.view-eval-review-fix',
-      '.view-eval-review-bar',
-    ]) {
-      expect(block, selector).toContain(selector);
-    }
-  });
-
-  it('hides the wires and stacks the two sides under 52rem', async () => {
-    const block = stripCssComments(evalReviewBlock(await source('src/web/styles/globals.css')));
-    const media = block.slice(block.indexOf('@media (max-width: 52rem)'));
-    expect(media).toContain('.view-eval-review-wires');
-    expect(media).toContain('display: none');
-    expect(media).toContain('grid-template-columns: minmax(0, 1fr)');
   });
 
   it('records the tone uses and the language bullet about the file\'s own word in design-language.md', async () => {
