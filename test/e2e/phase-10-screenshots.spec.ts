@@ -232,18 +232,18 @@ test.describe('phase 10 pages', () => {
   async function runLeg(
     browser: Browser,
     subject: Subject,
-    size: { width: number; height: number },
+    { width, height }: { width: number; height: number },
     theme: 'light' | 'dark',
     expects: (page: Page) => Promise<void>,
   ): Promise<void> {
-    const context = await browser.newContext({ viewport: size });
+    const context = await browser.newContext({ viewport: { width, height } });
     await context.addInitScript((value: string) => window.localStorage.setItem('labelore-theme', value), theme);
     const page = await context.newPage();
     try {
       await openSubject(page, subject, expects);
       expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(theme === 'dark');
-      await expectRulesHold(page, size.width);
-      await shoot(page, `${subject.page}-${subject.input}-${size.width}-${theme}.png`);
+      await expectRulesHold(page, width);
+      await shoot(page, `${subject.page}-${subject.input}-${width}-${theme}.png`);
     } finally {
       await context.close();
     }
