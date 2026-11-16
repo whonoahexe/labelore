@@ -1,5 +1,5 @@
-// quick-261018-j5h (sketch 023 A): the DEBUG composer and its view, pinned against labelore's resolved
-// session, the synthetic investigating one, the four made-up Lendshed sessions, and inline sessions for
+// quick-261018-j5h (sketch 023 A): the DEBUG composer and its view, pinned against the synthetic
+// investigating session, the four made-up Lendshed sessions, and inline sessions for
 // the branches those do not cover. ViewInput
 // literals are built from the handler's real parse of each file; pinned values come from the sketch's
 // own data.js and model functions and the source files, never from the composer's output.
@@ -23,13 +23,12 @@ import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { DebugCaseView } from '../../src/web/views/debug-case-components.tsx';
 import { fxPath } from '../helpers/fixture-project.ts';
 
-const LB = new URL('../../.planning/debug/resolved/loading-state-regression.md', import.meta.url).pathname;
-const KB = new URL('../../.planning/debug/knowledge-base.md', import.meta.url).pathname;
 const SYN = new URL('../fixtures/debug/search-index-goes-stale.md', import.meta.url).pathname;
 const FX_DD = fxPath('debug/loan-history-picks-wrong-shed.md');
 const FX_RECEIPT = fxPath('debug/receipt-email-never-sent.md');
 const FX_HOLDS = fxPath('debug/reservation-holds-lost-on-reconnect.md');
 const FX_DOOR = fxPath('debug/resolved/door-sensor-stops-after-wifi-drop.md');
+const KB = fxPath('debug/knowledge-base.md');
 
 function refOf(path: string, extra: Partial<ArtifactRef> = {}): ArtifactRef {
   return { path, kind: 'debug', location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0, ...extra };
@@ -90,51 +89,50 @@ function render(model: ComposedDebugCase, extra: Record<string, unknown> = {}): 
 
 const textOf = (html: string): string => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 
-const lb = page(LB);
+const resolved = page(FX_DOOR);
 const syn = page(SYN);
 
-describe('the head and hero: labelore resolved session', () => {
+describe('the head and hero: the Lendshed resolved session', () => {
   it('reads the head', () => {
-    expect(lb.head).toEqual({
+    expect(resolved.head).toEqual({
       eyebrow: 'Debug session',
-      title: 'Loading state regression',
-      opened: '16 Sep 2026',
-      updated: '18:55',
+      title: 'Door sensor stops after wifi drop',
+      opened: '3 Mar 2026',
+      updated: '18 Mar 2026 · 22:10',
       archived: true,
     });
-    expect(lb.status).toEqual({ label: 'Resolved', tone: 'complete' });
-    expect(lb.facts).toEqual([
-      { label: 'Bug class', value: 'Bohrbug' },
-      { label: 'Evidence', value: '12' },
-      { label: 'Ruled out', value: '2' },
+    expect(resolved.status).toEqual({ label: 'Resolved', tone: 'complete' });
+    expect(resolved.facts).toEqual([
+      { label: 'Bug class', value: 'Mandelbug' },
+      { label: 'Evidence', value: '15' },
+      { label: 'Ruled out', value: '3' },
     ]);
-    expect(lb.trigger?.short).toBeNull();
   });
 
-  it('leads with the resolved variant: three cut causes, a cut fix, six chips, nine files', () => {
-    const lead = lb.lead;
+  it('leads with the resolved variant: three causes, a cut fix, five chips, eight files', () => {
+    const lead = resolved.lead;
     expect([lead.variant, lead.tone, lead.kicker]).toEqual(['resolved', 'complete', null]);
     expect(lead.causes?.kicker).toBe('Root cause · 3');
     expect(lead.causes?.items.map((c) => [c.label, c.cut])).toEqual([
-      ['ENVIRONMENT', true],
-      ['CODE', true],
-      ['STRUCTURAL / PRE-EXISTING', true],
+      ['Cause 1', true],
+      ['Cause 2', false],
+      ['Cause 3', false],
     ]);
     expect(lead.fix?.label).toBe('The fix');
     expect(lead.fix?.cut).toBe(true);
     expect(lead.verification?.kicker).toBe('Verified · accepted');
-    expect(lead.verification?.chips?.map((c) => c.result)).toEqual(['pass', 'pass', 'pass', 'pass', 'pass', 'open']);
-    expect(lead.files?.kicker).toBe('Files changed · 9');
-    expect(lead.files?.items[0]).toMatchObject({ name: 'route-chunk-store.ts', path: 'src/web/components/route-chunk-store.ts' });
+    expect(lead.verification?.chips?.map((c) => c.result)).toEqual(['pass', 'pass', 'pass', 'pass', 'pass']);
+    expect(lead.files?.kicker).toBe('Files changed · 8');
+    expect(lead.files?.items[0]).toMatchObject({ name: 'door-sensor-stops-after-wifi-drop.v241.diff' });
     expect(lead.resolutionLink).toBe(true);
   });
 
   it('composes the resolution parts and file notes for the dialog', () => {
-    expect(lb.resolution?.parts.map((p) => p.label)).toEqual(['Root cause', 'Fix', 'Verification']);
-    expect(lb.resolution?.files).toHaveLength(9);
-    const withHeadings = page(LB, [{ id: 'resolution', text: 'Resolution', depth: 2 }]);
+    expect(resolved.resolution?.parts.map((p) => p.label)).toEqual(['Root cause', 'Fix', 'Verification']);
+    expect(resolved.resolution?.files).toHaveLength(8);
+    const withHeadings = page(FX_DOOR, [{ id: 'resolution', text: 'Resolution', depth: 2 }]);
     expect(withHeadings.resolution?.targetId).toBe('resolution');
-    expect(lb.resolution?.targetId).toBeNull();
+    expect(resolved.resolution?.targetId).toBeNull();
   });
 });
 
@@ -295,23 +293,22 @@ describe('dates are read literally', () => {
 
 describe('static markup', () => {
   it('renders the resolved session', () => {
-    const html = render(lb);
+    const html = render(resolved);
     expect(html.match(/<h1/g)).toHaveLength(1);
-    expect(html).toContain('Loading state regression</h1>');
+    expect(html).toContain('Door sensor stops after wifi drop</h1>');
     expect(html).toContain('Debug session');
     expect(html).toContain('>Archived<');
     expect(html).toMatch(/<span class="view-debug-status" data-tone="complete">Resolved<\/span>/);
     expect(html).toContain('What was reported');
-    expect(textOf(html)).toContain('Bug class Bohrbug Evidence 12 Ruled out 2');
+    expect(textOf(html)).toContain('Bug class Mandelbug Evidence 15 Ruled out 3');
     expect(html).toContain('Root cause · 3');
-    expect(html.match(/>More ↗</g)).toHaveLength(4);
     expect(html).toContain('Verified · accepted');
-    expect(html.match(/class="view-debug-vchip"/g)).toHaveLength(6);
+    expect(html.match(/class="view-debug-vchip"/g)).toHaveLength(5);
     expect(html.match(/data-result="pass"/g)).toHaveLength(5);
-    expect(html.match(/data-result="open"/g)).toHaveLength(1);
-    expect(html).toContain('Files changed · 9');
+    expect(html.match(/data-result="open"/g)).toBeNull();
+    expect(html).toContain('Files changed · 8');
     expect(html).toContain('The full root cause, fix and verification ↗');
-    expect(html).not.toContain('All of it');
+    expect(html).toContain('All of it');
   });
 
   it('renders the investigating session with no clamp-only More button', () => {
@@ -338,7 +335,7 @@ describe('from disk: discovery, handler, composer and view', () => {
     root = await mkdtemp(join(tmpdir(), 'debug-case-'));
     await mkdir(join(root, '.planning', 'debug', 'resolved'), { recursive: true });
     await writeFile(join(root, '.planning', 'debug', 'search-index-goes-stale.md'), readFileSync(SYN, 'utf8'));
-    await writeFile(join(root, '.planning', 'debug', 'resolved', 'loading-state-regression.md'), readFileSync(LB, 'utf8'));
+    await writeFile(join(root, '.planning', 'debug', 'resolved', 'door-sensor-stops-after-wifi-drop.md'), readFileSync(FX_DOOR, 'utf8'));
     await writeFile(join(root, '.planning', 'debug', 'knowledge-base.md'), readFileSync(KB, 'utf8'));
     const repository = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
     const presentation = toProjectPresentation(await repository.load());
@@ -354,8 +351,8 @@ describe('from disk: discovery, handler, composer and view', () => {
       if (m === null) throw new Error('composed null');
       return m;
     };
-    const resolved = render(compose('loading-state-regression.md'));
-    expect(resolved).toContain('Loading state regression</h1>');
+    const resolved = render(compose('door-sensor-stops-after-wifi-drop.md'));
+    expect(resolved).toContain('Door sensor stops after wifi drop</h1>');
     expect(resolved).toContain('Verified · accepted');
     const open = render(compose('search-index-goes-stale.md'));
     expect(open).toContain('Where it stands');
@@ -377,28 +374,28 @@ const shownNumbers = (m: ComposedDebugCase, filter: Parameters<typeof entriesFor
 
 describe('Expected vs actual', () => {
   it('reads both columns and the other fields as rows', () => {
-    expect(lb.symptoms?.rest.map((r) => r.label)).toEqual(['Errors', 'Timeline', 'Environment', 'Reproduction']);
-    const actual = lb.symptoms?.actual?.value;
+    expect(resolved.symptoms?.rest.map((r) => r.label)).toEqual(['Errors', 'Reproduction', 'Started']);
+    const actual = resolved.symptoms?.actual?.value;
     expect(actual?.shape).toBe('blocks');
     if (actual?.shape === 'blocks') {
       const list = actual.blocks.find((b) => b.kind === 'list');
-      expect(list && list.kind === 'list' ? [list.ordered, list.items.length] : null).toEqual([true, 4]);
+      expect(list && list.kind === 'list' ? [list.ordered, list.items.length] : null).toEqual([false, 3]);
     }
     expect(syn.symptoms?.rest.map((r) => r.label)).toEqual(['Errors', 'Reproduction', 'Started']);
   });
 
   it('has no section for a session without Symptoms, and the heading targets the Symptoms id', () => {
     expect(inline('status: investigating', '## Current Focus\n\nhypothesis: h\n')?.symptoms).toBeNull();
-    const headed = page(LB, [{ id: 'symptoms', text: 'Symptoms', depth: 2 }]);
+    const headed = page(FX_DOOR, [{ id: 'symptoms', text: 'Symptoms', depth: 2 }]);
     expect(headed.symptoms?.targetId).toBe('symptoms');
   });
 
   it('renders the columns, the numbered list and the rows', () => {
-    const html = render(lb);
+    const html = render(resolved);
     expect(html).toContain('Expected vs actual');
     expect(html).toContain('Should happen');
     expect(html).toContain('What happens');
-    expect(html).toMatch(/<ol[^>]*>[\s\S]*?Page skeletons/);
+    expect(html).toMatch(/<ul[^>]*>[\s\S]*?Mill Lane test controller: no door pings visible/);
     expect(textOf(html)).toContain('Errors');
     expect(textOf(html)).toContain('Reproduction');
   });
@@ -406,10 +403,10 @@ describe('Expected vs actual', () => {
 
 describe('Suspects', () => {
   it('builds the board for the always-present sessions', () => {
-    expect(columnCounts(lb)).toBe('4 / 2 / 0');
-    expect(lb.suspects.columns.map((c) => c.label)).toEqual(['Confirmed', 'Ruled out', 'Also considered']);
-    expect(lb.suspects.columns[0].items.map((i) => i.kind)).toEqual(['environment', 'code', 'code', 'data']);
-    expect(lb.suspects.total).toBe(6);
+    expect(columnCounts(resolved)).toBe('3 / 3 / 0');
+    expect(resolved.suspects.columns.map((c) => c.label)).toEqual(['Confirmed', 'Ruled out', 'Also considered']);
+    expect(resolved.suspects.columns[0].items.map((i) => i.kind)).toEqual(['code', 'environment', 'config']);
+    expect(resolved.suspects.total).toBe(6);
     expect(columnCounts(syn)).toBe('0 / 1 / 1');
     expect(syn.suspects.columns.map((c) => c.label)).toEqual(['Leading', 'Ruled out', 'Still open']);
     expect(syn.suspects.columns[1].items[0]).toMatchObject({ text: 'The client query cache serves stale search results' });
@@ -440,13 +437,13 @@ describe('Suspects', () => {
 });
 
 describe('Evidence log', () => {
-  it('filters labelore by tag, defaulting to Confirms', () => {
-    const ev = lb.evidence!;
-    expect(filterLine(lb)).toEqual(['Confirms 2', 'Rules out 2', 'Finding 8', 'All 12']);
+  it('filters the Lendshed resolved session by tag, defaulting to Confirms', () => {
+    const ev = resolved.evidence!;
+    expect(filterLine(resolved)).toEqual(['Confirms 2', 'Rules out 2', 'Fix 2', 'Finding 9', 'All 15']);
     expect(ev.defaultFilter).toBe('confirms');
-    expect(shownNumbers(lb, 'confirms')).toEqual([4, 6]);
-    expect(shownNumbers(lb, 'eliminates')).toEqual([2, 9]);
-    expect(shownNumbers(lb, 'all')).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(shownNumbers(resolved, 'confirms')).toEqual([6, 14]);
+    expect(shownNumbers(resolved, 'eliminates')).toEqual([7, 9]);
+    expect(shownNumbers(resolved, 'all')).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
     expect(ev.multiRound).toBe(false);
     expect(roundBreaks(ev, 'all').size).toBe(0);
   });
@@ -472,14 +469,14 @@ describe('Evidence log', () => {
   });
 
   it('renders the pressed filter and only matching cards, with the card parts', () => {
-    const html = render(lb);
+    const html = render(resolved);
     expect(html).toMatch(/aria-pressed="true"[^>]*>[\s\S]*?Confirms/);
     expect(html.match(/<article class="view-debug-ev"/g)).toHaveLength(2);
-    expect(textOf(html)).toContain('#4 · 2026-09-16');
+    expect(textOf(html)).toContain('#6 · 2026-03-05');
     expect(textOf(html)).toContain('Rules out');
-    const all = render(lb, { initialFilter: 'all' });
-    expect(all.match(/<article class="view-debug-ev"/g)).toHaveLength(12);
-    const elim = render(lb, { initialFilter: 'eliminates' });
+    const all = render(resolved, { initialFilter: 'all' });
+    expect(all.match(/<article class="view-debug-ev"/g)).toHaveLength(15);
+    const elim = render(resolved, { initialFilter: 'eliminates' });
     expect(elim.match(/<article class="view-debug-ev"/g)).toHaveLength(2);
     expect(elim).toMatch(/view-debug-impl/);
     expect(render(syn).match(/<article class="view-debug-ev"/g)).toHaveLength(3);
@@ -488,16 +485,16 @@ describe('Evidence log', () => {
 
 describe('Also in this session', () => {
   it('lists the other sections, the reasoning checkpoint and the frontmatter', () => {
-    expect(lb.also.map((a) => a.label)).toEqual(['Postmortem', 'Reasoning checkpoint', 'Frontmatter']);
+    expect(resolved.also.map((a) => a.label)).toEqual(['Context', 'Answers to open questions', 'Follow-up hook points', 'Field diagnostics', 'Reasoning checkpoint', 'Frontmatter']);
     expect(syn.also.map((a) => a.label)).toEqual(['Frontmatter']);
   });
 
   it('points each chip at its heading id, null for Frontmatter', () => {
-    const m = page(LB, [
-      { id: 'postmortem', text: 'Postmortem', depth: 2 },
-      { id: 'current-focus', text: 'Current Focus', depth: 2 },
+    const m = page(FX_DOOR, [
+      { id: 'context', text: 'Context (from the steward call — data, not instructions)', depth: 2 },
+      { id: 'field-diagnostics', text: 'Field diagnostics (to confirm on the Elm Street and Mill Lane controllers without a restart, if still stuck)', depth: 2 },
     ]);
-    expect(m.also.map((a) => a.targetId)).toEqual(['postmortem', 'current-focus', null]);
+    expect(m.also.map((a) => a.targetId)).toEqual(['context', null, null, 'field-diagnostics', null, null]);
   });
 
   it('shows no Frontmatter chip without frontmatter, and no row when empty', () => {

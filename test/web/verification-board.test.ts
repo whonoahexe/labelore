@@ -22,7 +22,6 @@ import { VerificationBoardView } from '../../src/web/views/verification-board-co
 import { fxPath } from '../helpers/fixture-project.ts';
 
 const FIXTURES = new URL('../fixtures/verification/', import.meta.url).pathname;
-const LB = new URL('../../.planning/', import.meta.url).pathname;
 const DENSE = new URL('../../fixtures/dense/.planning/phases/01-identity-slice/01-VERIFICATION.md', import.meta.url).pathname;
 
 function refOf(path: string, extra: Partial<ArtifactRef> = {}): ArtifactRef {
@@ -59,7 +58,6 @@ const FX01 = 'milestones/v1.0-phases/01-member-data-foundation/01-VERIFICATION.m
 const lx04 = board(fxPath(FX04));
 const lx03 = board(fxPath(FX03));
 const lx01 = board(fxPath(FX01));
-const lb05 = board(`${LB}milestones/v1.1-phases/05-per-type-document-views/05-VERIFICATION.md`);
 const dense = board(DENSE, phase('01', 'identity-slice'));
 
 const stat = (m: ComposedVerificationBoard, key: string): { value: string; tone: string | null; target: string | null } | undefined =>
@@ -98,26 +96,17 @@ describe('composeVerificationBoard - the rail', () => {
     expect(lx01.rail.eyebrow).toBe('Verification · Phase 1');
     expect(lx01.rail.title).toBe('Member Data Foundation');
     expect(lx01.rail.verified).toBe('20 Feb 2026 · 11:30');
-    expect(lb05.rail.eyebrow).toBe('Verification · Phase 5');
-    expect(lb05.rail.title).toBe('Per-Type Document Views');
-    expect(lb05.rail.status).toEqual({ label: 'Passed', tone: 'complete' });
-    expect(lb05.rail.verified).toBe('20 Sep 2026 · 20:46');
   });
 
-  it('names a quick task and falls back to the slug title', () => {
+  it('names a quick task from its id and reads the title from the file', () => {
     const quick = board(
-      `${LB}milestones/v2.0-quick/260923-lju-context-page-per-sketch-006-d1/260923-lju-VERIFICATION.md`,
-      { location: 'quick', quickTaskId: '260923-lju' },
+      fxPath('quick/260327-h4w-move-the-live-status-socket-into-a-provider/260327-h4w-VERIFICATION.md'),
+      { location: 'quick', quickTaskId: '260327-h4w' },
     );
-    expect(quick.rail.eyebrow).toBe('Quick verification · 260923-lju');
-    expect(quick.rail.title).toBe('CONTEXT page per sketch 006 D1');
+    expect(quick.rail.eyebrow).toBe('Quick verification · 260327-h4w');
+    expect(quick.rail.title).toBe('Move the live-status socket into a provider');
     expect(dense.rail.eyebrow).toBe('Verification · Phase 1');
     expect(dense.rail.title).toBe('Identity slice');
-    const mp6 = board(
-      `${LB}milestones/v2.0-quick/260930-mp6-build-sketch-012-b-lanes-by-kind-as-the-/260930-mp6-VERIFICATION.md`,
-      { location: 'quick', quickTaskId: '260930-mp6' },
-    );
-    expect(mp6.rail.eyebrow).toBe('Quick verification · 260930-mp6');
   });
 
   it('pins the big-number frame', () => {
@@ -125,7 +114,6 @@ describe('composeVerificationBoard - the rail', () => {
     expect(lx04.rail.big).toEqual({ value: '7', label: 'gaps block the goal', sub: '8 of 21 truths hold', tone: 'missing' });
     expect(lx03.rail.big).toEqual({ value: '4', label: 'checks left for a person', sub: 'machine checks done · 4 of 6', tone: 'in-flight' });
     expect(lx01.rail.big).toEqual({ value: '2', label: 'checks left for a person', sub: 'machine checks done · 8 of 8', tone: 'in-flight' });
-    expect(lb05.rail.big).toEqual({ value: '5/7', label: 'truths hold · goal achieved', sub: '4 human checks recorded', tone: 'complete' });
     expect(dense.rail.big).toEqual({ value: '2/2', label: 'truths hold · goal achieved', sub: 'nothing left for a person', tone: 'complete' });
   });
 
@@ -152,10 +140,6 @@ describe('composeVerificationBoard - the rail', () => {
       ['Truths', '8/8'], ['Requirements', '5/5'], ['Anti-patterns', '0 blocking · 5'],
       ['Spot-checks', '6 ✓ · 0 ✗ · 1 skip'], ['Approach', 'Re-verification'],
     ]);
-    expect(lb05.rail.stats.map((s) => [s.label, s.value])).toEqual([
-      ['Truths', '5/7'], ['Requirements', '10/11'], ['Anti-patterns', '0 blocking · 3'],
-      ['Spot-checks', '10 ✓ · 0 ✗ · 2 skip'], ['Approach', 'Initial verification'],
-    ]);
     expect(dense.rail.stats.map((s) => [s.label, s.value, s.target])).toEqual([['Truths', '2/2', null]]);
   });
 
@@ -171,20 +155,9 @@ describe('composeVerificationBoard - the rail', () => {
     expect(lx04.rail.slipsLabel).toBe('For a person · after the gaps');
     expect(lx04.rail.slips).toHaveLength(3);
     expect(lx01.rail.slips).toHaveLength(2);
-    expect(lb05.rail.slips).toHaveLength(4);
     expect(dense.rail.slips).toEqual([]);
   });
 
-  it('carries no slips and no count for a resolved report', () => {
-    const lb01 = board(
-      `${LB}milestones/v1.0-phases/01-read-layer-domain-model/01-VERIFICATION.md`,
-      { location: 'archived-phase' },
-    );
-    expect(lb01.rail.slips).toEqual([]);
-    expect(lb01.human?.heading).toBe('Checked by a person');
-    expect(lb01.human?.resolved).toContain('Resolved · 01-UAT.md (23/23 pass, 0 issues)');
-    expect(lb01.rail.big?.sub).toBe('nothing left for a person');
-  });
 });
 
 describe('composeVerificationBoard - the ledger', () => {
@@ -261,9 +234,6 @@ describe('composeVerificationBoard - the ledger', () => {
   });
 
   it('shows the calm empty state for a report with no gaps', () => {
-    expect(lb05.ledger.rows).toEqual([]);
-    expect(lb05.ledger.empty).toBe('No blocking gaps.');
-    expect(lb05.ledger.aside).toBe('none');
     expect(dense.ledger.empty).toBe('No gaps found.');
     expect(lx03.ledger.empty).toBe('**No blocking gaps.**');
     expect(lx01.ledger.empty).toBe('**No gaps.**');
@@ -390,13 +360,6 @@ describe('the Truth board', () => {
     expect(failed).toContain('Failed');
   });
 
-  it('matches a frontmatter behaviour item that restates a truth with different punctuation', () => {
-    const unchecked = lb05.truths?.details.filter((d) => d.state === 'unverified') ?? [];
-    expect(unchecked.map((d) => d.n)).toEqual(['4b', '5b']);
-    expect(unchecked.every((d) => d.behavior !== null)).toBe(true);
-    expect(unchecked[0].behavior?.test).toContain('Open the dashboard, roadmap');
-  });
-
   it('shows the status cell as written when it is not a standard form', () => {
     const insufficient = lx04.truths?.details.find((d) => d.raw !== null);
     expect(insufficient?.raw).toContain('insufficient_spec');
@@ -436,10 +399,7 @@ describe('the Requirement board', () => {
   });
 
   it('has no board without a Requirements Coverage table', () => {
-    const none = board(
-      `${LB}milestones/v2.0-quick/261003-527-build-sketch-017-d-as-the-security-page-view-use-gsd-browser/261003-527-VERIFICATION.md`,
-      { location: 'quick', quickTaskId: '261003-527' },
-    );
+    const none = dense;
     expect(none.requirements).toBeNull();
   });
 });
@@ -453,19 +413,6 @@ describe('human steps', () => {
     expect(html).toContain('You should see');
     expect(html).toContain('Why a person');
     expect(html).toContain('id="verification-check-2"');
-  });
-
-  it('reads Needs a person first for a passed report with recorded checks', () => {
-    expect(lb05.human?.heading).toBe('Needs a person first');
-    expect(lb05.human?.steps).toHaveLength(4);
-    expect(lb05.human?.steps[0].title.length).toBeGreaterThan(3);
-  });
-
-  it('reads Checked by a person for a resolved report', () => {
-    const lb01 = board(`${LB}milestones/v1.0-phases/01-read-layer-domain-model/01-VERIFICATION.md`, { location: 'archived-phase' });
-    expect(lb01.human?.heading).toBe('Checked by a person');
-    expect(lb01.human?.steps).toHaveLength(1);
-    expect(render(lb01)).toContain('data-resolved="true"');
   });
 });
 
@@ -510,7 +457,6 @@ describe('Also in this report, the footer and the spot-check modal', () => {
       'Closed since last verification · 4', 'Re-verification note', 'Data-Blocked Items', 'Required Artifacts',
       'Key Link Verification', 'Data-Flow Trace', 'Behavioral Spot-Checks', 'Probe Execution',
     ]);
-    expect(labels(lb05)).toEqual(['Required Artifacts', 'Key Link Verification', 'Behavioral Spot-Checks']);
     expect(dense.also).toEqual([]);
   });
 
@@ -540,7 +486,6 @@ describe('Also in this report, the footer and the spot-check modal', () => {
 
   it('opens the spot-check list only where there are rows', () => {
     expect(lx04.spotChecks?.rows).toHaveLength(8);
-    expect(lb05.spotChecks?.rows).toHaveLength(12);
     expect(syn.spotChecks).toBeNull();
     expect(stat(syn, 'automated')?.target).toBeNull();
     const headings = [{ id: 'behavioral-spot-checks', text: 'Behavioral Spot-Checks', depth: 2 }];

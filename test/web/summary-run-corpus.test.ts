@@ -1,5 +1,5 @@
-// quick-261006-iz7 (QIZ7-08): real-corpus guards over every SUMMARY.md in this repo's `.planning/` and in
-// the made-up Lendshed project (test/fixtures/lendshed), built through the real repository load so quick,
+// quick-261006-iz7 (QIZ7-08): real-corpus guards over every SUMMARY.md in the made-up Lendshed
+// project (test/fixtures/lendshed), built through the real repository load so quick,
 // archived and archived-quick summaries reach the handler with the refs discovery gives them. Every
 // summary must carry `structured.summary` and compose to a non-null page, and the sketch docs plus the
 // harder ones match the values pinned below. The pinned values were confirmed with grep / awk over the
@@ -15,8 +15,6 @@ import { composeSummaryRun, requirementPreviews } from '../../src/web/views/summ
 import type { ComposedSummaryRun } from '../../src/web/views/summary-run.ts';
 import { FX_ROOT, fxPath } from '../helpers/fixture-project.ts';
 
-const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
-const LB_PLANNING = join(LB_ROOT, '.planning');
 
 /** A folder holding research, not a summary run: `research`, or an archived `v1.0-research` style folder. */
 function isResearchFolder(name: string): boolean {
@@ -42,7 +40,6 @@ function walk(root: string): string[] {
   return found.sort();
 }
 
-let lb: ProjectPresentation;
 let fx: ProjectPresentation;
 
 beforeAll(async () => {
@@ -50,7 +47,6 @@ beforeAll(async () => {
     const repository = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
     return toProjectPresentation(await repository.load());
   };
-  lb = await load(LB_ROOT);
   fx = await load(FX_ROOT);
 }, 60000);
 
@@ -76,20 +72,6 @@ const isSummary = (path: string): boolean =>
   path.endsWith('SUMMARY.md') && !path.split('/').slice(0, -1).some(isResearchFolder) && !path.includes('/sketches/') && !path.includes('/spikes/') && !path.includes('/onboarding/');
 
 describe('SUMMARY corpus — every file extracts and composes', () => {
-  it('finds the same files on disk and in the presentation (labelore)', () => {
-    const onDisk = walk(LB_PLANNING).map((p) => relative(LB_ROOT, p)).sort();
-    const loaded = lb.artifacts.filter((a) => isSummary(a.path)).map((a) => a.path).sort();
-    expect(loaded).toEqual(onDisk);
-    expect(loaded.length).toBeGreaterThanOrEqual(110);
-  });
-
-  it('labelore: structured.summary on every file and a non-null page', () => {
-    for (const a of lb.artifacts.filter((x) => isSummary(x.path))) {
-      expect(a.structured.summary, a.path).toBeDefined();
-      expect(() => compose(a), a.path).not.toThrow();
-    }
-  });
-
   it('finds the same files on disk and in the presentation (Lendshed)', () => {
     const onDisk = walk(join(FX_ROOT, '.planning')).map((p) => relative(FX_ROOT, p)).sort();
     const loaded = fx.artifacts.filter((a) => isSummary(a.path)).map((a) => a.path).sort();
@@ -107,18 +89,8 @@ describe('SUMMARY corpus — every file extracts and composes', () => {
   });
 
   it('leaves research/SUMMARY.md unclaimed', () => {
-    const research = lb.artifacts.filter((a) => a.path.includes('/research/') && a.path.endsWith('SUMMARY.md'));
+    const research = fx.artifacts.filter((a) => a.path.includes('/research/') && a.path.endsWith('SUMMARY.md'));
     for (const a of research) expect(a.structured.summary, a.path).toBeUndefined();
-  });
-
-  it('resolves at least the planning-time share of requirement IDs through the archives', () => {
-    let found = 0;
-    for (const a of lb.artifacts.filter((x) => isSummary(x.path))) {
-      const model = compose(a);
-      const previews = requirementPreviews(lb, a.path, model.modals.requirements, model.quick);
-      found += Object.values(previews).filter((p) => p.found).length;
-    }
-    expect(found).toBeGreaterThanOrEqual(154);
   });
 
   // Counted by hand from the frontmatter of exactly these six files, so a summary another plan adds
@@ -147,67 +119,6 @@ describe('SUMMARY corpus — every file extracts and composes', () => {
       found += Object.values(previews).filter((p) => p.found).length;
     }
     expect([found, total]).toEqual([7, 8]);
-  });
-});
-
-describe('sketch docs — labelore', () => {
-  it('05-01: the canonical summary', () => {
-    const a = artifactAt(lb, 'v1.1-phases/05-per-type-document-views/05-01-SUMMARY.md');
-    const m = compose(a);
-    expect(m.head.eyebrow).toBe('Summary of 05-01 · Phase 5 · Per type document views');
-    expect(m.head.title).toBe('Discussion-log view, section-projection extractor, view registry');
-    expect([m.head.completed, m.head.duration, m.head.started, m.head.type]).toEqual(['20 Sep 2026', '26min', '20:34', 'UI']);
-    expect(m.head.status).toEqual({ label: 'Complete', tone: 'complete' });
-    expect(m.head.selfCheck?.label).toBe('Self-check passed');
-    expect(m.triggers).toEqual({ tasks: { label: 'Tasks', count: 2 }, files: { count: 15 }, requirements: { done: 3, pending: 0 } });
-    expect([m.outcome?.shipped, m.outcome?.proven, m.outcome?.human, m.outcome?.fixed]).toEqual([5, 3, 1, 0]);
-    expect(m.outcome?.rows.map((r) => r.pills.map((p) => `${p.id}:${p.state}${p.human ? ':human' : ''}`))).toEqual([['D1:pass'], [], ['D2:pass', 'D3:unknown:human'], [], []]);
-    expect(m.run.stops.map((s) => s.kind)).toEqual(['start', 'task', 'task', 'end']);
-    expect(m.run.went).not.toBeNull();
-    expect(m.proof?.map((p) => [p.id, p.human])).toEqual([['D1', false], ['D2', false], ['D3', true]]);
-    const previews = requirementPreviews(lb, a.path, m.modals.requirements, false);
-    expect(previews['VIEW-01']).toMatchObject({
-      found: true,
-      text: 'Each artifact type renders through a view selected for that type, rather than one undifferentiated reader',
-      status: 'Complete',
-      location: '.planning/milestones/v1.1-REQUIREMENTS.md',
-      phase: 'Phase 5',
-    });
-    expect(previews['VIEW-01'].url).not.toBeNull();
-  });
-
-  it('0x4: 16 commits, five deviations on the commits stop, no outcome', () => {
-    const a = artifactAt(lb, 'v1.0-quick/260910-0x4-close-every-tech-debt-item-in-planning-v/260910-0x4-SUMMARY.md');
-    const m = compose(a);
-    expect(m.head.eyebrow).toBe('Quick summary · 260910-0x4');
-    expect(m.head.title).toBe('Close Every Tech-Debt Item');
-    expect([m.head.completed, m.head.duration, m.head.started, m.head.type]).toEqual(['10 Sep 2026', '50min', null, 'Tech debt remediation']);
-    expect(m.triggers).toEqual({ tasks: { label: 'Commits', count: 16 }, files: { count: 28 }, requirements: { done: 14, pending: 0 } });
-    expect(m.outcome).toBeNull();
-    expect(m.run.aside).toBe('16 commits · 5 fixed on the way');
-    expect(m.run.stops.map((s) => [s.kind, s.deviations.length])).toEqual([['start', 0], ['commits', 5], ['end', 0]]);
-    expect(m.run.extras.map((e) => e.title)).toEqual(['Out-of-Scope (Not Fixed — Logged)']);
-    expect(m.proof).toHaveLength(7);
-    expect(m.proof?.filter((p) => p.human)).toHaveLength(1);
-    expect(m.decisions.items).toHaveLength(8);
-    expect(m.sourceOnly.map((s) => s.label)).toEqual(expect.arrayContaining(['Fourteen-Item Outcome Table', 'Note on STATE.md']));
-    expect(m.lineage?.affects).toHaveLength(3);
-    const previews = requirementPreviews(lb, a.path, m.modals.requirements, m.quick);
-    expect(Object.values(previews).every((p) => !p.found)).toBe(true);
-  });
-
-  it('3us: the quick format with a Tasks table', () => {
-    const a = artifactAt(lb, 'quick/260922-3us-build-sketch-004-b3-folded-chapters-docu/260922-3us-SUMMARY.md');
-    const m = compose(a);
-    expect(m.head.eyebrow).toBe('Quick summary · 260922-3us');
-    expect(m.head.completed).toBe('22 Sep 2026');
-    expect(m.triggers).toEqual({ tasks: { label: 'Tasks', count: 3 }, files: { count: 18 }, requirements: { done: 4, pending: 0 } });
-    expect(m.outcome).toBeNull();
-    expect(m.run.stops[m.run.stops.length - 1].deviations).toHaveLength(2);
-    const previews = requirementPreviews(lb, a.path, m.modals.requirements, m.quick);
-    expect(previews['B3-01']).toMatchObject({ found: false, status: 'Complete in this summary', location: '—', phase: '—', url: null });
-    expect(m.waits.map((s) => s.title)).toEqual(['Human check (pending)']);
-    expect(m.sourceOnly.map((s) => s.label)).toEqual(expect.arrayContaining(['Verification']));
   });
 });
 
@@ -261,20 +172,6 @@ describe('sketch docs — Lendshed 04-06', () => {
 });
 
 describe('harder summaries', () => {
-  it('lb 02-13: the longest Proof table (14 deliverables)', () => {
-    const m = compose(artifactAt(lb, 'v1.0-phases/02-situational-awareness-artifact-reading/02-13-SUMMARY.md'));
-    expect(m.proof).toHaveLength(14);
-  });
-
-  it('lb 528: a quick with a commit count and quick-task requirement IDs', () => {
-    const a = artifactAt(lb, 'quick/261003-528-build-sketch-018-b-as-the-ui-review-page-view-use-gsd-browse/261003-528-SUMMARY.md');
-    const m = compose(a);
-    expect(m.quick).toBe(true);
-    expect(m.triggers.tasks).toEqual({ label: 'Commits', count: 3 });
-    expect(m.modals.requirements.every((r) => r.id.startsWith('QK528-'))).toBe(true);
-    expect(m.head.title).toBe('UI-REVIEW scorecard (sketch 018 B)');
-  });
-
   it('Lendshed 04-07: seven Rule deviations', () => {
     const m = compose(artifactAt(fx, 'phases/04-bulk-loan-export/04-07-SUMMARY.md'));
     expect(m.run.cards).toHaveLength(7);

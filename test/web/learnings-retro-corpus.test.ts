@@ -1,5 +1,4 @@
-// quick-261017-k45 (QK45-07): corpus guards over every LEARNINGS file in this repo's `.planning/` (none
-// today; the sketches are skipped), the dense fixture's two files, the synthetic template and the
+// quick-261017-k45 (QK45-07): corpus guards over every LEARNINGS file in the dense fixture's two files, the synthetic template and the
 // made-up Lendshed project (D-01, D-05, D-06), built through the real repository load so phase and
 // project-root files reach the handler with the refs discovery gives them. Every file must carry
 // `structured.learnings` and compose to a non-null page whose per-kind counts equal the frontmatter
@@ -19,7 +18,6 @@ import type { ComposedLearningsRetro } from '../../src/web/views/learnings-retro
 import { FX_PLANNING, FX_ROOT, fxPath, loadProject } from '../helpers/fixture-project.ts';
 
 const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
-const LB_PLANNING = join(LB_ROOT, '.planning');
 const DENSE = join(LB_ROOT, 'fixtures/dense');
 const FIXTURES = join(LB_ROOT, 'test/fixtures/learnings');
 
@@ -42,7 +40,6 @@ function walk(root: string): string[] {
   return found.sort();
 }
 
-let lb: ProjectPresentation;
 let dense: ProjectPresentation;
 let fx: ProjectPresentation;
 
@@ -51,7 +48,6 @@ beforeAll(async () => {
     const repository = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
     return toProjectPresentation(await repository.load());
   };
-  lb = await load(LB_ROOT);
   dense = await load(DENSE);
   fx = (await loadProject(FX_ROOT)).presentation;
 }, 60000);
@@ -104,7 +100,6 @@ function frontmatterCounts(a: Artifact): number[] {
 describe('every LEARNINGS file in the corpus', () => {
   it('extracts without throwing, composes non-null and matches its frontmatter counts', () => {
     const presentations: [string, ProjectPresentation][] = [
-      ['labelore', lb],
       ['dense', dense],
       ['lendshed', fx],
     ];
@@ -120,7 +115,7 @@ describe('every LEARNINGS file in the corpus', () => {
       }
     }
     // The walk below proves the files exist on disk; the combined corpus can never be empty.
-    const onDisk = [...walk(LB_PLANNING), ...walk(join(DENSE, '.planning')), ...walk(FIXTURES), ...walk(FX_PLANNING)];
+    const onDisk = [...walk(join(DENSE, '.planning')), ...walk(FIXTURES), ...walk(FX_PLANNING)];
     expect(onDisk.length).toBeGreaterThanOrEqual(4);
     expect(walk(FX_PLANNING).length).toBeGreaterThanOrEqual(1);
     expect(files).toBeGreaterThanOrEqual(2);

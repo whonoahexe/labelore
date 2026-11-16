@@ -1,6 +1,5 @@
-// quick-260929-3x3 (3X3-01, H-3/H-4): corpus guards over every RESEARCH.md in this repo's `.planning/`
-// (keyed LB) plus the made-up Lendshed project (keyed FX, walked through FX_PLANNING; a missing fixture
-// throws instead of skipping). Every file must extract without throwing, compose to a non-null
+// quick-260929-3x3 (3X3-01, H-3/H-4): corpus guards over every RESEARCH.md in the made-up Lendshed project
+// (keyed FX, walked through FX_PLANNING; a missing fixture throws instead of skipping). Every file must extract without throwing, compose to a non-null
 // briefing, and leave no `##` section dropped silently. The pinned counts were independently confirmed
 // with awk/grep against the files themselves (never copied from the extractor's own output).
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -14,8 +13,6 @@ import {
 } from '../../src/planning-repo/handlers/research-briefing.ts';
 import { composeResearchBriefing } from '../../src/web/views/research-briefing.ts';
 import type { DocumentSectionGroup } from '../../src/web/views/document-sections.ts';
-
-const REPO_PLANNING = new URL('../../.planning', import.meta.url).pathname;
 
 function walkResearch(root: string): string[] {
   const found: string[] = [];
@@ -36,9 +33,8 @@ function walkResearch(root: string): string[] {
   return found.sort();
 }
 
-const LB_FILES = walkResearch(REPO_PLANNING);
 const FX_FILES = walkResearch(FX_PLANNING);
-const FILES = [...LB_FILES, ...FX_FILES];
+const FILES = FX_FILES;
 
 function slug(heading: string): string {
   return heading.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -50,15 +46,12 @@ function bodyOf(path: string): string {
 
 describe('RESEARCH corpus guard', () => {
   it('finds the corpus', () => {
-    // At least 5 Labelore files and the Lendshed RESEARCH files (R6, R8: minimums, never a total).
-    expect(LB_FILES.length).toBeGreaterThanOrEqual(5);
+    // The Lendshed RESEARCH files (R6, R8: a minimum, never a total).
     expect(FX_FILES.length).toBeGreaterThanOrEqual(4);
   });
 
   for (const file of FILES) {
-    const label = file.startsWith(REPO_PLANNING)
-      ? `LB ${relative(REPO_PLANNING, file)}`
-      : `FX ${relative(FX_PLANNING, file)}`;
+    const label = `FX ${relative(FX_PLANNING, file)}`;
 
     it(`${label}: extracts, composes non-null, and drops no ## section silently`, () => {
       const body = bodyOf(file);
@@ -106,19 +99,6 @@ describe('RESEARCH corpus guard', () => {
       }
     });
   }
-
-  it('LB v1.0/02 anchors', () => {
-    const b = extractResearchBriefing(
-      bodyOf(
-        `${REPO_PLANNING}/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-RESEARCH.md`,
-      ),
-    );
-    expect(b.stack?.groups.map((g) => g.packages.length)).toEqual([6, 15]);
-    expect(b.audit?.rows).toHaveLength(30);
-    expect(b.pitfalls?.items).toHaveLength(9);
-    expect(b.sources?.tiers.map((t) => t.items.length)).toEqual([5, 12, 1]);
-    expect(b.sourceOnly).toHaveLength(7);
-  });
 
   it('FX v1.0/02 anchors', () => {
     const b = extractResearchBriefing(bodyOf(fxPath('milestones/v1.0-phases/02-shed-inventory-health/02-RESEARCH.md')));

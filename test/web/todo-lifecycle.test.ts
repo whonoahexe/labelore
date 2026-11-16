@@ -17,7 +17,7 @@ import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { daysOpen, composeTodoLifecycle, formatDay, formatShort, readStamp } from '../../src/web/views/todo-lifecycle.ts';
 import type { ComposedTodoLifecycle } from '../../src/web/views/todo-lifecycle.ts';
 import { TodoLifecycleView } from '../../src/web/views/todo-lifecycle-components.tsx';
-import { LB_ROOT, TODO_KEYS, NOTE_KEYS, loadProject, readKeyed } from '../helpers/todo-corpus.ts';
+import { TODO_KEYS, NOTE_KEYS, loadFiles, loadProject, readKeyed } from '../helpers/todo-corpus.ts';
 import type { LoadedProject } from '../helpers/todo-corpus.ts';
 
 const NOW = new Date('2026-10-23T12:00:00+05:30');
@@ -615,10 +615,27 @@ describe('the view, more', () => {
   });
 });
 
-describe("labelore's own promoted todo (001), checklist squares", () => {
-  it('renders its acceptance list as squares with some done', async () => {
-    const project = await loadProject(LB_ROOT);
-    const path = '.planning/todos/completed/001-sketches-page-in-labelore.md';
+describe('checklist squares', () => {
+  it('renders an acceptance list as squares with some done', async () => {
+    const path = '.planning/todos/pending/tidy-the-shelves.md';
+    const project = await loadFiles({
+      [path]: [
+        '---',
+        'title: "Tidy the shelves"',
+        'date: "2026-03-26"',
+        'priority: medium',
+        '---',
+        '',
+        'Done when:',
+        '',
+        '- [x] The canal shelf holds only real stock',
+        '- [x] The north shelf holds only real stock',
+        '- [x] The depot shelf holds only real stock',
+        '- [ ] The duplicate ladder is gone',
+        '- [ ] The lost-and-found bags are listed',
+        '',
+      ].join('\n'),
+    });
     const artifact = project.presentation.artifacts.find((candidate) => candidate.path === path)!;
     const model = composeTodoLifecycle(
       {
@@ -635,8 +652,8 @@ describe("labelore's own promoted todo (001), checklist squares", () => {
     const squares = markup.match(/class="view-todo-check" data-done="(true|false)"/g) ?? [];
     expect(squares.length).toBe(model.captured.plan!.checks!.total);
     expect(squares.filter((square) => square.includes('"true"')).length).toBe(model.captured.plan!.checks!.done);
-    expect(squares).toHaveLength(7);
-    expect(squares.filter((square) => square.includes('"true"'))).toHaveLength(5);
+    expect(squares).toHaveLength(5);
+    expect(squares.filter((square) => square.includes('"true"'))).toHaveLength(3);
   });
 });
 

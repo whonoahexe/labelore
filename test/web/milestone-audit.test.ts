@@ -182,42 +182,6 @@ describe('composeMilestoneAudit - the Lendshed audit', () => {
   });
 });
 
-describe("composeMilestoneAudit - this repo's own audit", () => {
-  const model = composeContent(readFileSync(new URL('../../.planning/milestones/v1.0-MILESTONE-AUDIT.md', import.meta.url), 'utf8'));
-
-  it('reads Passed with four full scores and three "No gaps" groups', () => {
-    expect(model?.intro.verdict).toEqual({ label: 'Passed', tone: 'complete' });
-    expect(model?.intro.audited).toBe('9 Sep 2026');
-    expect(model?.scores?.map((score) => `${score.label} ${score.value} ${score.tone}`)).toEqual([
-      'Requirements 45/45 complete',
-      'Phases 4/4 complete',
-      'Integration 7/7 complete',
-      'Flows 7/7 complete',
-    ]);
-    expect(model?.scores?.[0].fill).toBe(100);
-    expect(model?.scores?.[0].segments).toBeNull();
-    expect(model?.gaps?.map((group) => group.emptyText)).toEqual(['No gaps', 'No gaps', 'No gaps']);
-  });
-
-  it('counts every closed debt item closed, outside the total', () => {
-    expect(model?.debt?.heading).toMatch(/^0 items across \d+ phases$/);
-    expect(model?.debt?.closedNote).toMatch(/^\d+ closed$/);
-    expect((model?.debt?.groups ?? []).every((group) => group.items.every((item) => item.tone === 'complete'))).toBe(true);
-  });
-
-  it('lists the unclaimed keys as labelled rows and states the Nyquist reason', () => {
-    expect(model?.extras.map((extra) => extra.label)).toEqual([
-      'Supersedes',
-      'Previously blocking now closed',
-      'Tech debt reconciliation',
-    ]);
-    expect(model?.extras[1].rows[0]).toMatchObject({ label: 'TGT-08' });
-    expect(model?.nyquist?.chips).toEqual([{ key: 'overall', label: 'Overall', phases: 'not applicable', tone: 'quiet' }]);
-    expect(model?.nyquist?.reason).toContain('Section skipped');
-    expect(model?.narrativeOpen).toBe(false);
-  });
-});
-
 describe('composeMilestoneAudit - prose-only audits', () => {
   it('opens the narrative with no scores, gaps, debt, Nyquist or unclaimed rows', () => {
     for (const url of [

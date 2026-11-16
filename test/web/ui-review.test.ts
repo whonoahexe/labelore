@@ -24,13 +24,7 @@ import type { ComposedUiReview } from '../../src/web/views/ui-review.ts';
 import { UiReviewIntroMeta, UiReviewView, stepPillar } from '../../src/web/views/ui-review-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
-const SYN = new URL('../../.planning/sketches/018-ui-review-page/synthetic-UI-REVIEW.md', import.meta.url);
-const LB05 = new URL('../../.planning/milestones/v1.1-phases/05-per-type-document-views/05-UI-REVIEW.md', import.meta.url);
-const LB03 = new URL('../../.planning/milestones/v1.0-phases/03-search-browsing-traceability/03-UI-REVIEW.md', import.meta.url);
-const LB04 = new URL(
-  '../../.planning/milestones/v1.0-phases/04-portability-degradation-hardening/04-UI-REVIEW.md',
-  import.meta.url,
-);
+const SYN = new URL('../fixtures/ui-review/synthetic-UI-REVIEW.md', import.meta.url);
 const FX03 = fxPath('phases/03-account-admin-and-sessions/03-UI-REVIEW.md');
 
 const HEADINGS: ViewInput['headings'] = [
@@ -181,20 +175,6 @@ describe('composeUiReview — synthetic doc', () => {
 });
 
 describe('composeUiReview — corpus docs', () => {
-  it('labelore 05', () => {
-    const review = compose(LB05, { number: '05', slug: 'per-type-document-views' });
-    expect(review.verdict.line).toBe('2 points lost, in Color and Experience Design.');
-    expect(review.method.status).toBeNull();
-    expect(review.method.shots).toMatchObject({ label: 'Seen in a browser', tone: 'complete' });
-    expect(review.method.baseline?.label).toBe('Against UI-SPEC.md');
-    expect(review.history).toBeNull();
-    expect(review.fixes.map((f) => f.pillarNumbers)).toEqual([[3, 6], [4], [2]]);
-    expect(review.pillars[2].fixNumbers).toEqual([1]);
-    expect(review.pillars[5].fixNumbers).toEqual([1]);
-    expect(review.sourceOnly.map((s) => s.label)).toEqual(['Frontmatter', 'Pillar Scores table', 'Audit method notes']);
-    expect(review.sourceOnly[2].targetId).toBe('detailed-findings');
-  });
-
   it('lendshed 03', () => {
     const review = compose(FX03, { number: '03', slug: 'account-admin-and-sessions' });
     expect(review.intro.title).toBe('Account admin and sessions');
@@ -203,20 +183,6 @@ describe('composeUiReview — corpus docs', () => {
     expect(review.method.shots).toMatchObject({ label: 'Code only · not seen in a browser', tone: 'in-flight' });
     expect(review.pillars.find((p) => p.n === review.initialPillar)?.name).toBe('Typography');
     expect(review.sourceOnly.map((s) => s.label)).toEqual(['Pillar Scores table', 'Top 3 Priority Fixes (as written)']);
-  });
-
-  it('labelore 03 and 04: full marks, history bars, no frontmatter noise', () => {
-    const lb03 = compose(LB03, { number: '03', slug: 'search-browsing-traceability' });
-    expect(lb03.noFixes).toEqual({ kind: 'clear', note: null });
-    expect(lb03.history).toHaveLength(3);
-    expect(lb03.method.status).toEqual({ label: 'Passed', tone: 'complete' });
-    expect(lb03.method.supersedes).toBe(2);
-    const lb04 = compose(LB04, { number: '04', slug: 'portability-degradation-hardening' });
-    expect(lb04.noFixes).toEqual({ kind: 'clear', note: 'All specification requirements met. No blocking issues.' });
-    expect(lb04.method.shots).toMatchObject({ label: 'Screenshots not stated', tone: 'quiet' });
-    expect(lb04.method.extraFacts.map((f) => f.key)).toEqual(['This audit']);
-    expect(lb04.history).toHaveLength(3);
-    expect(lb04.intro.audited).toBe('10 Sep 2026');
   });
 });
 
@@ -264,42 +230,12 @@ describe('UiReviewView static markup', () => {
     expect(html).not.toMatch(/id="ui-review-fix-1"[^>]*data-highlight/);
   });
 
-  it('shows a shared fix under both pillars (labelore 05)', () => {
-    const lb05 = compose(LB05, { number: '05', slug: 'per-type-document-views' });
-    expect(markup(lb05, { initialPillar: 3 })).toContain('id="ui-review-fix-1"');
-    expect(markup(lb05, { initialPillar: 6 })).toContain('id="ui-review-fix-1"');
-    expect(markup(lb05, { initialPillar: 1 })).not.toContain('id="ui-review-fix-1"');
-  });
-
   it('lendshed Typography: the ref chip and the more toggle', () => {
     const sp = compose(FX03, { number: '03', slug: 'account-admin-and-sessions' });
     const html = markup(sp);
     expect(html).toContain('frontend/components/confirm-danger-dialog.tsx:174');
     expect(html).toContain('aria-expanded="false"');
     expect(html).toContain('>more<');
-  });
-
-  it('renders the back matter in document order, folded, with the files tree', () => {
-    const lb03 = compose(LB03, { number: '03', slug: 'search-browsing-traceability' });
-    const html = markup(lb03);
-    const summaries = [...html.matchAll(/<summary>([^<]*)<\/summary>/g)].map((m) => m[1]);
-    expect(summaries).toEqual(['Supersession Notice', 'Technical Verification', 'Summary', 'Files Audited']);
-    expect(html).not.toMatch(/<details[^>]*\sopen/);
-    expect(html).toContain('All Phase 3 tests');
-    expect(html).toContain('Nothing to fix.');
-    expect(html).toContain('Full marks. Nothing to fix.');
-    expect(html).toContain('Nothing found — every check held.');
-    expect(html.match(/class="view-ui-review-bar"/g)).toHaveLength(3);
-
-    const lb05 = compose(LB05, { number: '05', slug: 'per-type-document-views' });
-    const files = markup(lb05);
-    expect(files.match(/class="view-ui-review-files-group"/g)).toHaveLength(4);
-    expect(files).toContain('New Phase 5 Files');
-    expect(files).toContain('src/web/components/');
-    expect(files).not.toContain('class="view-ui-review-bar"');
-
-    const lb04 = compose(LB04, { number: '04', slug: 'portability-degradation-hardening' });
-    expect(markup(lb04).match(/class="view-ui-review-files-group"/g)).toHaveLength(3);
   });
 
   it('folds the correction note into a bold line, never a literal hash', () => {
@@ -311,11 +247,11 @@ describe('UiReviewView static markup', () => {
 
   it('lists what only the source holds, in order, as buttons', () => {
     const calls: (string | null)[] = [];
-    const lb05 = compose(LB05, { number: '05', slug: 'per-type-document-views' });
-    const html = markup(lb05, {}, () => calls.push('x'));
+    const sp = compose(FX03, { number: '03', slug: 'account-admin-and-sessions' });
+    const html = markup(sp, {}, () => calls.push('x'));
     const nav = html.slice(html.indexOf('id="ui-review-source-only"'));
     const labels = [...nav.matchAll(/class="status-chip"[^>]*>([^<]*)</g)].map((m) => m[1]);
-    expect(labels).toEqual(['Frontmatter', 'Pillar Scores table', 'Audit method notes']);
+    expect(labels).toEqual(['Pillar Scores table', 'Top 3 Priority Fixes (as written)']);
   });
 
   it('renders the facts row through UiReviewIntroMeta', () => {

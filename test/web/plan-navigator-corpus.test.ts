@@ -1,5 +1,5 @@
-// quick-261006-iz6 (QKIZ6-10): real-corpus guards over every PLAN.md in this repo's `.planning/`
-// (excluding the sketches), fixtures/dense and the made-up Lendshed project (D-01, D-05). A pinned row
+// quick-261006-iz6 (QKIZ6-10): real-corpus guards over every PLAN.md in fixtures/dense and the
+// made-up Lendshed project (D-01, D-05). A pinned row
 // whose file is missing throws, never skips (R7). Every file must extract without throwing and compose
 // through the real handler; the rows pinned below match values independently confirmed with grep / awk
 // over the source files (task and list counts read by hand; Lendshed dates are the ROWS entry's own
@@ -14,7 +14,6 @@ import { composePlanNavigator } from '../../src/web/views/plan-navigator.ts';
 import type { ComposedPlanNavigator } from '../../src/web/views/plan-navigator.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
-const REPO_PLANNING = new URL('../../.planning', import.meta.url).pathname;
 const DENSE_PLANNING = new URL('../../fixtures/dense/.planning', import.meta.url).pathname;
 
 function walk(root: string): string[] {
@@ -104,69 +103,7 @@ interface Row {
   };
 }
 
-const LB = REPO_PLANNING;
-
 const ROWS: Row[] = [
-  {
-    key: '0501',
-    root: LB,
-    file: 'milestones/v1.1-phases/05-per-type-document-views/05-01-PLAN.md',
-    addedAt: '2026-09-20T20:31:13+05:30',
-    headings: ["Artifacts this phase produces (this plan's share)"],
-    expect: {
-      eyebrow: 'Plan 05-01 · Phase 5 · Per type document views',
-      title: "Prove the per-type view architecture end to end on the phase's flagship case",
-      chips: ['Execute', 'Autonomous', 'Executed'],
-      triggers: [0, 18, 3],
-      stats: ['2', 'low', '160k'],
-      types: ['tracer', 'auto'],
-      gates: [null, null],
-      tdd: [false, false],
-      done: [2, 4],
-      strip: [
-        'Must-haves',
-        'Threat model',
-        'Context files',
-        'Execution context',
-        'Assumption delta decision',
-        'Output',
-        "Artifacts this phase produces (this plan's share)",
-        'Frontmatter',
-      ],
-      sourceRows: [['Read first'], ['Read first']],
-      planned: '20 Sep 2026',
-      plannedSource: 'git',
-      files: [13, 6],
-      acceptance: [10, 6],
-      objectiveRows: [true, true, true],
-    },
-  },
-  {
-    key: '0x4',
-    root: LB,
-    file: 'milestones/v1.0-quick/260910-0x4-close-every-tech-debt-item-in-planning-v/260910-0x4-PLAN.md',
-    sibling: true,
-    expect: {
-      eyebrow: 'Quick plan 260910-0x4',
-      title:
-        'Close the fourteen tech-debt items recorded in .planning/v1.0-MILESTONE-AUDIT.md so a re-audit reads zero open debt — or, for any item that does not genuinely close, leave it listed with an honest reason and do not flip the audit status',
-      chips: ['Execute', 'Autonomous', 'Executed'],
-      triggers: [0, 23, 14],
-      stats: ['7', 'low', '190k'],
-      types: ['auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
-      gates: [null, null, null, null, null, null, null],
-      tdd: [false, true, true, false, false, false, false],
-      done: [1, 8],
-      doneLead: 'Run at the end of the plan, on the final tree:',
-      strip: ['Must-haves', 'Threat model', 'Context files', 'Execution context', 'Measured baseline', 'Global rules', 'Output', 'Frontmatter'],
-      sourceRows: [['Pre-condition'], [], [], ['Pre-condition'], ['Pre-condition'], [], ['Pre-condition']],
-      planned: '10 Sep 2026',
-      plannedSource: 'quick-id',
-      // The paragraph after Output ("No tracer task. …") is the objective's own rest.
-      objectiveRows: [true, true, true],
-      restStarts: 'No tracer task.',
-    },
-  },
   {
     key: '0106',
     root: FX_PLANNING,
@@ -256,75 +193,6 @@ const ROWS: Row[] = [
       objectiveRows: [true, true, true],
     },
   },
-  {
-    key: 'q528',
-    root: LB,
-    file: 'milestones/v2.0-quick/261003-528-build-sketch-018-b-as-the-ui-review-page-view-use-gsd-browse/261003-528-PLAN.md',
-    sibling: true,
-    expect: {
-      eyebrow: 'Quick plan 261003-528',
-      title: "Build sketch 018's winner, B: Scorecard — hexagon radar + pillar inspector, as the UI-REVIEW page view",
-      chips: ['Execute', 'Autonomous', 'Executed'],
-      triggers: [0, 16, 9],
-      stats: ['3', '—', '—'],
-      types: ['tracer', 'auto', 'auto'],
-      gates: [null, null, null],
-      tdd: [true, true, false],
-      done: [6, 6],
-      strip: [
-        'Must-haves',
-        'Threat model',
-        'Context files',
-        'Execution context',
-        'Winner spec',
-        'Interfaces',
-        'Corpus facts',
-        'Gates',
-        'Planner notes',
-        'Source audit',
-        'Output',
-        'Wrapper warnings · 1',
-        'Frontmatter',
-      ],
-      sourceRows: [['Pre-condition', 'Read first'], ['Read first'], ['Pre-condition', 'Read first']],
-      planned: '3 Oct 2026',
-      plannedSource: 'quick-id',
-      objectiveRows: [true, true, true],
-    },
-  },
-  {
-    key: 'lb0217',
-    root: LB,
-    file: 'milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-17-PLAN.md',
-    addedAt: '2026-08-31T00:44:11+05:30',
-    expect: {
-      eyebrow: 'Plan 02-17 · Phase 2 · Situational awareness artifact reading',
-      title: 'Re-run the Phase 02 human gate on a fresh build with a complete matrix that closes the six process shortfalls from 02-13',
-      chips: ['Execute', '1 checkpoint', 'Gap closure', 'Executed'],
-      triggers: [3, 0, 10],
-      stats: ['1', 'low', '14k'],
-      types: ['checkpoint:human-verify'],
-      gates: ['blocking-human'],
-      tdd: [false],
-      done: [4, 3],
-      strip: [
-        'Must-haves',
-        'Threat model',
-        'Context files',
-        'Execution context',
-        'Prohibitions',
-        'Assumption delta',
-        'Output',
-        'Artifacts this phase produces',
-        'Multi-Source Coverage Audit',
-        'Frontmatter',
-      ],
-      sourceRows: [['Pre-condition', 'Read first', 'Resume signal']],
-      planned: '31 Aug 2026',
-      plannedSource: 'git',
-      objectiveRows: [false, true, true],
-    },
-  },
 ];
 
 function compose(row: Row): { plan: ComposedPlanNavigator; built: Built } {
@@ -378,21 +246,21 @@ describe('PLAN corpus — pinned rows', () => {
     });
   }
 
-  it('0501 counts its files and acceptance items per task', () => {
+  it('0106 counts its files and acceptance items per task', () => {
     const { plan } = compose(ROWS[0]);
-    expect(plan.tasks.map((task) => task.sub)).toEqual(['T1 · Tracer · 13 files', 'T2 · Auto · 6 files']);
-    expect(plan.tasks.map((task) => task.tabs.find((tab) => tab.key === 'side')?.count)).toEqual([10, 6]);
+    expect(plan.tasks.map((task) => task.sub)).toEqual(['T1 · Auto · TDD · 3 files', 'T2 · Auto · 3 files', 'T3 · Action · waits']);
+    expect(plan.tasks.slice(0, 2).map((task) => task.tabs.find((tab) => tab.key === 'side')?.count)).toEqual([9, 9]);
   });
 
   it('0106 reads Done when from the top-level verification, and T3 reads as an Action checkpoint', () => {
-    const { plan } = compose(ROWS[2]);
+    const { plan } = compose(ROWS[0]);
     expect(plan.doneWhen?.checks.items).toHaveLength(4);
     expect(plan.tasks[2].sub).toBe('T3 · Action · waits');
     expect(plan.tasks[2].tabs.map((tab) => tab.label)).toEqual(['Action', 'Afterwards']);
   });
 
   it('04-02 reads its inline options as two cards and keeps no Objective row', () => {
-    const { plan } = compose(ROWS[3]);
+    const { plan } = compose(ROWS[1]);
     const options = plan.tasks[0].sections.main.find((section) => section.kind === 'options');
     expect(options).toMatchObject({ kind: 'options' });
     expect((options as { options: { name: string | null }[] }).options.map((option) => option.name)).toEqual([
@@ -404,7 +272,7 @@ describe('PLAN corpus — pinned rows', () => {
   });
 
   it('t8m derives the name of its human-verify task from what-built', () => {
-    const { plan } = compose(ROWS[4]);
+    const { plan } = compose(ROWS[2]);
     expect(plan.tasks[2].name.startsWith('A hands-on check of')).toBe(true);
   });
 
@@ -425,7 +293,6 @@ describe('PLAN corpus — pinned rows', () => {
 
 describe('PLAN corpus — every plan extracts and composes', () => {
   const files: { planning: string; abs: string }[] = [
-    ...walk(REPO_PLANNING).map((abs) => ({ planning: REPO_PLANNING, abs })),
     ...walk(DENSE_PLANNING).map((abs) => ({ planning: DENSE_PLANNING, abs })),
     ...walk(FX_PLANNING).map((abs) => ({ planning: FX_PLANNING, abs })),
   ];
@@ -434,7 +301,6 @@ describe('PLAN corpus — every plan extracts and composes', () => {
     // Per corpus, so a sibling plan adding Lendshed files cannot move a pin (README R6, R8).
     const under = (root: string): number => files.filter((file) => file.planning === root).length;
     expect(under(FX_PLANNING)).toBeGreaterThanOrEqual(5);
-    expect(under(REPO_PLANNING)).toBeGreaterThanOrEqual(20);
     expect(under(DENSE_PLANNING)).toBeGreaterThanOrEqual(1);
   });
 
@@ -465,7 +331,8 @@ describe('PLAN corpus — every plan extracts and composes', () => {
         composed += 1;
       }
     }
-    expect(composed).toBeGreaterThan(20);
+    // 14 PLAN files sit under the two committed roots; one holds no task.
+    expect(composed).toBeGreaterThanOrEqual(12);
     expect(skipped).toBeLessThan(files.length);
   });
 });

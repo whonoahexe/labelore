@@ -1,4 +1,4 @@
-// quick-261017-18a (Q18A-08): corpus guards over every VERIFICATION.md in this repo's `.planning/`, the dense
+// quick-261017-18a (Q18A-08): corpus guards over every VERIFICATION.md in the dense
 // fixture, the synthetic template report and the made-up Lendshed project (D-01, D-05, D-06), built through the
 // real repository load so phase, archived-phase, quick and archived-quick reports reach the handler with the
 // refs discovery gives them. Every report must carry `structured.verification` and compose to a non-null page;
@@ -18,7 +18,6 @@ import type { ComposedVerificationBoard } from '../../src/web/views/verification
 import { FX_PLANNING, FX_ROOT, fxPath, loadProject } from '../helpers/fixture-project.ts';
 
 const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
-const LB_PLANNING = join(LB_ROOT, '.planning');
 const DENSE = join(LB_ROOT, 'fixtures/dense');
 const FIXTURES = join(LB_ROOT, 'test/fixtures/verification');
 
@@ -41,7 +40,6 @@ function walk(root: string): string[] {
   return found.sort();
 }
 
-let lb: ProjectPresentation;
 let dense: ProjectPresentation;
 let fx: ProjectPresentation;
 
@@ -50,7 +48,6 @@ beforeAll(async () => {
     const repository = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
     return toProjectPresentation(await repository.load());
   };
-  lb = await load(LB_ROOT);
   dense = await load(DENSE);
   fx = (await loadProject(FX_ROOT)).presentation;
 }, 60000);
@@ -94,20 +91,6 @@ function fixtureBoard(name: string): ComposedVerificationBoard {
 }
 
 describe('VERIFICATION corpus - every file extracts and composes', () => {
-  it('finds the same files on disk and in the presentation (labelore)', () => {
-    const onDisk = walk(LB_PLANNING).map((p) => relative(LB_ROOT, p)).sort();
-    const loaded = lb.artifacts.filter((a) => isVerification(a.path)).map((a) => a.path).sort();
-    expect(loaded).toEqual(onDisk);
-    expect(loaded.length).toBeGreaterThanOrEqual(12);
-  });
-
-  it('labelore: structured.verification on every file and a non-null page', () => {
-    for (const a of lb.artifacts.filter((x) => isVerification(x.path))) {
-      expect(a.structured.verification, a.path).toBeDefined();
-      expect(() => compose(a), a.path).not.toThrow();
-    }
-  });
-
   it('the dense fixture composes from its frontmatter alone', () => {
     const m = compose(artifactAt(dense, '01-identity-slice/01-VERIFICATION.md'));
     expect(m.rail.eyebrow).toBe('Verification · Phase 1');
@@ -163,43 +146,9 @@ describe('the template report and the Lendshed reports', () => {
     expect(lx01.human?.steps.map((s) => s.title)[0]).toBe('Run `npm run check-seed` to completion');
   });
 
-  it('labelore v1.1/05 through the repository', () => {
-    const m = compose(artifactAt(lb, 'v1.1-phases/05-per-type-document-views/05-VERIFICATION.md'));
-    expect(m.rail.eyebrow).toBe('Verification · Phase 5');
-    expect(m.rail.big).toMatchObject({ value: '5/7', sub: '4 human checks recorded' });
-    expect(m.ledger.empty).toBe('No blocking gaps.');
-    expect(m.human?.steps).toHaveLength(4);
-    expect(m.requirements?.details).toHaveLength(11);
-    expect(m.spotChecks?.rows).toHaveLength(12);
-  });
 });
 
 describe('harder shapes', () => {
-  it('v1.0/01: a resolved check, a same-level numbered check and a second Human Verification section', () => {
-    const m = compose(artifactAt(lb, 'v1.0-phases/01-read-layer-domain-model/01-VERIFICATION.md'));
-    expect(m.human?.heading).toBe('Checked by a person');
-    expect(m.human?.steps).toHaveLength(1);
-    expect(m.rail.slips).toEqual([]);
-    expect(m.also.map((a) => a.label)).toContain('Human Verification — Resolved 2026-09-09');
-  });
-
-  it('quick 260930-mp6: a task key, empty gaps and three frontmatter checks', () => {
-    const m = compose(artifactAt(lb, 'quick/260930-mp6-build-sketch-012-b-lanes-by-kind-as-the-/260930-mp6-VERIFICATION.md'));
-    expect(m.rail.eyebrow).toBe('Quick verification · 260930-mp6');
-    expect(m.ledger.rows).toEqual([]);
-    expect(m.human?.steps).toHaveLength(3);
-  });
-
-  it('quick 261003-527 and 261003-528: a Truths section and no requirements table', () => {
-    for (const id of ['261003-527', '261003-528']) {
-      const a = lb.artifacts.find((x) => x.path.includes(`${id}-`) && x.path.endsWith('VERIFICATION.md'));
-      expect(a, id).toBeDefined();
-      const m = compose(a as Artifact);
-      expect(m.requirements, id).toBeNull();
-      expect(m.truths?.details.length, id).toBe(9);
-    }
-  });
-
   it('lendshed quick 260327-h4w: a same-level numbered human check', () => {
     fxPath('quick/260327-h4w-move-the-live-status-socket-into-a-provider/260327-h4w-VERIFICATION.md');
     const m = compose(artifactAt(fx, '260327-h4w-VERIFICATION.md'));

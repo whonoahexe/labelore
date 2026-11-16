@@ -1,8 +1,7 @@
-// quick-261023-61k (QCORP): real-corpus guards over every todo in the committed projects - labelore's own
-// `.planning/todos/`, the dashboard's synthetic fixture, the made-up Lendshed project and the committed
+// quick-261023-61k (QCORP): real-corpus guards over every todo in the committed projects - the dashboard's synthetic fixture, the made-up Lendshed project and the committed
 // Labelore fixture - built through the real repository load so each file reaches the handler with the ref
 // discovery gives it, with the server's todo context built by buildTodoContext. The test asserts
-// invariants for every file and pins values for the files named in TODO_KEYS (plus labelore's 001 and
+// invariants for every file and pins values for the files named in TODO_KEYS (plus
 // Lendshed's two sibling-shaped todos), counted in the files themselves - never the composer's output.
 process.env.TZ = 'Asia/Kolkata';
 import { existsSync, readdirSync, statSync } from 'node:fs';
@@ -18,7 +17,6 @@ import type { ComposedTodoLifecycle } from '../../src/web/views/todo-lifecycle.t
 import { TodoLifecycleView } from '../../src/web/views/todo-lifecycle-components.tsx';
 import {
   FIXTURE_ROOTS,
-  LB_ROOT,
   TODO_KEYS,
   loadProject,
   readKeyed,
@@ -27,7 +25,7 @@ import { FX_ROOT } from '../helpers/fixture-project.ts';
 import type { LoadedProject } from '../helpers/todo-corpus.ts';
 
 const KOLKATA = { now: new Date('2026-10-23T12:00:00+05:30'), timeZone: 'Asia/Kolkata' };
-const ROOTS = [LB_ROOT, ...FIXTURE_ROOTS];
+const ROOTS = [...FIXTURE_ROOTS];
 
 function walk(dir: string): string[] {
   if (!existsSync(dir)) return [];
@@ -226,28 +224,6 @@ describe('the sketch todos on the real pipeline', () => {
       expect(model.chips.weight.text, key).toBe(weight);
       expect(model.end.kind === 'closed' ? model.end.title : model.end.kind === 'open' ? model.end.lead : '', key).toBe(end);
     }
-  });
-});
-
-const LB001 = { root: LB_ROOT, path: '.planning/todos/completed/001-sketches-page-in-labelore.md' };
-describe("labelore's own promoted todo (001)", () => {
-  it('reads as promoted from its note, with the acceptance list and the closed sections', () => {
-    const model = entryOf(LB001).model!;
-    expect(model.chips.status).toEqual({ label: 'Done', tone: 'complete' });
-    expect(model.chips.weight).toMatchObject({ text: 'P2', level: 'medium' });
-    expect(model.chips.area).toBe('general');
-    expect(model.steps[0]).toMatchObject({ value: '23 Oct 03:11', sub: '1 note' });
-    const card = model.noted!.notes[0];
-    expect(card).toMatchObject({
-      path: '.planning/notes/2026-10-23-sketches-page-in-labelore.md',
-      kicker: 'Note · 23 Oct 03:11',
-      way: 'Promoted word for word',
-    });
-    expect(model.captured.kicker).toBe('23 Oct · promoted from /gsd-note');
-    expect(model.captured.lead?.label).toBe('Goal');
-    expect(model.captured.plan?.label).toBe('Done when · 5 of 7');
-    expect(model.captured.extras.map((extra) => extra.heading)).toEqual(['Context', 'Progress']);
-    expect(model.end).toMatchObject({ kind: 'closed', title: 'Closed' });
   });
 });
 

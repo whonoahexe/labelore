@@ -15,16 +15,9 @@ import { UiSpecIntroMeta, UiSpecView } from '../../src/web/views/ui-spec-compone
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
 
-const LB03 = new URL(
-  '../../.planning/milestones/v1.0-phases/03-search-browsing-traceability/03-UI-SPEC.md',
-  import.meta.url,
-);
-const LB05 = new URL(
-  '../../.planning/milestones/v1.1-phases/05-per-type-document-views/05-UI-SPEC.md',
-  import.meta.url,
-);
 const DENSE = new URL('../../fixtures/dense/.planning/phases/01-identity-slice/01-UI-SPEC.md', import.meta.url);
 const FX_V04 = fxPath('milestones/v1.0-phases/04-shed-to-shed-transfers/04-UI-SPEC.md');
+const FX_P3 = fxPath('phases/03-account-admin-and-sessions/03-UI-SPEC.md');
 const FX_V02 = fxPath('milestones/v1.0-phases/02-shed-inventory-health/02-UI-SPEC.md');
 
 function inputOf(uiSpec: unknown, overrides: Partial<ViewInput> = {}): ViewInput {
@@ -175,22 +168,24 @@ describe('composeUiSpec — Lendshed v1.0/04', () => {
 });
 
 describe('composeUiSpec — labels, status and degrade', () => {
-  it('lb v1.0/03: a flagged sign-off is in-flight', () => {
-    const spec = compose(LB03);
-    expect(spec.intro.signoff?.label).toBe('Sign-off 6/7 · 1 flag');
-    expect(spec.intro.signoff?.tone).toBe('in-flight');
-    expect(spec.intro.eyebrow).toBe('UI design contract · Phase 3');
-    expect(spec.intro.title).toBe('Search browsing traceability');
-    expect(spec.intro.status).toBeNull();
+  it('a flagged sign-off is in-flight', () => {
+    const contract = extractUiSpec(
+      '---\nphase: 3\nstatus: draft\n---\n# T\n\n## Checker Sign-Off\n\n- [x] Dimension 1 Copywriting: PASS\n- [x] Dimension 2 Visuals: FLAG — one note\n\n**Approval:** approved\n',
+    );
+    const spec = composeUiSpec(inputOf(contract));
+    expect(spec?.intro.signoff?.label).toBe('Sign-off 1/2 · 1 flag');
+    expect(spec?.intro.signoff?.tone).toBe('in-flight');
   });
 
-  it('lb v1.1/05: not run is quiet and the draft status shows', () => {
-    const spec = compose(LB05);
-    expect(spec.intro.signoff?.label).toBe('Sign-off not run');
-    expect(spec.intro.signoff?.tone).toBe('quiet');
+  it('Lendshed P3: a fully passed sign-off is complete, and the draft status shows', () => {
+    const spec = compose(FX_P3);
+    expect(spec.intro.signoff?.label).toBe('Signed off 6/6');
+    expect(spec.intro.signoff?.tone).toBe('complete');
+    expect(spec.intro.eyebrow).toBe('UI design contract · Phase 3');
+    expect(spec.intro.title).toBe('Account admin and sessions');
     expect(spec.intro.status).toBe('draft');
-    expect(spec.intro.created).toBe('2026-09-20');
-    expect(spec.intro.signoff?.dims.every((d) => d.verdict === 'Not run')).toBe(true);
+    expect(spec.intro.created).toBe('2026-04-03');
+    expect(spec.intro.signoff?.dims.map((d) => d.verdict)).toEqual(Array(6).fill('PASS'));
   });
 
   it('a BLOCK dimension gives the missing tone', () => {
@@ -222,10 +217,10 @@ describe('composeUiSpec — labels, status and degrade', () => {
   });
 
   it('the cover chip is a dialog trigger carrying the tone; Created and Status read as written', () => {
-    const html = renderCover(compose(LB05));
-    expect(html).toContain('data-tone="quiet"');
-    expect(html).toContain('Sign-off not run');
-    expect(html).toContain('Created <b>2026-09-20</b>');
+    const html = renderCover(compose(FX_P3));
+    expect(html).toContain('data-tone="complete"');
+    expect(html).toContain('Signed off 6/6');
+    expect(html).toContain('Created <b>2026-04-03</b>');
     expect(html).toContain('Status <b>draft</b>');
   });
 });

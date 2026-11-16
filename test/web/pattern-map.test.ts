@@ -1,5 +1,5 @@
 // quick-260930-wfs: composePatternMap, built from literal ViewInput objects and from the real
-// LB v1.1/05 extraction plus the made-up Lendshed v1.0/02 one (test/pattern-map.test.ts covers the
+// made-up Lendshed v1.0/02 extraction (test/pattern-map.test.ts covers the
 // server extractor; the narrow e2e spec covers the page end to end), plus the static markup of the
 // view. The Lendshed file is read through fxPath, which throws when it is missing: nothing skips.
 import { readFileSync } from 'node:fs';
@@ -27,10 +27,6 @@ import {
 } from '../../src/web/views/pattern-map-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
-const LB05 = new URL(
-  '../../.planning/milestones/v1.1-phases/05-per-type-document-views/05-PATTERNS.md',
-  import.meta.url,
-);
 const DENSE = new URL(
   '../../fixtures/dense/.planning/phases/01-identity-slice/01-PATTERNS.md',
   import.meta.url,
@@ -150,68 +146,6 @@ describe('composePatternMap — degrade', () => {
   });
 });
 
-describe('composePatternMap — LB v1.1/05', () => {
-  const composed = compose(LB05);
-
-  it('cover facts as written, counts from the classification', () => {
-    expect(composed.intro.eyebrow).toBe('Pattern map · Phase 5');
-    expect(composed.intro.title).toBe('Per-Type Document Views');
-    expect(composed.intro.mapped).toBe('2026-09-20');
-    expect(composed.intro.filesAnalyzed).toEqual({ value: '17', qualifier: '(new + modified)' });
-    expect(composed.intro.analogsFound).toBe('17 / 17');
-    expect(composed.intro.counts).toEqual({ exact: 8, role: 8, partial: 0, none: 1 });
-    expect(composed.intro.total).toBe(17);
-  });
-
-  it('groups by path, selects the new-ground file, and leaves nothing unplaced that has a row', () => {
-    expect(composed.areas.map((a) => a.label)).toContain('src/web');
-    const designLanguage = composed.rows.find((r) => r.name === 'design-language.md');
-    expect(designLanguage?.quality).toBe('none');
-    expect(designLanguage?.tone).toBe('missing');
-    expect(composed.defaultSelection).toBe(designLanguage?.id);
-    expect(designLanguage?.reason).toBeTruthy();
-    expect(composed.rows.find((r) => r.name === 'artifact-page.tsx')?.analogShort).toEqual({
-      kind: 'itself',
-    });
-  });
-
-  it('the no-analog entries and assignments that match no file stay visible as unplaced rows', () => {
-    const unplaced = composed.rows.filter((r) => r.origin === 'unplaced');
-    const fileCount = composed.rows.filter((r) => r.origin === 'file').length;
-    expect(fileCount).toBe(17);
-    for (const row of unplaced) expect(row.area).toBe('Outside the file table');
-    expect(composed.areas.at(-1)?.label === 'Outside the file table' || unplaced.length === 0).toBe(
-      true,
-    );
-  });
-
-  it('source-only entries and back matter', () => {
-    expect(composed.sourceOnly.map((e) => e.label)).toEqual([
-      '26 code excerpts',
-      'Line citations',
-      'Data-flow labels',
-      'Metadata',
-    ]);
-    expect(composed.backMatter).toEqual([]);
-  });
-
-  it('resolves source-only targets against the rendered headings', () => {
-    const withHeadings = compose(LB05, {
-      headings: [
-        { id: 'file-classification', text: 'File Classification', depth: 2 },
-        { id: 'pattern-assignments', text: 'Pattern Assignments', depth: 2 },
-        { id: 'metadata', text: 'Metadata', depth: 2 },
-      ],
-    });
-    expect(withHeadings.sourceOnly.map((e) => e.targetId)).toEqual([
-      'pattern-assignments',
-      'pattern-assignments',
-      'file-classification',
-      'metadata',
-    ]);
-  });
-});
-
 describe('composePatternMap — Lendshed v1.0/02 (made-up file)', () => {
   it('the five doc groups, reader.ts partial, the refuse-alike rule', () => {
     const composed = compose(FX02);
@@ -232,17 +166,57 @@ describe('composePatternMap — Lendshed v1.0/02 (made-up file)', () => {
     expect(composed.intro.counts).toEqual({ exact: 6, role: 4, partial: 4, none: 8 });
     expect(composed.backMatter.map((b) => b.heading)).toContain('Notes Spanning Several Files');
   });
+
+  it('cover facts as written, counts from the classification', () => {
+    const composed = compose(FX02);
+    expect(composed.intro.eyebrow).toBe('Pattern map · Phase 2');
+    expect(composed.intro.title).toBe('Shed Inventory Health');
+    expect(composed.intro.mapped).toBe('2026-02-09');
+    expect(composed.intro.filesAnalyzed).toEqual({ value: '22', qualifier: 'new/modified' });
+    expect(composed.intro.analogsFound).toBe('14 / 22');
+    expect(composed.intro.total).toBe(22);
+  });
+
+  it('selects the first no-analog file and keeps every classified file as a row', () => {
+    const composed = compose(FX02);
+    expect(composed.rows.filter((r) => r.origin === 'file')).toHaveLength(22);
+    const counterFeed = composed.rows.find((r) => r.name === 'counter-feed.ts');
+    expect(counterFeed?.quality).toBe('none');
+    expect(counterFeed?.tone).toBe('missing');
+    expect(composed.defaultSelection).toBe(counterFeed?.id);
+    expect(composed.rows.find((r) => r.name === 'app.ts')?.analogShort).toEqual({ kind: 'itself' });
+  });
+
+  it('source-only entries and back matter', () => {
+    const composed = compose(FX02);
+    expect(composed.sourceOnly.map((e) => e.label)).toEqual(['16 code excerpts', 'Line citations', 'Data-flow labels', 'Metadata']);
+    expect(composed.backMatter.map((b) => b.heading)).toEqual(['Notes Spanning Several Files', 'No Analog Found']);
+  });
+
+  it('resolves source-only targets against the rendered headings', () => {
+    const withHeadings = compose(FX02, {
+      headings: [
+        { id: 'file-classification', text: 'File Classification', depth: 2 },
+        { id: 'pattern-assignments', text: 'Pattern Assignments', depth: 2 },
+        { id: 'metadata', text: 'Metadata', depth: 2 },
+      ],
+    });
+    expect(withHeadings.sourceOnly.map((e) => e.targetId)).toEqual([
+      'pattern-assignments',
+      'pattern-assignments',
+      'file-classification',
+      'metadata',
+    ]);
+  });
 });
 
 describe('PatternMapView static markup', () => {
-  it('LB v1.1/05: 17 rows, the four source-only buttons, no code', () => {
-    const html = render(compose(LB05));
-    expect((html.match(/class="view-patterns-row"/g) ?? []).length).toBe(17);
-    expect(html).toContain('Why nothing matches');
-    expect(html).not.toContain('<pre');
+  it('Lendshed v1.0/02: 22 rows and the four source-only buttons', () => {
+    const html = render(compose(FX02));
+    expect((html.match(/class="view-patterns-row"/g) ?? []).length).toBe(22);
     const nav = html.slice(html.indexOf('aria-label="In the source only"'));
     expect((nav.match(/<button/g) ?? []).length).toBe(4);
-    expect(nav).toContain('26 code excerpts');
+    expect(nav).toContain('16 code excerpts');
     expect(nav).toContain('Line citations');
     expect(nav).toContain('Data-flow labels');
     expect(nav).toContain('Metadata');
@@ -261,19 +235,19 @@ describe('PatternMapView static markup', () => {
   });
 
   it('the cover renders the facts, the four-entry meter key and the Searched line', () => {
-    const composed = compose(LB05);
+    const composed = compose(FX02);
     const html = renderToStaticMarkup(createElement(PatternIntroMeta, { intro: composed.intro }));
-    expect(html).toContain('2026-09-20');
-    expect(html).toContain('17 / 17');
+    expect(html).toContain('2026-02-09');
+    expect(html).toContain('14 / 22');
     expect((html.match(/<li data-quality=/g) ?? []).length).toBe(4);
     expect(html).toContain('Searched');
     expect(html).toContain('more');
   });
 
   it('the end-to-end handler output composes and renders', () => {
-    const content = readFileSync(LB05, 'utf8');
+    const content = readFileSync(FX02, 'utf8');
     const ref = {
-      path: '.planning/phases/05-x/05-PATTERNS.md',
+      path: '.planning/phases/02-x/02-PATTERNS.md',
       kind: 'patterns',
       location: 'phase' as const,
       phaseIdentity: null,
@@ -294,7 +268,7 @@ describe('PatternMapView static markup', () => {
     const html = render(composed as ComposedPatternMap);
     expect(
       (html.match(/data-quality="(exact|role|partial|none)"/g) ?? []).length,
-    ).toBeGreaterThanOrEqual(17);
+    ).toBeGreaterThanOrEqual(22);
     expect(html).not.toContain('<pre');
   });
 });

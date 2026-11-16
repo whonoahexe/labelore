@@ -1,5 +1,5 @@
 // quick-260929-3x3: composeResearchBriefing, built from literal ViewInput objects and from the real
-// LB v1.0/02 extraction (test/research-briefing.test.ts covers the server extractor; the narrow
+// Lendshed phase 1 extraction (test/research-briefing.test.ts covers the server extractor; the narrow
 // e2e spec covers the two composed end to end). This is the composer-level smoke test.
 import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
@@ -18,14 +18,12 @@ import {
 } from '../../src/web/views/research-briefing.ts';
 import type { ComposedResearchBriefing } from '../../src/web/views/research-briefing.ts';
 import { AuditBlock } from '../../src/web/views/research-briefing-components.tsx';
+import { fxPath } from '../helpers/fixture-project.ts';
 import { NA_AUDIT, LS02_SHAPE, SYNTHETIC_SLOP } from '../helpers/research-fixtures.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import type { DocumentSectionGroup } from '../../src/web/views/document-sections.ts';
 
-const LB02 = new URL(
-  '../../.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-RESEARCH.md',
-  import.meta.url,
-);
+const LENDSHED01 = fxPath('phases/01-member-sign-in-sessions/01-RESEARCH.md');
 
 function inputOf(briefing: unknown, overrides: Partial<ViewInput> = {}): ViewInput {
   return {
@@ -46,8 +44,8 @@ function groupsOf(briefing: ResearchBriefing): DocumentSectionGroup[] {
   }));
 }
 
-function lb02(): ResearchBriefing {
-  return extractResearchBriefing(tryParseFrontmatter(readFileSync(LB02, 'utf8')).body);
+function lendshed01(): ResearchBriefing {
+  return extractResearchBriefing(tryParseFrontmatter(readFileSync(LENDSHED01, 'utf8')).body);
 }
 
 function minimal(meta: Partial<ResearchBriefing['meta']> = {}): ResearchBriefing {
@@ -94,29 +92,29 @@ describe('composeResearchBriefing', () => {
     expect(levelTone(undefined)).toBe('quiet');
   });
 
-  it('LB v1.0/02: cover facts, summary lead, recommendation and outline', () => {
-    const briefing = lb02();
+  it('Lendshed phase 1: cover facts, summary lead, recommendation and outline', () => {
+    const briefing = lendshed01();
     const composed = composeResearchBriefing(inputOf(briefing, { groups: groupsOf(briefing) }));
     expect(composed).not.toBeNull();
-    expect(composed?.intro.eyebrow).toBe('Research · Phase 02');
-    expect(composed?.intro.title).toBe('Situational Awareness & Artifact Reading');
-    expect(composed?.intro.researched).toBe('Aug 25, 2026');
-    expect(composed?.intro.confidence?.label).toBe('Mixed');
-    expect(composed?.intro.confidence?.rows).toHaveLength(5);
-    expect(composed?.intro.confidence?.rows[4]).toMatchObject({ label: 'Medium-low', tone: 'missing' });
-    expect(composed?.intro.validUntilShort).toBe('2026-09-01');
-    expect(composed?.intro.domain).toContain('Local read-only React dashboard');
+    expect(composed?.intro.eyebrow).toBe('Research · Phase 01');
+    expect(composed?.intro.title).toBe('Member Sign-In & Sessions');
+    expect(composed?.intro.researched).toBe('Mar 24, 2026');
+    expect(composed?.intro.confidence?.label).toBe('High');
+    expect(composed?.intro.confidence?.rows).toHaveLength(4);
+    expect(composed?.intro.confidence?.rows[3]).toMatchObject({ label: 'Medium', tone: 'in-flight' });
+    expect(composed?.intro.validUntilShort).toBeNull();
+    expect(composed?.intro.domain).toContain('Member-owned sign-in');
     expect(composed?.summary?.lead).toHaveLength(1);
     const leadBlock = composed?.summary?.lead[0];
-    expect(leadBlock?.kind === 'paragraph' && leadBlock.text.startsWith('Phase 2 should be planned')).toBe(true);
+    expect(leadBlock?.kind === 'paragraph' && leadBlock.text.startsWith('This phase swaps the *authenticator*')).toBe(true);
     expect(composed?.summary?.findings.map((f) => f.number)).toEqual(['01', '02']);
-    expect(composed?.summary?.recommendation?.startsWith('Build one reusable')).toBe(true);
+    expect(composed?.summary?.recommendation?.startsWith("Swap `requireMember`'s body")).toBe(true);
     expect(composed?.outline[0]).toEqual({ id: 'research-summary', label: 'Summary' });
     expect(composed?.outline.at(-1)).toEqual({ id: 'research-source-only', label: 'In the source only' });
   });
 
   it('every sourceOnly entry resolves its targetId against groups (h2) or headings (depth 3), else null', () => {
-    const briefing = lb02();
+    const briefing = lendshed01();
     const composed = composeResearchBriefing(
       inputOf(briefing, {
         groups: [
@@ -172,8 +170,8 @@ describe('composeResearchBriefing', () => {
 });
 
 describe('composeResearchBriefing — the Architecture chapter', () => {
-  it('LB v1.0/02: diagram, tree, patterns, anti-patterns, hand-roll and the key insight', () => {
-    const briefing = lb02();
+  it('Lendshed phase 1: diagram, tree, patterns, anti-patterns, hand-roll and the key insight', () => {
+    const briefing = lendshed01();
     const composed = composeResearchBriefing(inputOf(briefing, { groups: groupsOf(briefing) }));
     const architecture = composed?.chapters.find((c) => c.kind === 'architecture');
     expect(architecture).toBeDefined();
@@ -181,12 +179,12 @@ describe('composeResearchBriefing — the Architecture chapter', () => {
     expect(architecture.id).toBe('research-architecture');
     expect(architecture.number).toBe('02');
     expect(classifyFence(undefined, architecture.diagram?.text ?? '')).toBe('diagram');
-    expect(architecture.diagram?.text).toContain('CLI project path');
+    expect(architecture.diagram?.text).toContain('Web app route gate');
     expect(classifyFence(undefined, architecture.structure?.text ?? '')).toBe('tree');
-    expect(architecture.patterns).toHaveLength(8);
-    expect(architecture.antiPatterns).toHaveLength(9);
-    expect(architecture.handRoll?.rows).toHaveLength(8);
-    expect(architecture.handRoll?.insight?.startsWith('The only justified custom parsers')).toBe(true);
+    expect(architecture.patterns).toHaveLength(3);
+    expect(architecture.antiPatterns).toHaveLength(4);
+    expect(architecture.handRoll?.rows).toHaveLength(5);
+    expect(architecture.handRoll?.insight?.startsWith('every piece here has a shipped analogue')).toBe(true);
     expect(composed?.outline.some((entry) => entry.id === 'research-architecture')).toBe(true);
   });
 
@@ -246,8 +244,8 @@ function chapterOf<K extends ComposedResearchBriefing['chapters'][number]['kind'
 }
 
 describe('composeResearchBriefing — chapters and numbering', () => {
-  it('LB v1.0/02: stack 01, architecture 02, pitfalls 03, questions 04, environment 05, sources 06', () => {
-    const composed = composeResearchBriefing(inputOf(lb02()));
+  it('Lendshed phase 1: stack 01, architecture 02, pitfalls 03, questions 04, environment 05, sources 06', () => {
+    const composed = composeResearchBriefing(inputOf(lendshed01()));
     expect(composed?.chapters.map((c) => [c.kind, c.number])).toEqual([
       ['stack', '01'],
       ['architecture', '02'],
@@ -258,17 +256,14 @@ describe('composeResearchBriefing — chapters and numbering', () => {
     ]);
   });
 
-  it('the jz8 quick RESEARCH (no architecture, questions or environment) renumbers with no gaps', () => {
-    const body = tryParseFrontmatter(
-      readFileSync(
-        new URL(
-          '../../.planning/milestones/v1.1-quick/260910-jz8-centralize-spacing-type-and-color-tokens/260910-jz8-RESEARCH.md',
-          import.meta.url,
-        ),
-        'utf8',
-      ),
-    ).body;
-    const composed = composeFrom(body);
+  it('a RESEARCH with no architecture, questions or environment renumbers with no gaps', () => {
+    const composed = composeFrom(
+      [
+        '## Standard Stack\n\n### Core\n\n| Library | Version | Purpose | Why Standard |\n|---|---|---|---|\n| left-pad | 1 | pad | ok |\n',
+        '## Common Pitfalls\n\n### Pitfall 1: Padding twice\n\n**What goes wrong:** the value is padded again.\n',
+        '## Sources\n\n### Primary\n\n- the package readme\n',
+      ].join('\n'),
+    );
     expect(composed.chapters.map((c) => [c.kind, c.number])).toEqual([
       ['stack', '01'],
       ['pitfalls', '02'],
@@ -278,14 +273,13 @@ describe('composeResearchBriefing — chapters and numbering', () => {
 });
 
 describe('composeResearchBriefing — stack, alternatives and lanes', () => {
-  it('LB v1.0/02: SUS badges, verdict chips and the lane counts', () => {
-    const composed = composeResearchBriefing(inputOf(lb02()));
+  it('Lendshed phase 1: no badges, four rejected alternatives and the lane counts', () => {
+    const composed = composeResearchBriefing(inputOf(lendshed01()));
     if (!composed) throw new Error('null');
     const stack = chapterOf(composed, 'stack');
-    expect(stack.groups[0].packages[0].badges).toEqual([{ label: 'SUS', tone: 'in-flight' }]);
+    expect(stack.groups[0].packages[0].badges).toEqual([]);
     expect(stack.groups[0].label).toBe('Core');
     expect(stack.alternatives.map((a) => [a.verdictLabel, a.tone, a.struck])).toEqual([
-      ['rejected', 'quiet', true],
       ['rejected', 'quiet', true],
       ['rejected', 'quiet', true],
       ['rejected', 'quiet', true],
@@ -293,8 +287,8 @@ describe('composeResearchBriefing — stack, alternatives and lanes', () => {
     ]);
     const lanes = stack.audit?.lanes;
     expect(lanes?.slop.count).toBe(0);
-    expect(lanes?.sus.count).toBe(12);
-    expect(lanes?.ok.count).toBe(18);
+    expect(lanes?.sus.count).toBe(0);
+    expect(lanes?.ok.count).toBe(2);
     expect(lanes?.ok.items.filter((i) => i.dashed)).toHaveLength(0);
   });
 
@@ -351,8 +345,12 @@ describe('composeResearchBriefing — pitfalls, questions, environment, sources'
   });
 
   it('question chips: resolved is quiet, open is in-flight', () => {
-    const lb = chapterOf(composeResearchBriefing(inputOf(lb02())) as ComposedResearchBriefing, 'questions');
-    expect(lb.items.every((i) => i.chip.tone === 'quiet' && i.chip.label === 'resolved')).toBe(true);
+    const wired = chapterOf(composeResearchBriefing(inputOf(lendshed01())) as ComposedResearchBriefing, 'questions');
+    expect(wired.items.map((i) => [i.chip.label, i.chip.tone])).toEqual([
+      ['resolved', 'quiet'],
+      ['open', 'in-flight'],
+      ['open', 'in-flight'],
+    ]);
     const sp = chapterOf(composeFrom(LS02_SHAPE), 'questions');
     expect(sp.items.every((i) => i.chip.tone === 'in-flight' && i.chip.label === 'open')).toBe(true);
     expect(sp.items[0].number).toBe('Q1');
@@ -366,8 +364,8 @@ describe('composeResearchBriefing — pitfalls, questions, environment, sources'
   });
 
   it('sources: the collapsed summary reads the tier counts', () => {
-    const composed = composeResearchBriefing(inputOf(lb02())) as ComposedResearchBriefing;
-    expect(chapterOf(composed, 'sources').summary).toBe('Primary 5 · Secondary 12 · Tertiary 1');
+    const composed = composeResearchBriefing(inputOf(lendshed01())) as ComposedResearchBriefing;
+    expect(chapterOf(composed, 'sources').summary).toBe('Primary 5 · Secondary 2 · Tertiary 1');
   });
 
   it('splitSourceLinks links only http(s) URLs', () => {
@@ -386,13 +384,13 @@ describe('composeResearchBriefing — pitfalls, questions, environment, sources'
 });
 
 describe('composeResearchBriefing — At a glance and back matter', () => {
-  it('LB v1.0/02 glance: stack 21 with 12 flagged SUS, pitfalls 9, questions 0/3, environment gaps 2', () => {
-    const composed = composeResearchBriefing(inputOf(lb02())) as ComposedResearchBriefing;
+  it('Lendshed phase 1 glance: stack 5, pitfalls 4, questions 2 of 3 open, environment gaps 0', () => {
+    const composed = composeResearchBriefing(inputOf(lendshed01())) as ComposedResearchBriefing;
     expect(composed.glance).toEqual([
-      { targetId: 'research-stack', label: 'Stack entries · 12 flagged SUS', value: '21', sub: null },
-      { targetId: 'research-pitfalls', label: 'Pitfalls', value: '9', sub: null },
-      { targetId: 'research-questions', label: 'Open questions', value: '0', sub: '/3' },
-      { targetId: 'research-environment', label: 'Environment gaps', value: '2', sub: null },
+      { targetId: 'research-stack', label: 'Stack entries', value: '5', sub: null },
+      { targetId: 'research-pitfalls', label: 'Pitfalls', value: '4', sub: null },
+      { targetId: 'research-questions', label: 'Open questions', value: '2', sub: '/3' },
+      { targetId: 'research-environment', label: 'Environment gaps', value: '0', sub: null },
     ]);
   });
 
@@ -416,22 +414,22 @@ describe('composeResearchBriefing — At a glance and back matter', () => {
     expect(onlyStack.glance.map((r) => r.targetId)).toEqual(['research-stack']);
   });
 
-  it('LB v1.0/02 back matter, with decision ids linking into CONTEXT when it exists', () => {
+  it('Lendshed phase 1 back matter, with decision ids linking into CONTEXT when it exists', () => {
     const composed = composeResearchBriefing(
-      inputOf(lb02(), {
-        siblingArtifacts: [{ kind: 'context', path: '.planning/x/02-CONTEXT.md', url: '/ctx' }],
+      inputOf(lendshed01(), {
+        siblingArtifacts: [{ kind: 'context', path: '.planning/x/01-CONTEXT.md', url: '/ctx' }],
       }),
     ) as ComposedResearchBriefing;
     const [constraints, requirements, map] = composed.backMatter;
-    expect(constraints.summary).toBe('17 locked · 4 discretion · 1 deferred');
+    expect(constraints.summary).toBe('19 locked · 1 discretion · 4 deferred');
     if (constraints.kind !== 'constraints') throw new Error('kind');
     expect(constraints.groups[0].ids[0]).toEqual({ id: 'D-01', href: '/ctx#decision-d-01' });
-    expect(constraints.contextName).toBe('02-CONTEXT.md');
-    expect(requirements.summary).toBe('23 requirements');
-    expect(map.summary).toBe('8 capabilities');
+    expect(constraints.contextName).toBe('01-CONTEXT.md');
+    expect(requirements.summary).toBe('5 requirements');
+    expect(map.summary).toBe('6 capabilities');
     expect(composed.outline.map((e) => e.id)).toContain('research-back-matter');
 
-    const without = composeResearchBriefing(inputOf(lb02())) as ComposedResearchBriefing;
+    const without = composeResearchBriefing(inputOf(lendshed01())) as ComposedResearchBriefing;
     const noLink = without.backMatter[0];
     if (noLink.kind !== 'constraints') throw new Error('kind');
     expect(noLink.groups[0].ids[0].href).toBeNull();
@@ -515,15 +513,6 @@ describe('AuditBlock render (sketch 010 B)', () => {
     expect(notes).not.toBeNull();
     expect(notes?.[1].match(/<p>/g)).toHaveLength(2);
     expect(html).toContain('<code>gsd-tools query package-legitimacy check --ecosystem crates</code>');
-  });
-
-  it('LB v1.0/02: show-more rows carry an aria-hidden caret and the empty slop lane reads Nothing removed.', () => {
-    const html = render(composeResearchBriefing(inputOf(lb02())) as ComposedResearchBriefing);
-    expect(html).toContain('Show 8 more flagged <span aria-hidden="true">▾</span>');
-    expect(html).toContain('Show 14 more approved <span aria-hidden="true">▾</span>');
-    const slop = /<section class="view-research-lane" data-verdict="slop">([\s\S]*?)<\/section>/.exec(html);
-    expect(slop?.[1]).toContain('Nothing removed.');
-    expect(html).toContain('Show the seam output (30 rows)');
   });
 
   it('SYNTHETIC_SLOP: a removed item reads Use instead, with the replacement after it', () => {

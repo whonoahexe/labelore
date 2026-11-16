@@ -1,5 +1,5 @@
 // quick-261017-k44 (sketch 022 C): the REVIEW composer and view, pinned against the made-up Lendshed
-// reviews (test/fixtures/lendshed), the clean review (test/fixtures/review), labelore's own reviews and
+// reviews (test/fixtures/lendshed), the clean review (test/fixtures/review) and
 // the junk-input degrade paths. The
 // ViewInput literals come from the handlers' real parse of each file (round-tripped through JSON, as
 // the server serves them); the reviewContext of a pair is built by hand from the handler's parse of
@@ -32,7 +32,6 @@ const TRANSFERS = 'milestones/v1.0-phases/04-shed-to-shed-transfers/04-REVIEW.md
 const TRANSFERS_FIX = 'milestones/v1.0-phases/04-shed-to-shed-transfers/04-REVIEW-FIX.md';
 const ADMIN = 'phases/03-account-admin-and-sessions/03-REVIEW.md'; // Warning/Info buckets
 const EXPORT = 'phases/04-bulk-loan-export/04-REVIEW.md'; // blockers_resolved
-const LB = new URL('../../.planning/milestones/', import.meta.url).pathname;
 
 function refOf(path: string, kind: string): ArtifactRef {
   return { path, kind, location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0 };
@@ -106,33 +105,25 @@ const textOf = (blocks: { kind: string; text?: string }[]): string => blocks.map
 
 const members = compose(L(MEMBERS));
 const roles = compose(L(ROLES), contextOf(L(ROLES_FIX)));
-const lb01File = `${LB}v1.0-phases/01-read-layer-domain-model/01-REVIEW.md`;
-const lb01 = compose(lb01File, contextOf(`${LB}v1.0-phases/01-read-layer-domain-model/01-REVIEW-FIX.md`, 'Read Layer & Domain Model'));
 const catalogue = compose(L(CATALOGUE));
-const lb05 = compose(`${LB}v1.1-phases/05-per-type-document-views/05-REVIEW.md`);
 const clean = compose(F('clean-REVIEW.md'));
 const transfers = compose(L(TRANSFERS), contextOf(L(TRANSFERS_FIX)));
 const admin = compose(L(ADMIN));
 const bulkExport = compose(L(EXPORT));
-const lb04 = compose(`${LB}v1.0-phases/04-portability-degradation-hardening/04-REVIEW.md`);
 
 describe('the head', () => {
   it('reads the eyebrow, the title and the Reviewed stamp', () => {
-    expect([members.head.eyebrow, lb01.head.eyebrow]).toEqual(Array(2).fill('Code review · Phase 1'));
+    expect(members.head.eyebrow).toBe('Code review · Phase 1');
     expect(catalogue.head.eyebrow).toBe('Code review · Phase 3');
     expect([roles.head.eyebrow, transfers.head.eyebrow]).toEqual(['Code review · Phase 2', 'Code review · Phase 4']);
-    expect(lb05.head.eyebrow).toBe('Code review · Phase 5');
     expect(clean.head.eyebrow).toBe('Code review · Phase 7');
     expect(admin.head.eyebrow).toBe('Code review · Phase 3');
     expect(members.head.title).toBe('Member data foundation');
     expect(clean.head.title).toBe('Command palette');
     expect(admin.head.title).toBe('Account Admin & Session Control');
-    expect(lb01.head.title).toBe('Read Layer & Domain Model');
     expect(members.head.reviewed).toBe('26 Jan 2026');
     expect(roles.head.reviewed).toBe('31 Mar 2026');
-    expect(lb01.head.reviewed).toBe('24 Aug 2026 · 01:10');
     expect(catalogue.head.reviewed).toBe('27 Feb 2026');
-    expect(lb05.head.reviewed).toBe('20 Sep 2026 · 20:41');
     expect(clean.head.reviewed).toBe('15 Oct 2026 · 11:20');
     expect(admin.head.reviewed).toBe('8 Apr 2026 · 20:46');
   });
@@ -163,14 +154,11 @@ describe('the verdict, the facts and the tally', () => {
     const pins: [ComposedReviewThreads, string, string, string][] = [
       [members, '2 of 9 fixed. 7 still in the code.', 'in-flight', '7 open. Reviewed 20 files at standard depth.'],
       [roles, '4 of 10 fixed. 6 still in the code.', 'in-flight', '3 skipped on purpose, 3 not attempted. Reviewed 2 files at standard depth.'],
-      [lb01, '5 of 7 fixed. 2 still in the code.', 'in-flight', '2 not attempted. Reviewed 45 files at standard depth.'],
       [catalogue, '26 findings, 4 critical. None fixed yet.', 'missing', '15 warnings, 7 info. Reviewed 20 files at standard depth.'],
-      [lb05, '3 findings. None fixed yet.', 'in-flight', '1 warning, 2 info. Reviewed 33 files at standard depth.'],
       [clean, 'Clean. Nothing to fix across 4 files.', 'complete', 'Quick review.'],
       [transfers, '11 of 18 fixed. 7 still in the code, 1 critical.', 'missing', '1 open, 6 not attempted. Reviewed 21 files at standard depth.'],
       [admin, '7 findings. None fixed yet.', 'in-flight', '3 warnings, 4 info. Reviewed 38 files at standard depth.'],
       [bulkExport, '2 of 12 fixed. 10 still in the code.', 'in-flight', '10 open. Reviewed 16 files at standard depth.'],
-      [lb04, '5 findings, 2 critical. None fixed yet.', 'missing', '3 warnings, 0 info. Reviewed 36 files at standard depth.'],
     ];
     for (const [model, text, tone, sub] of pins) {
       expect(verdictText(model)).toBe(text);
@@ -190,30 +178,24 @@ describe('the verdict, the facts and the tally', () => {
   it('reads the tally', () => {
     expect(tallyText(members)).toBe('Open 7 · Fixed 2 · Skipped 0 · Not attempted 0');
     expect(tallyText(roles)).toBe('Open 0 · Fixed 4 · Skipped 3 · Not attempted 3');
-    expect(tallyText(lb01)).toBe('Open 0 · Fixed 5 · Skipped 0 · Not attempted 2');
     expect(tallyText(catalogue)).toBe('Critical 4 · Warning 15 · Info 7 · Total 26');
-    expect(tallyText(lb05)).toBe('Critical 0 · Warning 1 · Info 2 · Total 3');
     expect(tallyText(transfers)).toBe('Open 1 · Fixed 11 · Skipped 0 · Not attempted 6');
     expect(tallyText(admin)).toBe('Critical 0 · Warning 3 · Info 4 · Total 7');
     expect(tallyText(bulkExport)).toBe('Open 10 · Fixed 2 · Skipped 0 · Not attempted 0');
-    expect(tallyText(lb04)).toBe('Critical 2 · Warning 3 · Info 0 · Total 5');
     expect(clean.tally).toEqual([]);
     // A zero count takes no tone; the Open number is missing only above zero.
     expect(roles.tally[0].tone).toBeNull();
     expect(members.tally[0].tone).toBe('missing');
     expect(members.tally[1].tone).toBe('complete');
-    expect(lb05.tally[0].tone).toBeNull();
   });
 
   it('lists the facts after Files and Depth', () => {
     const facts = (m: ComposedReviewThreads): string => m.facts.map((f) => `${f.label} ${f.value}`).join(' | ');
     expect(facts(members)).toBe('Files 20 | Depth Standard | Resolved noted in the review itself');
     expect(facts(roles)).toBe('Files 2 | Depth Standard | Fix run 1 Apr 2026 · iteration 1');
-    expect(facts(lb01)).toBe('Files 45 | Depth Standard | Fix run 23 Aug 2026 · iteration 1');
     expect(facts(transfers)).toBe('Files 21 | Depth Standard | Fix run 17 Mar 2026 · iteration 1');
     expect(facts(bulkExport)).toBe('Files 16 | Depth Standard | Resolved noted in the review itself');
     expect(facts(catalogue)).toBe('Files 20 | Depth Standard');
-    expect(facts(lb05)).toBe('Files 33 | Depth Standard');
     expect(facts(clean)).toBe('Files 4 | Depth Quick');
     expect(facts(admin)).toBe('Files 38 | Depth Standard');
   });
@@ -250,15 +232,11 @@ describe('the threads', () => {
   it('counts the files and the comments', () => {
     expect(members.threads.aside).toBe('8 files · 9 comments');
     expect(roles.threads.aside).toBe('3 files · 10 comments');
-    expect(lb01.threads.aside).toBe('6 files · 7 comments');
     expect(catalogue.threads.aside).toBe('12 files · 26 comments');
-    expect(lb05.threads.aside).toBe('3 files · 3 comments');
     expect(clean.threads.aside).toBe('none');
     expect(admin.threads.aside).toBe('6 files · 7 comments');
-    expect(lb04.threads.aside).toBe('3 files · 5 comments');
     expect(members.threads.fixedCount).toBe(2);
     expect(roles.threads.fixedCount).toBe(4);
-    expect(lb01.threads.fixedCount).toBe(5);
     expect(catalogue.threads.fixedCount).toBe(0);
   });
 
@@ -276,11 +254,6 @@ describe('the threads', () => {
       ['IN-02'],
     ]);
     expect(folded(roles)).toEqual(['CR-01', 'CR-02', 'CR-03', 'WR-01']);
-    expect(pathsOf(lb01).map((p) => p.split('/').pop())).toEqual([
-      'crossref.ts', 'roadmap.ts', 'windows.ts', 'serialize.ts', 'package.json', 'generic.ts',
-    ]);
-    expect(blockIds(lb01)[4]).toEqual(['WR-04', 'IN-02']);
-    expect(folded(lb01)).toHaveLength(5);
     expect(blockIds(catalogue).slice(0, 4)).toEqual([
       ['CR-01'],
       ['CR-02', 'WR-04', 'WR-05', 'WR-06', 'WR-09', 'IN-04'],
@@ -290,10 +263,6 @@ describe('the threads', () => {
     expect(pathsOf(catalogue).slice(0, 4).map((p) => p.split('/').pop())).toEqual([
       'boundary.ts', 'use-catalogue.ts', 'use-shed-filter.ts', 'page-cursor.ts',
     ]);
-    expect(blockIds(lb05)).toEqual([['WR-01'], ['IN-01'], ['IN-02']]);
-    expect(pathsOf(lb05).map((p) => p.split('/').pop())).toEqual(['fallback.ts', 'context.ts', 'artifact-page.tsx']);
-    expect(blockIds(lb04)).toEqual([['CR-01', 'WR-03'], ['CR-02'], ['WR-01', 'WR-02']]);
-    expect(pathsOf(lb04)).toEqual(['src/server/index.ts', 'src/web/styles/globals.css', 'src/presentation/search.ts']);
     expect(blockIds(admin)).toHaveLength(6);
   });
 
@@ -303,7 +272,6 @@ describe('the threads', () => {
     expect(findingOf(members, 'CR-01').gutter).toEqual(['L74–92']);
     expect(findingOf(members, 'CR-01').firstLine).toBe('L74');
     expect(findingOf(catalogue, 'WR-03').gutter).toEqual(['L62–81', 'L140–147']);
-    expect(findingOf(lb05, 'WR-01').gutter).toEqual(['L56']);
     expect(findingOf(admin, 'WR-03').gutter).toHaveLength(7);
     expect(findingOf(admin, 'WR-03').gutter[0]).toBe('L212');
     expect(findingOf(roles, 'IN-02').moreFiles).toBe(0);
@@ -353,15 +321,6 @@ describe('the outcomes', () => {
       reviewContext: { phaseName: null, fix: { path: 'p', url: null, frontmatter: {}, report: { entries: [], deferred: [{ ids: ['IN-01'], note: '' }] } } } as never,
     });
     expect(model?.threads.files[0].findings[0].reply).toMatchObject({ kicker: 'Not attempted', quiet: "Outside the fix run's scope" });
-  });
-
-  it('reads labelore phase 1: five fixed, the info notes from the deferred bullets', () => {
-    for (const [id, commit] of [['CR-01', '6efec5a'], ['WR-01', 'e3073cb'], ['WR-02', '2c5edfd'], ['WR-03', '803542b'], ['WR-04', '784abef']]) {
-      expect(findingOf(lb01, id).stamp).toMatchObject({ outcome: 'fixed', commit });
-    }
-    expect(findingOf(lb01, 'IN-01').stamp.outcome).toBe('deferred');
-    expect(textOf(findingOf(lb01, 'IN-01').reply.note).startsWith('Duplicated title-derivation logic between `generic.ts` and `title.ts`')).toBe(true);
-    expect(findingOf(lb01, 'IN-02').reply.kicker).toBe('Not attempted');
   });
 
   it('reads transfers v1.0 phase 4: combined headings, a commit note and an unaddressed critical', () => {
@@ -517,22 +476,25 @@ describe('the line ruler, locations and extra fields', () => {
 
 describe('quiet files, the files dialog, the Also row and the footer', () => {
   it('lists the reviewed files no finding names', () => {
-    expect(lb05.quiet?.label).toBe('Reviewed with nothing to say · 39');
-    expect(lb05.quiet?.files).toHaveLength(39);
     expect(members.quiet?.files).toHaveLength(11);
-    expect(lb01.quiet?.files).toHaveLength(40);
     expect(catalogue.quiet?.files).toHaveLength(6);
     expect(clean.quiet?.files).toHaveLength(4);
     expect(roles.quiet).toBeNull();
     expect(admin.quiet).toBeNull();
-    const markup = markupOf(lb05);
+  });
+
+  it('caps the quiet file list at fourteen and counts the rest', () => {
+    const base = inputOf(F('clean-REVIEW.md'), null);
+    const list = Array.from({ length: 39 }, (_, index) => `src/quiet/file-${index + 1}.ts`);
+    const many = composeReviewThreads({ ...base, frontmatter: { ...base.frontmatter, files_reviewed: 39, files_reviewed_list: list } });
+    expect(many?.quiet?.label).toBe('Reviewed with nothing to say · 39');
+    expect(many?.quiet?.files).toHaveLength(39);
+    const markup = markupOf(many as ComposedReviewThreads);
     expect(markup).toContain('+25 more');
     expect(markup.match(/<code title=/g)).toHaveLength(14);
   });
 
   it('builds the files dialog and the Outside scope marks', () => {
-    expect(lb01.filesDialog?.title).toBe('Files reviewed · 46');
-    expect(lb01.filesDialog?.note).toBe('The frontmatter counts 45.');
     expect(roles.filesDialog?.title).toBe('Files reviewed · 2');
     expect(roles.filesDialog?.rows).toHaveLength(3);
     expect(roles.filesDialog?.rows[2]).toEqual({ path: 'server/src/grants/check.ts', outsideScope: true, ids: ['WR-01', 'IN-01'] });
@@ -549,13 +511,10 @@ describe('quiet files, the files dialog, the Also row and the footer', () => {
     const chips = (m: ComposedReviewThreads): string[] => m.also.map((a) => a.label);
     expect(chips(members)).toEqual(['Files reviewed · 20', 'Frontmatter']);
     expect(chips(roles)).toEqual(['Fix report · Partial', 'Files reviewed · 2', 'Frontmatter']);
-    expect(chips(lb01)).toEqual(['Fix report · All fixed', 'Files reviewed · 45', 'Frontmatter']);
     expect(chips(catalogue)).toEqual(['Files reviewed · 20', 'Frontmatter']);
-    expect(chips(lb05)).toEqual(['Files reviewed · 33', 'Frontmatter']);
     expect(chips(clean)).toEqual(['Files reviewed · 4', 'Frontmatter']);
     expect(chips(admin)).toEqual(['Areas Reviewed Clean', 'Frontmatter']);
     expect(chips(transfers)).toEqual(['Fix report · All fixed', 'Files reviewed · 21', 'Frontmatter']);
-    expect(chips(lb04)).toEqual(['Files reviewed · 36', 'Frontmatter']);
     expect(roles.also[0]).toMatchObject({ kind: 'fix', url: '/artifacts/fix' });
     expect(admin.also[0]).toMatchObject({ kind: 'section', targetId: 'areas-reviewed-clean' });
     expect(admin.also[1]).toMatchObject({ kind: 'frontmatter', targetId: null });
@@ -569,10 +528,8 @@ describe('quiet files, the files dialog, the Also row and the footer', () => {
     expect(markup).toContain('Show fixed threads (4)');
     expect(markup).toContain('Reviewer · Claude (gsd-code-reviewer)');
     expect(markup).toContain('Depth · standard');
-    expect(markupOf(lb04)).toContain('Reviewer · the agent (gsd-code-reviewer)');
     expect(markupOf(clean)).toContain('Depth · quick');
     expect(markupOf(catalogue)).not.toContain('Show fixed threads');
-    expect(markupOf(lb05)).not.toContain('Show fixed threads');
     expect(markupOf(roles).match(/href=/g)).toHaveLength(1);
   });
 });

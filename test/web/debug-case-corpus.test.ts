@@ -1,5 +1,5 @@
-// quick-261018-j5h (QJ5H-07): corpus guards over every debug session in the repository - labelore's own
-// `.planning/debug/`, the made-up Lendshed project's and the synthetic session - built through the real
+// quick-261018-j5h (QJ5H-07): corpus guards over every debug session in the repository - the made-up
+// Lendshed project's and the synthetic session - built through the real
 // repository load so each file reaches the handler with the ref discovery gives it. The test asserts
 // invariants for every file and pins values only for the four named Lendshed sessions, each counted in
 // its own file - never the composer's output.
@@ -18,7 +18,7 @@ import { FX_ROOT, fxPath } from '../helpers/fixture-project.ts';
 
 const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
 const SYN = join(LB_ROOT, 'test/fixtures/debug/search-index-goes-stale.md');
-const ROOTS = [LB_ROOT, FX_ROOT];
+const ROOTS = [FX_ROOT];
 
 function walk(dir: string): string[] {
   if (!existsSync(dir)) return [];
@@ -112,11 +112,11 @@ function compose(s: Session): ComposedDebugCase | null {
   });
 }
 
-describe('every debug session on this machine', () => {
-  it('reads labelore, the synthetic one and at least four Lendshed sessions', () => {
-    expect(sessions.length).toBeGreaterThanOrEqual(6);
+describe('every debug session in the committed roots', () => {
+  it('reads the synthetic one and all four Lendshed sessions', () => {
+    expect(sessions.length).toBeGreaterThanOrEqual(5);
     expect(sessions.some((s) => s.label === 'synthetic')).toBe(true);
-    expect(sessions.some((s) => s.path.endsWith('resolved/loading-state-regression.md'))).toBe(true);
+    expect(sessions.some((s) => s.path.endsWith('resolved/door-sensor-stops-after-wifi-drop.md'))).toBe(true);
   });
 
   it('gives every session the debug kind and a projection', () => {

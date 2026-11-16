@@ -1,5 +1,5 @@
 // quick-261003-527: composeSecurityConsole, built from literal ViewInput objects and from the real
-// corpus docs (test/security-register.test.ts covers the server extractor; the narrow e2e spec
+// made-up docs (test/security-register.test.ts covers the server extractor; the narrow e2e spec
 // covers the page end to end), plus the static markup of SecurityConsoleView.
 import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
@@ -26,18 +26,6 @@ import { SecurityConsoleView } from '../../src/web/views/security-console-compon
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
 const DN = new URL('../../fixtures/dense/.planning/phases/01-identity-slice/01-SECURITY.md', import.meta.url);
-const LB05 = new URL(
-  '../../.planning/milestones/v1.1-phases/05-per-type-document-views/05-SECURITY.md',
-  import.meta.url,
-);
-const LB02 = new URL(
-  '../../.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-SECURITY.md',
-  import.meta.url,
-);
-const LB04 = new URL(
-  '../../.planning/milestones/v1.0-phases/04-portability-degradation-hardening/04-SECURITY.md',
-  import.meta.url,
-);
 const FX1 = fxPath('phases/01-member-sign-in-sessions/01-SECURITY.md');
 const FX3 = fxPath('phases/03-account-admin-and-sessions/03-SECURITY.md');
 
@@ -138,43 +126,40 @@ describe('composeSecurityConsole — dense fixture', () => {
   });
 });
 
-describe('composeSecurityConsole — LB v1.1/05', () => {
-  const model = composed(LB05, HEADINGS);
+describe('composeSecurityConsole — Lendshed phase 1', () => {
+  const model = composed(FX1, HEADINGS);
 
-  it('reads identity, the all-clear-but-one gauge and the nav counts', () => {
+  it('reads identity, the all-closed gauge and the nav counts', () => {
     expect(model.intro).toMatchObject({
-      title: 'Per type document views',
+      title: 'Member sign in sessions',
       status: { label: 'Verified', tone: 'complete' },
-      created: '21 Sep 2026',
+      created: '2 Mar 2026',
     });
     expect(model.gauge).toMatchObject({
       open: 0,
       alarm: false,
-      verdict: '1 below high, non-blocking',
-      closedLine: '18 of 19 closed',
+      verdict: 'nothing blocking',
+      closedLine: '27 of 27 closed',
     });
-    expect(model.gauge.segments).toEqual([
-      { status: 'closed', tone: 'complete', count: 18 },
-      { status: 'open-low', tone: 'in-flight', count: 1 },
-    ]);
+    expect(model.gauge.segments).toEqual([{ status: 'closed', tone: 'complete', count: 27 }]);
     expect(model.stamp.signed).toBe(true);
     expect(model.nav).toEqual([
-      { id: 'security-board', label: 'Threats', count: '19' },
-      { id: 'security-waivers', label: 'Accepted risks', count: '8' },
-      { id: 'security-boundaries', label: 'Trust boundaries', count: '8' },
+      { id: 'security-board', label: 'Threats', count: '27' },
+      { id: 'security-waivers', label: 'Accepted risks', count: '6' },
+      { id: 'security-boundaries', label: 'Trust boundaries', count: '10' },
       { id: 'security-signoff', label: 'Sign-off', count: '4/4' },
     ]);
   });
 
-  it('puts one square per threat on the board, in STRIDE order without a missing column', () => {
-    expect(model.board.columns.map((c) => c.key)).toEqual(['S', 'T', 'I', 'D', 'E']);
-    expect(model.threats).toHaveLength(19);
-    expect(model.threats.filter((t) => t.tone === 'in-flight').map((t) => t.ref)).toEqual(['T-05-11']);
-    expect(model.threats.filter((t) => t.accepted)).toHaveLength(8);
+  it('puts one square per threat on the board, in STRIDE order', () => {
+    expect(model.board.columns.map((c) => c.key)).toEqual(['S', 'T', 'R', 'I', 'D', 'E']);
+    expect(model.threats).toHaveLength(27);
+    expect(model.threats.filter((t) => t.tone === 'in-flight')).toEqual([]);
+    expect(model.threats.filter((t) => t.accepted)).toHaveLength(6);
   });
 
   it('links each waiver to its square and back', () => {
-    expect(model.waivers.rows).toHaveLength(8);
+    expect(model.waivers.rows).toHaveLength(6);
     const first = model.waivers.rows[0];
     expect(first.refs[0].threatIndex).not.toBeNull();
     expect(model.threats[first.refs[0].threatIndex as number].riskIndexes).toContain(0);
@@ -594,7 +579,7 @@ describe('SecurityConsoleView — residual observations markup', () => {
     expect(render(literal, { initialPick: 0 })).toContain('2 residual observations');
     const one = composeSecurityConsole(residualDoc('**Only (relates to T-1-01).** prose')) as ComposedSecurityConsole;
     expect(render(one, { initialPick: 0 })).toContain('1 residual observation');
-    expect(render(composed(LB05), { initialPick: 0 })).not.toContain('residual observation');
+    expect(render(composed(DN), { initialPick: 0 })).not.toContain('residual observation');
   });
 
   it('Lendshed P1: closed toggle with 3 items when open, T-01-06 reverse link, no <details>', () => {
@@ -629,42 +614,29 @@ describe('SecurityConsoleView — static markup', () => {
   });
 
   it('shows the picked threat in the detail panel, and an accepted one with its waiver', () => {
-    const model = composed(LB05);
-    const open = model.threats.findIndex((t) => t.ref === 'T-05-11');
-    const openHtml = render(model, { initialPick: open });
-    expect(openHtml).toContain('T-05-11');
-    expect(openHtml).toContain('Open · non-blocking');
-    expect(openHtml).toContain('Mitigation · ');
-    expect(openHtml).not.toContain('Pick a square for the threat');
-    const accepted = model.threats.findIndex((t) => t.ref === 'T-05-03');
+    const model = composed(FX1);
+    const closed = model.threats.findIndex((t) => t.ref === 'T-01-01');
+    const closedHtml = render(model, { initialPick: closed });
+    expect(closedHtml).toContain('T-01-01');
+    expect(closedHtml).toContain('Mitigation · ');
+    expect(closedHtml).not.toContain('Pick a square for the threat');
+    const accepted = model.threats.findIndex((t) => t.ref === 'T-01-23');
     const html = render(model, { initialPick: accepted });
     expect(html).toContain('Why acceptable · ');
-    expect(html).toContain('input is already through');
-    expect(html).toContain('plan author (05-01-PLAN.md), 21 Sep 2026');
-    expect(html).toContain('R-05-01 ↓');
+    expect(html).toContain('the leftover session expires by itself');
+    expect(html).toContain('Steward, 2 Mar 2026');
+    expect(html).toContain('R-01-05 ↓');
   });
 
-  it('lists the four legend squares and an 8-row waiver ledger with ref buttons', () => {
-    const html = render(composed(LB05));
+  it('lists the four legend squares and a 6-row waiver ledger with ref buttons', () => {
+    const html = render(composed(FX1));
     expect(count(html, 'class="view-security-key-sq"')).toBe(4);
-    expect(count(html, 'class="view-security-waiver"')).toBe(8);
-    expect(count(html, '<button type="button" class="view-security-ref">')).toBe(8);
+    expect(count(html, 'class="view-security-waiver"')).toBe(6);
+    expect(count(html, '<button type="button" class="view-security-ref">')).toBe(6);
   });
 
-  it('LB v1.0/02: grouped board, a clamped long rationale and a picked group listing its ids', () => {
-    const model = composed(LB02);
-    const html = render(model, { initialPick: 0 });
-    expect(html).toContain('Grouped');
-    expect(html).toContain('aria-expanded="false">more<');
-    const matched = model.threats.some((t) => t.ids.includes('T-02-20'));
-    expect(html.includes('<button type="button" class="view-security-ref">T-02-20</button>')).toBe(matched);
-    expect(html).toContain('Threats · ');
-    expect(count(html, '<details>')).toBe(3);
-    expect(html).not.toContain('<details open');
-  });
-
-  it('LB v1.0/04 and the fixture render the notice instead of a ledger', () => {
-    for (const path of [LB04, DN]) {
+  it('the fixture renders the notice instead of a ledger', () => {
+    for (const path of [DN]) {
       const html = render(composed(path));
       expect(html).toContain('class="notice view-security-notice"');
       expect(count(html, 'class="view-security-waiver"')).toBe(0);
@@ -695,21 +667,11 @@ describe('SecurityConsoleView — static markup', () => {
     expect(count(html, 'aria-controls="flow-')).toBe(0);
   });
 
-  it('a boundary section renders the single list with source → destination leads', () => {
-    const html = render(composed(LB05));
-    expect(count(html, 'id="security-boundaries"')).toBe(1);
-    expect(html).toContain('Crossings');
-    expect(html).not.toContain('Other crossings');
-    expect(count(html, '<div id="security-dest-')).toBe(1);
-    expect(count(html, 'class="view-security-to-arrow"')).toBe(8);
-    expect(count(html, 'class="view-security-from" data-tone="in-flight"')).toBe(0);
-  });
-
   it('shows the sign-off checklist and the rail stamp for a signed and an unsigned doc', () => {
-    const signed = render(composed(LB05));
+    const signed = render(composed(FX1));
     expect(count(signed, 'data-done="true"')).toBe(4);
     expect(signed).toContain('Signed off');
-    expect(signed).toContain('verified 2026-09-21');
+    expect(signed).toContain('verified 2026-03-02');
     const unsigned = render(composed(DN));
     expect(count(unsigned, 'data-done="true"')).toBe(1);
     expect(count(unsigned, 'data-done="false"')).toBe(3);
@@ -718,7 +680,7 @@ describe('SecurityConsoleView — static markup', () => {
   });
 
   it('hides the audit trail by default and shows its runs and note when switched on', () => {
-    const model = composed(LB05);
+    const model = composed(FX1);
     const off = render(model);
     expect(off).not.toContain('id="security-audit"');
     expect(off).toContain('role="switch"');
@@ -726,8 +688,8 @@ describe('SecurityConsoleView — static markup', () => {
     const on = render(model, { initialAudit: true });
     expect(on).toContain('id="security-audit"');
     expect(count(on, 'class="view-security-run"')).toBe(1);
-    expect(on).toContain('1 (non-blocking: T-05-11) open');
-    expect(on).toContain('Audit notes');
+    expect(on).toContain('27 / 27 closed');
+    expect(on).toContain('class="view-security-note"');
   });
 
   it('the synthetic open-threats doc renders two runs when the audit is on', () => {
@@ -741,10 +703,10 @@ describe('SecurityConsoleView — static markup', () => {
   });
 
   it('names Frontmatter and, when the register has a legend, the Register legend', () => {
-    const withLegend = render(composed(LB05, HEADINGS));
+    const withLegend = render(composed(FX1, HEADINGS));
     expect(withLegend).toContain('>Frontmatter<');
     expect(withLegend).toContain('>Register legend<');
-    const without = render(composed(LB04, HEADINGS));
+    const without = render(composed(DN));
     expect(without).toContain('>Frontmatter<');
     expect(without).not.toContain('Register legend');
   });

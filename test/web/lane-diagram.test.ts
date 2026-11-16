@@ -1,5 +1,5 @@
 // quick-260930-mp6 (W-lanes, W-nodes, K-fallback): static markup for LaneDiagramFigure against the
-// lendshed fixtures, and the RESEARCH view drawing labelore v1.0/02 as lanes. The renderer is
+// lendshed fixtures, and the RESEARCH view drawing a Lendshed architecture diagram as lanes. The renderer is
 // exercised with renderToStaticMarkup (the clean-tree.test.ts idiom); geometry is covered by
 // test/rendering/lane-layout.test.ts, and clicks by the narrow research-briefing e2e spec.
 import { readFile } from 'node:fs/promises';
@@ -17,6 +17,7 @@ import { LaneDiagram, LaneDiagramFigure, NodeDetails } from '../../src/web/compo
 import { composeResearchBriefing } from '../../src/web/views/research-briefing.ts';
 import { ResearchBriefingView } from '../../src/web/views/research-briefing-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
+import { fxPath } from '../helpers/fixture-project.ts';
 
 const fixture = (name: string): Promise<string> => readFile(new URL(`../rendering/fixtures/${name}-diagram.txt`, import.meta.url), 'utf8');
 const STORAGE = await fixture('lendshed-v1-02-shed-health');
@@ -121,10 +122,14 @@ describe('LaneDiagram — groups, wire labels, stage semantics (W-wires)', () =>
   });
 });
 
-describe('ResearchBriefingView — labelore v1.0/02 as lanes', () => {
-  it('draws 23 lane nodes inside #research-architecture', () => {
-    const LB02 = new URL('../../.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-RESEARCH.md', import.meta.url);
-    const briefing = extractResearchBriefing(tryParseFrontmatter(readFileSync(LB02, 'utf8')).body);
+describe('ResearchBriefingView — Lendshed phase 1 research as lanes', () => {
+  it('draws one lane node per lifted node inside #research-architecture', () => {
+    const RESEARCH = fxPath('phases/01-member-sign-in-sessions/01-RESEARCH.md');
+    const body = tryParseFrontmatter(readFileSync(RESEARCH, 'utf8')).body;
+    const fence = /### System Architecture Diagram\n\n```\n([\s\S]*?)\n```/.exec(body);
+    expect(fence).not.toBeNull();
+    const drawn = graphOf((fence as RegExpExecArray)[1]).nodes.length;
+    const briefing = extractResearchBriefing(body);
     const input: ViewInput = {
       kind: 'research',
       frontmatter: {},
@@ -140,6 +145,7 @@ describe('ResearchBriefingView — labelore v1.0/02 as lanes', () => {
     const start = html.indexOf('id="research-architecture"');
     expect(start).toBeGreaterThan(-1);
     const chapter = html.slice(start);
-    expect(count(chapter.slice(0, chapter.indexOf('</section>')), /class="lane-diagram-node"/g)).toBe(23);
+    expect(count(chapter.slice(0, chapter.indexOf('</section>')), /class="lane-diagram-node"/g)).toBe(drawn);
+    expect(drawn).toBe(13);
   });
 });

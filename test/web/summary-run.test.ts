@@ -31,9 +31,6 @@ import {
 } from '../../src/web/views/summary-run-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
-const LB = '.planning';
-const P0501 = `${LB}/milestones/v1.1-phases/05-per-type-document-views/05-01-SUMMARY.md`;
-const P3US = `${LB}/milestones/v2.0-quick/260922-3us-build-sketch-004-b3-folded-chapters-docu/260922-3us-SUMMARY.md`;
 const FX0406 = fxPath('phases/04-bulk-loan-export/04-06-SUMMARY.md');
 const FX0101 = fxPath('phases/01-member-sign-in-sessions/01-01-SUMMARY.md');
 
@@ -64,16 +61,7 @@ function inputOf(
   };
 }
 
-function lb0501(headings: ViewInput['headings'] = []): ViewInput {
-  return inputOf(new URL(`../../${P0501}`, import.meta.url), {
-    path: P0501,
-    location: 'archived-phase',
-    milestoneVersion: 'v1.1',
-    phaseIdentity: { milestoneVersion: 'v1.1', number: '05', projectCode: null, slug: 'per-type-document-views' },
-  }, headings);
-}
-
-function view(model: ComposedSummaryRun, path = P0501, presentation: SummaryPresentation | null = null): string {
+function view(model: ComposedSummaryRun, path = '.planning/phases/01-member-sign-in-sessions/01-01-SUMMARY.md', presentation: SummaryPresentation | null = null): string {
   return renderToStaticMarkup(
     createElement(
       MemoryRouter,
@@ -292,126 +280,38 @@ describe('matchProof', () => {
   });
 });
 
-describe('0501 through the real handler', () => {
-  const input = lb0501();
-  const model = composeSummaryRun(input) as ComposedSummaryRun;
-
-  it('composes the pinned head, triggers and modals', () => {
-    expect(model.head).toMatchObject({
-      eyebrow: 'Summary of 05-01 · Phase 5 · Per type document views',
-      title: 'Discussion-log view, section-projection extractor, view registry',
-      planId: '05-01',
-      completed: '20 Sep 2026',
-      duration: '26min',
-      started: '20:34',
-      type: 'UI',
-      status: { label: 'Complete', tone: 'complete' },
-      selfCheck: { label: 'Self-check passed', tone: 'complete' },
-    });
-    expect(model.triggers).toEqual({ tasks: { label: 'Tasks', count: 2 }, files: { count: 15 }, requirements: { done: 3, pending: 0 } });
-    expect(model.modals.files.created).toHaveLength(12);
-    expect(model.modals.files.modified).toHaveLength(3);
-    expect(model.modals.requirements.map((r) => r.id)).toEqual(['VIEW-01', 'VIEW-02', 'UI-06']);
-    expect(model.setup).toBeNull();
-    expect(model.quick).toBe(false);
-  });
-
-  it('composes the outcome rows with the proof pills on the right rows', () => {
-    const outcome = model.outcome;
-    expect(outcome).not.toBeNull();
-    expect(outcome?.rows).toHaveLength(5);
-    expect(outcome?.rows[1].head).toBe('The client-side view registry');
-    expect(outcome?.rows[1].long).toBe(true);
-    expect(outcome?.rows[2].long).toBe(true);
-    expect(outcome?.rows.map((r) => r.pills.map((p) => p.id))).toEqual([['D1'], [], ['D2', 'D3'], [], []]);
-    expect(outcome?.rows[0].pills[0]).toMatchObject({ state: 'pass', human: false, anchorId: 'summary-proof-D1' });
-    expect(outcome?.rows[2].pills[1]).toMatchObject({ state: 'unknown', human: true });
-    expect([outcome?.shipped, outcome?.proven, outcome?.human, outcome?.fixed]).toEqual([5, 3, 1, 0]);
-  });
-
-  it('composes four stops, no cards, Went to plan and three proof rows', () => {
-    expect(model.run.stops.map((s) => [s.kind, s.label])).toEqual([
-      ['start', 'Started · 20:34'],
-      ['task', 'Task 1 · feat'],
-      ['task', 'Task 2 · feat'],
-      ['end', 'Completed · 20 Sep 2026 · 26min'],
-    ]);
-    expect(model.run.aside).toBe('2 tasks · 0 fixed on the way');
-    expect(model.run.cards).toEqual([]);
-    expect(model.run.went?.note?.startsWith('Plan executed exactly as written')).toBe(true);
-    expect(model.proof?.map((p) => [p.id, p.human, p.requirement])).toEqual([['D1', false, 'VIEW-02'], ['D2', false, 'VIEW-01'], ['D3', true, 'UI-06']]);
-    expect(model.proof?.[2].checks[0]).toMatchObject({ kind: 'manual procedural', state: 'unknown' });
-  });
-
-  it('composes decisions, patterns, also, lineage, next and the source-only entries', () => {
-    expect(model.decisions.items).toHaveLength(4);
-    expect(model.patterns?.items).toHaveLength(4);
-    expect(model.patterns?.items.filter((p) => p.kind === 'convention')).toHaveLength(1);
-    expect(model.patterns?.added).toEqual([]);
-    expect(model.sourceOnly.map((s) => s.label)).toEqual(expect.arrayContaining(['Known Stubs']));
-    expect(model.waits).toEqual([]);
-    expect(model.lineage?.planId).toBe('05-01');
-    expect(model.lineage?.requires).toHaveLength(1);
-    expect(model.lineage?.requires[0].label).toBe('Phase 2');
-    expect(model.lineage?.affects).toHaveLength(5);
-    expect(model.next).toContain('view-registry seam');
-    expect(model.sourceOnly.map((s) => s.label)).toEqual(['Tags', 'Provides', 'Actuals', 'Performance', 'Self-check', 'Known Stubs', 'Frontmatter']);
-  });
-
-  it('renders the head, outcome, timeline and proof as static markup', () => {
-    const html = view(model);
-    expect(count(html, '<h1')).toBe(1);
-    expect(html).toContain('Discussion-log view, section-projection extractor, view registry</h1>');
-    expect(html).toContain('Summary of 05-01 · Phase 5 · Per type document views');
-    expect(html).toContain('Completed <b>20 Sep 2026</b>');
-    expect(html).toContain('<b data-tone="complete">Complete</b>');
-    expect(html).toContain('title="26min">26min</b>');
-    expect(html).toContain('<b>20:34</b>');
-    expect(html).toContain('Type:</span> UI');
-    expect(html).toContain('Self-check passed');
-    expect(html).toContain('Tasks <b>2</b>');
-    expect(html).toContain('Files <b>15</b>');
-    expect(html).toContain('Requirements <b>3</b>');
-    expect(count(html, 'class="view-summary-row"')).toBe(5);
-    expect(count(html, 'class="view-summary-pill"')).toBe(3);
-    expect(html).toContain('<b>5</b> things shipped');
-    expect(html).toContain('3 deliverables proven');
-    expect(html).toContain('1 need a human');
-    expect(count(html, 'class="view-summary-stop"')).toBe(4);
-    expect(html).toContain('Went to plan.');
-    expect(count(html, 'id="summary-proof-D')).toBe(3);
-    expect(html).toContain('Needs a human');
-    expect(html).toContain('+ More');
-    expect(html).not.toContain('dangerously');
-    expect(html).toContain('id="summary-source-only"');
-  });
-});
-
 describe('modal bodies and the preview card', () => {
-  const model = composeSummaryRun(lb0501()) as ComposedSummaryRun;
+  const FX0101_PATH = '.planning/phases/01-member-sign-in-sessions/01-01-SUMMARY.md';
+  const model = composeSummaryRun(
+    inputOf(FX0101, {
+      path: FX0101_PATH,
+      location: 'phase',
+      phaseIdentity: { milestoneVersion: null, number: '01', projectCode: null, slug: 'member-sign-in-sessions' },
+    }),
+  ) as ComposedSummaryRun;
 
   it('lists the requirements as triggers with Completed chips', () => {
-    const previews = requirementPreviews(null, P0501, model.modals.requirements, false);
+    const previews = requirementPreviews(null, FX0101_PATH, model.modals.requirements, false);
     const html = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(RequirementsModalBody, { requirements: model.modals.requirements, previews })));
-    for (const id of ['VIEW-01', 'VIEW-02', 'UI-06']) expect(html).toContain(`>${id}</button>`);
+    for (const id of ['SIGN-01', 'SIGN-05', 'SIGN-06']) expect(html).toContain(`>${id}</button>`);
     expect(count(html, 'Completed')).toBe(3);
     expect(count(html, 'class="view-summary-req"')).toBe(3);
   });
 
-  it('lists 12 created and 3 modified files with their notes', () => {
+  it('lists 7 created and 6 modified files with their notes', () => {
     const html = renderToStaticMarkup(createElement(FilesModalBody, { files: model.modals.files }));
-    expect(html).toContain('Created · 12');
-    expect(html).toContain('Modified · 3');
-    expect(count(html, '>New<')).toBe(12);
+    expect(html).toContain('Created · 7');
+    expect(html).toContain('Modified · 6');
+    expect(count(html, '>New<')).toBe(7);
     expect(html).toContain('view-summary-file-note');
   });
 
   it('shows the task names, kind chips and copy buttons', () => {
     const html = renderToStaticMarkup(createElement(TasksModalBody, { tasks: model.modals.tasks, copiedHash: null, onCopy: () => {} }));
-    expect(count(html, 'aria-label="Copy ')).toBe(2);
-    expect(html).toContain('Copy 807003d');
+    expect(count(html, 'aria-label="Copy ')).toBe(3);
+    expect(html).toContain('Copy 3f9a1c2');
     expect(html).toContain('>feat<');
-    const copied = renderToStaticMarkup(createElement(TasksModalBody, { tasks: model.modals.tasks, copiedHash: '807003d', onCopy: () => {} }));
+    const copied = renderToStaticMarkup(createElement(TasksModalBody, { tasks: model.modals.tasks, copiedHash: '3f9a1c2', onCopy: () => {} }));
     expect(copied).toContain('>Copied<');
   });
 
@@ -492,7 +392,7 @@ describe('requirementPreviews / lineageLinks', () => {
     expect(links['v1.0-milestone-audit']).toBeNull();
     const old = lineageLinks(presentation, '.planning/milestones/v1.0-phases/03-x/03-01-SUMMARY.md', [{ key: '02-situational-awareness' }]);
     expect(old['02-situational-awareness']).toBe(buildPhaseUrl({ milestoneVersion: 'v1.0', number: '02', projectCode: null, slug: 'situational-awareness' }));
-    expect(lineageLinks(null, P0501, [{ key: '02-x' }])['02-x']).toBeNull();
+    expect(lineageLinks(null, '.planning/phases/01-x/01-01-SUMMARY.md', [{ key: '02-x' }])['02-x']).toBeNull();
   });
 });
 
@@ -547,32 +447,5 @@ describe('Lendshed summaries through the real handler', () => {
     expect(html).toContain('Not completed yet');
     expect(html).not.toContain('id="summary-outcome"');
     expect(html).toContain('Waits on a human');
-  });
-});
-
-describe('3us (quick, labelore)', () => {
-  it('composes the quick eyebrow, table tasks with names, the quick-ID fallback and the Completed-stop deviations', () => {
-    const input = inputOf(new URL(`../../${P3US}`, import.meta.url), { path: P3US, location: 'quick', quickTaskId: '260922-3us' });
-    const model = composeSummaryRun(input) as ComposedSummaryRun;
-    expect(model.head.eyebrow).toBe('Quick summary · 260922-3us');
-    expect(model.head.title).toBe('sketch-004 B3 folded-chapters document layout');
-    expect(model.head.completed).toBe('22 Sep 2026');
-    expect(model.head.type).toBe('Web UI');
-    expect(model.head.selfCheck).toBeNull();
-    expect(model.quick).toBe(true);
-    expect(model.triggers).toEqual({ tasks: { label: 'Tasks', count: 3 }, files: { count: 18 }, requirements: { done: 4, pending: 0 } });
-    expect(model.modals.tasks.rows.every((t) => t.name !== null)).toBe(true);
-    expect(model.outcome).toBeNull();
-    expect(model.decisions.items).toHaveLength(2);
-    expect(model.patterns).toBeNull();
-    expect(model.run.stops[model.run.stops.length - 1].deviations).toHaveLength(2);
-    const previews = requirementPreviews({ artifacts: [], milestones: [] }, P3US, model.modals.requirements, model.quick);
-    expect(previews['B3-01'].status).toBe('Complete in this summary');
-    expect(model.lineage?.requires).toEqual([]);
-    expect(model.lineage?.affects).toHaveLength(4);
-    const html = view(model, P3US);
-    expect(html).toContain('Quick summary · 260922-3us');
-    expect(html).not.toContain('id="summary-outcome"');
-    expect(html).toContain('Unblocks · 4');
   });
 });

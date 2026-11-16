@@ -11,7 +11,6 @@ import { composeWindowsLedger } from '../../src/web/views/windows-ledger.ts';
 import { WindowsLedgerView, windowsHeaderProps } from '../../src/web/views/windows-ledger-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
-const LB_PLANNING = new URL('../../.planning/', import.meta.url);
 const SHAPES_PLANNING = new URL('../fixtures/shapes/.planning/', import.meta.url);
 
 function inputOf(content: string): ViewInput {
@@ -57,21 +56,6 @@ describe('composeWindowsLedger - the Lendshed ledger', () => {
 
   it('has no notice when nothing disagrees', () => {
     expect(lendshed?.notice).toBeNull();
-  });
-});
-
-describe("composeWindowsLedger - this repo's own WINDOWS.md", () => {
-  const content = readFileSync(new URL('WINDOWS.md', LB_PLANNING), 'utf8');
-  const own = composeWindowsLedger(inputOf(content));
-
-  it('leads with 0 open in the complete tone', () => {
-    expect(own?.lead).toMatchObject({ open: 0, waived: 0, tone: 'complete' });
-    expect(own?.lead.fixed).toBeGreaterThanOrEqual(9);
-  });
-
-  it('says "Nothing open." and when the last fix landed', () => {
-    expect(own?.lead.sentence.startsWith('Nothing open. ')).toBe(true);
-    expect(own?.lead.sentence).toMatch(/fixed, last on \d{1,2} [A-Z][a-z]{2} \d{4}\.$/);
   });
 });
 
@@ -405,24 +389,5 @@ describe('the Shapes ledger (zero open, D-15)', () => {
     expect(html).toContain('<p class="empty-note">Nothing open.</p>');
     expect(html).toContain('<p class="empty-note">Nothing waived.</p>');
     expect(html).toContain('01 · 1 fixed');
-  });
-});
-
-describe("this repo's own WINDOWS.md - the history", () => {
-  const own = composeWindowsLedger(inputOf(readFileSync(new URL('WINDOWS.md', LB_PLANNING), 'utf8')));
-
-  it('composes its fixed rows into the history, none open and none waived', () => {
-    expect(own?.fixed?.count).toBeGreaterThanOrEqual(9);
-    const rows = own!.fixed!.groups.flatMap((group) => group.rows);
-    expect(rows.length).toBe(own!.fixed!.count);
-    expect(rows.every((row) => row.tone === 'complete')).toBe(true);
-    expect(own?.open.empty).toBe('Nothing open.');
-    expect(own?.waived.empty).toBe('Nothing waived.');
-  });
-
-  it('groups by the verbatim phase string, so quick tasks keep their own group', () => {
-    const phases = phasesOf(own?.fixed);
-    expect(phases.slice(0, 3)).toEqual(['01', '03', '04']);
-    expect(phases).toContain('quick-260909-ogb');
   });
 });

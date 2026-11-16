@@ -24,15 +24,7 @@ import type { ComposedUatSession } from '../../src/web/views/uat-session.ts';
 import { GapDetail, UatIntroMeta, UatSessionView } from '../../src/web/views/uat-session-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
-const SYN = new URL('../../.planning/sketches/015-uat-page/synthetic-testing-UAT.md', import.meta.url);
-const LB01 = new URL(
-  '../../.planning/milestones/v1.0-phases/01-read-layer-domain-model/01-UAT.md',
-  import.meta.url,
-);
-const LB02 = new URL(
-  '../../.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-UAT.md',
-  import.meta.url,
-);
+const SYN = new URL('../fixtures/uat/synthetic-testing-UAT.md', import.meta.url);
 const FX103 = fxPath('milestones/v1.0-phases/03-catalogue-browsing/03-UAT.md');
 const FX3 = fxPath('phases/03-account-admin-and-sessions/03-UAT.md');
 const FX1 = fxPath('phases/01-member-sign-in-sessions/01-UAT.md');
@@ -189,35 +181,6 @@ describe('composeUatSession — the synthetic testing doc', () => {
 });
 
 describe('composeUatSession — real documents', () => {
-  it('labelore v1.0/01: a done line, a 35 min gap, no gaps, two source-only entries', () => {
-    const composed = compose(LB01);
-    expect(composed.current).toMatchObject({ live: false, headline: 'Testing complete', passed: 23, total: 23 });
-    expect(composed.intro.status).toEqual({ label: 'Complete', tone: 'complete' });
-    expect(composed.intro.title).toBe('Read layer domain model');
-    expect(composed.intro.eyebrow).toBe('User acceptance test · Phase 1');
-    expect(composed.intro.started).toBe('9 Sep 2026 · 13:50');
-    expect(composed.intro.updated).toBe('9 Sep 2026 · 14:25');
-    expect(composed.intro.gap).toBe('35 min');
-    expect(composed.gaps.mode).toBe('none');
-    expect(composed.gaps.aside).toBe('none');
-    expect(composed.gaps.emptyLine).toBe('No gaps — no test reported an issue.');
-    expect(composed.sourceOnly.map((s) => s.label)).toEqual(['Summary block', 'Frontmatter']);
-    expect(composed.tests[0].more.map((m) => m.label)).toEqual(
-      expect.arrayContaining(['executed by', 'evidence']),
-    );
-  });
-
-  it('labelore v1.0/02: date-only stamps and a gap of 11 days, prose cards', () => {
-    const composed = compose(LB02);
-    expect(composed.intro.started).toBe('29 Aug 2026');
-    expect(composed.intro.updated).toBe('9 Sep 2026');
-    expect(composed.intro.gap).toBe('11 days');
-    expect(composed.gaps.mode).toBe('cards');
-    expect(composed.gaps.cards).toHaveLength(12);
-    expect(composed.gaps.aside).toBe('12');
-    expect(composed.extras).toHaveLength(4);
-  });
-
   it('Lendshed P1: no gap when updated precedes started', () => {
     expect(compose(FX1).intro.gap).toBeNull();
   });
@@ -353,22 +316,21 @@ describe('UatSessionView — static markup', () => {
     expect(html.match(/<button[^>]*class="view-uat-square"[^>]*data-now="true"/g)).toHaveLength(1);
   });
 
-  it('LB v1.0/01: the done line, 23 passing squares, no attention card', () => {
-    const html = render(compose(LB01));
+  it('Lendshed P3: the done line, five passing squares, no attention card', () => {
+    const html = render(compose(FX3));
     expect(html).toContain('Testing complete');
-    expect(html).toContain('23 of 23 passed');
+    expect(html).toContain('5 of 5 passed');
     expect(html).not.toContain('Now testing');
-    expect(html.match(/data-result="pass"/g)?.length).toBeGreaterThanOrEqual(23);
-    expect(html.match(/class="view-uat-pair"/g)).toHaveLength(23);
+    expect(html.match(/data-result="pass"/g)?.length).toBeGreaterThanOrEqual(5);
+    expect(html.match(/class="view-uat-pair"/g)).toHaveLength(5);
   });
 
   it('the cover renders the status chip, Started, Updated with the gap, and Tested from', () => {
-    const html = renderToStaticMarkup(createElement(UatIntroMeta, { intro: compose(LB01).intro }));
+    const html = renderToStaticMarkup(createElement(UatIntroMeta, { intro: compose(FX1).intro }));
     expect(html).toContain('Complete');
-    expect(html).toContain('9 Sep 2026 · 13:50');
-    expect(html).toContain('(35 min later)');
+    expect(html).toContain('2 Mar 2026 · 10:05');
     expect(html).toContain('Tested from');
-    expect(html).toContain('01-01-SUMMARY.md · 01-02-SUMMARY.md');
+    expect(html).toContain('01-01-SUMMARY.md · 01-02-SUMMARY.md · 01-03-SUMMARY.md · 01-VERIFICATION.md');
   });
 });
 
@@ -420,29 +382,6 @@ describe('UatSessionView — gaps, extras and the source-only strip', () => {
     expect(html).toContain('Re-check:');
   });
 
-  it('labelore v1.0/02: twelve cards and no table, four closed extras in order', () => {
-    const html = render(compose(LB02));
-    expect(html).not.toContain('view-uat-register');
-    expect(html.match(/class="view-uat-card"/g)).toHaveLength(12);
-    expect(html.match(/<details>/g)).toHaveLength(4);
-    const order = ['Result', 'Round-1 detail (historical)', 'Gap Reconciliation — 2026-09-09', 'Notes'].map((h) =>
-      html.indexOf(`<summary>${h}</summary>`),
-    );
-    expect(order.every((i) => i > -1)).toBe(true);
-    expect([...order].sort((a, b) => a - b)).toEqual(order);
-  });
-
-  it('labelore v1.0/01: gaps read none; two source-only buttons and no comments item', () => {
-    const html = render(compose(LB01));
-    expect(html).toContain('No gaps — no test reported an issue.');
-    expect(html).toContain('>none<');
-    const nav = html.slice(html.indexOf('id="uat-source-only"'));
-    expect(nav.match(/<button/g)).toHaveLength(2);
-    expect(nav).toContain('Summary block');
-    expect(nav).toContain('Frontmatter');
-    expect(nav).not.toContain('Template comments');
-  });
-
   it('the synthetic nav lists Template comments as a non-button item', () => {
     const html = render(compose(SYN));
     const nav = html.slice(html.indexOf('id="uat-source-only"'));
@@ -451,10 +390,10 @@ describe('UatSessionView — gaps, extras and the source-only strip', () => {
   });
 
   it('long expected text gets a more toggle; extra fields sit under a More toggle', () => {
-    expect(compose(LB01).tests.some((t) => t.expectedLong)).toBe(true);
-    const html = render(compose(LB01));
+    expect(compose(FX3).tests.some((t) => t.expectedLong)).toBe(true);
+    const html = render(compose(FX3));
     expect(html).toContain('>more</button>');
-    expect(html).toMatch(/More · executed by, evidence/);
+    expect(html).toMatch(/More · reverified, prior result, prior reported, prior severity/);
     expect(html).toContain('data-clamp="true"');
   });
 });
