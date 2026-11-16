@@ -77,7 +77,7 @@ Progress: [██████░░░░] 67%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [Phase 1]: Included every artifact type reference-portal has never produced, per D-01.
+- [Phase 1]: Included every artifact type the reference project has never produced, per D-01.
 - [Phase ?]: Corruption deliberately isolated to two files, per D-02.
 
 ### Quick Tasks Completed

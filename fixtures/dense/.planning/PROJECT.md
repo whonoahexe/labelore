@@ -33,7 +33,7 @@ broken.
 ## Context
 
 This is a synthetic fixture authored against `~/.claude/gsd-core/templates/` and
-`~/.claude/gsd-core/bin/lib/*.cjs`, never against `~/reference-portal` (D-01, D-04). It deliberately spans
+`~/.claude/gsd-core/bin/lib/*.cjs`, never against any real project (D-01, D-04). It deliberately spans
 three milestones (`v1.0`, `v2.0` archived; `v3.0` active) with an archived/live phase-number collision
 at phase `01`, so multi-milestone identity logic is exercised at N greater than 2.
 
@@ -50,7 +50,7 @@ at phase `01`, so multi-milestone identity logic is exercised at N greater than 
 |----------|-----------|---------|
 | Three milestones, not two | Multi-milestone logic (`phase_numbering: restarts-per-milestone`) must not be validated only at N=2 | — Pending |
 | Corruption lives inside the healthy tree, not beside it | Isolation is only meaningfully proven when a healthy majority surrounds the broken file | — Pending |
-| Unfamiliar artifact types (`SPEC.md`, `AI-SPEC.md`, `01-COST-MODEL.md`) are included | The highest-severity project risk is overfitting to `~/reference-portal`'s shape | — Pending |
+| Unfamiliar artifact types (`SPEC.md`, `AI-SPEC.md`, `01-COST-MODEL.md`) are included | The highest-severity project risk is overfitting to one real project's shape | — Pending |
 
 ---
 *Last updated: 2026-08-22 after initialization*

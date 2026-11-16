@@ -65,13 +65,6 @@ interface Exemption {
   reason: string;
 }
 
-/** Fixture places that may still name the reference project; removed once the scrub made them stale. */
-const FIXTURE_EXEMPTIONS: Exemption[] = [
-  { path: 'fixtures/dense/**', kind: 'word', reason: 'the made-up dense tree (D-04)' },
-  { path: 'fixtures/README.md', kind: 'word', reason: 'the fixtures ledger that states that rule' },
-  { path: 'test/__golden__/dense.json', kind: 'word', reason: 'the frozen golden of that tree (D-04)' },
-];
-
 /** Test sources that must name private text to forbid it: each exempt for one kind, with a reason. */
 const SOURCE_EXEMPTIONS: Exemption[] = [
   { path: 'test/fixture-leak.test.ts', kind: 'tool', reason: 'holds the public tool-tell list and plants it' },
@@ -159,9 +152,6 @@ function exemptionMatches(pattern: string, rel: string): boolean {
 function covers(e: Exemption, f: Finding): boolean {
   return e.kind === f.kind && exemptionMatches(e.path, f.path);
 }
-function fixtureExempt(f: Finding): boolean {
-  return f.scope === 'fixture' && FIXTURE_EXEMPTIONS.some((e) => covers(e, f));
-}
 function sourceExempt(f: Finding): boolean {
   return f.scope === 'test' && SOURCE_EXEMPTIONS.some((e) => covers(e, f));
 }
@@ -197,8 +187,6 @@ describe('fixture, test-source and app-source leak guard (TEST-03, quick-261116-
   });
 
   it('keeps every exemption list frozen at its decided length', () => {
-    expect(FIXTURE_EXEMPTIONS).toHaveLength(3);
-    expect(FIXTURE_EXEMPTIONS.every((e) => e.reason.length > 0)).toBe(true);
     expect(SOURCE_EXEMPTIONS).toHaveLength(3);
     expect(SOURCE_EXEMPTIONS.every((e) => e.reason.length > 0)).toBe(true);
   });
@@ -219,7 +207,7 @@ describe('fixture, test-source and app-source leak guard (TEST-03, quick-261116-
   });
 
   it('finds no private word, host, tool tell or file name in the fixtures', () => {
-    const offenders = findings.filter((f) => f.scope === 'fixture' && !fixtureExempt(f));
+    const offenders = findings.filter((f) => f.scope === 'fixture');
     expect(offenders.map(describeFinding)).toEqual([]);
   });
 
@@ -235,7 +223,7 @@ describe('fixture, test-source and app-source leak guard (TEST-03, quick-261116-
 
   it('has no stale exemption: an entry covers a finding exactly when its kind has terms to find', () => {
     const terms = (kind: Kind) => TERM_KIND.find(([k]) => k === kind)![1](LOCAL_NAMES);
-    for (const e of [...FIXTURE_EXEMPTIONS, ...SOURCE_EXEMPTIONS]) {
+    for (const e of SOURCE_EXEMPTIONS) {
       const hits = findings.filter((f) => covers(e, f));
       expect(hits.length > 0, `exemption ${e.path} (${e.kind})`).toBe(terms(e.kind).length > 0);
     }

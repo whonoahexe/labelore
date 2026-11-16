@@ -13,12 +13,12 @@ A reader of this file needs to know four things before touching anything under `
    source, recorded below. This is D-01, and it exists because a parser overfit to one real project's
    shape is the highest-severity risk this project's own research identified.
 
-2. **`~/reference-portal` is a manual smoke target only.** Per CONTEXT.md decision D-04: *"`~/reference-portal`
-   is a **manual smoke target only** — zero committed assertions against it. The machine-checked
-   contract is entirely fixture-derived, so no assertion can quietly encode a reference-portal-ism. You
+2. **A real GSD project on this machine is a manual smoke target only.** Per CONTEXT.md decision D-04: *"a real
+   project is a **manual smoke target only** — zero committed assertions against it. The machine-checked
+   contract is entirely fixture-derived, so no assertion can quietly encode one project's quirks. You
    point the harness at it by hand when you want to see real output."* No committed test in `test/` or
-   `src/` may assert anything about `~/reference-portal` — its path is named here, explicitly, precisely so
-   that a future contributor recognizes it on sight and does not accidentally wire an assertion to it.
+   `src/` may assert anything about a real project. Since quick-261116-r41 the reference project's name lives only
+   in the gitignored local deny list, so this public ledger no longer names it, and the rule stands.
 
 3. **The dense tree's golden snapshot permanently contains warnings.** Per D-02, three deliberate
    corruptions live inside `fixtures/dense/`, among healthy files. Once they were introduced (Task 3 of
@@ -92,14 +92,14 @@ proven against (per CONTEXT.md D-01, "reversibility: costly").
 |------|------------------|------------------|
 | `01-CONTEXT.md` | `templates/context.md` | Six-tag context grammar, no frontmatter |
 | `01-RESEARCH.md` | `templates/research.md` — the seven `<...>`-tagged sections | Frontmatter-free, fixed-section-tag research document parses |
-| `01-SECURITY.md` | `templates/SECURITY.md` — `phase`/`slug`/`status`/`threats_open`/`asvs_level`/`created` frontmatter, Trust Boundaries / Threat Register / Accepted Risks Log / Security Audit Trail / Sign-Off sections | An artifact type reference-portal has never produced (per PITFALLS.md's own confirmation) parses; `fixture_only` is an extra frontmatter key exercising pass-through on a typed artifact |
+| `01-SECURITY.md` | `templates/SECURITY.md` — `phase`/`slug`/`status`/`threats_open`/`asvs_level`/`created` frontmatter, Trust Boundaries / Threat Register / Accepted Risks Log / Security Audit Trail / Sign-Off sections | An artifact type the reference project has never produced (per PITFALLS.md's own confirmation) parses; `fixture_only` is an extra frontmatter key exercising pass-through on a typed artifact |
 | `01-UI-SPEC.md` | `templates/UI-SPEC.md` — `shadcn_initialized`/`preset` frontmatter, Design System / Spacing Scale / Typography / Color / Copywriting Contract / UI Considerations / Registry Safety / Checker Sign-Off sections | Same class of unfamiliar type; `fixture_extra_field` exercises unknown-frontmatter-key pass-through |
 | `01-VALIDATION.md` | `templates/VALIDATION.md` — `nyquist_compliant`/`wave_0_complete` frontmatter, Test Infrastructure / Sampling Rate / Per-Task Verification Map sections | Same class |
 | `01-UAT.md` | `templates/UAT.md` — `status`/`phase`/`source`/`started`/`updated` frontmatter, Current Test / Tests / Summary / Gaps sections | A completed UAT session (2/2 pass, no gaps) parses |
 | `01-VERIFICATION.md` | `GSD-DOMAIN.md` § "Per-phase-artifact YAML frontmatter" — `phase`/`verified`/`status`/`score`/`behavior_unverified` | **Deliberate corruption (D-02, defect 3):** complete, valid frontmatter followed by no body at all — see "Deliberate Defect Register" below |
 | `01-LEARNINGS.md` | `GSD-DOMAIN.md` § "Structured Data Schemas" — the per-phase `NN-LEARNINGS.md` shape (`phase`, `phase_name`, `project`, `generated`, `counts`, `missing_artifacts`) | Per-phase learnings frontmatter parses |
 | `01-PATTERNS.md` | `templates/README.md` row: `NN-PATTERNS.md`, produced by the pattern-mapper agent, shape *(inline)* | An optional, frontmatter-free phase artifact parses |
-| `01-SPEC.md` | `templates/spec.md` — Goal / Background / Requirements / Boundaries / Constraints / Acceptance Criteria / Ambiguity Report / Interview Log sections | An artifact type reference-portal has never produced (D-01) parses |
+| `01-SPEC.md` | `templates/spec.md` — Goal / Background / Requirements / Boundaries / Constraints / Acceptance Criteria / Ambiguity Report / Interview Log sections | An artifact type the reference project has never produced (D-01) parses |
 | `01-AI-SPEC.md` | `templates/AI-SPEC.md` — numbered `##`/`###` sections, **no YAML frontmatter** | Proves frontmatter presence cannot be the dispatch signal — this file has none and must still dispatch by filename |
 | `01-COST-MODEL.md` | No template, no reference document — genuinely invented (D-01) | The invented-future-doc-type case: the only correct handling is the generic markdown fallback, `kind: "unknown"` |
 | `01-01-PLAN.md` | `templates/phase-prompt.md` — full pseudo-XML task grammar (`<objective>`, `<context>`, `<decision>`, `<tasks>` with typed `<task type="...">` blocks including a `checkpoint:human-verify` variant, `<verification>`, `<success_criteria>`, `<output>`) | A realistic plan specimen with nested markdown (a list, a fenced code block) inside pseudo-XML tags, per `GSD-DOMAIN.md` § "PLAN.md task structure"; `fixture_extra_field` in frontmatter exercises pass-through on a typed artifact |
@@ -154,7 +154,7 @@ proven against (per CONTEXT.md D-01, "reversibility: costly").
 
 | file | shape traced to | what it proves |
 |------|------------------|------------------|
-| `ui-reviews/.gitignore` | `GSD-DOMAIN.md` § "`ui-reviews/`" — confirmed from `reference-portal`'s own `ui-reviews/` containing only a `.gitignore` in the sampled project | A directory whose only committed content is a gitignore — "present on a live filesystem but not in a git checkout" is a real condition the parser must not choke on |
+| `ui-reviews/.gitignore` | `GSD-DOMAIN.md` § "`ui-reviews/`" — confirmed from the reference project's own `ui-reviews/` containing only a `.gitignore` in the sampled project | A directory whose only committed content is a gitignore — "present on a live filesystem but not in a git checkout" is a real condition the parser must not choke on |
 
 ---
 
@@ -165,8 +165,8 @@ Authored across phase 06 and kept outside `fixtures/` because tests (and the Pla
 its README holds the fiction, the authoring rules R1-R9 and a quirk ledger with one row per file naming
 the shape it stands for and the quirks a test relies on. The rule that no committed test reads a real
 project on this machine (manual smoke only, never a test input) is enforced by `test/no-skips.test.ts`
-(home-directory calls, real-project paths, skips) and `test/fixture-leak.test.ts` (private names, hosts
-and file names in fixtures, tests and the app source). See `test/fixtures/lendshed/README.md`.
+(home-directory calls, real-project paths, skips) and `test/fixture-leak.test.ts` (private names and hosts from the gitignored local `.leak-names.local.json`,
+public tool tells and private-looking file names in fixtures, tests and the app source). See `test/fixtures/lendshed/README.md`.
 
 ---
 

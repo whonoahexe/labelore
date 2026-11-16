@@ -15,5 +15,5 @@ patterns against, so this file records the structural patterns the fixture itsel
 
 | This fixture's shape | Mirrors |
 |-----------------------|---------|
-| `phases/01-identity-slice/` full artifact spread | `~/reference-portal/.planning/phases/01-portal-owned-identity-sessions/`'s ~19-artifact-type spread |
-| `milestones/v1.0-phases/01-bootstrap/` | `~/reference-portal/.planning/milestones/v1.0-phases/01-identity-persistence-foundation/` |
+| `phases/01-identity-slice/` full artifact spread | a real project's first phase folder and its ~19-artifact-type spread |
+| `milestones/v1.0-phases/01-bootstrap/` | a real project's first archived v1.0 phase folder |

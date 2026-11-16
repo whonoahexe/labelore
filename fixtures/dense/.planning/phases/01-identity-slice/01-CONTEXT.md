@@ -7,7 +7,7 @@
 ## Phase Boundary
 
 Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types
-this fixture project needs — including types reference-portal has never produced.
+this fixture project needs — including types the reference project has never produced.
 
 </domain>
 

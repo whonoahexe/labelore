@@ -45,10 +45,10 @@ fixtures/dense/
 ## Common Pitfalls
 
 ### Pitfall 1: Overfitting to one real project
-**What goes wrong:** A parser assumes shapes only `~/reference-portal` happens to have
+**What goes wrong:** A parser assumes shapes only one project happens to have
 **Why it happens:** It's the only real project on the machine
 **How to avoid:** Derive shapes from `gsd-core` templates instead (D-01)
-**Warning signs:** Code comments like "reference-portal always has..."
+**Warning signs:** Code comments like "always has..."
 </common_pitfalls>
 
 <code_examples>

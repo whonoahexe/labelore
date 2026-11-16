@@ -55,7 +55,7 @@ Audit: [milestones/v2.0-MILESTONE-AUDIT.md](milestones/v2.0-MILESTONE-AUDIT.md)
 **Requirements**: [IDENT-01, IDENT-02, IDENT-03]
 **Success Criteria** (what must be TRUE):
   1. The identity slice's full artifact spread loads cleanly
-  2. Every artifact type reference-portal has never produced is represented and renders
+  2. Every artifact type the reference project has never produced is represented and renders
 **Plans**: 2 plans
 
 Plans:

@@ -333,12 +333,12 @@
         "path": ".planning/PROJECT.md",
         "kind": "project",
         "fileClass": "text",
-        "sizeBytes": 2386,
+        "sizeBytes": 2384,
         "location": "root",
         "frontmatter": {},
         "title": "Dense Fixture Project",
-        "bodyLength": 2370,
-        "bodyHash": "f66a33e2596561d9a3f69ce2e59a379356ab239002e2dcd97e0b631526ea021d",
+        "bodyLength": 2368,
+        "bodyHash": "37dee1e94d03869896488df9bce7d0008620c3e5259c9ef95fafc5789dff1e71",
         "mtimeMs": 0,
         "warnings": [],
         "structured": {
@@ -375,7 +375,7 @@
             },
             {
               "Decision": "Unfamiliar artifact types (`SPEC.md`, `AI-SPEC.md`, `01-COST-MODEL.md`) are included",
-              "Rationale": "The highest-severity project risk is overfitting to `~/reference-portal`'s shape",
+              "Rationale": "The highest-severity project risk is overfitting to one real project's shape",
               "Outcome": "— Pending"
             }
           ]
@@ -563,12 +563,12 @@
         "path": ".planning/ROADMAP.md",
         "kind": "roadmap",
         "fileClass": "text",
-        "sizeBytes": 2560,
+        "sizeBytes": 2568,
         "location": "root",
         "frontmatter": {},
         "title": "Roadmap: Dense Fixture Project",
-        "bodyLength": 2536,
-        "bodyHash": "1e6586f10ba8f0828d1d7192caedc2c15cb8d6d00604cd940a65d16528150659",
+        "bodyLength": 2544,
+        "bodyHash": "f615d01eba055d013fa7ae37f27f6141ad477acc0d273f31243b65e20033bdc2",
         "mtimeMs": 0,
         "warnings": [],
         "structured": {
@@ -647,7 +647,7 @@
               ],
               "successCriteria": [
                 "The identity slice's full artifact spread loads cleanly",
-                "Every artifact type reference-portal has never produced is represented and renders"
+                "Every artifact type the reference project has never produced is represented and renders"
               ],
               "plans": [
                 {
@@ -694,7 +694,7 @@
         "path": ".planning/STATE.md",
         "kind": "state",
         "fileClass": "text",
-        "sizeBytes": 3146,
+        "sizeBytes": 3154,
         "location": "root",
         "frontmatter": {
           "gsd_state_version": "1.0",
@@ -718,8 +718,8 @@
           }
         },
         "title": "Project State",
-        "bodyLength": 2585,
-        "bodyHash": "e7b5b2bccbfc31f719501e4c58e01b4480da2782a25d060d344023e7ad6e5f0a",
+        "bodyLength": 2593,
+        "bodyHash": "a883d6566f3f8c0c7b7519981508626cd716d3b2355b07e54254f189f1ef6e2e",
         "mtimeMs": 0,
         "warnings": [],
         "structured": {
@@ -3246,7 +3246,7 @@
             ],
             "successCriteria": [
               "The identity slice's full artifact spread loads cleanly",
-              "Every artifact type reference-portal has never produced is represented and renders"
+              "Every artifact type the reference project has never produced is represented and renders"
             ],
             "roadmapComplete": false,
             "diskStatus": "complete",
@@ -3491,7 +3491,7 @@
                   ],
                   "must_haves": {
                     "truths": [
-                      "Every artifact type reference-portal has never produced is represented and renders"
+                      "Every artifact type the reference project has never produced is represented and renders"
                     ],
                     "artifacts": [
                       {
@@ -4379,7 +4379,7 @@
                 "path": ".planning/phases/01-identity-slice/01-02-PLAN.md",
                 "kind": "plan",
                 "fileClass": "text",
-                "sizeBytes": 2326,
+                "sizeBytes": 2342,
                 "location": "phase",
                 "frontmatter": {
                   "phase": "01",
@@ -4400,7 +4400,7 @@
                   ],
                   "must_haves": {
                     "truths": [
-                      "Every artifact type reference-portal has never produced is represented and renders"
+                      "Every artifact type the reference project has never produced is represented and renders"
                     ],
                     "artifacts": [
                       {
@@ -4418,8 +4418,8 @@
                   }
                 },
                 "title": ".planning/phases/01-identity-slice/01-02-PLAN.md",
-                "bodyLength": 1754,
-                "bodyHash": "8fcbb059e52b0f5f7ecae055d85430c5033be51c20e18d332d5b6cef47f0fb72",
+                "bodyLength": 1762,
+                "bodyHash": "23598d4dec7ef8d6d4143302c6bb7da2a4c08837777d15c44047852f88c6f282",
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
@@ -4553,7 +4553,7 @@
                       "anchor": "plan-at-1540",
                       "lead": null,
                       "items": [
-                        "Every artifact type reference-portal has never produced is represented and renders."
+                        "Every artifact type the reference project has never produced is represented and renders."
                       ]
                     },
                     "verification": {
@@ -4572,7 +4572,7 @@
                       },
                       {
                         "tag": "output",
-                        "anchor": "plan-at-1663",
+                        "anchor": "plan-at-1671",
                         "fileCount": null
                       }
                     ],
@@ -4875,12 +4875,12 @@
                 "path": ".planning/phases/01-identity-slice/01-CONTEXT.md",
                 "kind": "context",
                 "fileClass": "text",
-                "sizeBytes": 2114,
+                "sizeBytes": 2122,
                 "location": "phase",
                 "frontmatter": {},
                 "title": "Phase 1: Identity Slice - Context",
-                "bodyLength": 1950,
-                "bodyHash": "59cacbdcd9182913dc462bf41649abdafacd7bda6bd6d6a255a6f1ad107d2eec",
+                "bodyLength": 1958,
+                "bodyHash": "fae277a7211996ca9bcbcce6ed76746aff0c1419fa55b88c93173325eb156d7f",
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
@@ -4895,7 +4895,7 @@
                     }
                   ],
                   "sections": {
-                    "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types reference-portal has never produced.",
+                    "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types the reference project has never produced.",
                     "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
                     "specifics": "## Specific Ideas\n\nNo specific requirements — open to standard approaches. This phase exists to prove the artifact-type\nbreadth claim, not to model realistic product decisions.",
                     "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows\n- `~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth\n  for which root files are canonical",
@@ -4913,7 +4913,7 @@
                     },
                     "boundary": {
                       "eyebrow": "Phase Boundary",
-                      "statement": "Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types this fixture project needs — including types reference-portal has never produced.",
+                      "statement": "Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types this fixture project needs — including types the reference project has never produced.",
                       "statementRest": "",
                       "inList": [],
                       "outList": [],
@@ -5171,12 +5171,12 @@
                 "path": ".planning/phases/01-identity-slice/01-PATTERNS.md",
                 "kind": "patterns",
                 "fileClass": "text",
-                "sizeBytes": 1019,
+                "sizeBytes": 954,
                 "location": "phase",
                 "frontmatter": {},
                 "title": "Phase 1: Identity Slice - Patterns",
-                "bodyLength": 1015,
-                "bodyHash": "8439fc842a27c5bb391cf69294f421e96e868192c4f6587ac2ce88caea3a6309",
+                "bodyLength": 950,
+                "bodyHash": "9751776d8e830e4b67a1f323370092fdefc0c4adfb7caace05c68dea0798ec13",
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
@@ -5221,11 +5221,11 @@
                             "rows": [
                               {
                                 "This fixture's shape": "`phases/01-identity-slice/` full artifact spread",
-                                "Mirrors": "`~/reference-portal/.planning/phases/01-portal-owned-identity-sessions/`'s ~19-artifact-type spread"
+                                "Mirrors": "a real project's first phase folder and its ~19-artifact-type spread"
                               },
                               {
                                 "This fixture's shape": "`milestones/v1.0-phases/01-bootstrap/`",
-                                "Mirrors": "`~/reference-portal/.planning/milestones/v1.0-phases/01-identity-persistence-foundation/`"
+                                "Mirrors": "a real project's first archived v1.0 phase folder"
                               }
                             ]
                           }
@@ -5253,12 +5253,12 @@
                 "path": ".planning/phases/01-identity-slice/01-RESEARCH.md",
                 "kind": "research",
                 "fileClass": "text",
-                "sizeBytes": 2407,
+                "sizeBytes": 2387,
                 "location": "phase",
                 "frontmatter": {},
                 "title": "Phase 1: Identity Slice - Research",
-                "bodyLength": 2393,
-                "bodyHash": "54a47c260908ab0432aad04fa7949c85d8c96303f7c84ac168f42e258e06ad69",
+                "bodyLength": 2373,
+                "bodyHash": "d173c285d6a636de9d114dc0b572ef92f1bf788938772292187016484578cc20",
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
@@ -5369,7 +5369,7 @@
                           "rows": [
                             {
                               "label": "What goes wrong",
-                              "text": "A parser assumes shapes only `~/reference-portal` happens to have",
+                              "text": "A parser assumes shapes only one project happens to have",
                               "code": [],
                               "codeLangs": []
                             },
@@ -5387,7 +5387,7 @@
                             },
                             {
                               "label": "Warning signs",
-                              "text": "Code comments like \"reference-portal always has...\"",
+                              "text": "Code comments like \"always has...\"",
                               "code": [],
                               "codeLangs": []
                             }
@@ -5604,12 +5604,12 @@
                 "path": ".planning/phases/01-identity-slice/01-SPEC.md",
                 "kind": "spec",
                 "fileClass": "text",
-                "sizeBytes": 2913,
+                "sizeBytes": 2933,
                 "location": "phase",
                 "frontmatter": {},
                 "title": "Phase 1: Identity Slice — Specification",
-                "bodyLength": 2889,
-                "bodyHash": "d382426457f69d94d2df66bedf6ee724b9630a3aae2633d6ddd03a3e8d3a7b32",
+                "bodyLength": 2909,
+                "bodyHash": "798dce076fd4b4d563af8ead3c6b71d960e578739531b1c0ec11d61bfe1ec00f",
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
@@ -5629,7 +5629,7 @@
                         "n": 1,
                         "label": "Unfamiliar types render",
                         "statement": "`01-SPEC.md`, `01-AI-SPEC.md` are present and parse.",
-                        "current": "Neither exists in `~/reference-portal`'s corpus",
+                        "current": "Neither exists in the reference project's corpus",
                         "target": "Both exist here, authored from `gsd-core/templates/spec.md` and `AI-SPEC.md`",
                         "acceptance": "Both files appear in the snapshot with non-empty bodies",
                         "extras": []
@@ -8700,7 +8700,7 @@
         ],
         "successCriteria": [
           "The identity slice's full artifact spread loads cleanly",
-          "Every artifact type reference-portal has never produced is represented and renders"
+          "Every artifact type the reference project has never produced is represented and renders"
         ],
         "roadmapComplete": false,
         "diskStatus": "complete",
@@ -8945,7 +8945,7 @@
               ],
               "must_haves": {
                 "truths": [
-                  "Every artifact type reference-portal has never produced is represented and renders"
+                  "Every artifact type the reference project has never produced is represented and renders"
                 ],
                 "artifacts": [
                   {
@@ -9833,7 +9833,7 @@
             "path": ".planning/phases/01-identity-slice/01-02-PLAN.md",
             "kind": "plan",
             "fileClass": "text",
-            "sizeBytes": 2326,
+            "sizeBytes": 2342,
             "location": "phase",
             "frontmatter": {
               "phase": "01",
@@ -9854,7 +9854,7 @@
               ],
               "must_haves": {
                 "truths": [
-                  "Every artifact type reference-portal has never produced is represented and renders"
+                  "Every artifact type the reference project has never produced is represented and renders"
                 ],
                 "artifacts": [
                   {
@@ -9872,8 +9872,8 @@
               }
             },
             "title": ".planning/phases/01-identity-slice/01-02-PLAN.md",
-            "bodyLength": 1754,
-            "bodyHash": "8fcbb059e52b0f5f7ecae055d85430c5033be51c20e18d332d5b6cef47f0fb72",
+            "bodyLength": 1762,
+            "bodyHash": "23598d4dec7ef8d6d4143302c6bb7da2a4c08837777d15c44047852f88c6f282",
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
@@ -10007,7 +10007,7 @@
                   "anchor": "plan-at-1540",
                   "lead": null,
                   "items": [
-                    "Every artifact type reference-portal has never produced is represented and renders."
+                    "Every artifact type the reference project has never produced is represented and renders."
                   ]
                 },
                 "verification": {
@@ -10026,7 +10026,7 @@
                   },
                   {
                     "tag": "output",
-                    "anchor": "plan-at-1663",
+                    "anchor": "plan-at-1671",
                     "fileCount": null
                   }
                 ],
@@ -10329,12 +10329,12 @@
             "path": ".planning/phases/01-identity-slice/01-CONTEXT.md",
             "kind": "context",
             "fileClass": "text",
-            "sizeBytes": 2114,
+            "sizeBytes": 2122,
             "location": "phase",
             "frontmatter": {},
             "title": "Phase 1: Identity Slice - Context",
-            "bodyLength": 1950,
-            "bodyHash": "59cacbdcd9182913dc462bf41649abdafacd7bda6bd6d6a255a6f1ad107d2eec",
+            "bodyLength": 1958,
+            "bodyHash": "fae277a7211996ca9bcbcce6ed76746aff0c1419fa55b88c93173325eb156d7f",
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
@@ -10349,7 +10349,7 @@
                 }
               ],
               "sections": {
-                "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types reference-portal has never produced.",
+                "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types the reference project has never produced.",
                 "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
                 "specifics": "## Specific Ideas\n\nNo specific requirements — open to standard approaches. This phase exists to prove the artifact-type\nbreadth claim, not to model realistic product decisions.",
                 "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows\n- `~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth\n  for which root files are canonical",
@@ -10367,7 +10367,7 @@
                 },
                 "boundary": {
                   "eyebrow": "Phase Boundary",
-                  "statement": "Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types this fixture project needs — including types reference-portal has never produced.",
+                  "statement": "Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types this fixture project needs — including types the reference project has never produced.",
                   "statementRest": "",
                   "inList": [],
                   "outList": [],
@@ -10625,12 +10625,12 @@
             "path": ".planning/phases/01-identity-slice/01-PATTERNS.md",
             "kind": "patterns",
             "fileClass": "text",
-            "sizeBytes": 1019,
+            "sizeBytes": 954,
             "location": "phase",
             "frontmatter": {},
             "title": "Phase 1: Identity Slice - Patterns",
-            "bodyLength": 1015,
-            "bodyHash": "8439fc842a27c5bb391cf69294f421e96e868192c4f6587ac2ce88caea3a6309",
+            "bodyLength": 950,
+            "bodyHash": "9751776d8e830e4b67a1f323370092fdefc0c4adfb7caace05c68dea0798ec13",
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
@@ -10675,11 +10675,11 @@
                         "rows": [
                           {
                             "This fixture's shape": "`phases/01-identity-slice/` full artifact spread",
-                            "Mirrors": "`~/reference-portal/.planning/phases/01-portal-owned-identity-sessions/`'s ~19-artifact-type spread"
+                            "Mirrors": "a real project's first phase folder and its ~19-artifact-type spread"
                           },
                           {
                             "This fixture's shape": "`milestones/v1.0-phases/01-bootstrap/`",
-                            "Mirrors": "`~/reference-portal/.planning/milestones/v1.0-phases/01-identity-persistence-foundation/`"
+                            "Mirrors": "a real project's first archived v1.0 phase folder"
                           }
                         ]
                       }
@@ -10707,12 +10707,12 @@
             "path": ".planning/phases/01-identity-slice/01-RESEARCH.md",
             "kind": "research",
             "fileClass": "text",
-            "sizeBytes": 2407,
+            "sizeBytes": 2387,
             "location": "phase",
             "frontmatter": {},
             "title": "Phase 1: Identity Slice - Research",
-            "bodyLength": 2393,
-            "bodyHash": "54a47c260908ab0432aad04fa7949c85d8c96303f7c84ac168f42e258e06ad69",
+            "bodyLength": 2373,
+            "bodyHash": "d173c285d6a636de9d114dc0b572ef92f1bf788938772292187016484578cc20",
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
@@ -10823,7 +10823,7 @@
                       "rows": [
                         {
                           "label": "What goes wrong",
-                          "text": "A parser assumes shapes only `~/reference-portal` happens to have",
+                          "text": "A parser assumes shapes only one project happens to have",
                           "code": [],
                           "codeLangs": []
                         },
@@ -10841,7 +10841,7 @@
                         },
                         {
                           "label": "Warning signs",
-                          "text": "Code comments like \"reference-portal always has...\"",
+                          "text": "Code comments like \"always has...\"",
                           "code": [],
                           "codeLangs": []
                         }
@@ -11058,12 +11058,12 @@
             "path": ".planning/phases/01-identity-slice/01-SPEC.md",
             "kind": "spec",
             "fileClass": "text",
-            "sizeBytes": 2913,
+            "sizeBytes": 2933,
             "location": "phase",
             "frontmatter": {},
             "title": "Phase 1: Identity Slice — Specification",
-            "bodyLength": 2889,
-            "bodyHash": "d382426457f69d94d2df66bedf6ee724b9630a3aae2633d6ddd03a3e8d3a7b32",
+            "bodyLength": 2909,
+            "bodyHash": "798dce076fd4b4d563af8ead3c6b71d960e578739531b1c0ec11d61bfe1ec00f",
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
@@ -11083,7 +11083,7 @@
                     "n": 1,
                     "label": "Unfamiliar types render",
                     "statement": "`01-SPEC.md`, `01-AI-SPEC.md` are present and parse.",
-                    "current": "Neither exists in `~/reference-portal`'s corpus",
+                    "current": "Neither exists in the reference project's corpus",
                     "target": "Both exist here, authored from `gsd-core/templates/spec.md` and `AI-SPEC.md`",
                     "acceptance": "Both files appear in the snapshot with non-empty bodies",
                     "extras": []
@@ -12739,7 +12739,7 @@
               ],
               "successCriteria": [
                 "The identity slice's full artifact spread loads cleanly",
-                "Every artifact type reference-portal has never produced is represented and renders"
+                "Every artifact type the reference project has never produced is represented and renders"
               ],
               "roadmapComplete": false,
               "diskStatus": "complete",
@@ -12984,7 +12984,7 @@
                     ],
                     "must_haves": {
                       "truths": [
-                        "Every artifact type reference-portal has never produced is represented and renders"
+                        "Every artifact type the reference project has never produced is represented and renders"
                       ],
                       "artifacts": [
                         {
@@ -13872,7 +13872,7 @@
                   "path": ".planning/phases/01-identity-slice/01-02-PLAN.md",
                   "kind": "plan",
                   "fileClass": "text",
-                  "sizeBytes": 2326,
+                  "sizeBytes": 2342,
                   "location": "phase",
                   "frontmatter": {
                     "phase": "01",
@@ -13893,7 +13893,7 @@
                     ],
                     "must_haves": {
                       "truths": [
-                        "Every artifact type reference-portal has never produced is represented and renders"
+                        "Every artifact type the reference project has never produced is represented and renders"
                       ],
                       "artifacts": [
                         {
@@ -13911,8 +13911,8 @@
                     }
                   },
                   "title": ".planning/phases/01-identity-slice/01-02-PLAN.md",
-                  "bodyLength": 1754,
-                  "bodyHash": "8fcbb059e52b0f5f7ecae055d85430c5033be51c20e18d332d5b6cef47f0fb72",
+                  "bodyLength": 1762,
+                  "bodyHash": "23598d4dec7ef8d6d4143302c6bb7da2a4c08837777d15c44047852f88c6f282",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -14046,7 +14046,7 @@
                         "anchor": "plan-at-1540",
                         "lead": null,
                         "items": [
-                          "Every artifact type reference-portal has never produced is represented and renders."
+                          "Every artifact type the reference project has never produced is represented and renders."
                         ]
                       },
                       "verification": {
@@ -14065,7 +14065,7 @@
                         },
                         {
                           "tag": "output",
-                          "anchor": "plan-at-1663",
+                          "anchor": "plan-at-1671",
                           "fileCount": null
                         }
                       ],
@@ -14368,12 +14368,12 @@
                   "path": ".planning/phases/01-identity-slice/01-CONTEXT.md",
                   "kind": "context",
                   "fileClass": "text",
-                  "sizeBytes": 2114,
+                  "sizeBytes": 2122,
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Context",
-                  "bodyLength": 1950,
-                  "bodyHash": "59cacbdcd9182913dc462bf41649abdafacd7bda6bd6d6a255a6f1ad107d2eec",
+                  "bodyLength": 1958,
+                  "bodyHash": "fae277a7211996ca9bcbcce6ed76746aff0c1419fa55b88c93173325eb156d7f",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -14388,7 +14388,7 @@
                       }
                     ],
                     "sections": {
-                      "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types reference-portal has never produced.",
+                      "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types the reference project has never produced.",
                       "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
                       "specifics": "## Specific Ideas\n\nNo specific requirements — open to standard approaches. This phase exists to prove the artifact-type\nbreadth claim, not to model realistic product decisions.",
                       "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows\n- `~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth\n  for which root files are canonical",
@@ -14406,7 +14406,7 @@
                       },
                       "boundary": {
                         "eyebrow": "Phase Boundary",
-                        "statement": "Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types this fixture project needs — including types reference-portal has never produced.",
+                        "statement": "Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types this fixture project needs — including types the reference project has never produced.",
                         "statementRest": "",
                         "inList": [],
                         "outList": [],
@@ -14664,12 +14664,12 @@
                   "path": ".planning/phases/01-identity-slice/01-PATTERNS.md",
                   "kind": "patterns",
                   "fileClass": "text",
-                  "sizeBytes": 1019,
+                  "sizeBytes": 954,
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Patterns",
-                  "bodyLength": 1015,
-                  "bodyHash": "8439fc842a27c5bb391cf69294f421e96e868192c4f6587ac2ce88caea3a6309",
+                  "bodyLength": 950,
+                  "bodyHash": "9751776d8e830e4b67a1f323370092fdefc0c4adfb7caace05c68dea0798ec13",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -14714,11 +14714,11 @@
                               "rows": [
                                 {
                                   "This fixture's shape": "`phases/01-identity-slice/` full artifact spread",
-                                  "Mirrors": "`~/reference-portal/.planning/phases/01-portal-owned-identity-sessions/`'s ~19-artifact-type spread"
+                                  "Mirrors": "a real project's first phase folder and its ~19-artifact-type spread"
                                 },
                                 {
                                   "This fixture's shape": "`milestones/v1.0-phases/01-bootstrap/`",
-                                  "Mirrors": "`~/reference-portal/.planning/milestones/v1.0-phases/01-identity-persistence-foundation/`"
+                                  "Mirrors": "a real project's first archived v1.0 phase folder"
                                 }
                               ]
                             }
@@ -14746,12 +14746,12 @@
                   "path": ".planning/phases/01-identity-slice/01-RESEARCH.md",
                   "kind": "research",
                   "fileClass": "text",
-                  "sizeBytes": 2407,
+                  "sizeBytes": 2387,
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Research",
-                  "bodyLength": 2393,
-                  "bodyHash": "54a47c260908ab0432aad04fa7949c85d8c96303f7c84ac168f42e258e06ad69",
+                  "bodyLength": 2373,
+                  "bodyHash": "d173c285d6a636de9d114dc0b572ef92f1bf788938772292187016484578cc20",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -14862,7 +14862,7 @@
                             "rows": [
                               {
                                 "label": "What goes wrong",
-                                "text": "A parser assumes shapes only `~/reference-portal` happens to have",
+                                "text": "A parser assumes shapes only one project happens to have",
                                 "code": [],
                                 "codeLangs": []
                               },
@@ -14880,7 +14880,7 @@
                               },
                               {
                                 "label": "Warning signs",
-                                "text": "Code comments like \"reference-portal always has...\"",
+                                "text": "Code comments like \"always has...\"",
                                 "code": [],
                                 "codeLangs": []
                               }
@@ -15097,12 +15097,12 @@
                   "path": ".planning/phases/01-identity-slice/01-SPEC.md",
                   "kind": "spec",
                   "fileClass": "text",
-                  "sizeBytes": 2913,
+                  "sizeBytes": 2933,
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice — Specification",
-                  "bodyLength": 2889,
-                  "bodyHash": "d382426457f69d94d2df66bedf6ee724b9630a3aae2633d6ddd03a3e8d3a7b32",
+                  "bodyLength": 2909,
+                  "bodyHash": "798dce076fd4b4d563af8ead3c6b71d960e578739531b1c0ec11d61bfe1ec00f",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -15122,7 +15122,7 @@
                           "n": 1,
                           "label": "Unfamiliar types render",
                           "statement": "`01-SPEC.md`, `01-AI-SPEC.md` are present and parse.",
-                          "current": "Neither exists in `~/reference-portal`'s corpus",
+                          "current": "Neither exists in the reference project's corpus",
                           "target": "Both exist here, authored from `gsd-core/templates/spec.md` and `AI-SPEC.md`",
                           "acceptance": "Both files appear in the snapshot with non-empty bodies",
                           "extras": []
@@ -15958,7 +15958,7 @@
               ],
               "successCriteria": [
                 "The identity slice's full artifact spread loads cleanly",
-                "Every artifact type reference-portal has never produced is represented and renders"
+                "Every artifact type the reference project has never produced is represented and renders"
               ],
               "roadmapComplete": false,
               "diskStatus": "complete",
@@ -16203,7 +16203,7 @@
                     ],
                     "must_haves": {
                       "truths": [
-                        "Every artifact type reference-portal has never produced is represented and renders"
+                        "Every artifact type the reference project has never produced is represented and renders"
                       ],
                       "artifacts": [
                         {
@@ -17091,7 +17091,7 @@
                   "path": ".planning/phases/01-identity-slice/01-02-PLAN.md",
                   "kind": "plan",
                   "fileClass": "text",
-                  "sizeBytes": 2326,
+                  "sizeBytes": 2342,
                   "location": "phase",
                   "frontmatter": {
                     "phase": "01",
@@ -17112,7 +17112,7 @@
                     ],
                     "must_haves": {
                       "truths": [
-                        "Every artifact type reference-portal has never produced is represented and renders"
+                        "Every artifact type the reference project has never produced is represented and renders"
                       ],
                       "artifacts": [
                         {
@@ -17130,8 +17130,8 @@
                     }
                   },
                   "title": ".planning/phases/01-identity-slice/01-02-PLAN.md",
-                  "bodyLength": 1754,
-                  "bodyHash": "8fcbb059e52b0f5f7ecae055d85430c5033be51c20e18d332d5b6cef47f0fb72",
+                  "bodyLength": 1762,
+                  "bodyHash": "23598d4dec7ef8d6d4143302c6bb7da2a4c08837777d15c44047852f88c6f282",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -17265,7 +17265,7 @@
                         "anchor": "plan-at-1540",
                         "lead": null,
                         "items": [
-                          "Every artifact type reference-portal has never produced is represented and renders."
+                          "Every artifact type the reference project has never produced is represented and renders."
                         ]
                       },
                       "verification": {
@@ -17284,7 +17284,7 @@
                         },
                         {
                           "tag": "output",
-                          "anchor": "plan-at-1663",
+                          "anchor": "plan-at-1671",
                           "fileCount": null
                         }
                       ],
@@ -17587,12 +17587,12 @@
                   "path": ".planning/phases/01-identity-slice/01-CONTEXT.md",
                   "kind": "context",
                   "fileClass": "text",
-                  "sizeBytes": 2114,
+                  "sizeBytes": 2122,
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Context",
-                  "bodyLength": 1950,
-                  "bodyHash": "59cacbdcd9182913dc462bf41649abdafacd7bda6bd6d6a255a6f1ad107d2eec",
+                  "bodyLength": 1958,
+                  "bodyHash": "fae277a7211996ca9bcbcce6ed76746aff0c1419fa55b88c93173325eb156d7f",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -17607,7 +17607,7 @@
                       }
                     ],
                     "sections": {
-                      "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types reference-portal has never produced.",
+                      "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types the reference project has never produced.",
                       "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
                       "specifics": "## Specific Ideas\n\nNo specific requirements — open to standard approaches. This phase exists to prove the artifact-type\nbreadth claim, not to model realistic product decisions.",
                       "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows\n- `~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth\n  for which root files are canonical",
@@ -17625,7 +17625,7 @@
                       },
                       "boundary": {
                         "eyebrow": "Phase Boundary",
-                        "statement": "Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types this fixture project needs — including types reference-portal has never produced.",
+                        "statement": "Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types this fixture project needs — including types the reference project has never produced.",
                         "statementRest": "",
                         "inList": [],
                         "outList": [],
@@ -17883,12 +17883,12 @@
                   "path": ".planning/phases/01-identity-slice/01-PATTERNS.md",
                   "kind": "patterns",
                   "fileClass": "text",
-                  "sizeBytes": 1019,
+                  "sizeBytes": 954,
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Patterns",
-                  "bodyLength": 1015,
-                  "bodyHash": "8439fc842a27c5bb391cf69294f421e96e868192c4f6587ac2ce88caea3a6309",
+                  "bodyLength": 950,
+                  "bodyHash": "9751776d8e830e4b67a1f323370092fdefc0c4adfb7caace05c68dea0798ec13",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -17933,11 +17933,11 @@
                               "rows": [
                                 {
                                   "This fixture's shape": "`phases/01-identity-slice/` full artifact spread",
-                                  "Mirrors": "`~/reference-portal/.planning/phases/01-portal-owned-identity-sessions/`'s ~19-artifact-type spread"
+                                  "Mirrors": "a real project's first phase folder and its ~19-artifact-type spread"
                                 },
                                 {
                                   "This fixture's shape": "`milestones/v1.0-phases/01-bootstrap/`",
-                                  "Mirrors": "`~/reference-portal/.planning/milestones/v1.0-phases/01-identity-persistence-foundation/`"
+                                  "Mirrors": "a real project's first archived v1.0 phase folder"
                                 }
                               ]
                             }
@@ -17965,12 +17965,12 @@
                   "path": ".planning/phases/01-identity-slice/01-RESEARCH.md",
                   "kind": "research",
                   "fileClass": "text",
-                  "sizeBytes": 2407,
+                  "sizeBytes": 2387,
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Research",
-                  "bodyLength": 2393,
-                  "bodyHash": "54a47c260908ab0432aad04fa7949c85d8c96303f7c84ac168f42e258e06ad69",
+                  "bodyLength": 2373,
+                  "bodyHash": "d173c285d6a636de9d114dc0b572ef92f1bf788938772292187016484578cc20",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -18081,7 +18081,7 @@
                             "rows": [
                               {
                                 "label": "What goes wrong",
-                                "text": "A parser assumes shapes only `~/reference-portal` happens to have",
+                                "text": "A parser assumes shapes only one project happens to have",
                                 "code": [],
                                 "codeLangs": []
                               },
@@ -18099,7 +18099,7 @@
                               },
                               {
                                 "label": "Warning signs",
-                                "text": "Code comments like \"reference-portal always has...\"",
+                                "text": "Code comments like \"always has...\"",
                                 "code": [],
                                 "codeLangs": []
                               }
@@ -18316,12 +18316,12 @@
                   "path": ".planning/phases/01-identity-slice/01-SPEC.md",
                   "kind": "spec",
                   "fileClass": "text",
-                  "sizeBytes": 2913,
+                  "sizeBytes": 2933,
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice — Specification",
-                  "bodyLength": 2889,
-                  "bodyHash": "d382426457f69d94d2df66bedf6ee724b9630a3aae2633d6ddd03a3e8d3a7b32",
+                  "bodyLength": 2909,
+                  "bodyHash": "798dce076fd4b4d563af8ead3c6b71d960e578739531b1c0ec11d61bfe1ec00f",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -18341,7 +18341,7 @@
                           "n": 1,
                           "label": "Unfamiliar types render",
                           "statement": "`01-SPEC.md`, `01-AI-SPEC.md` are present and parse.",
-                          "current": "Neither exists in `~/reference-portal`'s corpus",
+                          "current": "Neither exists in the reference project's corpus",
                           "target": "Both exist here, authored from `gsd-core/templates/spec.md` and `AI-SPEC.md`",
                           "acceptance": "Both files appear in the snapshot with non-empty bodies",
                           "extras": []
@@ -19177,7 +19177,7 @@
               ],
               "successCriteria": [
                 "The identity slice's full artifact spread loads cleanly",
-                "Every artifact type reference-portal has never produced is represented and renders"
+                "Every artifact type the reference project has never produced is represented and renders"
               ],
               "roadmapComplete": false,
               "diskStatus": "complete",
@@ -19422,7 +19422,7 @@
                     ],
                     "must_haves": {
                       "truths": [
-                        "Every artifact type reference-portal has never produced is represented and renders"
+                        "Every artifact type the reference project has never produced is represented and renders"
                       ],
                       "artifacts": [
                         {
@@ -20310,7 +20310,7 @@
                   "path": ".planning/phases/01-identity-slice/01-02-PLAN.md",
                   "kind": "plan",
                   "fileClass": "text",
-                  "sizeBytes": 2326,
+                  "sizeBytes": 2342,
                   "location": "phase",
                   "frontmatter": {
                     "phase": "01",
@@ -20331,7 +20331,7 @@
                     ],
                     "must_haves": {
                       "truths": [
-                        "Every artifact type reference-portal has never produced is represented and renders"
+                        "Every artifact type the reference project has never produced is represented and renders"
                       ],
                       "artifacts": [
                         {
@@ -20349,8 +20349,8 @@
                     }
                   },
                   "title": ".planning/phases/01-identity-slice/01-02-PLAN.md",
-                  "bodyLength": 1754,
-                  "bodyHash": "8fcbb059e52b0f5f7ecae055d85430c5033be51c20e18d332d5b6cef47f0fb72",
+                  "bodyLength": 1762,
+                  "bodyHash": "23598d4dec7ef8d6d4143302c6bb7da2a4c08837777d15c44047852f88c6f282",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -20484,7 +20484,7 @@
                         "anchor": "plan-at-1540",
                         "lead": null,
                         "items": [
-                          "Every artifact type reference-portal has never produced is represented and renders."
+                          "Every artifact type the reference project has never produced is represented and renders."
                         ]
                       },
                       "verification": {
@@ -20503,7 +20503,7 @@
                         },
                         {
                           "tag": "output",
-                          "anchor": "plan-at-1663",
+                          "anchor": "plan-at-1671",
                           "fileCount": null
                         }
                       ],
@@ -20806,12 +20806,12 @@
                   "path": ".planning/phases/01-identity-slice/01-CONTEXT.md",
                   "kind": "context",
                   "fileClass": "text",
-                  "sizeBytes": 2114,
+                  "sizeBytes": 2122,
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Context",
-                  "bodyLength": 1950,
-                  "bodyHash": "59cacbdcd9182913dc462bf41649abdafacd7bda6bd6d6a255a6f1ad107d2eec",
+                  "bodyLength": 1958,
+                  "bodyHash": "fae277a7211996ca9bcbcce6ed76746aff0c1419fa55b88c93173325eb156d7f",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -20826,7 +20826,7 @@
                       }
                     ],
                     "sections": {
-                      "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types reference-portal has never produced.",
+                      "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types the reference project has never produced.",
                       "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
                       "specifics": "## Specific Ideas\n\nNo specific requirements — open to standard approaches. This phase exists to prove the artifact-type\nbreadth claim, not to model realistic product decisions.",
                       "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows\n- `~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth\n  for which root files are canonical",
@@ -20844,7 +20844,7 @@
                       },
                       "boundary": {
                         "eyebrow": "Phase Boundary",
-                        "statement": "Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types this fixture project needs — including types reference-portal has never produced.",
+                        "statement": "Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types this fixture project needs — including types the reference project has never produced.",
                         "statementRest": "",
                         "inList": [],
                         "outList": [],
@@ -21102,12 +21102,12 @@
                   "path": ".planning/phases/01-identity-slice/01-PATTERNS.md",
                   "kind": "patterns",
                   "fileClass": "text",
-                  "sizeBytes": 1019,
+                  "sizeBytes": 954,
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Patterns",
-                  "bodyLength": 1015,
-                  "bodyHash": "8439fc842a27c5bb391cf69294f421e96e868192c4f6587ac2ce88caea3a6309",
+                  "bodyLength": 950,
+                  "bodyHash": "9751776d8e830e4b67a1f323370092fdefc0c4adfb7caace05c68dea0798ec13",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -21152,11 +21152,11 @@
                               "rows": [
                                 {
                                   "This fixture's shape": "`phases/01-identity-slice/` full artifact spread",
-                                  "Mirrors": "`~/reference-portal/.planning/phases/01-portal-owned-identity-sessions/`'s ~19-artifact-type spread"
+                                  "Mirrors": "a real project's first phase folder and its ~19-artifact-type spread"
                                 },
                                 {
                                   "This fixture's shape": "`milestones/v1.0-phases/01-bootstrap/`",
-                                  "Mirrors": "`~/reference-portal/.planning/milestones/v1.0-phases/01-identity-persistence-foundation/`"
+                                  "Mirrors": "a real project's first archived v1.0 phase folder"
                                 }
                               ]
                             }
@@ -21184,12 +21184,12 @@
                   "path": ".planning/phases/01-identity-slice/01-RESEARCH.md",
                   "kind": "research",
                   "fileClass": "text",
-                  "sizeBytes": 2407,
+                  "sizeBytes": 2387,
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Research",
-                  "bodyLength": 2393,
-                  "bodyHash": "54a47c260908ab0432aad04fa7949c85d8c96303f7c84ac168f42e258e06ad69",
+                  "bodyLength": 2373,
+                  "bodyHash": "d173c285d6a636de9d114dc0b572ef92f1bf788938772292187016484578cc20",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -21300,7 +21300,7 @@
                             "rows": [
                               {
                                 "label": "What goes wrong",
-                                "text": "A parser assumes shapes only `~/reference-portal` happens to have",
+                                "text": "A parser assumes shapes only one project happens to have",
                                 "code": [],
                                 "codeLangs": []
                               },
@@ -21318,7 +21318,7 @@
                               },
                               {
                                 "label": "Warning signs",
-                                "text": "Code comments like \"reference-portal always has...\"",
+                                "text": "Code comments like \"always has...\"",
                                 "code": [],
                                 "codeLangs": []
                               }
@@ -21535,12 +21535,12 @@
                   "path": ".planning/phases/01-identity-slice/01-SPEC.md",
                   "kind": "spec",
                   "fileClass": "text",
-                  "sizeBytes": 2913,
+                  "sizeBytes": 2933,
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice — Specification",
-                  "bodyLength": 2889,
-                  "bodyHash": "d382426457f69d94d2df66bedf6ee724b9630a3aae2633d6ddd03a3e8d3a7b32",
+                  "bodyLength": 2909,
+                  "bodyHash": "798dce076fd4b4d563af8ead3c6b71d960e578739531b1c0ec11d61bfe1ec00f",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -21560,7 +21560,7 @@
                           "n": 1,
                           "label": "Unfamiliar types render",
                           "statement": "`01-SPEC.md`, `01-AI-SPEC.md` are present and parse.",
-                          "current": "Neither exists in `~/reference-portal`'s corpus",
+                          "current": "Neither exists in the reference project's corpus",
                           "target": "Both exist here, authored from `gsd-core/templates/spec.md` and `AI-SPEC.md`",
                           "acceptance": "Both files appear in the snapshot with non-empty bodies",
                           "extras": []
@@ -23159,7 +23159,7 @@
             "artifactKind": "context",
             "position": {
               "line": 68,
-              "offset": 1874
+              "offset": 1882
             },
             "excerpt": "- Live reconciliation with a running session — tracked as v4.0 requirement IDENT-04."
           },
@@ -23218,7 +23218,7 @@
             "artifactKind": "context",
             "position": {
               "line": 23,
-              "offset": 595
+              "offset": 603
             },
             "excerpt": "- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02"
           },
@@ -23229,7 +23229,7 @@
             "artifactKind": "project",
             "position": {
               "line": 45,
-              "offset": 1735
+              "offset": 1734
             },
             "excerpt": "healthy files, isolated per D-02."
           },
@@ -23240,7 +23240,7 @@
             "artifactKind": "state",
             "position": {
               "line": 61,
-              "offset": 1613
+              "offset": 1621
             },
             "excerpt": "- [Phase ?]: Corruption deliberately isolated to two files, per D-02."
           }
@@ -23286,7 +23286,7 @@
             "artifactKind": "context",
             "position": {
               "line": 18,
-              "offset": 349
+              "offset": 357
             },
             "excerpt": "- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own"
           },
@@ -23319,7 +23319,7 @@
             "artifactKind": "research",
             "position": {
               "line": 50,
-              "offset": 1521
+              "offset": 1515
             },
             "excerpt": "**How to avoid:** Derive shapes from `gsd-core` templates instead (D-01)"
           },
@@ -23341,9 +23341,9 @@
             "artifactKind": "project",
             "position": {
               "line": 36,
-              "offset": 1199
+              "offset": 1198
             },
-            "excerpt": "`~/.claude/gsd-core/bin/lib/*.cjs`, never against `~/reference-portal` (D-01, D-04). It deliberately spans"
+            "excerpt": "`~/.claude/gsd-core/bin/lib/*.cjs`, never against any real project (D-01, D-04). It deliberately spans"
           },
           {
             "scheme": "decision",
@@ -23363,9 +23363,9 @@
             "artifactKind": "state",
             "position": {
               "line": 60,
-              "offset": 1543
+              "offset": 1551
             },
-            "excerpt": "- [Phase 1]: Included every artifact type reference-portal has never produced, per D-01."
+            "excerpt": "- [Phase 1]: Included every artifact type the reference project has never produced, per D-01."
           }
         ],
         "phase:1": [
@@ -23882,7 +23882,7 @@
             "artifactKind": "roadmap",
             "position": {
               "line": 67,
-              "offset": 1970
+              "offset": 1978
             },
             "excerpt": "**Depends on**: Phase 1"
           },
@@ -23917,7 +23917,7 @@
               "line": 60,
               "offset": 1472
             },
-            "excerpt": "- [Phase 1]: Included every artifact type reference-portal has never produced, per D-01."
+            "excerpt": "- [Phase 1]: Included every artifact type the reference project has never produced, per D-01."
           },
           {
             "scheme": "phase",
@@ -23926,7 +23926,7 @@
             "artifactKind": "state",
             "position": {
               "line": 89,
-              "offset": 2540
+              "offset": 2548
             },
             "excerpt": "Stopped at: Phase 1 hardening task committed"
           }
@@ -24073,7 +24073,7 @@
             "artifactKind": "roadmap",
             "position": {
               "line": 62,
-              "offset": 1769
+              "offset": 1777
             },
             "excerpt": "- [ ] 01-01: Identity slice tracer"
           }
@@ -24242,7 +24242,7 @@
             "artifactKind": "context",
             "position": {
               "line": 61,
-              "offset": 1751
+              "offset": 1759
             },
             "excerpt": "None — the fixture has no downstream phase beyond Phase 2 within this same tree."
           },
@@ -24319,7 +24319,7 @@
             "artifactKind": "roadmap",
             "position": {
               "line": 65,
-              "offset": 1848
+              "offset": 1856
             },
             "excerpt": "#### Phase 2: Transport Layer"
           },
@@ -24341,7 +24341,7 @@
             "artifactKind": "state",
             "position": {
               "line": 76,
-              "offset": 2094
+              "offset": 2102
             },
             "excerpt": "- Phase 2's transport layer plan has not yet produced a summary — mid-flight phase shape."
           }
@@ -24376,7 +24376,7 @@
             "artifactKind": "roadmap",
             "position": {
               "line": 75,
-              "offset": 2204
+              "offset": 2212
             },
             "excerpt": "- [ ] 02-01: Transport layer tracer"
           },
@@ -24422,7 +24422,7 @@
             "artifactKind": "context",
             "position": {
               "line": 23,
-              "offset": 687
+              "offset": 695
             },
             "excerpt": "- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02"
           },
@@ -24433,7 +24433,7 @@
             "artifactKind": "context",
             "position": {
               "line": 24,
-              "offset": 719
+              "offset": 727
             },
             "excerpt": "hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere."
           },
@@ -24466,7 +24466,7 @@
             "artifactKind": "roadmap",
             "position": {
               "line": 63,
-              "offset": 1804
+              "offset": 1812
             },
             "excerpt": "- [ ] 01-02: Identity slice hardening"
           },
@@ -24626,7 +24626,7 @@
             "artifactKind": "roadmap",
             "position": {
               "line": 68,
-              "offset": 1990
+              "offset": 1998
             },
             "excerpt": "**Requirements**: XPORT-01, XPORT-02"
           },
@@ -24694,7 +24694,7 @@
             "artifactKind": "roadmap",
             "position": {
               "line": 68,
-              "offset": 2000
+              "offset": 2008
             },
             "excerpt": "**Requirements**: XPORT-01, XPORT-02"
           },
@@ -24845,9 +24845,9 @@
             "artifactKind": "project",
             "position": {
               "line": 36,
-              "offset": 1205
+              "offset": 1204
             },
-            "excerpt": "`~/.claude/gsd-core/bin/lib/*.cjs`, never against `~/reference-portal` (D-01, D-04). It deliberately spans"
+            "excerpt": "`~/.claude/gsd-core/bin/lib/*.cjs`, never against any real project (D-01, D-04). It deliberately spans"
           }
         ]
       },
@@ -25486,7 +25486,7 @@
           "artifactKind": "context",
           "position": {
             "line": 18,
-            "offset": 349
+            "offset": 357
           },
           "excerpt": "- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own"
         },
@@ -25497,7 +25497,7 @@
           "artifactKind": "context",
           "position": {
             "line": 23,
-            "offset": 595
+            "offset": 603
           },
           "excerpt": "- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02"
         },
@@ -25508,7 +25508,7 @@
           "artifactKind": "context",
           "position": {
             "line": 23,
-            "offset": 687
+            "offset": 695
           },
           "excerpt": "- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02"
         },
@@ -25519,7 +25519,7 @@
           "artifactKind": "context",
           "position": {
             "line": 24,
-            "offset": 719
+            "offset": 727
           },
           "excerpt": "hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere."
         },
@@ -25530,7 +25530,7 @@
           "artifactKind": "context",
           "position": {
             "line": 61,
-            "offset": 1751
+            "offset": 1759
           },
           "excerpt": "None — the fixture has no downstream phase beyond Phase 2 within this same tree."
         },
@@ -25541,7 +25541,7 @@
           "artifactKind": "context",
           "position": {
             "line": 68,
-            "offset": 1874
+            "offset": 1882
           },
           "excerpt": "- Live reconciliation with a running session — tracked as v4.0 requirement IDENT-04."
         },
@@ -25607,7 +25607,7 @@
           "artifactKind": "research",
           "position": {
             "line": 50,
-            "offset": 1521
+            "offset": 1515
           },
           "excerpt": "**How to avoid:** Derive shapes from `gsd-core` templates instead (D-01)"
         },
@@ -25904,9 +25904,9 @@
           "artifactKind": "project",
           "position": {
             "line": 36,
-            "offset": 1199
+            "offset": 1198
           },
-          "excerpt": "`~/.claude/gsd-core/bin/lib/*.cjs`, never against `~/reference-portal` (D-01, D-04). It deliberately spans"
+          "excerpt": "`~/.claude/gsd-core/bin/lib/*.cjs`, never against any real project (D-01, D-04). It deliberately spans"
         },
         {
           "scheme": "decision",
@@ -25915,9 +25915,9 @@
           "artifactKind": "project",
           "position": {
             "line": 36,
-            "offset": 1205
+            "offset": 1204
           },
-          "excerpt": "`~/.claude/gsd-core/bin/lib/*.cjs`, never against `~/reference-portal` (D-01, D-04). It deliberately spans"
+          "excerpt": "`~/.claude/gsd-core/bin/lib/*.cjs`, never against any real project (D-01, D-04). It deliberately spans"
         },
         {
           "scheme": "decision",
@@ -25926,7 +25926,7 @@
           "artifactKind": "project",
           "position": {
             "line": 45,
-            "offset": 1735
+            "offset": 1734
           },
           "excerpt": "healthy files, isolated per D-02."
         },
@@ -26289,7 +26289,7 @@
           "artifactKind": "roadmap",
           "position": {
             "line": 62,
-            "offset": 1769
+            "offset": 1777
           },
           "excerpt": "- [ ] 01-01: Identity slice tracer"
         },
@@ -26300,7 +26300,7 @@
           "artifactKind": "roadmap",
           "position": {
             "line": 63,
-            "offset": 1804
+            "offset": 1812
           },
           "excerpt": "- [ ] 01-02: Identity slice hardening"
         },
@@ -26311,7 +26311,7 @@
           "artifactKind": "roadmap",
           "position": {
             "line": 65,
-            "offset": 1848
+            "offset": 1856
           },
           "excerpt": "#### Phase 2: Transport Layer"
         },
@@ -26322,7 +26322,7 @@
           "artifactKind": "roadmap",
           "position": {
             "line": 67,
-            "offset": 1970
+            "offset": 1978
           },
           "excerpt": "**Depends on**: Phase 1"
         },
@@ -26333,7 +26333,7 @@
           "artifactKind": "roadmap",
           "position": {
             "line": 68,
-            "offset": 1990
+            "offset": 1998
           },
           "excerpt": "**Requirements**: XPORT-01, XPORT-02"
         },
@@ -26344,7 +26344,7 @@
           "artifactKind": "roadmap",
           "position": {
             "line": 68,
-            "offset": 2000
+            "offset": 2008
           },
           "excerpt": "**Requirements**: XPORT-01, XPORT-02"
         },
@@ -26355,7 +26355,7 @@
           "artifactKind": "roadmap",
           "position": {
             "line": 75,
-            "offset": 2204
+            "offset": 2212
           },
           "excerpt": "- [ ] 02-01: Transport layer tracer"
         },
@@ -26456,7 +26456,7 @@
             "line": 60,
             "offset": 1472
           },
-          "excerpt": "- [Phase 1]: Included every artifact type reference-portal has never produced, per D-01."
+          "excerpt": "- [Phase 1]: Included every artifact type the reference project has never produced, per D-01."
         },
         {
           "scheme": "decision",
@@ -26465,9 +26465,9 @@
           "artifactKind": "state",
           "position": {
             "line": 60,
-            "offset": 1543
+            "offset": 1551
           },
-          "excerpt": "- [Phase 1]: Included every artifact type reference-portal has never produced, per D-01."
+          "excerpt": "- [Phase 1]: Included every artifact type the reference project has never produced, per D-01."
         },
         {
           "scheme": "decision",
@@ -26476,7 +26476,7 @@
           "artifactKind": "state",
           "position": {
             "line": 61,
-            "offset": 1613
+            "offset": 1621
           },
           "excerpt": "- [Phase ?]: Corruption deliberately isolated to two files, per D-02."
         },
@@ -26487,7 +26487,7 @@
           "artifactKind": "state",
           "position": {
             "line": 76,
-            "offset": 2094
+            "offset": 2102
           },
           "excerpt": "- Phase 2's transport layer plan has not yet produced a summary — mid-flight phase shape."
         },
@@ -26498,7 +26498,7 @@
           "artifactKind": "state",
           "position": {
             "line": 89,
-            "offset": 2540
+            "offset": 2548
           },
           "excerpt": "Stopped at: Phase 1 hardening task committed"
         },

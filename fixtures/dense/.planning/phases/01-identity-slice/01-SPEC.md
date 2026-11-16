@@ -12,12 +12,12 @@ Every unfamiliar and invented artifact type the dense fixture needs is present u
 ## Background
 
 This is a fixture project with no real codebase. `01-SPEC.md` itself is one of the artifact types
-reference-portal has never produced — its presence here is the point.
+the reference project has never produced — its presence here is the point.
 
 ## Requirements
 
 1. **Unfamiliar types render**: `01-SPEC.md`, `01-AI-SPEC.md` are present and parse.
-   - Current: Neither exists in `~/reference-portal`'s corpus
+   - Current: Neither exists in the reference project's corpus
    - Target: Both exist here, authored from `gsd-core/templates/spec.md` and `AI-SPEC.md`
    - Acceptance: Both files appear in the snapshot with non-empty bodies
 
@@ -63,7 +63,7 @@ No additional constraints beyond standard project conventions.
 
 | Round | Perspective    | Question summary         | Decision locked                    |
 |-------|----------------|---------------------------|-------------------------------------|
-| 1     | Researcher     | What artifact types are missing from reference-portal? | SPEC.md, AI-SPEC.md, and an invented type |
+| 1     | Researcher     | What artifact types are missing from the reference project? | SPEC.md, AI-SPEC.md, and an invented type |
 
 ---
 
