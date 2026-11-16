@@ -15,7 +15,8 @@ playwright-report/
 .gsd/
 .playwright-mcp/
 
-# GSD per-session lock
-.planning/milestone.lock
-# Agent worktrees created by Claude Code isolation
-.claude/worktrees/
+# Private, local-only paths: kept on disk, never tracked (quick-261116-qsy).
+# Root-anchored so the nested fixture planning folders stay tracked.
+/.planning/
+/.claude/
+/.mcp.json
