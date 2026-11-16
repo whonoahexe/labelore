@@ -2,6 +2,10 @@
 // conditionally, reach another project on this machine, or carry an absolute millisecond budget.
 // The scan names the constructs it forbids, so it sits in its own exemption list.
 //
+// The Work-segment and old root-constant rules take their names from the gitignored local names file
+// through test/helpers/private-names.ts (quick-261117-0ne). In a checkout without that file they have no
+// names to match by design and nothing is skipped. Planted controls use invented names.
+//
 // Skip members are matched on comment-blanked text (a comment may talk about them); real-path
 // patterns on raw text (a comment naming a real checkout is still a leak). The scan is a function of
 // a root folder and relative paths so planted controls run the same code on a mkdtemp folder.
@@ -10,6 +14,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
+import { localPrivateNames } from './helpers/private-names.ts';
 import { blankComments, walkSource } from './helpers/source-scan.ts';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -38,13 +43,25 @@ const SKIP_MEMBER =
   /(?<![\w.$])(?:it|test|describe)(?:\.[A-Za-z]+)*\.(?:skip|todo|only|fixme|skipIf|runIf)\b/g;
 const DISGUISED_SKIP =
   /\bif\s*\(\s*!\s*(?:[\w$]+\.)*existsSync\s*\([^)]*\)\s*\)\s*(?:\{\s*)?return\s*[;}]/g;
-const REAL_PATH_PATTERNS: [string, RegExp][] = [
+const FIXED_REAL_PATH_PATTERNS: [string, RegExp][] = [
   ['home-directory call', /\bhomedir\s*\(/g],
   ['absolute home path', /\/home\/[^/\s'"`]+\/(?:Work|codebases)\b/g],
   ['tilde path into Work', /~\/Work\b/g],
-  ['private Work segment', /Work\/(?:project-g|user|project-d)\b/gi],
-  ['old real-checkout constant', /\b(?:reference-portal_ROOT|SP_PLANNING|SP_ROOT)\b/g],
+  ['old planning constant', /\b(?:SP_PLANNING|SP_ROOT)\b/g],
 ];
+const escapeRegex = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** The fixed rules plus, for a non-empty word list, a Work-segment rule and a `<NAME>_ROOT` constant rule. */
+function realPathPatterns(words: readonly string[]): [string, RegExp][] {
+  const patterns = [...FIXED_REAL_PATH_PATTERNS];
+  if (words.length > 0) {
+    const segment = words.map(escapeRegex).join('|');
+    const constant = words.map((word) => escapeRegex(`${word.toUpperCase().replace(/-/g, '_')}_ROOT`)).join('|');
+    patterns.push(['private Work segment', new RegExp(`Work/(?:${segment})\\b`, 'gi')]);
+    patterns.push(['old real-checkout constant', new RegExp(`\\b(?:${constant})\\b`, 'g')]);
+  }
+  return patterns;
+}
 const TIMING_SOURCE = /\b(?:performance\.now|Date\.now|bestOf)\s*\(/;
 const BUDGET_TAIL = /^\s*\.\s*toBeLessThan(?:OrEqual)?\s*\(\s*\d[\d_.]*\s*\)/;
 
@@ -98,7 +115,7 @@ function absoluteBudgets(blanked: string): { index: number; detail: string }[] {
 }
 
 /** Scans one file's text. Exposed to the planted controls through scanFiles. */
-function scanText(path: string, raw: string): Finding[] {
+function scanText(path: string, raw: string, patterns: [string, RegExp][]): Finding[] {
   const findings: Finding[] = [];
   const blanked = blankComments(raw);
   const add = (kind: Kind, detail: string, index: number, text: string) =>
@@ -106,19 +123,21 @@ function scanText(path: string, raw: string): Finding[] {
 
   for (const m of blanked.matchAll(SKIP_MEMBER)) add('skip-member', m[0], m.index!, blanked);
   for (const m of blanked.matchAll(DISGUISED_SKIP)) add('disguised-skip', m[0], m.index!, blanked);
-  for (const [name, pattern] of REAL_PATH_PATTERNS) {
+  for (const [name, pattern] of patterns) {
     for (const m of raw.matchAll(pattern)) add('real-path', `${name}: ${m[0]}`, m.index!, raw);
   }
   for (const b of absoluteBudgets(blanked)) add('absolute-budget', b.detail, b.index, blanked);
   return findings;
 }
 
-function scanFiles(root: string, paths: string[]): Finding[] {
-  return paths.flatMap((rel) => scanText(rel, readFileSync(join(root, rel), 'utf8')));
+function scanFiles(root: string, paths: string[], words: readonly string[]): Finding[] {
+  const patterns = realPathPatterns(words);
+  return paths.flatMap((rel) => scanText(rel, readFileSync(join(root, rel), 'utf8'), patterns));
 }
 
 const testFiles = [...walkSource(['test'], ['.ts']), 'playwright.config.ts'];
-const findings = scanFiles(REPO_ROOT, testFiles);
+const LOCAL_WORDS = localPrivateNames(REPO_ROOT).words;
+const findings = scanFiles(REPO_ROOT, testFiles, LOCAL_WORDS);
 const planted: string[] = [];
 afterAll(() => {
   for (const dir of planted) rmSync(dir, { recursive: true, force: true });
@@ -158,9 +177,11 @@ describe('no-skips and real-path guard (D-05, TEST-01, TEST-04)', () => {
       }
       return { root, paths: Object.keys(files) };
     }
-    const reported = (text: string, kind: Kind): number => {
+    /** Invented names that stand in for the local list, which a clone lacks. */
+    const INVENTED = ['Zorblax', 'Quenfrum', 'vexmoor-hall'];
+    const reported = (text: string, kind: Kind, words: readonly string[] = INVENTED): number => {
       const { root, paths } = plant({ 'test/planted.test.ts': text });
-      return scanFiles(root, paths).filter((f) => f.kind === kind).length;
+      return scanFiles(root, paths, words).filter((f) => f.kind === kind).length;
     };
 
     const MEMBERS = [
@@ -191,14 +212,35 @@ describe('no-skips and real-path guard (D-05, TEST-01, TEST-04)', () => {
       'absolute home path': "const p = '/home/someone/Work/thing';\n",
       codebases: "const p = '/home/someone/codebases/thing';\n",
       'tilde path': "const p = '~/Work/thing';\n",
-      'private Work segment': "const p = 'Work/project-g/x';\n",
-      'private Work segment (user)': "const p = 'Work/user/x';\n",
-      'private Work segment (project-d)': "const p = 'Work/project-d/x';\n",
-      'old constant': 'const r = reference-portal_ROOT;\n',
+      'private Work segment': "const p = 'Work/Zorblax/x';\n",
+      'private Work segment (lower case)': "const p = 'Work/quenfrum/x';\n",
+      'private Work segment (hyphenated)': "const p = 'Work/vexmoor-hall/x';\n",
+      'old constant': 'const r = ZORBLAX_ROOT;\n',
+      'old constant (hyphen to underscore)': 'const r = VEXMOOR_HALL_ROOT;\n',
       'old planning constant': 'const r = SP_PLANNING;\n',
     };
     it.each(Object.entries(REAL))('reports a real path: %s', (_name, text) => {
       expect(reported(text, 'real-path')).toBeGreaterThanOrEqual(1);
+    });
+
+    it('reports no name-derived finding with an empty word list, but the fixed rules still fire', () => {
+      expect(reported("const p = 'Work/Zorblax/x';\n", 'real-path', [])).toBe(0);
+      expect(reported('const r = ZORBLAX_ROOT;\n', 'real-path', [])).toBe(0);
+      expect(reported('const h = homedir();\n', 'real-path', [])).toBeGreaterThanOrEqual(1);
+      expect(reported('const r = SP_ROOT;\n', 'real-path', [])).toBeGreaterThanOrEqual(1);
+    });
+
+    it('does not report an unlisted Work segment or a constant that is not derived from a listed word', () => {
+      expect(reported("const p = 'Work/Projects/x';\n", 'real-path')).toBe(0);
+      expect(reported('const r = REPO_ROOT;\n', 'real-path')).toBe(0);
+    });
+
+    it('reports every word of the local list as a Work segment and as a derived root constant', () => {
+      for (const word of LOCAL_WORDS) {
+        const constant = `${word.toUpperCase().replace(/-/g, '_')}_ROOT`;
+        expect(reported(`const p = 'Work/${word}/x';\n`, 'real-path', LOCAL_WORDS), `segment ${word.length}`).toBeGreaterThanOrEqual(1);
+        expect(reported(`const r = ${constant};\n`, 'real-path', LOCAL_WORDS), `constant ${word.length}`).toBeGreaterThanOrEqual(1);
+      }
     });
 
     it('reports an absolute budget on a measured time, inline and through a variable', () => {

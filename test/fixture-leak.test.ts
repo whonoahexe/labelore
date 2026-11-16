@@ -3,7 +3,8 @@
 // source and every other tracked file (scope C).
 // The private names and hosts live in the gitignored `.leak-names.local.json` at the repo root, shaped
 // {"words": [...], "hosts": [...]} (quick-261116-r41, superseding D-08's committed list), so the public
-// repository never names what the guard forbids. When that file is absent (a fresh clone, CI) the word
+// repository never names what the guard forbids. The file is read through test/helpers/private-names.ts,
+// shared with the no-skips guard. When that file is absent (a fresh clone, CI) the word
 // and host scans run over empty lists by design and no test is skipped; the tool-tell, private-prefix
 // file-name, scope-anchor and ignore-rule checks and the planted controls still run everywhere.
 //
@@ -17,37 +18,12 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
+import { localPrivateNames, NAMES_FILE, readPrivateNames, type PrivateNames } from './helpers/private-names.ts';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-/** Where the private deny list lives: gitignored, local only, never tracked. */
-const NAMES_FILE = '.leak-names.local.json';
-
-interface PrivateNames {
-  /** Private project and product names. A hyphen inside a word also matches a run of whitespace, so
-   * the two-word capitalised form of a hyphenated name is caught too. */
-  words: string[];
-  /** Private host names. */
-  hosts: string[];
-}
-
-function isNameList(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === 'string' && item.length > 0);
-}
-
-function readPrivateNames(path: string): PrivateNames {
-  const parsed: unknown = JSON.parse(readFileSync(path, 'utf8'));
-  const record = (typeof parsed === 'object' && parsed !== null ? parsed : {}) as Record<string, unknown>;
-  if (!isNameList(record.words) || !isNameList(record.hosts)) {
-    throw new Error(`${NAMES_FILE} must be {"words": string[], "hosts": string[]} with non-empty strings`);
-  }
-  return { words: record.words, hosts: record.hosts };
-}
-
-/** The real deny list, or empty lists when the local file is absent (never an early return or a skip). */
-const LOCAL_NAMES: PrivateNames = existsSync(join(REPO_ROOT, NAMES_FILE))
-  ? readPrivateNames(join(REPO_ROOT, NAMES_FILE))
-  : { words: [], hosts: [] };
+/** The real deny list, or empty lists when the local file is absent. */
+const LOCAL_NAMES: PrivateNames = localPrivateNames(REPO_ROOT);
 
 // The next two are public tool names and a file-name rule, not private names, so they stay in the
 // source and keep guarding a fresh clone.
@@ -68,7 +44,6 @@ interface Exemption {
 /** Test sources that must name private text to forbid it: each exempt for one kind, with a reason. */
 const SOURCE_EXEMPTIONS: Exemption[] = [
   { path: 'test/fixture-leak.test.ts', kind: 'tool', reason: 'holds the public tool-tell list and plants it' },
-  { path: 'test/no-skips.test.ts', kind: 'word', reason: 'names the real-checkout path patterns it forbids' },
   {
     path: 'test/web/shell-contract.test.ts',
     kind: 'word',
@@ -187,7 +162,7 @@ describe('fixture, test-source and app-source leak guard (TEST-03, quick-261116-
   });
 
   it('keeps every exemption list frozen at its decided length', () => {
-    expect(SOURCE_EXEMPTIONS).toHaveLength(3);
+    expect(SOURCE_EXEMPTIONS).toHaveLength(2);
     expect(SOURCE_EXEMPTIONS.every((e) => e.reason.length > 0)).toBe(true);
   });
 
