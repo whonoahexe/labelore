@@ -1,7 +1,7 @@
 // The NOTE page e2e (quick-261023-61l, sketch 028 A; quick-261023-u13, sketch 029 A: gist console). The spec starts a read-only server on a thin temp
 // project built by the shared fixture server (ports 5310-5319 only, see fixture-server.ts) holding the
-// notes and todos of the made-up Lendshed project, the synthetic fixture and this repo's own `.planning/`
-// (every source is required, none is optional), and resolves each page by path against its live
+// notes and todos of the made-up Lendshed project, the synthetic fixture and the committed labelore todo
+// fixture (every source is required, none is optional), and resolves each page by path against its live
 // project's presentation payload. It asserts the foundation sweep's key invariants itself
 // (one h1, squared corners, one chip signature, no 420px overflow) since the full sweep is too slow to run
 // per change. The browser context is granted clipboard access so copying a file reference can be read back.
@@ -9,7 +9,7 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { relative } from 'node:path';
 import { FX_ROOT, planningFiles } from '../helpers/fixture-project.ts';
-import { LB_ROOT, SYNTHETIC_ROOT } from '../helpers/todo-corpus.ts';
+import { LABELORE_FIXTURE_ROOT, LB_ROOT, SYNTHETIC_ROOT } from '../helpers/todo-corpus.ts';
 import { artifactUrl, hrefOf, projectApiUrl } from './app-url.ts';
 import { startFixtureServer } from './fixture-server.ts';
 import type { FixturePlacement, FixtureServer } from './fixture-server.ts';
@@ -27,7 +27,7 @@ function noteAndTodoPlacements(root: string): FixturePlacement[] {
     .map((path) => ({ from: relative(LB_ROOT, `${root}/${path}`), to: path }));
 }
 
-const PLACEMENTS: FixturePlacement[] = [FX_ROOT, SYNTHETIC_ROOT, LB_ROOT].flatMap(noteAndTodoPlacements);
+const PLACEMENTS: FixturePlacement[] = [FX_ROOT, SYNTHETIC_ROOT, LABELORE_FIXTURE_ROOT].flatMap(noteAndTodoPlacements);
 
 test.use({ timezoneId: 'Asia/Kolkata', permissions: ['clipboard-read', 'clipboard-write'] });
 
@@ -56,9 +56,7 @@ const DCROP = 'notes/2026-03-24-crop-tool-photos-and-member-avatars.md';
 const PCAP = 'notes/2026-03-24-raise-single-export-size-cap.md';
 const STAR = 'notes/2026-10-16-tariff-note-tooltips.md';
 const SUNDO = 'notes/2026-10-08-brokers-want-undo.md';
-const LSK = 'notes/2026-10-23-sketches-page-in-labelore.md';
 const LPERKIND = 'notes/per-kind-artifact-rendering.md';
-const LSURVEY = 'notes/artifact-structure-survey.md';
 const PBRIEF = 'notes/2026-03-26-steward-desk-milestone-brief.md';
 
 async function openPage(page: Page, suffix: string, theme: 'light' | 'dark'): Promise<void> {
@@ -232,23 +230,6 @@ test.describe('Note page', () => {
     await expect(card.locator('.view-note-none')).toHaveText('Not promoted to a todo.');
   });
 
-  test("labelore's own sketches note: a Then row first and two Open questions", async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await openPage(page, LSK, 'light');
-    await expect(page.locator('.view-note-rail h1')).toHaveText('Sketches page in labelore');
-    await expect(page.locator('.view-note-say')).toHaveText('Show sketches inside Labelore instead of a separate file server.');
-    await expect(page.locator('.view-note-stage')).toHaveText('Shipped');
-    await expect(page.locator('.view-note-big b')).toHaveText('6');
-    await expect(page.locator('.view-note-big-sub')).toHaveText('1 ask · 1 problem · 2 open questions · 2 other');
-    await expect(page.locator('.view-note-gutter')).toHaveText(['Then', 'Want', 'Open question', 'Open question', 'Today', 'Suggested interim']);
-    await expect(page.locator('.view-note-label[data-tone="missing"]')).toHaveCount(2);
-    const card = page.locator('.view-note-rail .view-note-todo');
-    await expect(card.locator('.view-note-kicker').first()).toHaveText('Became a todo');
-    await expect(card.locator('.status-chip').first()).toHaveText('Done');
-    await expect(card.locator('.view-note-weight')).toHaveText('P2');
-    await expect(page.locator('.view-note-mentions .view-note-kicker')).toHaveText('Mentions · 3');
-  });
-
   test('an explore note opens on its gist and reads section by section, light', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await openPage(page, LPERKIND, 'light');
@@ -312,14 +293,6 @@ test.describe('Note page', () => {
       "Kiosk should detect when a shed's door sensor has vanished from its dock",
       'Pre-milestone: swap shed Ethernet, re-seat sensors, tidy the shelves',
     ]);
-  });
-
-  test('the survey: six sections, eight figures and no todo points here', async ({ page }) => {
-    await openPage(page, LSURVEY, 'light');
-    await expect(page.locator('.view-note-big b')).toHaveText('8');
-    await expect(page.locator('.view-note-part')).toHaveCount(6);
-    await expect(page.locator('.view-note-todo')).toHaveCount(1);
-    await expect(page.locator('.view-note-todo .view-note-kicker')).toHaveText('No todo points here');
   });
 
   for (const theme of ['light', 'dark'] as const) {

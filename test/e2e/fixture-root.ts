@@ -34,6 +34,12 @@ export const TIDEMARK_FIXTURE_ROOT: string = fileURLToPath(new URL('../fixtures/
   '',
 );
 
+/** The made-up dense project (fixtures/dense), served on port 4199: every phase artifact kind and a research folder. */
+export const DENSE_FIXTURE_ROOT: string = fileURLToPath(new URL('../../fixtures/dense', import.meta.url)).replace(
+  /[\\/]$/,
+  '',
+);
+
 /** The fixture root, or a thrown error when its `.planning/` folder does not exist. */
 export function resolveFixtureRoot(root: string = FIXTURE_ROOT): string {
   if (!existsSync(join(root, '.planning'))) {

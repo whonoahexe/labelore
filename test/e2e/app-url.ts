@@ -5,7 +5,7 @@
 // This is a helper, not a spec (testMatch is *.spec.ts).
 import { withProjectSlug } from '../../src/web/project-path.ts';
 
-/** The repo server the Playwright config starts; matches `use.baseURL` in playwright.config.ts. */
+/** The dense-fixture server (fixtures/dense) the Playwright config starts; matches `use.baseURL` in playwright.config.ts. */
 export const BASE_URL = 'http://127.0.0.1:4199';
 
 interface PresentationLite {

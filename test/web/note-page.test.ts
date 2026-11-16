@@ -1,5 +1,5 @@
 // quick-261023-61l (sketch 028 A) and quick-261023-u13 (sketch 029 A: gist console): the NOTE composer and its
-// view, pinned against the fixture project, the synthetic notes and labelore's own notes loaded as one
+// view, pinned against the fixture project, the synthetic notes and the labelore todo fixture's notes loaded as one
 // project, and inline notes for the branches those do not cover. ViewInput literals are built from the
 // handler's real parse (through the presentation) and the real join; pinned values come from the sketch's
 // own data (its `quickModel`, `exploreModel` and `journey`, run in a browser at its NOW of 23 Oct 2026
@@ -86,6 +86,35 @@ const count = (html: string, needle: string): number => html.split(needle).lengt
 const statsOf = (model: ComposedNotePage): [string, string, string | null][] => model.rail.stats.map((stat) => [stat.label, stat.value, stat.tone]);
 const firstText = (runs: { text: string }[]): string => runs.map((run) => run.text).join('');
 
+const textRuns = (text: string): { kind: string; text: string }[] => [{ kind: 'text', text }];
+
+/** A made-up quick note in the shape the handler lifts: an unlabelled lead row, then labelled rows, two of them open questions. */
+function inlineQuick(): ViewInput {
+  const row = (label: string | null, group: string, text: string, tone: string | null = null) => ({ label, group, tone, first: textRuns(text), rest: [] });
+  return {
+    kind: 'note',
+    frontmatter: { date: '2026-10-23 03:11', promoted: true },
+    structured: {
+      note: {
+        shape: 'quick',
+        title: textRuns('Show the sensor log inside the dashboard.'),
+        rows: [
+          row(null, 'other', 'Then the log would sit beside the shed page.'),
+          row('Want', 'ask', 'One place to read the log.'),
+          row('Open question', 'open', 'Which sheds keep a log?', 'missing'),
+          row('Open question', 'open', 'How long is it kept?', 'missing'),
+          row('Today', 'problem', 'A separate file server.'),
+        ],
+        mentions: [],
+        words: 40,
+      },
+    },
+    groups: [],
+    planSegments: [],
+    noteContext: { todos: [] },
+  } as unknown as ViewInput;
+}
+
 describe('the rail of a quick note', () => {
   it('dcrop: the file-name title, Shipped, the big 6 with its count line, and the stats in order', () => {
     const model = page('dcrop');
@@ -170,21 +199,6 @@ describe('the rail of a quick note', () => {
       ['Words', '116', null],
     ]);
   });
-  it('lsk: the completed todo makes it Shipped, the ledger has two missing Open question rows and the age is under a day', () => {
-    const model = page('lsk');
-    expect(model.rail.title).toBe('Sketches page in labelore');
-    expect(model.rail.stage).toEqual({ key: 'done', text: 'Shipped' });
-    expect([model.rail.big.value, model.rail.big.sub]).toEqual(['6', '1 ask · 1 problem · 2 open questions · 2 other']);
-    expect(model.gist.line).toBe('Became a todo and shipped.');
-    expect(statsOf(model)).toEqual([
-      ['Noted', '23 Oct 2026 · 03:11', null],
-      ['Age', 'less than a day', null],
-      ['Promoted', 'Yes', null],
-      ['Todo', 'Done', 'complete'],
-      ['Mentions', '3', null],
-      ['Words', '240', null],
-    ]);
-  });
 });
 
 describe('the ledger of a quick note', () => {
@@ -222,19 +236,19 @@ describe('the ledger of a quick note', () => {
       ['Output', null, null],
     ]);
   });
-  it('lsk: the first row is the Then row, and Open question is missing on the label and the mark', () => {
-    const model = page('lsk');
-    expect(firstText(model.gist.runs)).toBe('Show sketches inside Labelore instead of a separate file server.');
+  it('an unlabelled first row is the Then row, and an open-question row is missing on the label and the mark', () => {
+    const model = composeNotePage(inlineQuick(), { now: NOW });
+    if (model === null) throw new Error('composed null');
+    expect(firstText(model.gist.runs)).toBe('Show the sensor log inside the dashboard.');
     expect(model.rows.map((row) => [row.index, row.label, row.tone, row.mark])).toEqual([
       ['01', null, null, null],
       ['02', 'Want', null, null],
       ['03', 'Open question', 'missing', 'missing'],
       ['04', 'Open question', 'missing', 'missing'],
       ['05', 'Today', null, 'in-flight'],
-      ['06', 'Suggested interim', null, null],
     ]);
     expect(model.rows[0].then).toBe(true);
-    expect(model.mentions.map((m) => m.path)).toEqual(['sketches/MANIFEST.md', 'README.md', 'data.js']);
+    expect(model.rows.slice(1).every((row) => !row.then)).toBe(true);
   });
 });
 
@@ -323,14 +337,13 @@ describe('the todo cards and the empty states', () => {
     ]);
     expect(pbrief.todos[1].weight).toEqual({ text: 'High', level: 'high', title: 'priority: high' });
   });
-  it('dback and pcap: promoted but untraced; sundo: still a note; lsurvey: no todo points here', () => {
+  it('dback and pcap: promoted but untraced; sundo: still a note', () => {
     expect(page('dback').empty).toEqual({
       kicker: 'Promoted, but untraced',
       text: 'Marked `promoted: true`, but no todo names this note or carries its text.',
     });
     expect(page('pcap').empty?.kicker).toBe('Promoted, but untraced');
     expect(page('sundo').empty).toEqual({ kicker: 'Still a note', text: 'Not promoted to a todo.' });
-    expect(page('lsurvey').empty).toEqual({ kicker: 'No todo points here', text: 'No todo names or mentions this note.' });
     expect(page('dcrop').empty).toBeNull();
   });
 });
@@ -464,13 +477,12 @@ describe('static markup of a quick note', () => {
   });
 
   it('the first row of a multi-sentence lead is headed Then', () => {
-    const html = render(page('lsk'));
+    const model = composeNotePage(inlineQuick(), { now: NOW });
+    if (model === null) throw new Error('composed null');
+    const html = render(model);
     expect(html).toContain('<span class="view-note-then">Then</span>');
-    expect(html).toContain('Mentions · 3');
-    expect(html).toContain('<code>.planning/sketches/</code>');
     expect(count(html, '<span class="view-note-label" data-tone="missing">Open question</span>')).toBe(2);
     expect(count(html, '<div class="view-note-row" data-tone="missing">')).toBe(2);
-    expect(html).toContain('<span class="view-note-stage" data-stage="done"><i aria-hidden="true"></i>Shipped</span>');
   });
 
   it('star: the whole-note line, a Where it went ledger holding the card, no toggle and no card in the rail', () => {
@@ -678,14 +690,35 @@ describe('an explore note', () => {
     for (const id of ids) expect(sectionHtml(served.document.html, id).length).toBeGreaterThan(0);
   });
 
-  it('lsurvey: the big 8, six parts, five figure chips and +1 on the first, and the No todo points here card', async () => {
-    const { model } = await composed('lsurvey');
-    expect(model.rail.stage).toEqual({ key: 'note', text: '6 sections' });
-    expect(model.rail.big).toEqual({ value: '8', label: 'measured figures', sub: '24 points across 6 sections', stage: 'done' });
-    expect(model.parts).toHaveLength(6);
+  it('figure chips cap at five on a part, with the rest counted as +N', () => {
+    const figure = (value: string) => ({ value, unit: 'ms', phrase: 'a made-up timing' });
+    const model = composeNotePage(
+      {
+        kind: 'note',
+        frontmatter: { date: '2026-10-20' },
+        structured: {
+          note: {
+            shape: 'document',
+            sections: [
+              { heading: 'Timings', items: [], flags: [], figures: ['1', '2', '3', '4', '5', '6'].map(figure), side: [] },
+              { heading: 'Notes', items: [], flags: [], figures: [], side: [] },
+            ],
+            figures: ['1', '2', '3', '4', '5', '6'].map(figure),
+            points: 6,
+          },
+        },
+        groups: [],
+        planSegments: [],
+        headings: [],
+        noteContext: { todos: [] },
+      } as unknown as ViewInput,
+      { now: NOW },
+    );
+    if (model === null) throw new Error('composed null');
+    expect(model.rail.big.value).toBe('6');
     expect(model.parts[0].figures).toHaveLength(5);
     expect(model.parts[0].moreFigures).toBe(1);
-    expect(model.parts[4].items.map((item) => item.term)).toEqual(['1 new extractor', '2 existing extractors', '16 small manifests']);
+    expect(model.parts[1].figures).toEqual([]);
     expect(model.todos).toEqual([]);
     expect(model.empty).toEqual({ kicker: 'No todo points here', text: 'No todo names or mentions this note.' });
   });
@@ -725,14 +758,6 @@ describe('an explore note', () => {
     expect(count(first, 'class="view-note-figure"')).toBe(0);
     expect(first).toContain('<span>7 items</span>');
     expect(html).toContain('<p class="view-note-line">Captured from an exploration session on 2026-03-26.');
-  });
-
-  it('lsurvey renders the No todo points here card', async () => {
-    const { model, served } = await composed('lsurvey');
-    const html = render(model, { documentHtml: served.document.html });
-    expect(html).toContain('No todo points here');
-    expect(html).toContain('No todo names or mentions this note.');
-    expect(html).toContain('<b>8</b>');
   });
 
   it('an explore note with a frontmatter title but no headings has no parts', () => {

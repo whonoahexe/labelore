@@ -1,11 +1,12 @@
 // Where the todo corpus lives, for the tests that read todo files (quick-261023-61k): the made-up Lendshed
-// project, the Labelore todo fixture, the dashboard's synthetic fixture and Labelore's own `.planning/`
-// folder, nothing else. Every project here is committed to this repository; there is no root that points
-// at another project or at the machine's home directory (D-05).
+// project, the Labelore todo fixture and the dashboard's synthetic fixture, nothing else. Every project here
+// is committed to this repository; there is no root that points at another project or at the machine's
+// home directory (D-05), and Labelore's own untracked `.planning/` is never read.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { FX_ROOT } from './fixture-project.ts';
 
+/** The repository root, used only for path arithmetic (fixture and source locations); never read as a project. */
 export const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
 const FIXTURES = join(LB_ROOT, 'test/fixtures/todos');
 
