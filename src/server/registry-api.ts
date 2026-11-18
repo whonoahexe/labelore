@@ -1,4 +1,5 @@
-// The served app (PLAT-02, PLAT-08): the project list at GET /api/projects, every project's read API
+// The served app (PLAT-02, PLAT-08): the project list at GET /api/projects, who this server is at
+// GET /api/identity, every project's read API
 // at /api/projects/:slug/*, and the production static block. A request reaches a project only
 // through the slug in its own URL - the registry holds no "active project" a tab could change for
 // another (D-08).
@@ -10,6 +11,7 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { SCAN_MESSAGES, SCAN_RESULT_CAP } from './folder-scan.ts';
+import { serverIdentity } from './identity.ts';
 import { createProjectApi } from './project-api.ts';
 import { INVALID_INPUT_MESSAGE } from './project-registry.ts';
 import type { ProjectRegistry } from './project-registry.ts';
@@ -43,6 +45,11 @@ export function createRegistryApp(registry: ProjectRegistry, options: RegistryAp
   app.use('/api/*', (c, next) => (c.req.path === ADD_MANY_PATH ? addManyLimit(c, next) : standardLimit(c, next)));
 
   app.get('/api/projects', async (c) => c.json(await registry.list()));
+
+  // Who this server is (app, version, instanceId, pid): the stable marker a launcher reads before it
+  // trusts a port. Registered after the guard above, so a foreign Host never learns it. A route of its
+  // own, not a field of /api/projects, whose typed answer the web shares and whose handler revalidates folders.
+  app.get('/api/identity', (c) => c.json(serverIdentity()));
 
   // The three write routes of the remembered list. They sit before the :slug mount so the project API's
   // resolver never runs for them, and behind the guard and body limit above (SEC-05).
