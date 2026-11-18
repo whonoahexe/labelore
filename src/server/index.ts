@@ -1,5 +1,7 @@
+import { existsSync, realpathSync } from 'node:fs';
 import { createServer as createHttpServer, type Server } from 'node:http';
-import { pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createAdaptorServer, getRequestListener } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
@@ -23,6 +25,11 @@ const DEFAULT_PORT = 4173;
 const HOSTNAME = '127.0.0.1';
 /** How many consecutive ports an auto-port start tries before giving up (4173 → 4182). */
 const PORT_ATTEMPTS = 10;
+
+/** The directory of the prebuilt web app: the launcher's absolute LABELORE_DIST_DIR, else ./dist. */
+function distDir(): string {
+  return process.env.LABELORE_DIST_DIR || './dist';
+}
 
 /** True for the URLs the Hono app owns (the API, which includes the sketch files). In dev mode
  * everything else goes to Vite, /sketches and /<slug>/sketches included. */
@@ -147,7 +154,10 @@ function boundPort(server: Server, requested: number): number {
  * socket is listening, including when an auto-port start moved off the default.
  */
 export async function startServer(rawPaths: readonly string[], options: ServerOptions = {}): Promise<Server> {
-  const production = options.production ?? process.env.NODE_ENV === 'production';
+  // The bundle build defines LABELORE_BUNDLE as "1": this folds to `true`, and the dev-only Vite branch
+  // below is dropped from the bundle. Keep the expression inline here, a helper would hide it from the fold.
+  const production =
+    process.env.LABELORE_BUNDLE === '1' || (options.production ?? process.env.NODE_ENV === 'production');
   const port = options.port ?? DEFAULT_PORT;
   const store = options.settings ?? new FileSettingsStore(defaultSettingsDir(), identityOfTarget);
   const registry = new ProjectRegistry({
@@ -157,7 +167,7 @@ export async function startServer(rawPaths: readonly string[], options: ServerOp
   });
   await registry.registerCliTargets(rawPaths);
   const policy = createHostPolicy(options.allowedHosts ?? parseAllowedHosts(process.env.LABELORE_ALLOWED_HOSTS));
-  const app = createRegistryApp(registry, { policy, production, staticRoot: './dist' });
+  const app = createRegistryApp(registry, { policy, production, staticRoot: distDir() });
 
   const autoPort = options.autoPort ?? false;
 
@@ -243,7 +253,17 @@ export function parseCli(args: string[]): CliOptions {
 
 async function runCli(): Promise<void> {
   const options = parseCli(process.argv.slice(2));
-  const production = process.env.NODE_ENV === 'production';
+  const production = process.env.LABELORE_BUNDLE === '1' || process.env.NODE_ENV === 'production';
+  if (production) {
+    const index = resolve(distDir(), 'index.html');
+    if (!existsSync(index)) {
+      console.error(
+        `Labelore did not start: the built web app is missing (checked ${index}). Set LABELORE_DIST_DIR to a built dist directory, or run \`npm run build\`.`,
+      );
+      process.exitCode = 1;
+      return;
+    }
+  }
   const server = await startServer(options.rawPaths, {
     port: options.port,
     autoPort: options.autoPort,
@@ -296,7 +316,7 @@ async function runCli(): Promise<void> {
   // `dist/`. Nothing in the output said which mode was active, so the misconfiguration was
   // invisible. It is now the loudest line at startup.
   if (production) {
-    console.log('Mode: production — serving the prebuilt ./dist bundle');
+    console.log(`Mode: production — serving the prebuilt bundle from ${resolve(distDir())}`);
   } else {
     console.warn(
       'Mode: DEVELOPMENT — serving unbundled modules through Vite. Expect a slow first paint over any network hop; run `npm start` (NODE_ENV=production) after `npm run build` to serve ./dist instead.',
@@ -306,8 +326,22 @@ async function runCli(): Promise<void> {
   console.log(`Open ${baseUrl}`);
 }
 
-const isEntryPoint = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
-if (isEntryPoint) {
+/**
+ * True when this file is the program being run. The bundle is always the entry (the build define). A
+ * source run compares real paths, so starting it through a symlinked directory still starts it instead
+ * of exiting 0 without a word.
+ */
+function isEntryPoint(): boolean {
+  if (process.env.LABELORE_BUNDLE === '1') return true;
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isEntryPoint()) {
   runCli().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
