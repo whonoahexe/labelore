@@ -8,7 +8,7 @@
 // of at most 64 characters of [A-Za-z0-9-], else null, so a hand-run or service-run server can never be
 // taken for the launcher's own. `pid` is the process id. A field may be added later; renaming or removing
 // one breaks every installed launcher.
-import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 
 export interface ServerIdentity {
   app: 'labelore';
@@ -26,9 +26,9 @@ function readVersion(): string {
   // In the bundle the build defines LABELORE_BUNDLE as "1", so this branch folds away and the built
   // file holds only the version literal; a source run reads package.json beside src/.
   if (process.env.LABELORE_BUNDLE === '1') return process.env.LABELORE_VERSION as string;
-  const manifest = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')) as {
-    version: string;
-  };
+  // createRequire, not the fs module: src/planning-fs/local-fs.ts and settings-store.ts stay the only
+  // fs importers under src/ (DATA-01, test/portability.test.ts).
+  const manifest = createRequire(import.meta.url)('../../package.json') as { version: string };
   return manifest.version;
 }
 

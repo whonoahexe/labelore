@@ -1,10 +1,10 @@
-import { existsSync, realpathSync } from 'node:fs';
 import { createServer as createHttpServer, type Server } from 'node:http';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createAdaptorServer, getRequestListener } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
+import { canonicalizePath, pathExistsSync } from '../planning-fs/local-fs.ts';
 import type { ProjectSnapshot } from '../planning-repo/types.ts';
 import { isServerOwnedUrl } from '../presentation/reserved.ts';
 import type { ProjectListResponse } from '../presentation/project-list.ts';
@@ -256,7 +256,7 @@ async function runCli(): Promise<void> {
   const production = process.env.LABELORE_BUNDLE === '1' || process.env.NODE_ENV === 'production';
   if (production) {
     const index = resolve(distDir(), 'index.html');
-    if (!existsSync(index)) {
+    if (!pathExistsSync(index)) {
       console.error(
         `Labelore did not start: the built web app is missing (checked ${index}). Set LABELORE_DIST_DIR to a built dist directory, or run \`npm run build\`.`,
       );
@@ -334,11 +334,9 @@ async function runCli(): Promise<void> {
 function isEntryPoint(): boolean {
   if (process.env.LABELORE_BUNDLE === '1') return true;
   if (!process.argv[1]) return false;
-  try {
-    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
-  } catch {
-    return false;
-  }
+  const argv1 = canonicalizePath(process.argv[1]);
+  const self = canonicalizePath(fileURLToPath(import.meta.url));
+  return argv1.ok && self.ok && argv1.resolved === self.resolved;
 }
 
 if (isEntryPoint()) {
