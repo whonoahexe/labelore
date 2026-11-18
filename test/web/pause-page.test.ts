@@ -434,8 +434,19 @@ describe('composePause - nested pauses are headed with their own context (D-07)'
 });
 
 describe('PauseView head - the moved-on note, the copy-path buttons and the missing partner (D-08)', () => {
-  it('shows "Work has moved on since" for Lendshed phase 3 beside the date, apart from the stop and gate fields', async () => {
+  it('shows the ROADMAP reading of Lendshed phase 3 in the head line when the roadmap ticks it', async () => {
     const model = pauseOf(await lendshed());
+    expect(model.head.movedOnLine).toBe('Work has moved on since: Phase 3 Account Admin & Sessions is complete (ROADMAP)');
+  });
+
+  it('shows "Work has moved on since" for Lendshed phase 3 beside the date, apart from the stop and gate fields', async () => {
+    // The Lendshed ROADMAP ticks phase 3, so the roadmap is silenced to reach the STATE note and its date.
+    const model = pauseOf(
+      planted(await lendshed(), (copy) => {
+        const phase = copy.milestones.flatMap((m) => m.phases).find((p) => p.dirPath?.endsWith('03-account-admin-and-sessions'))!;
+        phase.roadmapComplete = null;
+      }),
+    );
     expect(model.head.movedOnLine).toBe(
       'Work has moved on since: Phase 3 Account Admin & Sessions is behind the current phase 4 Bulk Loan Export (STATE, 2026-04-14)',
     );

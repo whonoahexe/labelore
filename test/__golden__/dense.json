@@ -591,6 +591,7 @@
                       "checked": true
                     }
                   ],
+                  "phaseLineChecked": null,
                   "roadmapComplete": true
                 }
               ]
@@ -613,6 +614,7 @@
                       "checked": true
                     }
                   ],
+                  "phaseLineChecked": null,
                   "roadmapComplete": true
                 },
                 {
@@ -629,6 +631,7 @@
                       "checked": true
                     }
                   ],
+                  "phaseLineChecked": null,
                   "roadmapComplete": true
                 }
               ]
@@ -661,6 +664,7 @@
                   "checked": false
                 }
               ],
+              "phaseLineChecked": null,
               "roadmapComplete": false
             },
             {
@@ -683,6 +687,7 @@
                   "checked": false
                 }
               ],
+              "phaseLineChecked": null,
               "roadmapComplete": false
             }
           ],
@@ -985,6 +990,7 @@
                   "checked": true
                 }
               ],
+              "phaseLineChecked": true,
               "roadmapComplete": true
             }
           ],
@@ -1100,6 +1106,7 @@
                   "checked": true
                 }
               ],
+              "phaseLineChecked": true,
               "roadmapComplete": true
             },
             {
@@ -1120,6 +1127,7 @@
                   "checked": true
                 }
               ],
+              "phaseLineChecked": true,
               "roadmapComplete": true
             }
           ],

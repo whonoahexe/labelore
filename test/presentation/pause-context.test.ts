@@ -174,8 +174,24 @@ describe('buildPauseContext: the pause date and its source', () => {
 });
 
 describe('buildPauseContext: work has moved on', () => {
-  it('names the root HANDOFF\'s phase 3 as behind the current phase, from STATE, kept apart from the handoff fields', async () => {
+  it('reads the root HANDOFF\'s phase 3 as complete from its ROADMAP phase line, kept apart from the handoff fields', async () => {
     const context = buildPauseContext(await lendshed(), HANDOFF)!;
+    expect(context.movedOn).toEqual({
+      what: 'Phase 3 Account Admin & Sessions is complete',
+      source: 'ROADMAP',
+      date: null,
+    });
+    // The note is not one of the handoff's own fields.
+    expect(context.stop.status).toBe('paused');
+  });
+
+  it('names the root HANDOFF\'s phase 3 as behind the current phase, from STATE, kept apart from the handoff fields', async () => {
+    // The Lendshed ROADMAP ticks phase 3, so the roadmap is silenced to reach the STATE branch.
+    const copy = planted(await lendshed(), (draft) => {
+      const phase = draft.milestones.flatMap((m) => m.phases).find((p) => p.dirPath?.endsWith('03-account-admin-and-sessions'))!;
+      phase.roadmapComplete = null;
+    });
+    const context = buildPauseContext(copy, HANDOFF)!;
     expect(context.movedOn).toEqual({
       what: 'Phase 3 Account Admin & Sessions is behind the current phase 4 Bulk Loan Export',
       source: 'STATE',
@@ -185,7 +201,7 @@ describe('buildPauseContext: work has moved on', () => {
     expect(context.stop.status).toBe('paused');
   });
 
-  it('names ROADMAP when the roadmap\'s plan checklist marks the phase complete, with the newest summary day', async () => {
+  it('names ROADMAP when the roadmap marks the phase complete, with the newest summary day', async () => {
     const copy = planted(await lendshed(), (draft) => {
       const phase = draft.milestones.flatMap((m) => m.phases).find((p) => p.dirPath?.endsWith('03-account-admin-and-sessions'))!;
       phase.roadmapComplete = true;
@@ -205,6 +221,7 @@ describe('buildPauseContext: work has moved on', () => {
     const copy = planted(await lendshed(), (draft) => {
       const phase = draft.milestones.flatMap((m) => m.phases).find((p) => p.dirPath?.endsWith('03-account-admin-and-sessions'))!;
       phase.diskStatus = 'complete';
+      phase.roadmapComplete = null; // the roadmap is silenced to reach the STATE branch
     });
     expect(buildPauseContext(copy, HANDOFF)!.movedOn).toMatchObject({ source: 'STATE', date: '2026-04-14' });
   });
@@ -362,6 +379,7 @@ describe('buildPauseContext: decimal phases compare as GSD numbers them (L2A-WR-
     const copy = planted(lendshedSync, (draft) => {
       const phase = draft.milestones.flatMap((m) => m.phases).find((p) => p.dirPath?.endsWith('03-account-admin-and-sessions'))!;
       phase.identity.number = pause;
+      phase.roadmapComplete = null; // the roadmap is silenced to reach the STATE branch
       (draft.artifacts.find((artifact) => artifact.path === HANDOFF)!.structured.pause as { phase?: string }).phase = pause;
       draft.state!.phaseNumber = current;
     });

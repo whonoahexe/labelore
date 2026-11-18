@@ -295,7 +295,7 @@ describe('RoadmapHandler — phase overview line', () => {
     (parseRoadmap(content).structured?.milestoneGroups as { phases: Block[] }[])[0].phases;
   const states = (b: Block) => [b.phaseLineChecked, b.roadmapComplete];
 
-  it('reads an unticked bold phase line as incomplete even when every plan box is ticked (sideby shape)', () => {
+  it('reads an unticked bold phase line as incomplete even when every plan box is ticked', () => {
     const [b] = livePhases(
       `## Phases\n\n- [ ] **Phase 3: Synced Playback** - Server-owned timeline\n\n## Phase Details\n\n### Phase 3: Synced Playback\n**Goal**: Sync\n\nPlans:\n- [x] 03-01-PLAN.md — One\n- [x] 03-02-PLAN.md — Two\n`,
     );

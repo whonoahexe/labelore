@@ -293,7 +293,8 @@ function phaseLabel(phase: PhaseDto): string {
 
 /**
  * The "work has moved on" note for the named phase, kept apart from the handoff's own fields (D-07, D-08).
- * ROADMAP when its plan checklist marks the phase complete; STATE when the phase is complete on disk, or
+ * ROADMAP when the roadmap marks the phase complete, by its phase line or, with no phase line, its plan
+ * checklist; STATE when the phase is complete on disk, or
  * STATE.md now names a later phase of the same milestone (the roadmap of a project that writes only a
  * "4/4 plans executed" line has no checklist, so `roadmapComplete` is null there).
  */

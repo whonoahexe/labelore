@@ -350,8 +350,8 @@
         "number": "03",
         "name": "Account Admin & Sessions",
         "status": {
-          "label": "Researched",
-          "tone": "quiet"
+          "label": "Complete",
+          "tone": "complete"
         },
         "done": 0,
         "total": 0,
@@ -723,8 +723,8 @@
           "number": "01",
           "name": "Member Data Foundation",
           "status": {
-            "label": "Discussed",
-            "tone": "quiet"
+            "label": "Complete",
+            "tone": "complete"
           },
           "done": 0,
           "total": 0,
@@ -788,8 +788,8 @@
           "number": "02",
           "name": "Shed Inventory Health",
           "status": {
-            "label": "Researched",
-            "tone": "quiet"
+            "label": "Complete",
+            "tone": "complete"
           },
           "done": 0,
           "total": 0,
@@ -871,8 +871,8 @@
           "number": "03",
           "name": "Catalogue Browsing",
           "status": {
-            "label": "Researched",
-            "tone": "quiet"
+            "label": "Complete",
+            "tone": "complete"
           },
           "done": 0,
           "total": 0,
@@ -963,8 +963,8 @@
           "number": "04",
           "name": "Shed-to-Shed Transfers",
           "status": {
-            "label": "Discussed",
-            "tone": "quiet"
+            "label": "Complete",
+            "tone": "complete"
           },
           "done": 0,
           "total": 0,

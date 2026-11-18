@@ -155,9 +155,10 @@ export interface Phase {
   requirementRefs: Reference<Requirement>[];
   successCriteria: string[];
   /**
-   * Completion state as reported by ROADMAP.md's own plan-checklist checkbox syntax. Null when
-   * this phase has no ROADMAP.md entry to read from — never coerced to false, which would read as
-   * a false claim of "roadmap says incomplete" rather than "no roadmap data available".
+   * Completion state as reported by ROADMAP.md: the phase line's checkbox, falling back to the
+   * phase's plan checklist when the roadmap has no phase line. Null when neither exists — never
+   * coerced to false, which would read as a false claim of "roadmap says incomplete" rather than
+   * "no roadmap data available".
    */
   roadmapComplete: boolean | null;
   /** Completion state as inferred from disk (PLAN.md / SUMMARY.md presence). Never merged with roadmapComplete — the two are documented to legitimately disagree. */
