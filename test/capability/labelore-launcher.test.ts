@@ -7,6 +7,7 @@
 import { execFile, spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import {
+  chmodSync,
   cpSync,
   existsSync,
   mkdirSync,
@@ -15,6 +16,7 @@ import {
   readFileSync,
   realpathSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from 'node:fs';
 import { createServer } from 'node:http';
@@ -563,6 +565,100 @@ describe('stop and open after a handshake', { timeout: 60_000 }, () => {
     expect(result.code).toBe(1);
     expect(result.stderr).toContain('exit code 3');
     expect(result.stderr).toContain('boom');
+  });
+});
+
+/** chmod -R a-w (or back) over a tree; deepest paths first when locking, the root first when unlocking. */
+function setWritable(root: string, writable: boolean): void {
+  const entries = readdirSync(root, { recursive: true, withFileTypes: true });
+  const paths = entries.map((entry) => join(entry.parentPath, entry.name));
+  const ordered = writable ? [root, ...paths] : [...paths.reverse(), root];
+  for (const path of ordered) {
+    const dir = statSync(path).isDirectory();
+    chmodSync(path, writable ? (dir ? 0o755 : 0o644) : dir ? 0o555 : 0o444);
+  }
+}
+
+describe('restarting a server of another version', { timeout: 60_000 }, () => {
+  it('replaces an older server once, then the next open reuses the new one', async () => {
+    config.identityVersion = '0.0.1-old';
+    const victim = await spawnVictim();
+    await startFake({ victim });
+    const first = await stagedLauncher(['open']);
+    expect(first.code).toBe(0);
+    await exited(victim);
+    expect(alive(victim.pid)).toBe(false);
+    expect(first.stdout.trimEnd().split('\n')).toHaveLength(1);
+    expect(first.stdout).toMatch(URL_LINE);
+    const restarted = first.stderr.split('\n').filter((line) => line.startsWith('Restarted'));
+    expect(restarted).toEqual([`Restarted Labelore server (0.0.1-old → ${OWN_VERSION})`]);
+    const state = readStateFile();
+    expect(state.pid).not.toBe(victim.pid);
+    expect(state.instanceId).toMatch(UUID);
+    expect(state.instanceId).not.toBe(FAKE_ID);
+    expect(state.version).toBe(OWN_VERSION);
+
+    const second = await stagedLauncher(['open']);
+    expect(second.code).toBe(0);
+    expect(second.stdout.trimEnd().split('\n')).toHaveLength(1);
+    expect(second.stderr).not.toContain('Restarted');
+    expect(readStateFile().pid).toBe(state.pid);
+  });
+
+  it('treats an older version in the state file as older even when the identity reports the current one', async () => {
+    config.stateVersion = '0.0.1-old';
+    const victim = await spawnVictim();
+    await startFake({ victim });
+    const result = await stagedLauncher(['open']);
+    expect(result.code).toBe(0);
+    expect(result.stderr).toContain(`Restarted Labelore server (${OWN_VERSION} → ${OWN_VERSION})`);
+    await exited(victim);
+    expect(readStateFile().version).toBe(OWN_VERSION);
+  });
+
+  it('link prints the URL for an older server and leaves it running', async () => {
+    config.identityVersion = '0.0.1-old';
+    const victim = await spawnVictim();
+    const port = await startFake({ victim });
+    const result = await launcher(['link']);
+    expect(result.code).toBe(0);
+    expect(result.stdout.trim()).toBe(`Labelore URL: http://127.0.0.1:${port}/demo/`);
+    expect(alive(victim.pid)).toBe(true);
+  });
+
+  it('starts the new server after the wait when the old one ignores SIGTERM, and says so', async () => {
+    config.identityVersion = '0.0.1-old';
+    const victim = await spawnVictim(true);
+    await startFake({ victim });
+    const result = await stagedLauncher(['open']);
+    expect(result.code).toBe(0);
+    expect(alive(victim.pid)).toBe(true);
+    expect(result.stderr).toContain(`the older Labelore server (pid ${victim.pid}) has not exited yet`);
+    expect(result.stderr.split('\n').filter((line) => line.startsWith('Restarted'))).toHaveLength(1);
+    expect(readStateFile().pid).not.toBe(victim.pid);
+    expect(result.stdout).toMatch(URL_LINE);
+  });
+
+  it('works from a read-only copy of the stage and changes nothing under it', async () => {
+    const copy = join(makeTempDir('labelore-readonly'), 'stage');
+    cpSync(stage, copy, { recursive: true });
+    const snapshot = (): string[] =>
+      readdirSync(copy, { recursive: true })
+        .map(String)
+        .sort()
+        .map((entry) => `${entry} ${statSync(join(copy, entry)).mtimeMs}`);
+    const before = snapshot();
+    let result: Outcome;
+    setWritable(copy, false);
+    try {
+      result = await stagedLauncher(['open'], copy);
+    } finally {
+      setWritable(copy, true);
+    }
+    expect(result.code).toBe(0);
+    expect(result.stdout).toMatch(URL_LINE);
+    expect(snapshot()).toEqual(before);
+    expect(existsSync(join(stateDir, 'server.json'))).toBe(true);
   });
 });
 
