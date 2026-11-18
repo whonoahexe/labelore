@@ -286,6 +286,89 @@ describe('RoadmapHandler', () => {
   });
 });
 
+describe('RoadmapHandler — phase overview line', () => {
+  type Block = { number: string; plans: unknown[]; phaseLineChecked: boolean | null; roadmapComplete: boolean | null };
+  const parseRoadmap = (content: string) =>
+    RoadmapHandler.parse(raw('.planning/ROADMAP.md', content), ref('.planning/ROADMAP.md'));
+  const livePhases = (content: string) => parseRoadmap(content).structured?.phases as Block[];
+  const groupPhases = (content: string) =>
+    (parseRoadmap(content).structured?.milestoneGroups as { phases: Block[] }[])[0].phases;
+  const states = (b: Block) => [b.phaseLineChecked, b.roadmapComplete];
+
+  it('reads an unticked bold phase line as incomplete even when every plan box is ticked (sideby shape)', () => {
+    const [b] = livePhases(
+      `## Phases\n\n- [ ] **Phase 3: Synced Playback** - Server-owned timeline\n\n## Phase Details\n\n### Phase 3: Synced Playback\n**Goal**: Sync\n\nPlans:\n- [x] 03-01-PLAN.md — One\n- [x] 03-02-PLAN.md — Two\n`,
+    );
+    expect(b.plans).toHaveLength(2);
+    expect(states(b)).toEqual([false, false]);
+  });
+
+  it('reads a ticked phase line as complete even with an unticked plan box, or no plan checklist at all', () => {
+    const [a, c] = livePhases(
+      `## Phases\n\n- [x] **Phase 1: Foundation** - desc (completed 2026-01-30)\n- [x] **Phase 2: Bare** - desc\n\n## Phase Details\n\n### Phase 1: Foundation\nPlans:\n- [ ] 01-01-PLAN.md — One\n\n### Phase 2: Bare\n**Goal**: Nothing listed\n`,
+    );
+    expect(states(a)).toEqual([true, true]);
+    expect(states(c)).toEqual([true, true]);
+  });
+
+  it('keeps the plan-checkbox rule when the roadmap has no overview line for the phase', () => {
+    const [done, open, bare] = livePhases(
+      `### Phase 1: A\nPlans:\n- [x] 01-01: One\n\n### Phase 2: B\nPlans:\n- [x] 02-01: One\n- [ ] 02-02: Two\n\n### Phase 3: C\n**Goal**: none\n`,
+    );
+    expect(states(done)).toEqual([null, true]);
+    expect(states(open)).toEqual([null, false]);
+    expect(states(bare)).toEqual([null, null]);
+  });
+
+  it('reads the plain form inside a <details> group, scoped to that group only', () => {
+    const content = `## Phases\n\n<details>\n<summary>✅ v1.0 MVP</summary>\n\n- [x] Phase 2: Name (3/3 plans) — completed 2026-01-01\n\n### Phase 2: Name\n**Goal**: x\n\n</details>\n\n### Phase 2: Other\n**Goal**: live\n`;
+    expect(states(groupPhases(content)[0])).toEqual([true, true]);
+    expect(states(livePhases(content)[0])).toEqual([null, null]);
+  });
+
+  it('does not let a live phase line reach an archived block', () => {
+    const content = `- [x] **Phase 1: Live** - d\n\n<details>\n<summary>v1.0</summary>\n\n### Phase 1: Archived\nPlans:\n- [ ] 01-01: One\n\n</details>\n\n### Phase 1: Live\n`;
+    expect(states(groupPhases(content)[0])).toEqual([null, false]);
+    expect(states(livePhases(content)[0])).toEqual([true, true]);
+  });
+
+  it('matches decimal and zero-padded numbers by GSD phase-number comparison', () => {
+    const [hot, one] = livePhases(
+      `- [ ] **Phase 2.1: Hotfix** (INSERTED) - desc\n- [x] **Phase 01: One**\n\n### Phase 2.1: Hotfix (INSERTED)\nPlans:\n- [x] 02.1-01: Fix\n\n### Phase 1: One\n`,
+    );
+    expect(states(hot)).toEqual([false, false]);
+    expect(states(one)).toEqual([true, true]);
+  });
+
+  it('keeps 2.1 and 2.10 apart', () => {
+    const [a, b] = livePhases(`- [ ] **Phase 2.1: A**\n- [x] **Phase 2.10: B**\n\n### Phase 2.1: A\n\n### Phase 2.10: B\n`);
+    expect(states(a)).toEqual([false, false]);
+    expect(states(b)).toEqual([true, true]);
+  });
+
+  it('never reads a version-prefixed archive line as the current milestone phase', () => {
+    const [b] = livePhases(`- [x] v1.0 Phase 1: Old (3/3 plans)\n\n### Phase 1: Now\nPlans:\n- [ ] 01-01: One\n`);
+    expect(states(b)).toEqual([null, false]);
+  });
+
+  it('defers to the plan rule when two overview lines for the same phase disagree', () => {
+    const [b] = livePhases(`- [x] **Phase 4: Dup** - a\n- [ ] **Phase 4: Dup** - b\n\n### Phase 4: Dup\nPlans:\n- [x] 04-01: One\n`);
+    expect(states(b)).toEqual([null, true]);
+  });
+
+  it('does not read a checkbox inside another phase body as a phase line', () => {
+    const [b] = livePhases(`### Phase 1: One\n- [x] Phase 9: shaped like a line\n\n### Phase 9: Nine\n`);
+    expect(b.number).toBe('1');
+    const phases = livePhases(`### Phase 1: One\n- [x] Phase 9: shaped like a line\n\n### Phase 9: Nine\n`);
+    expect(states(phases[1])).toEqual([null, null]);
+  });
+
+  it('stays total on pathological input', () => {
+    const noise = '- [x] ' + '*'.repeat(5000) + ' Phase ' + '1.'.repeat(3000) + '\n' + '- [ ]\n- [x] **Phase\n';
+    expect(() => parseRoadmap(noise)).not.toThrow();
+  });
+});
+
 describe('RequirementsHandler', () => {
   const content = `# Requirements: Demo\n\n## v1 Requirements\n\n### Authentication\n\n- [ ] **AUTH-01**: User can sign up\n- [x] **AUTH-02**: User can sign in\n\n## v2 Requirements\n\n### Notifications\n\n- **NOTF-01**: User gets notified\n\n## Out of Scope\n\n| Feature | Reason |\n|---|---|\n| Video posts | Too costly |\n\n## Traceability\n\n| Requirement | Phase | Status |\n|---|---|---|\n| AUTH-01 | Phase 1 | Pending |\n`;
 

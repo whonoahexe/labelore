@@ -1,12 +1,13 @@
 // ROADMAP.md — the richest hand-authored structure. Extracts per-phase blocks (goal, depends-on,
 // requirements, success criteria, plan checklist) fully; the ASCII dependency-shape diagram is
 // captured verbatim and never arrow-parsed (it is confirmed free-form art, not a schema); the
-// `<details>`-wrapped milestone grouping is detected by presence, keyed on its `<summary>` text.
+// `<details>`-wrapped milestone grouping is detected by presence, keyed on its `<summary>` text; the
+// phase overview checklist is read for each phase's own checkbox.
 import { basename } from 'node:path';
 import type { ArtifactHandler, RawArtifact, ArtifactRef } from '../types.ts';
 import { tryParseFrontmatter } from '../frontmatter.ts';
 import { deriveTitle } from './title.ts';
-import { parseMilestoneFileName } from '../naming.ts';
+import { parseMilestoneFileName, comparePhaseNumbers } from '../naming.ts';
 
 export interface RoadmapPlanEntry {
   id: string;
@@ -22,8 +23,26 @@ export interface RoadmapPhaseBlock {
   requirementIds: string[];
   successCriteria: string[];
   plans: RoadmapPlanEntry[];
-  /** All parsed plan checkboxes checked, per ROADMAP.md's own syntax. Null when no plan checklist could be read (e.g. "Plans: TBD"). */
+  /**
+   * The phase's own overview checklist line in this roadmap scope (`- [x] **Phase N: Name** ...`),
+   * bold or plain, any trailing text. Null when the scope has no such line for this phase, or has two
+   * that disagree.
+   */
+  phaseLineChecked: boolean | null;
+  /**
+   * The phase line's checkbox when there is one (GSD ticks it only after verification), otherwise all
+   * parsed plan checkboxes checked, and null when neither exists (e.g. "Plans: TBD").
+   */
   roadmapComplete: boolean | null;
+}
+
+/** The completion rule: the phase line decides when present, else the plan checkboxes, else unknown. */
+export function roadmapCompleteOf(
+  phaseLineChecked: boolean | null,
+  plans: RoadmapPlanEntry[],
+): boolean | null {
+  if (phaseLineChecked !== null) return phaseLineChecked;
+  return plans.length > 0 ? plans.every((p) => p.checked) : null;
 }
 
 export interface RoadmapMilestoneGroup {
@@ -48,6 +67,40 @@ interface RawPhaseBlock {
   body: string;
 }
 
+/** The one definition of the phase heading grammar: `## Phase N: Name` at level 2-6, emoji prefix allowed. */
+function phaseHeadingOf(line: string): { number: string; name: string } | null {
+  const headingMatch = line.match(/^#{2,6}\s+(.*)$/);
+  if (!headingMatch) return null;
+  const phaseMatch = headingMatch[1].match(/^(?:[^\w]*\s*)?Phase\s+([\w.]+):\s*(.+)$/i);
+  return phaseMatch ? { number: phaseMatch[1], name: phaseMatch[2].trim() } : null;
+}
+
+interface PhaseLineState {
+  number: string;
+  checked: boolean | null;
+}
+
+/**
+ * Reads the overview checklist (`- [x] **Phase N: Name** ...`, bold or plain) that sits above the
+ * first phase heading. Stops at that heading so a checkbox inside a phase's own body is never read
+ * as a phase line. `Phase` must directly follow the checkbox, so a `v1.0 Phase 1:` archive line never
+ * matches. Two lines for one number that disagree become null, deferring to the plan rule. One linear
+ * pass, one anchored regex per line, no nested quantifiers (T-01-11).
+ */
+function extractPhaseLineStates(text: string): PhaseLineState[] {
+  const states: PhaseLineState[] = [];
+  for (const line of text.split('\n')) {
+    if (phaseHeadingOf(line)) break;
+    const m = line.match(/^\s*[-*]\s*\[([ xX])\]\s*(?:\*\*)?Phase\s+([\w.]+)(?:\*\*)?\s*:/i);
+    if (!m) continue;
+    const checked = m[1].toLowerCase() === 'x';
+    const existing = states.find((s) => comparePhaseNumbers(s.number, m[2]) === 0);
+    if (!existing) states.push({ number: m[2], checked });
+    else if (existing.checked !== checked) existing.checked = null;
+  }
+  return states;
+}
+
 /**
  * Line-scans for `### Phase N: {Name}` / `#### Phase N: {Name}` headings at any level 2–6 and
  * captures everything up to the next `Phase N:` heading as that phase's body. An interior heading
@@ -62,31 +115,26 @@ function extractRawPhaseBlocks(text: string): RawPhaseBlock[] {
   let current: { number: string; name: string; lines: string[] } | null = null;
 
   for (const line of text.split('\n')) {
-    const headingMatch = line.match(/^#{2,6}\s+(.*)$/);
-    if (headingMatch) {
-      const phaseMatch = headingMatch[1].match(/^(?:[^\w]*\s*)?Phase\s+([\w.]+):\s*(.+)$/i);
-      if (phaseMatch) {
-        if (current) {
-          blocks.push({
-            number: current.number,
-            name: current.name,
-            body: current.lines.join('\n'),
-          });
-        }
-        current = { number: phaseMatch[1], name: phaseMatch[2].trim(), lines: [] };
-      } else if (current) {
-        current.lines.push(line); // non-phase heading is content of the current phase, not a boundary
+    const heading = phaseHeadingOf(line);
+    if (heading) {
+      if (current) {
+        blocks.push({
+          number: current.number,
+          name: current.name,
+          body: current.lines.join('\n'),
+        });
       }
+      current = { number: heading.number, name: heading.name, lines: [] };
       continue;
     }
-    if (current) current.lines.push(line);
+    if (current) current.lines.push(line); // non-phase heading is content of the current phase, not a boundary
   }
   if (current)
     blocks.push({ number: current.number, name: current.name, body: current.lines.join('\n') });
   return blocks;
 }
 
-function parsePhaseBlockFields(raw: RawPhaseBlock): RoadmapPhaseBlock {
+function parsePhaseBlockFields(raw: RawPhaseBlock, lineStates: PhaseLineState[]): RoadmapPhaseBlock {
   const goalMatch = raw.body.match(/^\*\*Goal\*\*:\s*(.+)$/m);
   const dependsMatch = raw.body.match(/^\*\*Depends on\*\*:\s*(.+)$/m);
   const reqMatch = raw.body.match(/^\*\*Requirements\*\*:\s*(.+)$/m);
@@ -111,6 +159,9 @@ function parsePhaseBlockFields(raw: RawPhaseBlock): RoadmapPhaseBlock {
     checked: match[1].toLowerCase() === 'x',
   }));
 
+  const phaseLineChecked =
+    lineStates.find((s) => comparePhaseNumbers(s.number, raw.number) === 0)?.checked ?? null;
+
   return {
     number: raw.number,
     name: raw.name,
@@ -119,7 +170,8 @@ function parsePhaseBlockFields(raw: RawPhaseBlock): RoadmapPhaseBlock {
     requirementIds: reqMatch ? parseRequirementIds(reqMatch[1]) : [],
     successCriteria,
     plans,
-    roadmapComplete: plans.length > 0 ? plans.every((p) => p.checked) : null,
+    phaseLineChecked,
+    roadmapComplete: roadmapCompleteOf(phaseLineChecked, plans),
   };
 }
 
@@ -143,10 +195,11 @@ function extractMilestoneGroups(body: string): MilestoneExtraction {
   while ((match = detailsRe.exec(body)) !== null) {
     const summaryText = match[1].trim();
     const versionMatch = summaryText.match(/v(\d+(?:\.\d+)+)/i);
+    const lineStates = extractPhaseLineStates(match[2]);
     groups.push({
       summary: summaryText,
       version: versionMatch ? `v${versionMatch[1]}` : null,
-      phases: extractRawPhaseBlocks(match[2]).map(parsePhaseBlockFields),
+      phases: extractRawPhaseBlocks(match[2]).map((raw) => parsePhaseBlockFields(raw, lineStates)),
     });
     remainder = remainder.replace(match[0], '');
   }
@@ -173,7 +226,8 @@ export const RoadmapHandler: ArtifactHandler = {
     const title = deriveTitle(fm.data, fm.body, ref.path);
 
     const { groups, remainder } = extractMilestoneGroups(fm.body);
-    const phases = extractRawPhaseBlocks(remainder).map(parsePhaseBlockFields);
+    const lineStates = extractPhaseLineStates(remainder);
+    const phases = extractRawPhaseBlocks(remainder).map((rawBlock) => parsePhaseBlockFields(rawBlock, lineStates));
 
     return {
       title,

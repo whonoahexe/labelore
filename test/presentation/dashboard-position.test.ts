@@ -102,6 +102,51 @@ describe('dashboard position: a live milestone, from the files on disk', () => {
     ]);
   });
 
+  // quick-261118-mt6: GSD ticks each plan box as the plan executes and the phase line only after verification.
+  const phaseLineRoadmap = (phase1Box: ' ' | 'x') => `# Roadmap
+
+## Phases
+
+- [${phase1Box}] **Phase 1: First Slice** - First.
+- [ ] **Phase 2: Second Slice** - Second.
+
+## Phase Details
+
+### Phase 1: First Slice
+**Goal**: First.
+
+Plans:
+- [x] 01-01-PLAN.md — Build 01-01.
+- [x] 01-02-PLAN.md — Build 01-02.
+
+### Phase 2: Second Slice
+**Goal**: Second.
+`;
+  const phaseLineFiles = (phase1Box: ' ' | 'x', status: string) => ({
+    '.planning/ROADMAP.md': phaseLineRoadmap(phase1Box),
+    '.planning/STATE.md': liveState('1', status),
+    ...planFile('01-first-slice', '01-01'),
+    ...planFile('01-first-slice', '01-02'),
+    ...summaryFile('01-first-slice', '01-01'),
+    ...summaryFile('01-first-slice', '01-02'),
+  });
+
+  it('keeps a phase at Verify while its ROADMAP phase line is unticked, though every plan box is ticked and summarised', async () => {
+    const position = await positionOf(phaseLineFiles(' ', 'verifying'));
+    expect(position?.now).toMatchObject({ kind: 'phase', title: 'First Slice' });
+    expect(position?.next).toMatchObject({ kind: 'verify', title: 'Verify phase 1', command: '/gsd-verify-work 1', plan: null });
+    expect(stagesOf(position)?.slice(3)).toEqual([
+      ['Execute', 'done', '2/2 plans'],
+      ['Verify', 'next', 'to do'],
+    ]);
+  });
+
+  it('moves on to the next phase once the ROADMAP phase line is ticked', async () => {
+    const position = await positionOf(phaseLineFiles('x', 'executing'));
+    expect(position?.next).toMatchObject({ kind: 'discuss', command: '/gsd-discuss-phase 2' });
+    expect(position?.now).toMatchObject({ kind: 'phase', title: 'Second Slice' });
+  });
+
   it('moves on to discuss the next phase once verification passed', async () => {
     const position = await positionOf(
       withRoadmap({

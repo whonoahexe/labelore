@@ -21,7 +21,7 @@ import { basename, dirname } from 'node:path';
 import type { Project, Artifact, Phase, Milestone, Plan, PlanSummary, Requirement, QuickTask, PhaseIdentity } from '../domain/model.ts';
 import type { ParsedArtifact } from './types.ts';
 import { parsePlanFileName, comparePhaseNumbers } from './naming.ts';
-import type { RoadmapPhaseBlock } from './handlers/roadmap.ts';
+import { roadmapCompleteOf, type RoadmapPhaseBlock } from './handlers/roadmap.ts';
 import { resolveCrossReferences } from './crossref.ts';
 import type { WarningCollector } from './warnings.ts';
 
@@ -163,10 +163,10 @@ function buildPhaseFromGroup(group: PhaseGroupInput, roadmapBlock: RoadmapPhaseB
  * `vX.Y-ROADMAP.md` block for this phase number) wins per field when it supplies a value —
  * non-null `goal`/`dependsOnRaw`, non-empty `name`/`requirementIds`/`successCriteria` — and
  * `fallback` (the root `<details>` block) fills whatever `primary` leaves empty, remaining the
- * sole source when no per-milestone block exists. `plans` and `roadmapComplete` are taken
- * together, as a pair, from whichever block actually supplies a non-empty plan checklist,
- * preferring `primary` — `roadmapComplete` is a derived summary of exactly that array and is
- * never paired with a `plans` array it did not describe.
+ * sole source when no per-milestone block exists. `plans` comes as one array from whichever block
+ * supplies a non-empty checklist, preferring `primary`. `roadmapComplete` comes from the phase line
+ * (primary first, then fallback); the plan rule runs only when neither block has a line, over exactly
+ * the plans array returned.
  */
 function mergeRoadmapPhaseBlocks(
   primary: RoadmapPhaseBlock | null,
@@ -176,6 +176,7 @@ function mergeRoadmapPhaseBlocks(
   if (!fallback) return primary;
 
   const plansSource = primary.plans.length > 0 ? primary : fallback;
+  const phaseLineChecked = primary.phaseLineChecked ?? fallback.phaseLineChecked;
 
   return {
     number: primary.number,
@@ -185,7 +186,8 @@ function mergeRoadmapPhaseBlocks(
     requirementIds: primary.requirementIds.length > 0 ? primary.requirementIds : fallback.requirementIds,
     successCriteria: primary.successCriteria.length > 0 ? primary.successCriteria : fallback.successCriteria,
     plans: plansSource.plans,
-    roadmapComplete: plansSource.roadmapComplete,
+    phaseLineChecked,
+    roadmapComplete: roadmapCompleteOf(phaseLineChecked, plansSource.plans),
   };
 }
 

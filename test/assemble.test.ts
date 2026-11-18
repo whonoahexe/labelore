@@ -156,6 +156,30 @@ describe('assembleDomainModel — per-milestone ROADMAP.md promotion (0YP)', () 
     expect(phase?.roadmapComplete).toBe(true);
   });
 
+  it('lets the per-milestone phase line beat the root block\'s ticked plans', async () => {
+    const rootRoadmap = `# Roadmap: Demo\n\n<details>\n<summary>✅ v1.0 MVP (Phases 1) - SHIPPED</summary>\n\n### Phase 1: Bootstrap\n**Goal**: Root goal\n\nPlans:\n- [x] 01-01: Schema\n\n</details>\n`;
+    const perMilestoneRoadmap = `# Roadmap Snapshot: v1.0\n\n- [ ] **Phase 1: Bootstrap** - Base\n\n### Phase 1: Bootstrap\n**Goal**: Per-milestone goal\n`;
+    const { project } = await assembleTree({
+      '.planning/ROADMAP.md': rootRoadmap,
+      '.planning/milestones/v1.0-ROADMAP.md': perMilestoneRoadmap,
+      '.planning/milestones/v1.0-phases/01-bootstrap/01-CONTEXT.md': '<domain>x</domain>',
+    });
+    const phase = project.phases.find((p) => p.archived && p.identity.milestoneVersion === 'v1.0');
+    expect(phase?.roadmapComplete).toBe(false);
+  });
+
+  it('uses the root phase line when the per-milestone block has neither a line nor a checklist', async () => {
+    const rootRoadmap = `# Roadmap: Demo\n\n<details>\n<summary>✅ v1.0 MVP (Phases 1) - SHIPPED</summary>\n\n- [x] Phase 1: Bootstrap (1/1 plans) — completed 2026-01-01\n\n### Phase 1: Bootstrap\n**Goal**: Root goal\n\nPlans:\n- [ ] 01-01: Schema\n\n</details>\n`;
+    const perMilestoneRoadmap = `### Phase 1: Bootstrap\n**Goal**: Per-milestone goal\n`;
+    const { project } = await assembleTree({
+      '.planning/ROADMAP.md': rootRoadmap,
+      '.planning/milestones/v1.0-ROADMAP.md': perMilestoneRoadmap,
+      '.planning/milestones/v1.0-phases/01-bootstrap/01-CONTEXT.md': '<domain>x</domain>',
+    });
+    const phase = project.phases.find((p) => p.archived && p.identity.milestoneVersion === 'v1.0');
+    expect(phase?.roadmapComplete).toBe(true);
+  });
+
   it('produces a Phase for a phase number present only in the per-milestone file, with no matching directory or root entry', async () => {
     const rootRoadmap = `# Roadmap: Demo\n\n<details>\n<summary>✅ v1.0 MVP (Phases 1) - SHIPPED</summary>\n\n### Phase 1: Bootstrap\n**Goal**: Root goal\n\nPlans:\n- [x] 01-01: Schema\n\n</details>\n`;
     const perMilestoneRoadmap = `### Phase 1: Bootstrap\n**Goal**: Per-milestone goal\n\n### Phase 2: Extras\n**Goal**: Only in the snapshot\n`;
