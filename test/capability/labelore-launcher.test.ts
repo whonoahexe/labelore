@@ -119,6 +119,12 @@ async function spawnVictim(ignoreTerm = false): Promise<ChildProcess> {
   return child;
 }
 
+/** Resolves once the child has exited (immediately when it already has). */
+async function exited(child: ChildProcess): Promise<void> {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  await new Promise<void>((done) => child.once('exit', () => done()));
+}
+
 function writeState(state: StateFile): void {
   writeFileSync(join(stateDir, 'server.json'), JSON.stringify(state));
 }
@@ -224,6 +230,14 @@ async function cleanupLaunched(): Promise<void> {
       // already gone
     }
   }
+}
+
+/** A copy of the stage with its server file replaced by a script of the test's choosing. */
+function stageWithServer(script: string): string {
+  const copy = join(makeTempDir('labelore-stage-copy'), 'stage');
+  cpSync(stage, copy, { recursive: true });
+  writeFileSync(join(copy, 'server', 'labelore-server.mjs'), script);
+  return copy;
 }
 
 async function launcher(args: string[], projectEnv: string | null = projectDir): Promise<Outcome> {
@@ -461,6 +475,94 @@ describe('against the real bundle', { timeout: 60_000 }, () => {
     expect(result.stderr).toContain('not a release');
     expect(readdirSync(REPO_ROOT).sort()).toEqual(topLevel);
     expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
+  });
+});
+
+type NonMatch = 'legacy' | 'another instanceId' | 'another pid' | 'another app' | 'unreachable port';
+const NON_MATCH: NonMatch[] = ['legacy', 'another instanceId', 'another pid', 'another app', 'unreachable port'];
+
+/** Sets up one non-match state around a victim the test spawned; returns that victim and the recorded port. */
+async function nonMatchState(kind: NonMatch): Promise<{ victim: ChildProcess; port: number }> {
+  const victim = await spawnVictim();
+  if (kind === 'legacy') return { victim, port: await startFake({ legacy: true, victim }) };
+  if (kind === 'another instanceId') config.identityId = 'some-other-instance';
+  if (kind === 'another app') config.identityApp = 'not-labelore';
+  if (kind === 'another pid') config.identityPid = (await spawnVictim()).pid as number;
+  if (kind === 'unreachable port') {
+    const closed = createServer();
+    await new Promise<void>((done) => closed.listen(0, '127.0.0.1', done));
+    const { port } = closed.address() as AddressInfo;
+    await new Promise<void>((done) => closed.close(() => done()));
+    writeState({ pid: victim.pid as number, port, instanceId: FAKE_ID, version: OWN_VERSION });
+    return { victim, port };
+  }
+  return { victim, port: await startFake({ victim }) };
+}
+
+describe('stop and open after a handshake', { timeout: 60_000 }, () => {
+  for (const kind of NON_MATCH) {
+    it(`stop with ${kind} does not signal the recorded pid`, async () => {
+      const { victim, port } = await nonMatchState(kind);
+      const result = await launcher(['stop']);
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain('labelore: not running');
+      expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
+      expect(alive(victim.pid)).toBe(true);
+      if (kind === 'legacy') {
+        expect(result.stderr).toContain(String(victim.pid));
+        expect(result.stderr).toContain(String(port));
+      }
+    });
+  }
+
+  for (const kind of ['legacy', 'another instanceId'] as const) {
+    it(`open with ${kind} starts a fresh server and leaves the recorded pid alone`, async () => {
+      const { victim, port } = await nonMatchState(kind);
+      const result = await stagedLauncher(['open']);
+      expect(result.code).toBe(0);
+      expect(result.stdout.trimEnd().split('\n')).toHaveLength(1);
+      expect(result.stdout).toMatch(URL_LINE);
+      const state = readStateFile();
+      expect(state.instanceId).toMatch(UUID);
+      expect(state.instanceId).not.toBe(FAKE_ID);
+      expect(state.port).not.toBe(port);
+      expect(state.pid).not.toBe(victim.pid);
+      expect(alive(victim.pid)).toBe(true);
+      if (kind === 'legacy') {
+        expect(result.stderr).toContain(String(victim.pid));
+        expect(result.stderr).toContain(String(port));
+      } else {
+        expect(result.stderr).not.toContain('older version may still be running');
+      }
+    });
+  }
+
+  it('stop with a matching handshake signals the recorded pid and removes the state', async () => {
+    const victim = await spawnVictim();
+    const port = await startFake({ victim });
+    const result = await launcher(['stop']);
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain(`labelore: stopped Labelore (pid ${victim.pid}, port ${port})`);
+    await exited(victim);
+    expect(alive(victim.pid)).toBe(false);
+    expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
+  });
+
+  it('open fails loudly when the server exits 0 with no output', async () => {
+    const copy = stageWithServer('process.exit(0);\n');
+    const result = await stagedLauncher(['open'], copy);
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain('exit code 0');
+    expect(result.stderr).toContain('no output');
+    expect(result.stderr).toContain(join(stateDir, 'server.log'));
+  });
+
+  it('open fails loudly when the server prints boom and exits 3', async () => {
+    const copy = stageWithServer("console.log('boom');\nprocess.exit(3);\n");
+    const result = await stagedLauncher(['open'], copy);
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain('exit code 3');
+    expect(result.stderr).toContain('boom');
   });
 });
 
