@@ -7,13 +7,16 @@
  *   node labelore.mjs stop           stop the server this launcher started
  *
  * The launcher is read-only towards the project it opens: its only writes are its own state
- * directory and, on first launch, the bundle's own node_modules/ and dist/. It never touches the
- * target's .planning/. It talks only to a Labelore it started itself (pid and port in its own state
- * file, both checked live), never to a hand-run or service-run instance.
+ * directory. It never writes under its own bundle directory (gsd's consent binds a hash of the
+ * installed tree) and never touches the target's .planning/. It runs the prebuilt
+ * server/labelore-server.mjs that ships in a release; there is no build path. It trusts and signals
+ * only a server whose GET /api/identity answer matches the instanceId and pid it recorded at spawn,
+ * never a hand-run or service-run instance.
  *
- * It uses Node builtins only (plus the global fetch) because it runs before node_modules/ exists.
+ * It uses Node builtins only (plus the global fetch) because a release ships no node_modules.
  */
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import {
   closeSync,
   existsSync,
@@ -91,33 +94,101 @@ function requireNode() {
   }
 }
 
+const INSTANCE_ID_SHAPE = /^[A-Za-z0-9-]{1,64}$/;
+const VERSION_MAX = 64;
+
+const isVersion = (value) =>
+  typeof value === 'string' && value.length > 0 && value.length <= VERSION_MAX;
+
+/** This launcher's own version: the version in the capability.json beside scripts/. */
+function ownVersion() {
+  const path = join(BUNDLE_DIR, 'capability.json');
+  try {
+    const { version } = JSON.parse(readFileSync(path, 'utf8')) ?? {};
+    if (isVersion(version)) return version;
+  } catch {
+    // fall through to the failure below
+  }
+  return fail(
+    `labelore: ${path} is missing or has no usable version, so this copy is not a valid install.`,
+  );
+}
+
 function readState() {
   try {
     const parsed = JSON.parse(readFileSync(join(stateDir(), 'server.json'), 'utf8'));
-    const { pid, port } = parsed ?? {};
+    const { pid, port, instanceId, version } = parsed ?? {};
     if (!Number.isInteger(pid) || pid <= 0) return null;
     if (!Number.isInteger(port) || port <= 0 || port >= 65536) return null;
-    return { pid, port };
+    return {
+      pid,
+      port,
+      instanceId:
+        typeof instanceId === 'string' && INSTANCE_ID_SHAPE.test(instanceId) ? instanceId : null,
+      version: isVersion(version) ? version : null,
+    };
   } catch {
     return null;
   }
 }
 
-/** The server this launcher started, only when its pid is alive and its port answers the Labelore API. */
+/** True while a process with this pid exists. Signal 0 delivers nothing. */
+function isAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code === 'EPERM';
+  }
+}
+
+/**
+ * Asks the recorded port who it is. A match needs app labelore, the recorded instanceId and the
+ * recorded pid. Never signals anything.
+ */
+async function handshake(state) {
+  if (state.instanceId === null) return { kind: 'legacy' };
+  try {
+    const response = await fetch(`http://127.0.0.1:${state.port}/api/identity`, {
+      signal: AbortSignal.timeout(2000),
+    });
+    if (!response.ok) return { kind: 'stale', reason: `HTTP ${response.status}` };
+    const body = await response.json();
+    if (!body || body.app !== 'labelore') return { kind: 'stale', reason: 'not a Labelore server' };
+    if (body.instanceId !== state.instanceId) return { kind: 'stale', reason: 'another instance' };
+    if (body.pid !== state.pid) return { kind: 'stale', reason: 'another pid' };
+    if (!isVersion(body.version)) return { kind: 'stale', reason: 'no usable version' };
+    return { kind: 'match', version: body.version };
+  } catch (error) {
+    return { kind: 'stale', reason: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+/**
+ * The recorded server and what the handshake made of it. `server` is set only for a match (the
+ * recorded server, with the project list it serves) and is the only thing a caller may signal.
+ */
 async function ownServer() {
   const state = readState();
-  if (!state) return null;
+  if (!state) return { state: null, verdict: { kind: 'none' }, server: null };
+  const verdict = await handshake(state);
+  if (verdict.kind !== 'match') return { state, verdict, server: null };
+  const base = `http://127.0.0.1:${state.port}`;
+  let projects = [];
   try {
-    process.kill(state.pid, 0);
-    const base = `http://127.0.0.1:${state.port}`;
     const response = await fetch(`${base}/api/projects`, { signal: AbortSignal.timeout(2000) });
-    if (!response.ok) return null;
-    const body = await response.json();
-    if (!body || !Array.isArray(body.projects)) return null;
-    return { pid: state.pid, port: state.port, base, projects: body.projects };
+    if (response.ok) {
+      const body = await response.json();
+      if (body && Array.isArray(body.projects)) projects = body.projects;
+    }
   } catch {
-    return null;
+    // an unreadable project list leaves the match in place; open adds the project itself
   }
+  return {
+    state,
+    verdict,
+    server: { pid: state.pid, port: state.port, base, projects, version: verdict.version },
+  };
 }
 
 function tail(path, lines) {
@@ -128,59 +199,49 @@ function tail(path, lines) {
   }
 }
 
-function runNpm(args, message, logPath, fd) {
-  note(message);
-  const result = spawnSync('npm', args, {
-    cwd: BUNDLE_DIR,
-    stdio: ['ignore', fd, fd],
-    timeout: 600000,
-  });
-  if (result.error || result.status !== 0) {
-    note(tail(logPath, 30));
-    fail(`labelore: ${args.join(' ')} failed (log: ${logPath})`);
+/** Polls signal 0 every 100 ms until the pid is gone or the time is up. Returns whether it is gone. */
+async function waitForExit(pid, ms) {
+  const deadline = Date.now() + ms;
+  while (Date.now() < deadline) {
+    if (!isAlive(pid)) return true;
+    await new Promise((done) => setTimeout(done, 100));
   }
-}
-
-/** First launch: install dependencies and build the dashboard inside the bundle when they are missing. */
-function ensureBuilt() {
-  const needInstall = !existsSync(join(BUNDLE_DIR, 'node_modules'));
-  const needBuild = !existsSync(join(BUNDLE_DIR, 'dist', 'index.html'));
-  if (!needInstall && !needBuild) return;
-  const logPath = join(ensureStateDir(), 'build.log');
-  const fd = openSync(logPath, 'w');
-  try {
-    if (needInstall) {
-      runNpm(
-        ['ci', '--ignore-scripts', '--prefer-offline', '--no-audit', '--no-fund'],
-        'labelore: first launch — installing dependencies (npm ci), this takes a few minutes',
-        logPath,
-        fd,
-      );
-    }
-    if (needBuild) {
-      runNpm(['run', 'build'], 'labelore: building the dashboard (vite build)', logPath, fd);
-    }
-  } finally {
-    closeSync(fd);
-  }
+  return !isAlive(pid);
 }
 
 const OPEN_LINE = /^Open (http:\/\/127\.0\.0\.1:(\d+))\s*$/m;
 
 async function startServer(root) {
+  const bundle = join(BUNDLE_DIR, 'server', 'labelore-server.mjs');
+  if (!existsSync(bundle)) {
+    fail(
+      `labelore: ${bundle} is missing. This copy of Labelore is not a release build, so it cannot start a server. Install a release with gsd capability install.`,
+    );
+  }
+  const version = ownVersion();
   const dir = ensureStateDir();
   const logPath = join(dir, 'server.log');
+  const instanceId = randomUUID();
   const fd = openSync(logPath, 'w');
-  const child = spawn(process.execPath, ['src/server/index.ts', root], {
+  const child = spawn(process.execPath, [bundle, root], {
     cwd: BUNDLE_DIR,
     detached: true,
     stdio: ['ignore', fd, fd],
-    env: { ...process.env, NODE_ENV: 'production', LABELORE_CONFIG_DIR: serverConfigDir() },
+    env: {
+      ...process.env,
+      NODE_ENV: 'production',
+      LABELORE_CONFIG_DIR: serverConfigDir(),
+      LABELORE_DIST_DIR: join(BUNDLE_DIR, 'dist'),
+      LABELORE_INSTANCE_ID: instanceId,
+    },
   });
   closeSync(fd);
-  let exited = false;
-  child.on('exit', () => {
-    exited = true;
+  let ended = null;
+  child.on('exit', (code, signal) => {
+    ended = { code, signal };
+  });
+  child.on('error', () => {
+    ended = { code: null, signal: null };
   });
   child.unref();
   const deadline = Date.now() + 30000;
@@ -190,19 +251,30 @@ async function startServer(root) {
       const port = Number(match[2]);
       writeFileSync(
         join(dir, 'server.json'),
-        `${JSON.stringify({ pid: child.pid, port, startedAt: new Date().toISOString() })}\n`,
+        `${JSON.stringify({ pid: child.pid, port, instanceId, version, startedAt: new Date().toISOString() })}\n`,
       );
       note(
         `labelore: started Labelore (pid ${child.pid}, port ${port}); log ${logPath}; stop it with: node "${LAUNCHER}" stop`,
       );
       return { pid: child.pid, port, base: match[1] };
     }
-    if (exited) break;
+    if (ended) break;
     await new Promise((done) => setTimeout(done, 250));
   }
-  if (!exited) child.kill('SIGTERM');
+  if (!ended) {
+    // The child this launcher just spawned, and nothing else.
+    child.kill('SIGTERM');
+    note(tail(logPath, 20));
+    return fail(`labelore: Labelore did not print its address within 30 s (log: ${logPath})`);
+  }
+  const how = `exit code ${ended.code}, signal ${ended.signal ?? 'none'}`;
+  if (readFileSync(logPath, 'utf8').trim() === '') {
+    return fail(
+      `labelore: the Labelore server exited (${how}) before printing its address, with no output (log: ${logPath})`,
+    );
+  }
   note(tail(logPath, 20));
-  return fail(`labelore: Labelore did not start (log: ${logPath})`);
+  return fail(`labelore: Labelore did not start: the server exited (${how}) (log: ${logPath})`);
 }
 
 function dashboardUrl(base, slug) {
@@ -263,21 +335,43 @@ async function addProject(own, root) {
   return fail(`labelore: Labelore refused this project: ${reason}`);
 }
 
+/** Stderr note for a v2.1 server with no identity check that is still running. Never signals it. */
+function noteLegacy(state) {
+  if (!isAlive(state.pid)) return;
+  note(
+    `labelore: a Labelore server from an older version may still be running (pid ${state.pid}, port ${state.port}); it has no identity check, so it was not stopped. Stop it by hand if you no longer need it.`,
+  );
+}
+
 async function open(phase) {
   requireNode();
   const start = startPoint();
   const root = findProjectRoot(start);
   if (!root) fail(`labelore: no .planning/ directory at or above ${start}`);
+  const own = ownVersion();
 
-  let server = await ownServer();
+  const found = await ownServer();
+  let server = found.server;
   let slug;
-  if (server) {
+  if (server && found.state.version === own && server.version === own) {
     const known = server.projects.find((project) => project.target === root);
     slug = known ? known.slug : await addProject(server, root);
   } else {
-    ensureBuilt();
+    let restartedFrom = null;
+    if (server) {
+      // A matching server of another version. The old one keeps serving from memory after an update
+      // swaps the files, so replace it. The handshake just matched, so this pid is ours to signal.
+      restartedFrom = server.version;
+      process.kill(server.pid, 'SIGTERM');
+      if (!(await waitForExit(server.pid, 5000))) {
+        note(`labelore: the older Labelore server (pid ${server.pid}) has not exited yet`);
+      }
+    } else if (found.verdict.kind === 'legacy') {
+      noteLegacy(found.state);
+    }
     const started = await startServer(root);
-    server = await ownServer();
+    if (restartedFrom !== null) note(`Restarted Labelore server (${restartedFrom} → ${own})`);
+    server = (await ownServer()).server;
     const known = server?.projects.find((project) => project.target === root);
     if (!server || !known) {
       process.stdout.write(`Labelore URL: ${started.base}/\n`);
@@ -288,7 +382,7 @@ async function open(phase) {
   process.stdout.write(`Labelore URL: ${await phaseUrl(server.base, slug, phase)}\n`);
 }
 
-/** The ship:post path: read-only, never builds, starts or changes a server, always exits 0. */
+/** The ship:post path: read-only, never starts, restarts or signals a server, always exits 0. */
 async function link(phase) {
   const start = startPoint();
   const root = findProjectRoot(start);
@@ -299,10 +393,10 @@ async function link(phase) {
     return;
   }
   try {
-    const own = await ownServer();
-    const known = own?.projects.find((project) => project.target === root);
-    if (own && known) {
-      process.stdout.write(`Labelore URL: ${await phaseUrl(own.base, known.slug, phase)}\n`);
+    const { server } = await ownServer();
+    const known = server?.projects.find((project) => project.target === root);
+    if (server && known) {
+      process.stdout.write(`Labelore URL: ${await phaseUrl(server.base, known.slug, phase)}\n`);
       return;
     }
     process.stdout.write(
@@ -316,22 +410,15 @@ async function link(phase) {
 }
 
 async function stop() {
-  const own = await ownServer();
-  if (own) {
-    process.kill(own.pid, 'SIGTERM');
-    const deadline = Date.now() + 5000;
-    while (Date.now() < deadline) {
-      try {
-        process.kill(own.pid, 0);
-      } catch {
-        break;
-      }
-      await new Promise((done) => setTimeout(done, 100));
-    }
+  const { state, verdict, server } = await ownServer();
+  if (server) {
+    process.kill(server.pid, 'SIGTERM');
+    await waitForExit(server.pid, 5000);
     rmSync(join(stateDir(), 'server.json'), { force: true });
-    process.stdout.write(`labelore: stopped Labelore (pid ${own.pid}, port ${own.port})\n`);
+    process.stdout.write(`labelore: stopped Labelore (pid ${server.pid}, port ${server.port})\n`);
     return;
   }
+  if (state && verdict.kind === 'legacy') noteLegacy(state);
   rmSync(join(stateDir(), 'server.json'), { force: true });
   process.stdout.write('labelore: not running\n');
 }

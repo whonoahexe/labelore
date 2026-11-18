@@ -1,8 +1,13 @@
-// The /gsd-labelore launcher (scripts/labelore.mjs), run as a real subprocess against an in-test fake
-// Labelore API. The fake plays the server the launcher's own state file points at; no real server is
-// started and `stop` is never run against the fake, because its pid is this test process.
-import { execFile } from 'node:child_process';
+// The /gsd-labelore launcher (scripts/labelore.mjs), run as a real subprocess. Most cases run against an
+// in-test fake Labelore API: the fake plays the server the launcher's own state file points at. The pid
+// the fake records and reports always belongs to a victim child the test spawned (never this test
+// process), so a signal the launcher sends lands on that victim and nowhere else, and startFake refuses
+// process.pid outright. The real-bundle cases run a staged release (built bundle, stub dist, launcher,
+// capability.json) end to end.
+import { execFile, spawn } from 'node:child_process';
+import type { ChildProcess } from 'node:child_process';
 import {
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -19,10 +24,16 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { buildServerBundle, makeTempDir, stubDist } from '../helpers/server-bundle.ts';
 
 const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const run = promisify(execFile);
+const OWN_VERSION = (JSON.parse(readFileSync(join(REPO_ROOT, 'capability.json'), 'utf8')) as { version: string })
+  .version;
+const FAKE_ID = 'fake-instance-0001';
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const URL_LINE = /^Labelore URL: http:\/\/127\.0\.0\.1:(\d+)\/([^/]+)\/$/m;
 
 interface Outcome {
   code: number;
@@ -41,6 +52,28 @@ interface FakeConfig {
   projects: { slug: string; target: string }[];
   postStatus: number;
   postBody: unknown;
+  /** What GET /api/identity reports; each defaults to the matching answer for the recorded victim. */
+  identityApp?: string;
+  identityVersion?: string;
+  identityId?: string;
+  identityPid?: number;
+  /** The version written to the state file (default OWN_VERSION). */
+  stateVersion?: string;
+}
+
+interface FakeOptions {
+  /** Record a v2.1 state, {pid, port} only. */
+  legacy?: boolean;
+  /** The victim to point the state at (default: a fresh one). */
+  victim?: ChildProcess;
+}
+
+interface StateFile {
+  pid: number;
+  port: number;
+  instanceId?: string;
+  version?: string;
+  startedAt?: string;
 }
 
 let stateDir: string;
@@ -49,12 +82,58 @@ let projectReal: string;
 let server: Server | null;
 let requests: Recorded[];
 let config: FakeConfig;
+let victims: ChildProcess[];
+let stageUsed: boolean;
+let stage: string;
+let stageRoot: string;
 
 function listing(): string {
   return readdirSync(projectDir, { recursive: true }).join('\n');
 }
 
-async function startFake(): Promise<number> {
+/** True while a process with this pid exists (signal 0 delivers nothing). */
+function alive(pid: number | undefined): boolean {
+  if (pid === undefined) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** A child that does nothing until it is killed. Every victim is SIGKILLed in afterEach. */
+async function spawnVictim(ignoreTerm = false): Promise<ChildProcess> {
+  const script = ignoreTerm
+    ? "process.on('SIGTERM',()=>{});console.log('ready');setInterval(()=>{},1000)"
+    : 'setInterval(()=>{},1000)';
+  const child = spawn(process.execPath, ['-e', script], {
+    stdio: ['ignore', ignoreTerm ? 'pipe' : 'ignore', 'ignore'],
+  });
+  victims.push(child);
+  await new Promise<void>((done, reject) => {
+    child.once('error', reject);
+    if (ignoreTerm) child.stdout?.once('data', () => done());
+    else child.once('spawn', () => done());
+  });
+  return child;
+}
+
+function writeState(state: StateFile): void {
+  writeFileSync(join(stateDir, 'server.json'), JSON.stringify(state));
+}
+
+function readStateFile(): StateFile {
+  return JSON.parse(readFileSync(join(stateDir, 'server.json'), 'utf8')) as StateFile;
+}
+
+async function startFake(options: FakeOptions = {}): Promise<number> {
+  const victim = options.victim ?? (await spawnVictim());
+  const recorded = victim.pid as number;
+  const reported = config.identityPid ?? recorded;
+  for (const pid of [recorded, reported]) {
+    if (pid === process.pid) throw new Error('startFake refuses to record or report process.pid (this test process)');
+  }
   server = createServer((request, response) => {
     const chunks: Buffer[] = [];
     request.on('data', (chunk: Buffer) => chunks.push(chunk));
@@ -66,7 +145,16 @@ async function startFake(): Promise<number> {
         body: Buffer.concat(chunks).toString('utf8'),
       });
       response.setHeader('content-type', 'application/json');
-      if (request.method === 'GET' && request.url === '/api/projects') {
+      if (request.method === 'GET' && request.url === '/api/identity') {
+        response.end(
+          JSON.stringify({
+            app: config.identityApp ?? 'labelore',
+            version: config.identityVersion ?? OWN_VERSION,
+            instanceId: config.identityId ?? FAKE_ID,
+            pid: reported,
+          }),
+        );
+      } else if (request.method === 'GET' && request.url === '/api/projects') {
         response.end(JSON.stringify({ projects: config.projects, notices: [] }));
       } else if (request.method === 'POST' && request.url === '/api/projects') {
         response.statusCode = config.postStatus;
@@ -86,8 +174,56 @@ async function startFake(): Promise<number> {
   });
   await new Promise<void>((done) => server?.listen(0, '127.0.0.1', done));
   const { port } = server?.address() as AddressInfo;
-  writeFileSync(join(stateDir, 'server.json'), JSON.stringify({ pid: process.pid, port }));
+  writeState(
+    options.legacy
+      ? { pid: recorded, port }
+      : { pid: recorded, port, instanceId: FAKE_ID, version: config.stateVersion ?? OWN_VERSION },
+  );
   return port;
+}
+
+/** Runs the staged release's launcher: its own bundle dir, nothing from the repository. */
+async function stagedLauncher(
+  args: string[],
+  stageDir: string = stage,
+  projectEnv: string = projectDir,
+): Promise<Outcome> {
+  stageUsed = true;
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    LABELORE_STATE_DIR: stateDir,
+    LABELORE_CONFIG_DIR: join(stateDir, 'config'),
+    CLAUDE_PROJECT_DIR: projectEnv,
+  };
+  try {
+    const { stdout, stderr } = await run(process.execPath, [join(stageDir, 'scripts', 'labelore.mjs'), ...args], {
+      cwd: stageRoot,
+      env,
+    });
+    return { code: 0, stdout, stderr };
+  } catch (error) {
+    const failure = error as { code?: number; stdout?: string; stderr?: string };
+    return { code: failure.code ?? 1, stdout: failure.stdout ?? '', stderr: failure.stderr ?? '' };
+  }
+}
+
+/** Stops whatever the staged launcher started, with a SIGKILL backstop on the recorded pid. */
+async function cleanupLaunched(): Promise<void> {
+  if (!stageUsed) return;
+  let pid: number | null;
+  try {
+    pid = readStateFile().pid;
+  } catch {
+    pid = null;
+  }
+  await stagedLauncher(['stop']);
+  if (pid !== null && pid !== process.pid && alive(pid)) {
+    try {
+      process.kill(pid, 'SIGKILL');
+    } catch {
+      // already gone
+    }
+  }
 }
 
 async function launcher(args: string[], projectEnv: string | null = projectDir): Promise<Outcome> {
@@ -106,7 +242,26 @@ async function launcher(args: string[], projectEnv: string | null = projectDir):
   }
 }
 
+beforeAll(() => {
+  stageRoot = makeTempDir('labelore-stage');
+  stage = join(stageRoot, 'stage');
+  mkdirSync(join(stage, 'dist'), { recursive: true });
+  mkdirSync(join(stage, 'scripts'), { recursive: true });
+  mkdirSync(join(stage, 'server'), { recursive: true });
+  const built = buildServerBundle(join(stageRoot, 'built'));
+  cpSync(built, join(stage, 'server', 'labelore-server.mjs'));
+  stubDist(join(stage, 'dist'));
+  cpSync(join(REPO_ROOT, 'scripts', 'labelore.mjs'), join(stage, 'scripts', 'labelore.mjs'));
+  cpSync(join(REPO_ROOT, 'capability.json'), join(stage, 'capability.json'));
+}, 180_000);
+
+afterAll(() => {
+  rmSync(stageRoot, { recursive: true, force: true });
+});
+
 beforeEach(() => {
+  victims = [];
+  stageUsed = false;
   stateDir = mkdtempSync(join(tmpdir(), 'labelore-state-'));
   projectDir = mkdtempSync(join(tmpdir(), 'labelore-project-'));
   mkdirSync(join(projectDir, '.planning'));
@@ -122,6 +277,8 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+  await cleanupLaunched();
+  for (const victim of victims) victim.kill('SIGKILL');
   if (server) await new Promise<void>((done) => server?.close(() => done()));
   rmSync(stateDir, { recursive: true, force: true });
   rmSync(projectDir, { recursive: true, force: true });
@@ -238,6 +395,72 @@ describe('stop', () => {
     const result = await launcher(['stop']);
     expect(result.stdout).toContain('labelore: not running');
     expect(readFileSync(join(projectDir, '.planning', 'PROJECT.md'), 'utf8')).toBe('# Scratch\n');
+  });
+});
+
+describe('the fake', () => {
+  it('refuses to record or report this test process', async () => {
+    config.identityPid = process.pid;
+    await expect(startFake()).rejects.toThrow('process.pid');
+    expect(server).toBeNull();
+  });
+});
+
+describe('against the real bundle', { timeout: 60_000 }, () => {
+  it('open starts the bundled server, records its identity, and prints one URL line', async () => {
+    const result = await stagedLauncher(['open']);
+    expect(result.code).toBe(0);
+    const lines = result.stdout.trimEnd().split('\n');
+    expect(lines).toHaveLength(1);
+    const match = URL_LINE.exec(lines[0] ?? '');
+    expect(match).not.toBeNull();
+    const state = readStateFile();
+    expect(state.port).toBe(Number(match?.[1]));
+    expect(Number.isInteger(state.pid)).toBe(true);
+    expect(state.instanceId).toMatch(UUID);
+    expect(state.version).toBe(OWN_VERSION);
+    expect(typeof state.startedAt).toBe('string');
+    const identity = (await (await fetch(`http://127.0.0.1:${state.port}/api/identity`)).json()) as {
+      app: string;
+      instanceId: string;
+      pid: number;
+    };
+    expect(identity.app).toBe('labelore');
+    expect(identity.instanceId).toBe(state.instanceId);
+    expect(identity.pid).toBe(state.pid);
+    expect(result.stderr).toContain('started Labelore');
+  });
+
+  it('a second open reuses the matching server: same pid, one URL line, no started note', async () => {
+    const first = await stagedLauncher(['open']);
+    const before = readStateFile();
+    const second = await stagedLauncher(['open']);
+    expect(first.code).toBe(0);
+    expect(second.code).toBe(0);
+    expect(second.stdout.trimEnd().split('\n')).toHaveLength(1);
+    expect(second.stdout).toMatch(URL_LINE);
+    expect(readStateFile().pid).toBe(before.pid);
+    expect(second.stderr).not.toContain('started Labelore');
+  });
+
+  it('stop stops the server it started and removes the state file', async () => {
+    await stagedLauncher(['open']);
+    const { pid, port } = readStateFile();
+    const result = await stagedLauncher(['stop']);
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain(`labelore: stopped Labelore (pid ${pid}, port ${port})`);
+    expect(alive(pid)).toBe(false);
+    expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
+  });
+
+  it('a copy with no server/labelore-server.mjs exits 1, names the file, and builds nothing', async () => {
+    const topLevel = readdirSync(REPO_ROOT).sort();
+    const result = await launcher(['open']);
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain('server/labelore-server.mjs');
+    expect(result.stderr).toContain('not a release');
+    expect(readdirSync(REPO_ROOT).sort()).toEqual(topLevel);
+    expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
   });
 });
 
