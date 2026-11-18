@@ -8,7 +8,7 @@ import rehypeStringify from 'rehype-stringify';
 import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
-import { createHighlighter, type Highlighter } from 'shiki';
+import { createHighlighter, type Highlighter } from './highlighter.ts';
 import { unified, type Processor } from 'unified';
 import type { VFile } from 'vfile';
 import type { Artifact } from '../domain/model.ts';
