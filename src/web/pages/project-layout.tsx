@@ -26,6 +26,7 @@ import { Button } from '../components/ui/button.tsx';
 import { useProjectPathname, useProjectScope } from '../nav.tsx';
 import { decodeAddress, isWorkstreamIndexAddress, projectLayoutOutcome, withProjectScope } from '../project-path.ts';
 import { projectKey, projectsKey } from '../query-keys.ts';
+import { useTabTitle } from '../tab-title.ts';
 import { InvalidProjectScreen } from './invalid-project-screen.tsx';
 import { NotFoundPage } from './not-found-page.tsx';
 import { UnknownProjectPage } from './unknown-project-page.tsx';
@@ -110,6 +111,9 @@ export function ProjectLayout({
       .then(() => queryClient.invalidateQueries({ queryKey: projectsKey }))
       .catch(() => undefined);
   }, [listed, slug, queryClient]);
+
+  // The tab names the listed project as soon as the list names it, so it reads correctly from the "Opening {name}…" state on.
+  useTabTitle(entry?.name ?? null);
 
   const outcome = projectLayoutOutcome({
     slug,
