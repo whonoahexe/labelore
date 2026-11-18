@@ -3,6 +3,9 @@
  * Install-channel spike harness. A maintainer tool, never shipped.
  *
  *   node scripts/prove-install.mjs --channels [--only <leg>] [--json] [--keep]
+ *   node scripts/prove-install.mjs --spec <spec> [--integrity <sha512>] [--scope global|project|both]
+ *                                  [--node <path>] [--keep]
+ *   node scripts/prove-install.mjs --update-from <stage> --update-to <stage> [--keep]
  *
  * It drives the real `gsd capability install` (and `list`, `outdated`) against a stand-in
  * Labelore release tree for every channel gsd-core offers (local dir, npm, git, tarball), and
@@ -14,6 +17,12 @@
  * nothing is written to the maintainer's real install, and the real global capability list is
  * compared before and after the run. Only `npm pack` and `npm view` are run, both with an empty
  * user npmrc: nothing here publishes, logs in to npm, or reads or writes a token.
+ *
+ * Install mode (--spec) installs one release for real at each scope and opens it through the
+ * skill's own Bash snippet, from a project directory that is not the install dir, with npm and npx
+ * shims first on PATH that record every call. Update mode (--update-from, --update-to) installs a
+ * local-dir source, swaps the source for a newer release, runs `capability update` and checks the
+ * launcher's restart. Both modes use a throwaway GSD_HOME and launcher state dir per leg.
  *
  * Node builtins only.
  */
@@ -27,6 +36,7 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -559,24 +569,398 @@ const LEGS = [
   },
 ];
 
+
+// ---------------------------------------------------------------------------------------------
+// Install mode and update mode (plan 14-07)
+// ---------------------------------------------------------------------------------------------
+
+const SNIPPET_BLOCK = /```bash\n([\s\S]*?)\n```/;
+const SUBCOMMAND_SLOT = '<subcommand> [phase]';
+const URL_LINE = /^Labelore URL: (http:\/\/127\.0\.0\.1:\d+\/.*)$/;
+const RESTARTED_LINE = /^Restarted Labelore server \(/;
+
+/** The one Bash block of the installed skill, which is what an agent would run. */
+function readSnippet(installDir) {
+  const text = readFileSync(join(installDir, 'skills', 'labelore', 'SKILL.md'), 'utf8');
+  const match = SNIPPET_BLOCK.exec(text);
+  if (!match || !match[1].includes(SUBCOMMAND_SLOT)) {
+    throw new Error('the installed SKILL.md has no bash block with a <subcommand> [phase] slot');
+  }
+  return match[1];
+}
+
+/** Every entry under a directory with size and mtime, so any write shows up as a changed line. */
+function treeListing(dir) {
+  const lines = [];
+  const walk = (current, prefix) => {
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const full = join(current, entry.name);
+      const rel = `${prefix}${entry.name}`;
+      const info = lstatSync(full);
+      lines.push(`${rel}|${entry.isDirectory() ? 'dir' : info.size}|${info.mtimeMs}`);
+      if (entry.isDirectory()) walk(full, `${rel}/`);
+    }
+  };
+  walk(dir, '');
+  return lines.sort();
+}
+
+function hasNodeModules(dir) {
+  return treeListing(dir).some((line) => /(^|\/)node_modules(\||\/)/.test(line));
+}
+
+function isAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code === 'EPERM';
+  }
+}
+
+async function waitGone(pid, ms) {
+  const deadline = Date.now() + ms;
+  while (Date.now() < deadline) {
+    if (!isAlive(pid)) return true;
+    await new Promise((resolveWait) => setTimeout(resolveWait, 100));
+  }
+  return !isAlive(pid);
+}
+
+async function getJson(url) {
+  const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+  const body = await response.json().catch(() => null);
+  return { status: response.status, body };
+}
+
+function readServerState(stateDir) {
+  try {
+    return JSON.parse(readFileSync(join(stateDir, 'server.json'), 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * One run environment for the skill snippet: a throwaway GSD_HOME, project and launcher state dir,
+ * and a shim dir whose npm and npx record their argv to calls.log and fail.
+ */
+function makeRun(ctx, { label, node }) {
+  const home = ctx.tmp(`home-${label}`);
+  const project = ctx.tmp(`project-${label}`);
+  const state = ctx.tmp(`state-${label}`);
+  const shim = ctx.tmp(`shim-${label}`);
+  mkdirSync(join(project, '.planning'), { recursive: true });
+  writeFileSync(join(project, '.planning', 'config.json'), '{}\n');
+  writeFileSync(join(project, '.planning', 'PROJECT.md'), '# Proof project\n');
+  for (const name of ['npm', 'npx']) {
+    writeFileSync(join(shim, name), `#!/bin/sh\necho "${name} $*" >> "${join(shim, 'calls.log')}"\nexit 99\n`, { mode: 0o755 });
+  }
+  const env = {
+    ...process.env,
+    GSD_HOME: home,
+    CLAUDE_PROJECT_DIR: project,
+    LABELORE_STATE_DIR: state,
+    PATH: `${shim}:${dirname(node)}:${process.env.PATH}`,
+  };
+  delete env.LABELORE_CONFIG_DIR;
+  const pids = new Set();
+  const run = {
+    home,
+    project,
+    state,
+    shim,
+    env,
+    npmCalls() {
+      const log = join(shim, 'calls.log');
+      if (!existsSync(log)) return 0;
+      return readFileSync(log, 'utf8').split('\n').filter(Boolean).length;
+    },
+    /** Run the installed skill's snippet with a subcommand; returns stdout and stderr lines. */
+    async snippet(installDir, subcommand) {
+      const script = readSnippet(installDir).replace(SUBCOMMAND_SLOT, subcommand);
+      const res = await exec('bash', ['-c', script], { cwd: project, env });
+      const lines = (text) => text.split('\n').map((line) => line.trimEnd()).filter(Boolean);
+      const out = lines(res.stdout);
+      const err = lines(res.stderr);
+      const urls = out.map((line) => URL_LINE.exec(line)).filter(Boolean);
+      const state2 = readServerState(state);
+      if (state2?.pid) pids.add(state2.pid);
+      return { status: res.status, out, err, url: urls[0]?.[1] ?? null, urlCount: urls.length };
+    },
+    async cleanup() {
+      for (const pid of pids) {
+        if (isAlive(pid)) {
+          try {
+            process.kill(pid, 'SIGTERM');
+          } catch {
+            // already gone
+          }
+          await waitGone(pid, 3000);
+        }
+      }
+    },
+  };
+  ctx.onCleanup(() => run.cleanup());
+  return run;
+}
+
+/** The checks that follow every `open`: URL answers, identity matches the state file. */
+async function checkOpen(opened, run, problems, tag) {
+  if (opened.status !== 0) problems.push(`${tag}: open exited ${opened.status}: ${opened.err.join(' / ') || opened.out.join(' / ')}`);
+  if (opened.urlCount !== 1) problems.push(`${tag}: expected one Labelore URL line, got ${opened.urlCount}`);
+  const extra = opened.out.filter((line) => !URL_LINE.test(line) && !/^labelore: running /.test(line));
+  if (extra.length > 0) problems.push(`${tag}: unexpected stdout lines: ${extra.join(' / ')}`);
+  if (!opened.url) return null;
+  const origin = new URL(opened.url).origin;
+  const page = await fetch(opened.url, { signal: AbortSignal.timeout(5000) }).catch((error) => ({ status: String(error) }));
+  if (page.status !== 200) problems.push(`${tag}: GET ${opened.url} answered ${page.status}`);
+  const identity = await getJson(`${origin}/api/identity`).catch((error) => ({ status: String(error), body: null }));
+  const state = readServerState(run.state);
+  if (identity.status !== 200 || identity.body?.app !== 'labelore') problems.push(`${tag}: /api/identity answered ${identity.status}`);
+  else if (!state) problems.push(`${tag}: no server.json in the state dir`);
+  else if (identity.body.instanceId !== state.instanceId || identity.body.pid !== state.pid) {
+    problems.push(`${tag}: /api/identity (${identity.body.instanceId}, ${identity.body.pid}) differs from server.json (${state.instanceId}, ${state.pid})`);
+  }
+  return { origin, identity: identity.body, state };
+}
+
+/** One scope of install mode. Returns a result row and the list of failed assertions. */
+async function proveScope(ctx, { spec, integrity, scope, node }) {
+  const problems = [];
+  const run = makeRun(ctx, { label: `install-${scope}`, node });
+  const installCwd = scope === 'project' ? run.project : ctx.tmp(`cwd-install-${scope}`);
+  const args = ['install', spec];
+  if (integrity) args.push('--integrity', integrity);
+  args.push('--scope', scope, '--yes');
+  const installRes = await ctx.gsd(args, { home: run.home, cwd: installCwd });
+  const row = { scope, installed: 'no', url: '-', npm: '-', files: '-', bytes: '-', node: '-' };
+  if (installRes.status !== 0 || !/"status":\s*"installed"/.test(installRes.stdout)) {
+    problems.push(`install: ${pickEvidence(installRes, 'refused', null)}`);
+    return { row, problems };
+  }
+  row.installed = 'yes';
+  const { row: listed } = await listedStatus(ctx, { home: run.home, cwd: installCwd, scope });
+  if (!listed) problems.push('list: labelore is not in capability list');
+  else if (scope === 'project' && listed.status !== 'active') problems.push(`list: project-scope status is ${listed.status}, not active`);
+
+  const installDir = scope === 'project' ? join(run.project, '.gsd', 'capabilities', 'labelore') : ctx.installDir(run.home);
+  const stats = dirStats(installDir);
+  row.files = stats.files;
+  row.bytes = stats.bytes;
+  const before = treeListing(installDir);
+  const nodeVersion = (await exec(node, ['--version'], { cwd: run.project, env: process.env })).stdout.trim();
+  row.node = nodeVersion;
+
+  try {
+    const opened = await run.snippet(installDir, 'open');
+    row.url = opened.url ?? '-';
+    const seen = await checkOpen(opened, run, problems, 'open');
+    if (seen?.state) {
+      let exe = null;
+      try {
+        exe = realpathSync(`/proc/${seen.state.pid}/exe`);
+      } catch (error) {
+        problems.push(`open: cannot read /proc/${seen.state.pid}/exe: ${error.message}`);
+      }
+      if (exe && exe !== realpathSync(node)) problems.push(`open: the server runs ${exe}, not ${realpathSync(node)}`);
+    }
+    if (existsSync(join(run.state, 'build.log'))) problems.push('open: a build.log exists in the state dir');
+
+    const again = await run.snippet(installDir, 'open');
+    const seenAgain = await checkOpen(again, run, problems, 'reopen');
+    if (seen?.state && seenAgain?.state && seen.state.pid !== seenAgain.state.pid) {
+      problems.push(`reopen: the server pid changed from ${seen.state.pid} to ${seenAgain.state.pid}`);
+    }
+    if (again.err.some((line) => RESTARTED_LINE.test(line))) problems.push('reopen: a Restarted line was printed for an unchanged version');
+
+    const stopped = await run.snippet(installDir, 'stop');
+    if (stopped.status !== 0) problems.push(`stop: exited ${stopped.status}`);
+    if (seen?.state) {
+      if (!(await waitGone(seen.state.pid, 5000))) problems.push(`stop: pid ${seen.state.pid} still alive after 5 s`);
+    }
+    if (existsSync(join(run.state, 'server.json'))) problems.push('stop: server.json was not removed');
+  } finally {
+    await run.cleanup();
+  }
+
+  const calls = run.npmCalls();
+  row.npm = calls;
+  if (calls !== 0) problems.push(`${calls} npm or npx calls were recorded`);
+  const after = treeListing(installDir);
+  if (before.join('\n') !== after.join('\n')) problems.push('the install dir listing, sizes or mtimes changed during open and stop');
+  if (hasNodeModules(installDir)) problems.push('a node_modules directory exists in the install dir');
+  return { row, problems };
+}
+
+async function proveSpec(options) {
+  const node = options.node ? resolve(options.node) : process.execPath;
+  if (!existsSync(node)) fail(`--node ${node} does not exist`);
+  const scopes = options.scope === 'both' ? ['global', 'project'] : [options.scope];
+  const ctx = createContext({ keep: options.keep });
+  const results = [];
+  let before;
+  let after;
+  try {
+    before = await ctx.gsdReal(['list', '--scope', 'global', '--json']);
+    for (const scope of scopes) {
+      note(`install scope ${scope} ...`);
+      try {
+        results.push(await proveScope(ctx, { spec: options.spec, integrity: options.integrity, scope, node }));
+      } catch (error) {
+        results.push({
+          row: { scope, installed: 'error', url: '-', npm: '-', files: '-', bytes: '-', node: '-' },
+          problems: [String(error?.stack ?? error)],
+        });
+      }
+    }
+    after = await ctx.gsdReal(['list', '--scope', 'global', '--json']);
+  } finally {
+    await ctx.dispose();
+  }
+  const lines = ['| scope | installed | url | npm calls | files | bytes | node |', '|---|---|---|---|---|---|---|'];
+  for (const { row } of results) {
+    lines.push(`| ${row.scope} | ${row.installed} | ${row.url} | ${row.npm} | ${row.files} | ${row.bytes} | ${row.node} |`);
+  }
+  const unchanged = before.status === after.status && before.stdout === after.stdout;
+  process.stdout.write(`${lines.join('\n')}\n\nReal global capability list: ${unchanged ? 'unchanged' : 'CHANGED during this run'}.\n`);
+  let failed = !unchanged;
+  for (const { row, problems } of results) {
+    for (const problem of problems) {
+      failed = true;
+      note(`FAIL ${row.scope}: ${problem}`);
+    }
+  }
+  process.exitCode = failed ? 1 : 0;
+}
+
+function stageVersion(stage) {
+  return JSON.parse(readFileSync(join(stage, 'capability.json'), 'utf8')).version;
+}
+
+/** The update leg: local-dir source, swap the source, `capability update`, check the restart. */
+async function proveUpdate(options) {
+  const from = resolve(options.updateFrom);
+  const to = resolve(options.updateTo);
+  for (const stage of [from, to]) {
+    if (!existsSync(join(stage, 'capability.json'))) fail(`${stage} is not a release stage (no capability.json)`);
+  }
+  const fromVersion = stageVersion(from);
+  const toVersion = stageVersion(to);
+  if (fromVersion === toVersion) fail(`both stages are version ${fromVersion}; an update proof needs two versions`);
+  const node = process.execPath;
+  const ctx = createContext({ keep: options.keep });
+  const problems = [];
+  const report = [];
+  let before;
+  let after;
+  try {
+    before = await ctx.gsdReal(['list', '--scope', 'global', '--json']);
+    const source = ctx.tmp('update-source');
+    cpSync(from, source, { recursive: true });
+    const run = makeRun(ctx, { label: 'update', node });
+    const cwd = ctx.tmp('cwd-update');
+    const installRes = await ctx.gsd(['install', source, '--scope', 'global', '--yes'], { home: run.home, cwd });
+    if (installRes.status !== 0 || !/"status":\s*"installed"/.test(installRes.stdout)) {
+      problems.push(`install of the ${fromVersion} source: ${pickEvidence(installRes, 'refused', null)}`);
+    } else {
+      const installDir = ctx.installDir(run.home);
+      try {
+        const first = await run.snippet(installDir, 'open');
+        const seen = await checkOpen(first, run, problems, `open ${fromVersion}`);
+        if (seen?.identity?.version !== fromVersion) problems.push(`open ${fromVersion}: /api/identity reports ${seen?.identity?.version}`);
+        const oldPid = seen?.state?.pid ?? null;
+        report.push(`open ${fromVersion}: ${first.url}, pid ${oldPid}`);
+
+        // Swap the source for the newer release, as a maintainer rebuilding a local stage would.
+        rmSync(source, { recursive: true, force: true });
+        mkdirSync(source, { recursive: true });
+        cpSync(to, source, { recursive: true });
+        const updated = await ctx.gsd(['update', 'labelore', '--scope', 'global', '--yes'], { home: run.home, cwd });
+        const updateText = `${updated.stdout}\n${updated.stderr}`;
+        const upgradeLine = lineMatching(updateText, /upgraded/i) ?? firstLine(updateText);
+        report.push(`capability update: ${upgradeLine}`);
+        const parsed = parseJson(updated.stdout);
+        const entry = Array.isArray(parsed) ? parsed[0] : (parsed?.updated?.[0] ?? parsed);
+        const gotFrom = entry?.fromVersion ?? /"fromVersion":\s*"([^"]+)"/.exec(updated.stdout)?.[1];
+        const gotTo = entry?.toVersion ?? /"toVersion":\s*"([^"]+)"/.exec(updated.stdout)?.[1];
+        if (updated.status !== 0 || !/upgraded/.test(updated.stdout) || gotFrom !== fromVersion || gotTo !== toVersion) {
+          problems.push(`update: expected an upgrade from ${fromVersion} to ${toVersion}, got: ${upgradeLine} (from ${gotFrom}, to ${gotTo})`);
+        }
+
+        const second = await run.snippet(installDir, 'open');
+        const seen2 = await checkOpen(second, run, problems, `open ${toVersion}`);
+        const restarted = second.err.filter((line) => RESTARTED_LINE.test(line));
+        const want = `Restarted Labelore server (${fromVersion} → ${toVersion})`;
+        if (restarted.length !== 1 || restarted[0] !== want) problems.push(`restart: expected exactly one "${want}", got ${JSON.stringify(restarted)}`);
+        if (oldPid !== null && (await waitGone(oldPid, 5000)) === false) problems.push(`restart: old pid ${oldPid} is still alive`);
+        if (seen2?.identity?.version !== toVersion) problems.push(`restart: /api/identity reports ${seen2?.identity?.version}, not ${toVersion}`);
+        if (seen2?.state && seen2.state.pid === oldPid) problems.push('restart: the pid did not change');
+        report.push(`open ${toVersion}: stderr ${JSON.stringify(restarted)}, pid ${seen2?.state?.pid}`);
+
+        const third = await run.snippet(installDir, 'open');
+        const seen3 = await checkOpen(third, run, problems, 'open again');
+        if (third.err.some((line) => RESTARTED_LINE.test(line))) problems.push('open again: a Restarted line was printed');
+        if (seen2?.state && seen3?.state && seen2.state.pid !== seen3.state.pid) problems.push('open again: the pid changed');
+        const stopped = await run.snippet(installDir, 'stop');
+        if (stopped.status !== 0) problems.push(`stop: exited ${stopped.status}`);
+        if (seen3?.state && !(await waitGone(seen3.state.pid, 5000))) problems.push('stop: the server is still alive after 5 s');
+        if (run.npmCalls() !== 0) problems.push(`${run.npmCalls()} npm or npx calls were recorded`);
+      } finally {
+        await run.cleanup();
+      }
+    }
+    after = await ctx.gsdReal(['list', '--scope', 'global', '--json']);
+  } finally {
+    await ctx.dispose();
+  }
+  const unchanged = before.status === after.status && before.stdout === after.stdout;
+  process.stdout.write(`${report.join('\n')}\n\nUpdate ${fromVersion} -> ${toVersion}: ${problems.length === 0 ? 'ok' : 'FAILED'}\nReal global capability list: ${unchanged ? 'unchanged' : 'CHANGED during this run'}.\n`);
+  for (const problem of problems) note(`FAIL: ${problem}`);
+  process.exitCode = problems.length > 0 || !unchanged ? 1 : 0;
+}
+
 function parseArgs(argv) {
-  const options = { channels: false, only: null, json: false, keep: false };
+  const options = {
+    channels: false,
+    only: null,
+    json: false,
+    keep: false,
+    spec: null,
+    integrity: null,
+    scope: 'both',
+    node: null,
+    updateFrom: null,
+    updateTo: null,
+  };
+  const value = (index, name) => {
+    if (!argv[index] || argv[index].startsWith('--')) fail(`${name} needs a value`);
+    return argv[index];
+  };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--channels') options.channels = true;
     else if (arg === '--json') options.json = true;
     else if (arg === '--keep') options.keep = true;
-    else if (arg === '--only') {
-      index += 1;
-      if (!argv[index]) fail('--only needs a leg id');
-      options.only = argv[index];
-    } else fail(`Unknown argument: ${arg}\n${usage()}`);
+    else if (arg === '--only') options.only = value((index += 1), arg);
+    else if (arg === '--spec') options.spec = value((index += 1), arg);
+    else if (arg === '--integrity') options.integrity = value((index += 1), arg);
+    else if (arg === '--scope') options.scope = value((index += 1), arg);
+    else if (arg === '--node') options.node = value((index += 1), arg);
+    else if (arg === '--update-from') options.updateFrom = value((index += 1), arg);
+    else if (arg === '--update-to') options.updateTo = value((index += 1), arg);
+    else fail(`Unknown argument: ${arg}\n${usage()}`);
   }
+  if (!['global', 'project', 'both'].includes(options.scope)) fail(`--scope must be global, project or both\n${usage()}`);
   return options;
 }
 
 function usage() {
-  return 'Usage: node scripts/prove-install.mjs --channels [--only <leg>] [--json] [--keep]';
+  return [
+    'Usage: node scripts/prove-install.mjs --channels [--only <leg>] [--json] [--keep]',
+    '       node scripts/prove-install.mjs --spec <spec> [--integrity <sha512>] [--scope global|project|both] [--node <path>] [--keep]',
+    '       node scripts/prove-install.mjs --update-from <stage> --update-to <stage> [--keep]',
+  ].join('\n');
 }
 
 function table(results) {
@@ -590,9 +974,15 @@ function table(results) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  if (!options.channels) fail(usage(), 2);
+  const modes = [options.channels, options.spec !== null, options.updateFrom !== null || options.updateTo !== null];
+  if (modes.filter(Boolean).length !== 1) fail(usage(), 2);
   if (!existsSync(GSD_TOOLS)) {
     fail(`gsd-tools not found at ${GSD_TOOLS}. Set GSD_TOOLS to the path of gsd-tools.cjs.`);
+  }
+  if (options.spec !== null) return proveSpec(options);
+  if (options.updateFrom !== null || options.updateTo !== null) {
+    if (!options.updateFrom || !options.updateTo) fail(`--update-from and --update-to go together\n${usage()}`, 2);
+    return proveUpdate(options);
   }
   const legs = options.only ? LEGS.filter((leg) => leg.id === options.only) : LEGS;
   if (legs.length === 0) fail(`Unknown leg: ${options.only}. Legs: ${LEGS.map((leg) => leg.id).join(', ')}`);
