@@ -23,3 +23,8 @@ playwright-report/
 
 # Private deny list read by test/fixture-leak.test.ts: local only, never tracked (quick-261116-r41).
 /.leak-names.local.json
+
+# Release build output: the staged capability tree and the packed tarball (phase 14). Root-anchored, never tracked.
+/release/
+/out/
+*.tgz

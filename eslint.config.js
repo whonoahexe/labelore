@@ -9,8 +9,9 @@ export default tseslint.config(
     // Lint covers tracked, shipped code. `.planning/**` stays ignored because ESLint does not read
     // .gitignore and the local planning tree (untracked since quick-261116-qsy) holds sketch scripts.
     // `.claude/**` (agent config with its own scripts) and `.playwright-mcp/**` (Playwright scratch)
-    // are gitignored local folders that a fresh clone does not have.
-    ignores: ['node_modules/**', 'dist/**', 'fixtures/**', 'test/__golden__/**', '.planning/**', '.claude/**', '.playwright-mcp/**', 'test/fixtures/**/.planning/**'],
+    // are gitignored local folders that a fresh clone does not have. `release/**` and `out/**` are
+    // the gitignored release build output (the staged capability tree and its tarball).
+    ignores: ['node_modules/**', 'dist/**', 'release/**', 'out/**', 'fixtures/**', 'test/__golden__/**', '.planning/**', '.claude/**', '.playwright-mcp/**', 'test/fixtures/**/.planning/**'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
