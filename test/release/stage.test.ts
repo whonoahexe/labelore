@@ -2,15 +2,18 @@
 // verification gate can fail on a planted variant, and the staged bundle starts and reports the
 // version baked into it. One real stage is built once; each variant is a copy of it.
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { readTarball, scanTarball, scanTree, type LeakNames } from '../../scripts/lib/leak-scan.mjs';
 import {
   CONSENT_CAP_BYTES,
   RUNTIME_FILES,
   SIZE_BUDGET_BYTES,
   listStage,
   smokeStage,
+  verifyPacked,
   verifyStage,
 } from '../../scripts/lib/stage-verify.mjs';
 import { buildStage, copyStage } from '../helpers/release-stage.ts';
@@ -30,6 +33,32 @@ beforeAll(() => {
 afterAll(() => {
   for (const dir of [stage, ...temps]) if (dir) rmSync(dir, { recursive: true, force: true });
 });
+
+/** Invented words (never real private names) that the real stage does not hold. */
+const MADE_UP: LeakNames = { words: ['kelvorn', 'drumplix-ward'], hosts: ['zentrel77'] };
+
+function release(args: string[]): { status: number | null; stdout: string; stderr: string } {
+  const run = spawnSync(process.execPath, [join(REPO_ROOT, 'scripts/release.mjs'), ...args], {
+    cwd: REPO_ROOT,
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  return { status: run.status, stdout: run.stdout, stderr: run.stderr };
+}
+
+/** `npm pack` of a stage into a fresh temp dir, the way the release does; returns the tarball and npm's report. */
+function packStage(dir: string): { tgz: string; integrity: string } {
+  const out = makeTempDir('labelore-pack');
+  temps.push(out);
+  const run = spawnSync('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', out], {
+    cwd: dir,
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  expect(run.status, `${run.stdout}\n${run.stderr}`).toBe(0);
+  const [report] = JSON.parse(run.stdout) as { filename: string; integrity: string }[];
+  return { tgz: join(out, report.filename), integrity: report.integrity };
+}
 
 /** Runs `plant` on a copy of the real stage, verifies the copy, and removes it. */
 function verifyVariant(plant: (copy: string) => void): string[] {
@@ -186,6 +215,65 @@ describe('the staged bundle starts (BUND-03 version agreement)', () => {
   }, 60_000);
 });
 
+describe('the leak scans of the stage and the packed tarball (BUND-05)', () => {
+  it('scans the real stage clean with an invented list', () => {
+    expect(scanTree(stage, MADE_UP)).toEqual([]);
+  });
+
+  it('finds an invented word planted in the bundle, in the stage and inside the packed tarball', () => {
+    const copy = copyStage(stage);
+    try {
+      const path = join(copy, 'server/labelore-server.mjs');
+      writeFileSync(path, `${readFileSync(path, 'utf8')}\n// planted: kelvorn\n`);
+      const found = scanTree(copy, MADE_UP);
+      expect(found.map((f) => [f.path, f.kind, f.index])).toEqual([['server/labelore-server.mjs', 'word', 0]]);
+      const { tgz } = packStage(copy);
+      const { entries } = readTarball(tgz);
+      expect(scanTarball(entries, MADE_UP).map((f) => [f.path, f.kind, f.index])).toEqual([
+        ['package/server/labelore-server.mjs', 'word', 0],
+      ]);
+    } finally {
+      rmSync(copy, { recursive: true, force: true });
+    }
+  }, 120_000);
+});
+
+describe('the packed tarball against its stage (BUND-05)', () => {
+  let tgz = '';
+  let integrity = '';
+  let buffer: Buffer = Buffer.alloc(0);
+
+  beforeAll(() => {
+    ({ tgz, integrity } = packStage(stage));
+    ({ buffer } = readTarball(tgz));
+  }, 120_000);
+
+  it('hashes to the integrity npm reported and lists exactly the stage files', () => {
+    expect(`sha512-${createHash('sha512').update(buffer).digest('base64')}`).toBe(integrity);
+    expect(buffer.equals(readFileSync(tgz))).toBe(true);
+    const result = verifyPacked(buffer, listStage(stage), integrity);
+    expect(result.problems).toEqual([]);
+    expect(result.ok).toBe(true);
+  });
+
+  it('fails when the integrity differs', () => {
+    const result = verifyPacked(buffer, listStage(stage), `sha512-${Buffer.alloc(64).toString('base64')}`);
+    expect(result.ok).toBe(false);
+    expect(result.problems.join('\n')).toContain('npm pack reported');
+  });
+
+  it('fails when the stage listing has an entry the tarball lacks, or lacks one the tarball holds', () => {
+    const listing = listStage(stage);
+    const extra = [...listing, { path: 'dist/never-packed.js', size: 1, kind: 'file' as const }];
+    const lacks = verifyPacked(buffer, extra, integrity);
+    expect(lacks.ok).toBe(false);
+    expect(lacks.problems.join('\n')).toContain('the tarball lacks dist/never-packed.js');
+    const adds = verifyPacked(buffer, listing.filter((entry) => entry.path !== 'LICENSE'), integrity);
+    expect(adds.ok).toBe(false);
+    expect(adds.problems.join('\n')).toContain('the tarball adds LICENSE');
+  });
+});
+
 describe('the release script', () => {
   it('leaves no leftover from an earlier run in the stage dir', () => {
     const dir = makeTempDir('labelore-stage-rerun');
@@ -210,6 +298,35 @@ describe('the release script', () => {
     expect(run.status).toBe(1);
     expect(run.stderr).toContain('Refusing to empty');
     expect(existsSync(join(REPO_ROOT, 'package.json'))).toBe(true);
+  });
+
+  it('refuses a full run without a usable private-names file, before any build', () => {
+    const dir = makeTempDir('labelore-names');
+    temps.push(dir);
+    const empty = join(dir, 'empty.json');
+    writeFileSync(empty, JSON.stringify({ words: [], hosts: [] }));
+    const broken = join(dir, 'broken.json');
+    writeFileSync(broken, '{ not json');
+    for (const names of [join(dir, 'missing.json'), empty, broken]) {
+      const run = release(['--names', names]);
+      expect(run.status, names).toBe(1);
+      expect(run.stderr).toContain(names);
+      expect(run.stdout).toBe('');
+    }
+  });
+
+  it('refuses a version and tag that disagree, before any build, and rewrites nothing', () => {
+    const dir = makeTempDir('labelore-names');
+    temps.push(dir);
+    const names = join(dir, 'names.json');
+    writeFileSync(names, JSON.stringify(MADE_UP));
+    const run = release(['--names', names, '--tag', 'v0.0.0-nope']);
+    expect(run.status).toBe(1);
+    expect(run.stderr).toContain('v0.0.0-nope');
+    expect(run.stderr).toContain(VERSION);
+    expect(run.stdout).toBe('');
+    expect(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')).toBe(repoPackageBefore);
+    expect(readFileSync(join(REPO_ROOT, 'capability.json'), 'utf8')).toBe(repoCapabilityBefore);
   });
 
   it('holds no quoted publish, push or tag string literal', () => {
