@@ -18,6 +18,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
+import { lineOf, wordRegex } from '../scripts/lib/leak-scan.mjs';
 import { localPrivateNames, NAMES_FILE, readPrivateNames, type PrivateNames } from './helpers/private-names.ts';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -66,20 +67,6 @@ function scopeOf(rel: string): Scope {
   if (FIXTURE_PREFIXES.some((prefix) => rel.startsWith(prefix))) return 'fixture';
   if (rel.startsWith('test/') || rel === 'playwright.config.ts') return 'test';
   return 'source';
-}
-
-function wordRegex(word: string, flags: string): RegExp {
-  const body = word
-    .split('-')
-    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-    .join('(?:-|\\s+)');
-  return new RegExp(`\\b${body}\\b`, flags);
-}
-
-function lineOf(text: string, index: number): number {
-  let line = 1;
-  for (let i = 0; i < index; i++) if (text.charCodeAt(i) === 10) line++;
-  return line;
 }
 
 /** Scans root-relative `paths` under `root`. Paths absent on disk are filtered out (not an early
