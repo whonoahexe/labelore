@@ -13,6 +13,7 @@
     "build": "vite build",
     "build:watch": "vite build --watch",
     "build:server": "vite build -c vite.server.config.ts",
+    "release": "node scripts/release.mjs",
     "start": "NODE_ENV=production node src/server/index.ts",
     "smoke": "NODE_ENV=production node src/server/index.ts --smoke",
     "test": "vitest run",
