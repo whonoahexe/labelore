@@ -1,7 +1,7 @@
 {
   "id": "labelore",
   "role": "feature",
-  "version": "2.2.0-rc.1",
+  "version": "2.2.0",
   "title": "Labelore",
   "description": "Read-only web dashboard for a GSD project's .planning/ — /gsd-labelore opens it on the current project and a ship:post step prints where the shipped phase is in it.",
   "tier": "full",
