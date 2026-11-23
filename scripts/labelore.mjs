@@ -3,7 +3,9 @@
  * Labelore launcher: the command line behind the /gsd-labelore skill.
  *
  *   node labelore.mjs open [phase]   start (or reuse) Labelore on the current GSD project
- *   node labelore.mjs link [phase]   print the dashboard link (read-only; what the ship:post step runs)
+ *   node labelore.mjs link [phase]   print the dashboard link (GETs only, on the attach target when one is
+ *                                    configured, else the own server; never starts or adds anything; gives up
+ *                                    after about 3 s and always exits 0; what the ship:post step runs)
  *   node labelore.mjs stop           stop the server this launcher started
  *
  * The launcher is read-only towards the project it opens: its only writes are its own state
@@ -152,15 +154,27 @@ function request(url, init = {}) {
   return fetch(url, { ...init, redirect: 'error' });
 }
 
+/** `link` gives up as a whole after this long, whatever each request's own cap is (ATT-04). */
+const LINK_DEADLINE_MS = 3000;
+
+/**
+ * A signal that fires after `ms` or when `signal` does, whichever is first. With no signal it is the
+ * plain timeout, so a caller that passes none keeps its per-call cap.
+ */
+function within(ms, signal) {
+  const cap = AbortSignal.timeout(ms);
+  return signal ? AbortSignal.any([signal, cap]) : cap;
+}
+
 /**
  * Asks the recorded port who it is. A match needs app labelore, the recorded instanceId and the
  * recorded pid. Never signals anything.
  */
-async function handshake(state) {
+async function handshake(state, signal) {
   if (state.instanceId === null) return { kind: 'legacy' };
   try {
     const response = await request(`http://127.0.0.1:${state.port}/api/identity`, {
-      signal: AbortSignal.timeout(2000),
+      signal: within(2000, signal),
     });
     if (!response.ok) return { kind: 'stale', reason: `HTTP ${response.status}` };
     const body = await response.json();
@@ -178,15 +192,15 @@ async function handshake(state) {
  * The recorded server and what the handshake made of it. `server` is set only for a match (the
  * recorded server, with the project list it serves) and is the only thing a caller may signal.
  */
-async function ownServer() {
+async function ownServer(signal) {
   const state = readState();
   if (!state) return { state: null, verdict: { kind: 'none' }, server: null };
-  const verdict = await handshake(state);
+  const verdict = await handshake(state, signal);
   if (verdict.kind !== 'match') return { state, verdict, server: null };
   const base = `http://127.0.0.1:${state.port}`;
   let projects = [];
   try {
-    const response = await request(`${base}/api/projects`, { signal: AbortSignal.timeout(2000) });
+    const response = await request(`${base}/api/projects`, { signal: within(2000, signal) });
     if (response.ok) {
       const body = await response.json();
       if (body && Array.isArray(body.projects)) projects = body.projects;
@@ -298,12 +312,12 @@ const normPhase = (value) =>
     .replace(/^0+(?=\d)/, '');
 
 /** The deep link for a phase, or the project dashboard when the phase is not in the roadmap. */
-async function phaseUrl(base, slug, phase) {
+async function phaseUrl(base, slug, phase, signal) {
   const dashboard = dashboardUrl(base, slug);
   if (phase === undefined || phase === '') return dashboard;
   try {
     const response = await request(`${base}/api/projects/${encodeURIComponent(slug)}/roadmap`, {
-      signal: AbortSignal.timeout(5000),
+      signal: within(5000, signal),
     });
     if (!response.ok) return dashboard;
     const roadmap = await response.json();
@@ -498,7 +512,7 @@ async function bodyOf(response) {
  */
 async function verifyAttach(origin, signal) {
   try {
-    const response = await request(`${origin}/api/identity`, { signal });
+    const response = await request(`${origin}/api/identity`, { signal: within(2000, signal) });
     if (response.status === 403) {
       return { ok: false, why: describeRefusal(403, await bodyOf(response), new URL(origin).host) };
     }
@@ -519,11 +533,11 @@ async function verifyAttach(origin, signal) {
 
 /** Identity first, then the project list. Never POSTs, so `link` can share it. */
 async function lookUpAttached(config, signal) {
-  const verified = await verifyAttach(config.origin, signal ?? AbortSignal.timeout(2000));
+  const verified = await verifyAttach(config.origin, signal);
   if (!verified.ok) return verified;
   try {
     const response = await request(`${config.origin}/api/projects`, {
-      signal: signal ?? AbortSignal.timeout(2000),
+      signal: within(2000, signal),
     });
     if (response.status !== 200) {
       const host = new URL(config.origin).host;
@@ -626,8 +640,13 @@ async function open(phase) {
   process.stdout.write(`Labelore URL: ${await phaseUrl(server.base, slug, phase)}\n`);
 }
 
-/** The ship:post path: read-only, never starts, restarts or signals a server, always exits 0. */
+/**
+ * The ship:post path: GETs only, never starts, adds, signals or writes anything, always exits 0. One
+ * deadline made at the start bounds every request, so a stuck target cannot stall a ship (ATT-04).
+ * With an attach target configured the project is looked up there and nowhere else (D-08).
+ */
 async function link(phase) {
+  const deadline = AbortSignal.timeout(LINK_DEADLINE_MS);
   const start = startPoint();
   const root = findProjectRoot(start);
   if (!root) {
@@ -637,10 +656,35 @@ async function link(phase) {
     return;
   }
   try {
-    const { server } = await ownServer();
+    const attach = readAttachConfig();
+    if (attach) {
+      if (!attach.ok) {
+        process.stdout.write(`${configProblem(attach)}\n`);
+        return;
+      }
+      const found = await lookUpAttached(attach, deadline);
+      if (!found.ok) {
+        process.stdout.write(`${attachFailure(attach, found.why)}\n`);
+        return;
+      }
+      const listed = found.projects.find((project) => project.target === root);
+      if (listed) {
+        process.stdout.write(
+          `Labelore URL: ${await phaseUrl(found.base, listed.slug, phase, deadline)}\n`,
+        );
+      } else {
+        process.stdout.write(
+          `labelore: this project is not open in the Labelore at ${attach.origin}. Open it with /gsd-labelore (or: node "${LAUNCHER}" open)\n`,
+        );
+      }
+      return;
+    }
+    const { server } = await ownServer(deadline);
     const known = server?.projects.find((project) => project.target === root);
     if (server && known) {
-      process.stdout.write(`Labelore URL: ${await phaseUrl(server.base, known.slug, phase)}\n`);
+      process.stdout.write(
+        `Labelore URL: ${await phaseUrl(server.base, known.slug, phase, deadline)}\n`,
+      );
       return;
     }
     process.stdout.write(
@@ -648,7 +692,7 @@ async function link(phase) {
     );
   } catch (error) {
     process.stdout.write(
-      `labelore: could not reach Labelore (${error instanceof Error ? error.message : String(error)})\n`,
+      `labelore: could not reach Labelore (${clean(error instanceof Error ? error.message : String(error))})\n`,
     );
   }
 }

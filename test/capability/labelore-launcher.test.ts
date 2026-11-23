@@ -27,7 +27,7 @@ import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { buildServerBundle, makeTempDir, stubDist } from '../helpers/server-bundle.ts';
+import { buildServerBundle, cleanEnv, makeTempDir, startBundle, stopBundle, stubDist } from '../helpers/server-bundle.ts';
 
 const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const run = promisify(execFile);
@@ -506,6 +506,185 @@ describe('link', () => {
   });
 });
 
+describe('link with attach (ATT-04, D-08)', () => {
+  it('link prints the attach link with GETs only', async () => {
+    const stub = await startStub(labeloreAnswers({ projects: [{ slug: 'demo', target: projectReal }] }));
+    const fresh = join(makeTempDir('labelore-fresh'), 'state');
+    const result = await launcher(['link', '3'], projectDir, {
+      env: { LABELORE_ATTACH_URL: stub.origin, LABELORE_STATE_DIR: fresh },
+    });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}/demo/v1.0/phase-3\n`);
+    expect(stub.requests.length).toBeGreaterThan(0);
+    expect(stub.requests.filter((entry) => entry.method !== 'GET')).toHaveLength(0);
+    expect(existsSync(fresh)).toBe(false);
+  });
+
+  it('link names the attach URL when the project is not listed there, and never asks its own server', async () => {
+    await startFake();
+    const stub = await startStub(labeloreAnswers({ projects: [] }));
+    const result = await launcher(['link', '3'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(
+      `labelore: this project is not open in the Labelore at ${stub.origin}. Open it with /gsd-labelore (or: node "${join(REPO_ROOT, 'scripts', 'labelore.mjs')}" open)\n`,
+    );
+    expect(requests).toHaveLength(0);
+    expect(stub.requests.filter((entry) => entry.method !== 'GET')).toHaveLength(0);
+  });
+
+  it('link prints the same one line for bad attach config and exits 0', async () => {
+    const result = await launcher(['link', '3'], projectDir, { env: { LABELORE_ATTACH_URL: 'https://127.0.0.1:1' } });
+    expect(result.code).toBe(0);
+    expect(result.stdout.trimEnd().split('\n')).toHaveLength(1);
+    expect(result.stdout).toContain('must use http://');
+    expect(result.stdout.trimEnd().endsWith("To use Labelore's own server instead: unset LABELORE_ATTACH_URL")).toBe(true);
+    const opened = await launcher(['open', '3'], projectDir, { env: { LABELORE_ATTACH_URL: 'https://127.0.0.1:1' } });
+    expect(opened.stderr).toBe(result.stdout);
+  });
+
+  it('link prints one line and exits 0 when the attach target fails', async () => {
+    const closed = createServer();
+    await new Promise<void>((done) => closed.listen(0, '127.0.0.1', done));
+    const { port } = closed.address() as AddressInfo;
+    await new Promise<void>((done) => closed.close(() => done()));
+    const result = await launcher(['link', '3'], projectDir, {
+      env: { LABELORE_ATTACH_URL: `http://127.0.0.1:${port}` },
+    });
+    expect(result.code).toBe(0);
+    const lines = result.stdout.trimEnd().split('\n');
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain('the attach target');
+    expect(lines[0]).toContain('refused the connection');
+  });
+});
+
+/** The standard answers with every response held back by `ms`. */
+function slowAnswers(ms: number, over: AnswerOptions = {}): (request: Recorded) => StubAnswer {
+  const answers = labeloreAnswers(over);
+  return (request) => ({ ...answers(request), delayMs: ms });
+}
+
+// ATT-04: a stuck server must never stall a ship. The cap is proved by outcome (the phase link is lost when
+// the answers add up past it, kept when they do not) and by the execFile timeout (the run ends on its own,
+// killed false). Wall-clock numbers are not asserted: test/no-skips.test.ts forbids absolute budgets.
+describe('link gives up after about 3 s (ATT-04)', { timeout: 30_000 }, () => {
+  const PHASE_LINK = '/demo/v1.0/phase-3';
+
+  async function ownStubState(stub: Stub): Promise<ChildProcess> {
+    const victim = await spawnVictim();
+    writeState({ pid: victim.pid as number, port: stub.port, instanceId: FAKE_ID, version: OWN_VERSION });
+    return victim;
+  }
+
+  it('a hanging own server: link exits 0 on its own', async () => {
+    const stub = await startStub(() => ({ hang: true }));
+    await ownStubState(stub);
+    const result = await launcher(['link', '3'], projectDir, { timeoutMs: 15_000 });
+    expect(result.killed).toBe(false);
+    expect(result.code).toBe(0);
+    expect(result.stdout.trimEnd().split('\n')).toHaveLength(1);
+    expect(result.stdout).not.toContain('Labelore URL:');
+  });
+
+  it('a hanging attach target: link exits 0 on its own', async () => {
+    const stub = await startStub(() => ({ hang: true }));
+    const result = await launcher(['link', '3'], projectDir, {
+      env: { LABELORE_ATTACH_URL: stub.origin },
+      timeoutMs: 15_000,
+    });
+    expect(result.killed).toBe(false);
+    expect(result.code).toBe(0);
+    expect(result.stdout.trimEnd().split('\n')).toHaveLength(1);
+    expect(result.stdout).toContain(stub.origin);
+    expect(result.stdout).toContain('did not answer in time');
+  });
+
+  it('a total cap, not per call: three 1.2 s answers from the own server lose the phase link', async () => {
+    const victim = await spawnVictim();
+    const stub = await startStub(
+      slowAnswers(1200, { instanceId: FAKE_ID, pid: victim.pid, projects: [{ slug: 'demo', target: projectReal }] }),
+    );
+    writeState({ pid: victim.pid as number, port: stub.port, instanceId: FAKE_ID, version: OWN_VERSION });
+    const result = await launcher(['link', '3'], projectDir, { timeoutMs: 15_000 });
+    expect(result.killed).toBe(false);
+    expect(result.code).toBe(0);
+    expect(result.stdout.trimEnd().split('\n')).toHaveLength(1);
+    expect(result.stdout).not.toContain(PHASE_LINK);
+  });
+
+  it('a total cap, not per call: three 1.2 s answers from an attach target lose the phase link', async () => {
+    const stub = await startStub(slowAnswers(1200, { projects: [{ slug: 'demo', target: projectReal }] }));
+    const result = await launcher(['link', '3'], projectDir, {
+      env: { LABELORE_ATTACH_URL: stub.origin },
+      timeoutMs: 15_000,
+    });
+    expect(result.killed).toBe(false);
+    expect(result.code).toBe(0);
+    expect(result.stdout.trimEnd().split('\n')).toHaveLength(1);
+    expect(result.stdout).not.toContain(PHASE_LINK);
+  });
+
+  it('under the cap: three quick own-server answers keep the phase link', async () => {
+    const victim = await spawnVictim();
+    const stub = await startStub(
+      slowAnswers(200, { instanceId: FAKE_ID, pid: victim.pid, projects: [{ slug: 'demo', target: projectReal }] }),
+    );
+    writeState({ pid: victim.pid as number, port: stub.port, instanceId: FAKE_ID, version: OWN_VERSION });
+    const result = await launcher(['link', '3'], projectDir, { timeoutMs: 15_000 });
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}${PHASE_LINK}\n`);
+  });
+
+  it('under the cap: three quick attach answers keep the phase link', async () => {
+    const stub = await startStub(slowAnswers(200, { projects: [{ slug: 'demo', target: projectReal }] }));
+    const result = await launcher(['link', '3'], projectDir, {
+      env: { LABELORE_ATTACH_URL: stub.origin },
+      timeoutMs: 15_000,
+    });
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}${PHASE_LINK}\n`);
+  });
+
+  it('link never spawns a server', async () => {
+    const marker = join(stateDir, 'spawned.marker');
+    const copy = stageWithServer(
+      "import { writeFileSync } from 'node:fs';\nwriteFileSync(process.env.ARGV_MARKER, 'spawned');\nprocess.exit(0);\n",
+    );
+    const result = await stagedLauncher(['link', '3'], copy, projectDir, { env: { ARGV_MARKER: marker } });
+    expect(result.code).toBe(0);
+    expect(result.stdout.trimEnd().split('\n')).toHaveLength(1);
+    expect(existsSync(marker)).toBe(false);
+    expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
+  });
+});
+
+describe('stop with attach (ATT-04)', { timeout: 30_000 }, () => {
+  it('stop never contacts the attach target and stops only its own server', async () => {
+    const ownVictim = await spawnVictim();
+    const attachedVictim = await spawnVictim();
+    await startFake({ victim: ownVictim });
+    const stub = await startStub(
+      labeloreAnswers({ pid: attachedVictim.pid, projects: [{ slug: 'demo', target: projectReal }] }),
+    );
+    const result = await launcher(['stop'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain('labelore: stopped Labelore');
+    await exited(ownVictim);
+    expect(alive(ownVictim.pid)).toBe(false);
+    expect(alive(attachedVictim.pid)).toBe(true);
+    expect(stub.requests).toHaveLength(0);
+  });
+
+  it('stop works with a bad attach config', async () => {
+    const ownVictim = await spawnVictim();
+    await startFake({ victim: ownVictim });
+    const result = await launcher(['stop'], projectDir, { env: { LABELORE_ATTACH_URL: 'not-a-url' } });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain('labelore: stopped Labelore');
+    expect(result.stderr).toBe('');
+    await exited(ownVictim);
+    expect(alive(ownVictim.pid)).toBe(false);
+  });
+});
+
 describe('open', () => {
   it('adds the project to its own running server with one guarded POST, then prints the phase link', async () => {
     config.projects = [];
@@ -608,6 +787,48 @@ describe('attach (ATT-02)', () => {
     expect(result.code).toBe(0);
     expect(existsSync(fresh)).toBe(false);
     expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
+  });
+
+  it('open attaches to a real Labelore bundle, adds the project once and reuses it', { timeout: 60_000 }, async () => {
+    const other = makeTempDir('labelore-other-project');
+    mkdirSync(join(other, '.planning'));
+    writeFileSync(join(other, '.planning', 'PROJECT.md'), '# Other\n');
+    const run = await startBundle({
+      bundle: join(stage, 'server', 'labelore-server.mjs'),
+      args: [other, '--port', '0'],
+      cwd: makeTempDir('labelore-cwd'),
+      env: cleanEnv({ LABELORE_DIST_DIR: join(stage, 'dist') }),
+    });
+    const listed = async (): Promise<{ slug: string; target: string }[]> => {
+      const body = (await (await fetch(`${run.base}/api/projects`)).json()) as {
+        projects: { slug: string; target: string }[];
+      };
+      return body.projects;
+    };
+    try {
+      const first = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: run.base } });
+      expect(first.code).toBe(0);
+      expect(first.stdout.trimEnd().split('\n')).toHaveLength(1);
+      expect(first.stdout).toMatch(new RegExp(`^Labelore URL: ${run.base}/[^/]+/\\n$`));
+      const afterFirst = await listed();
+      expect(afterFirst.filter((project) => project.target === projectReal)).toHaveLength(1);
+
+      const viaLocalhost = `http://localhost:${run.port}`;
+      const second = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: viaLocalhost } });
+      expect(second.code).toBe(0);
+      expect(second.stdout.trimEnd().split('\n')).toHaveLength(1);
+      expect(second.stdout.startsWith(`Labelore URL: ${viaLocalhost}/`)).toBe(true);
+      expect(await listed()).toHaveLength(afterFirst.length);
+
+      const linked = await launcher(['link'], projectDir, { env: { LABELORE_ATTACH_URL: viaLocalhost } });
+      expect(linked.code).toBe(0);
+      expect(linked.stdout.trimEnd().split('\n')).toHaveLength(1);
+      expect(linked.stdout.startsWith(`Labelore URL: ${viaLocalhost}/`)).toBe(true);
+      expect(await listed()).toHaveLength(afterFirst.length);
+    } finally {
+      await stopBundle(run.child);
+      rmSync(other, { recursive: true, force: true });
+    }
   });
 });
 
