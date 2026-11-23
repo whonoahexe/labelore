@@ -780,6 +780,117 @@ describe('a configured attach that fails, fails loudly (ATT-03)', { timeout: 30_
   });
 });
 
+/** The project path may travel only in the POST body, and only after identity and list succeeded. */
+function expectPathOnlyInPost(stubRequests: Recorded[]): void {
+  for (const entry of stubRequests) {
+    if (entry.method === 'POST') continue;
+    expect(entry.url).not.toContain(projectReal);
+    expect(entry.body).not.toContain(projectReal);
+  }
+}
+
+const NOT_LABELORE = 'is not a Labelore 2.2 or newer; upgrade that server';
+
+interface IdentityFailure {
+  label: string;
+  why: string;
+  /** What GET /api/identity answers; absent for the closed-port row. */
+  identity?: StubAnswer;
+}
+
+const IDENTITY_FAILURES: IdentityFailure[] = [
+  { label: 'is a closed [::1] port', why: 'refused the connection' },
+  { label: 'never answers', why: 'did not answer in time', identity: { hang: true } },
+  { label: 'answers 404 (a v2.1 server)', why: NOT_LABELORE, identity: { status: 404, body: { error: 'API route not found' } } },
+  { label: 'is another app', why: NOT_LABELORE, identity: { body: { app: 'not-labelore', version: OWN_VERSION } } },
+  { label: 'reports no version', why: NOT_LABELORE, identity: { body: { app: 'labelore' } } },
+  { label: 'reports a numeric version', why: NOT_LABELORE, identity: { body: { app: 'labelore', version: 3 } } },
+  {
+    label: 'reports a version with an escape sequence',
+    why: NOT_LABELORE,
+    identity: { body: { app: 'labelore', version: '2.2.0\u001b[31m' } },
+  },
+  {
+    label: 'reports a 65-character version',
+    why: NOT_LABELORE,
+    identity: { body: { app: 'labelore', version: '1'.repeat(65) } },
+  },
+  { label: 'answers a body that is not JSON', why: NOT_LABELORE, identity: { raw: 'not json' } },
+  { label: 'answers an empty 200 body', why: NOT_LABELORE, identity: { raw: '' } },
+];
+
+describe('identity failures (ATT-03, D-04, D-06)', { timeout: 30_000 }, () => {
+  for (const row of IDENTITY_FAILURES) {
+    it(`open fails loudly when the attach target ${row.label}`, async () => {
+      if (row.identity === undefined) {
+        const port = await closedPort('::1');
+        const origin = `http://[::1]:${port}`;
+        const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: origin } });
+        expectLoudFailure(result, origin);
+        expect(result.stderr).toContain(`(set by LABELORE_ATTACH_URL) ${row.why}.`);
+        expect(result.stderr).not.toContain('must name');
+        return;
+      }
+      const identity = row.identity;
+      const base = labeloreAnswers();
+      const stub = await startStub((entry) =>
+        entry.method === 'GET' && entry.url === '/api/identity' ? identity : base(entry),
+      );
+      const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+      expectLoudFailure(result, stub.origin);
+      expect(result.stderr).toContain(`(set by LABELORE_ATTACH_URL) ${row.why}.`);
+      expect(result.stdout).toBe('');
+      expect(stub.requests.filter((entry) => entry.method === 'POST')).toHaveLength(0);
+      expectPathOnlyInPost(stub.requests);
+    });
+  }
+
+  it('a redirect on the identity reaches nothing else', async () => {
+    const target = await startStub(labeloreAnswers());
+    const first = await startStub((entry) =>
+      entry.method === 'GET' && entry.url === '/api/identity'
+        ? { status: 302, headers: { location: `${target.origin}/api/identity` } }
+        : labeloreAnswers()(entry),
+    );
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: first.origin } });
+    expectLoudFailure(result, first.origin);
+    expect(result.stderr).toContain('answered with a redirect, which is never followed.');
+    expect(target.requests).toHaveLength(0);
+    expect(first.requests.map((entry) => entry.method)).toEqual(['GET']);
+  });
+
+  it('a redirect on the POST reaches nothing else', async () => {
+    const target = await startStub(labeloreAnswers());
+    const base = labeloreAnswers();
+    const first = await startStub((entry) =>
+      entry.method === 'POST'
+        ? { status: 307, headers: { location: `${target.origin}/api/projects` } }
+        : base(entry),
+    );
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: first.origin } });
+    expectLoudFailure(result, first.origin);
+    expect(result.stderr).toContain('answered with a redirect, which is never followed.');
+    expect(target.requests).toHaveLength(0);
+    expect(first.requests.filter((entry) => entry.method === 'POST')).toHaveLength(1);
+  });
+
+  it('server text is cleaned before it is printed', async () => {
+    const stub = await startStub(
+      labeloreAnswers({
+        postStatus: 422,
+        postBody: { error: `\u001b[2J${'A'.repeat(1000)}\u0007` },
+      }),
+    );
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expectLoudFailure(result, stub.origin);
+    expect(result.stderr).not.toContain('\u001b');
+    expect(result.stderr).not.toContain('\u0007');
+    const longest = Math.max(0, ...(result.stderr.match(/A+/g) ?? []).map((run) => run.length));
+    expect(longest).toBeGreaterThan(0);
+    expect(longest).toBeLessThanOrEqual(200);
+  });
+});
+
 describe('own server (LNCH-02, ATT-01)', { timeout: 60_000 }, () => {
   it('open spawns its own server with --port 0', async () => {
     const marker = join(stateDir, 'argv.json');
