@@ -27,7 +27,7 @@ import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { buildServerBundle, makeTempDir, stubDist } from '../helpers/server-bundle.ts';
+import { buildServerBundle, cleanEnv, makeTempDir, startBundle, stopBundle, stubDist } from '../helpers/server-bundle.ts';
 
 const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const run = promisify(execFile);
@@ -787,6 +787,48 @@ describe('attach (ATT-02)', () => {
     expect(result.code).toBe(0);
     expect(existsSync(fresh)).toBe(false);
     expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
+  });
+
+  it('open attaches to a real Labelore bundle, adds the project once and reuses it', { timeout: 60_000 }, async () => {
+    const other = makeTempDir('labelore-other-project');
+    mkdirSync(join(other, '.planning'));
+    writeFileSync(join(other, '.planning', 'PROJECT.md'), '# Other\n');
+    const run = await startBundle({
+      bundle: join(stage, 'server', 'labelore-server.mjs'),
+      args: [other, '--port', '0'],
+      cwd: makeTempDir('labelore-cwd'),
+      env: cleanEnv({ LABELORE_DIST_DIR: join(stage, 'dist') }),
+    });
+    const listed = async (): Promise<{ slug: string; target: string }[]> => {
+      const body = (await (await fetch(`${run.base}/api/projects`)).json()) as {
+        projects: { slug: string; target: string }[];
+      };
+      return body.projects;
+    };
+    try {
+      const first = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: run.base } });
+      expect(first.code).toBe(0);
+      expect(first.stdout.trimEnd().split('\n')).toHaveLength(1);
+      expect(first.stdout).toMatch(new RegExp(`^Labelore URL: ${run.base}/[^/]+/\\n$`));
+      const afterFirst = await listed();
+      expect(afterFirst.filter((project) => project.target === projectReal)).toHaveLength(1);
+
+      const viaLocalhost = `http://localhost:${run.port}`;
+      const second = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: viaLocalhost } });
+      expect(second.code).toBe(0);
+      expect(second.stdout.trimEnd().split('\n')).toHaveLength(1);
+      expect(second.stdout.startsWith(`Labelore URL: ${viaLocalhost}/`)).toBe(true);
+      expect(await listed()).toHaveLength(afterFirst.length);
+
+      const linked = await launcher(['link'], projectDir, { env: { LABELORE_ATTACH_URL: viaLocalhost } });
+      expect(linked.code).toBe(0);
+      expect(linked.stdout.trimEnd().split('\n')).toHaveLength(1);
+      expect(linked.stdout.startsWith(`Labelore URL: ${viaLocalhost}/`)).toBe(true);
+      expect(await listed()).toHaveLength(afterFirst.length);
+    } finally {
+      await stopBundle(run.child);
+      rmSync(other, { recursive: true, force: true });
+    }
   });
 });
 
