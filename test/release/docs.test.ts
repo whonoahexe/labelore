@@ -141,3 +141,44 @@ describe('the README is the user guide (DOC-01, D-12, D-14)', () => {
     expect(README).not.toMatch(/first launch builds/i);
   });
 });
+
+// The three Step headings and the launcher line are the part of the skill the dispatch relies on; they
+// are copied literally from the skill as shipped by the previous release.
+const STEP_HEADINGS = ['## Step 1: pick the subcommand', '## Step 2: run the launcher', '## Step 3: report'];
+const LAUNCHER_LINE =
+  'L="${CLAUDE_PROJECT_DIR:-.}/.gsd/capabilities/labelore/scripts/labelore.mjs"; [ -f "$L" ] || L="${GSD_HOME:-$HOME}/.gsd/capabilities/labelore/scripts/labelore.mjs"; [ -f "$L" ] || { echo "labelore: launcher not found under CLAUDE_PROJECT_DIR or GSD_HOME"; exit 1; }; echo "labelore: running $L"; node "$L" <subcommand> [phase]';
+
+describe('the skill notes (DOC-01, D-13)', () => {
+  it('stays under 60 lines and keeps its frontmatter', () => {
+    expect(SKILL.split('\n').length).toBeLessThan(60);
+    expect(SKILL.startsWith('---\nname: gsd-labelore\n')).toBe(true);
+  });
+
+  it('keeps the three Step headings and the launcher line unchanged', () => {
+    const lines = SKILL.split('\n');
+    for (const heading of STEP_HEADINGS) expect(lines).toContain(heading);
+    expect(lines).toContain(LAUNCHER_LINE);
+  });
+
+  it('passes the phase only when it looks like a phase number', () => {
+    expect(SKILL).toContain('^[0-9]+(\\.[0-9]+)*$');
+  });
+
+  it('gives short notes on open, stop, link, the port and attach, and points to the README', () => {
+    expect(SKILL).toContain('LABELORE_ATTACH_URL');
+    expect(SKILL).toContain('attach.json');
+    expect(SKILL).toContain('README');
+    expect(SKILL).toMatch(/loopback/i);
+    expect(SKILL).toMatch(/port changes/i);
+    expect(SKILL).toMatch(/never starts/i);
+  });
+
+  it('holds no fixed port, no concrete loopback port, no hosting word and no stale build text', () => {
+    expect(SKILL).not.toMatch(FIXED_PORT);
+    expect(SKILL).not.toMatch(CONCRETE_LOOPBACK);
+    for (const word of HOSTING_WORDS) expect(SKILL).not.toMatch(word);
+    expect(SKILL).not.toMatch(/npm ci/);
+    expect(SKILL).not.toMatch(/vite build/);
+    expect(SKILL).not.toMatch(/first (open|launch) builds/i);
+  });
+});
