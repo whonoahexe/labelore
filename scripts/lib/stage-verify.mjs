@@ -4,7 +4,8 @@
 //
 // Node builtins only, like scripts/labelore.mjs, so the release script can import it with nothing
 // installed. Every check returns problems as named strings instead of throwing, so one run reports
-// every failure at once.
+// every failure at once. The checks also refuse a stage that names the fixed port the maintainer's
+// own instance holds (LNCH-02, D-09), so no shipped file points a new user at it.
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { lstatSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
@@ -38,6 +39,8 @@ const FORBIDDEN_PACKAGE_FIELDS = ['bin', 'scripts', 'dependencies', 'devDependen
 
 const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url)).replace(/[\\/]$/, '');
 const OPEN_LINE = /^Open (http:\/\/127\.0\.0\.1:(\d+))\s*$/m;
+// A port-shaped 4173: not inside a longer number, name or decimal (the dist holds a digit run `.7141733`).
+const FIXED_PORT = /(?<![\w.])4173(?![\w])/;
 const SMOKE_START_MS = 20_000;
 const SMOKE_KILL_GRACE_MS = 3_000;
 
@@ -142,6 +145,15 @@ function checkBundle(dir, problems) {
   }
 }
 
+function checkPort(dir, entries, problems) {
+  for (const entry of entries) {
+    if (entry.kind !== 'file') continue;
+    const bytes = readFileSync(join(dir, entry.path));
+    if (bytes.subarray(0, 8000).includes(0)) continue;
+    if (FIXED_PORT.test(bytes.toString('utf8'))) problems.push(`port 4173 is named in the stage: ${entry.path}`);
+  }
+}
+
 function checkPackage(dir, version, problems) {
   const pkg = readJson(join(dir, 'package.json'), problems, 'package.json');
   const capability = readJson(join(dir, 'capability.json'), problems, 'capability.json');
@@ -178,6 +190,7 @@ export function verifyStage(dir, { budgetBytes = SIZE_BUDGET_BYTES, version } = 
     if (entry.kind === 'other') problems.push(`non-regular entry in the stage: ${entry.path}`);
   }
   checkBundle(dir, problems);
+  checkPort(dir, entries, problems);
   checkPackage(dir, version, problems);
   const regular = entries.filter((entry) => entry.kind === 'file');
   const bytes = regular.reduce((sum, entry) => sum + entry.size, 0);
