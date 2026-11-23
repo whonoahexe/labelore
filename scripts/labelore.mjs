@@ -233,7 +233,7 @@ async function startServer(root) {
   const logPath = join(dir, 'server.log');
   const instanceId = randomUUID();
   const fd = openSync(logPath, 'w');
-  const child = spawn(process.execPath, [bundle, root], {
+  const child = spawn(process.execPath, [bundle, root, '--port', '0'], {
     cwd: BUNDLE_DIR,
     detached: true,
     stdio: ['ignore', fd, fd],
