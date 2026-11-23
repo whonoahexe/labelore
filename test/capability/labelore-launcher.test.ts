@@ -24,13 +24,14 @@ import type { IncomingHttpHeaders, Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { buildServerBundle, makeTempDir, stubDist } from '../helpers/server-bundle.ts';
 
 const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const run = promisify(execFile);
+const RECORDER = fileURLToPath(new URL('../helpers/connect-recorder.mjs', import.meta.url));
 const OWN_VERSION = (JSON.parse(readFileSync(join(REPO_ROOT, 'capability.json'), 'utf8')) as { version: string })
   .version;
 const FAKE_ID = 'fake-instance-0001';
@@ -41,6 +42,14 @@ interface Outcome {
   code: number;
   stdout: string;
   stderr: string;
+  /** True when the run was killed for exceeding LaunchOptions.timeoutMs. */
+  killed: boolean;
+}
+
+interface LaunchOptions {
+  /** Extra child env, applied after the LABELORE_ATTACH_URL scrub. */
+  env?: Record<string, string>;
+  timeoutMs?: number;
 }
 
 interface Recorded {
@@ -88,6 +97,7 @@ let victims: ChildProcess[];
 let stageUsed: boolean;
 let stage: string;
 let stageRoot: string;
+let stubs: Server[];
 
 function listing(): string {
   return readdirSync(projectDir, { recursive: true }).join('\n');
@@ -190,11 +200,143 @@ async function startFake(options: FakeOptions = {}): Promise<number> {
   return port;
 }
 
+interface StubAnswer {
+  status?: number;
+  body?: unknown;
+  raw?: string;
+  headers?: Record<string, string>;
+  delayMs?: number;
+  /** Never answer. */
+  hang?: boolean;
+}
+
+interface Stub {
+  port: number;
+  origin: string;
+  requests: Recorded[];
+  server: Server;
+}
+
+/** A loopback server on an OS-assigned port that records every request and answers as the callback says. */
+async function startStub(answer: (request: Recorded) => StubAnswer): Promise<Stub> {
+  const requests: Recorded[] = [];
+  const stub = createServer((request, response) => {
+    const chunks: Buffer[] = [];
+    request.on('data', (chunk: Buffer) => chunks.push(chunk));
+    request.on('end', () => {
+      const recorded: Recorded = {
+        method: request.method ?? '',
+        url: request.url ?? '',
+        headers: request.headers,
+        body: Buffer.concat(chunks).toString('utf8'),
+      };
+      requests.push(recorded);
+      const reply = answer(recorded);
+      if (reply.hang) return;
+      const send = (): void => {
+        response.statusCode = reply.status ?? 200;
+        response.setHeader('content-type', 'application/json');
+        for (const [name, value] of Object.entries(reply.headers ?? {})) response.setHeader(name, value);
+        response.end(reply.raw ?? JSON.stringify(reply.body ?? {}));
+      };
+      if (reply.delayMs) setTimeout(send, reply.delayMs);
+      else send();
+    });
+  });
+  stubs.push(stub);
+  await new Promise<void>((done) => stub.listen(0, '127.0.0.1', done));
+  const { port } = stub.address() as AddressInfo;
+  return { port, origin: `http://127.0.0.1:${port}`, requests, server: stub };
+}
+
+interface AnswerOptions {
+  app?: string;
+  version?: string;
+  instanceId?: string | null;
+  pid?: number;
+  projects?: { slug: string; target: string }[];
+  postStatus?: number;
+  postBody?: unknown;
+}
+
+/** The standard Labelore answers. The pid, when given, belongs to a victim the test spawned. */
+function labeloreAnswers(over: AnswerOptions = {}): (request: Recorded) => StubAnswer {
+  return (request) => {
+    if (request.method === 'GET' && request.url === '/api/identity') {
+      return {
+        body: {
+          app: over.app ?? 'labelore',
+          version: over.version ?? OWN_VERSION,
+          instanceId: over.instanceId ?? null,
+          pid: over.pid,
+        },
+      };
+    }
+    if (request.method === 'GET' && request.url === '/api/projects') {
+      return { body: { projects: over.projects ?? [], notices: [] } };
+    }
+    if (request.method === 'POST' && request.url === '/api/projects') {
+      return {
+        status: over.postStatus ?? 201,
+        body: over.postBody ?? { slug: 'demo', name: 'demo', duplicate: false },
+      };
+    }
+    if (request.method === 'GET' && request.url === '/api/projects/demo/roadmap') {
+      return {
+        body: {
+          active: { phases: [{ number: '3', url: '/v1.0/phase-3' }] },
+          history: [{ phases: [{ number: '2.1', url: '/v0.9/phase-2.1' }] }],
+        },
+      };
+    }
+    return { status: 404, body: {} };
+  };
+}
+
+/** Parses a connect-recorder file into one entry per outbound connect. */
+function readConnects(file: string): { pid: number; host: string; port: number }[] {
+  if (!existsSync(file)) return [];
+  return readFileSync(file, 'utf8')
+    .split('\n')
+    .filter((line) => line !== '')
+    .map((line) => {
+      const space = line.indexOf(' ');
+      const target = line.slice(space + 1);
+      const colon = target.lastIndexOf(':');
+      return { pid: Number(line.slice(0, space)), host: target.slice(0, colon), port: Number(target.slice(colon + 1)) };
+    });
+}
+
+/** A loopback listener that only counts connections; anything that reaches it is a leak. */
+async function startDecoy(): Promise<{ port: number; origin: string; connections: () => number }> {
+  let count = 0;
+  const decoy = createServer();
+  decoy.on('connection', (socket) => {
+    count += 1;
+    socket.destroy();
+  });
+  stubs.push(decoy);
+  await new Promise<void>((done) => decoy.listen(0, '127.0.0.1', done));
+  const { port } = decoy.address() as AddressInfo;
+  return { port, origin: `http://127.0.0.1:${port}`, connections: () => count };
+}
+
+function outcomeOf(error: unknown): Outcome {
+  const failure = error as { code?: number; stdout?: string; stderr?: string; killed?: boolean };
+  return {
+    code: typeof failure.code === 'number' ? failure.code : 1,
+    stdout: failure.stdout ?? '',
+    stderr: failure.stderr ?? '',
+    killed: failure.killed === true,
+  };
+}
+
 /** Runs the staged release's launcher: its own bundle dir, nothing from the repository. */
 async function stagedLauncher(
   args: string[],
   stageDir: string = stage,
   projectEnv: string = projectDir,
+  options: LaunchOptions = {},
 ): Promise<Outcome> {
   stageUsed = true;
   const env: NodeJS.ProcessEnv = {
@@ -203,15 +345,18 @@ async function stagedLauncher(
     LABELORE_CONFIG_DIR: join(stateDir, 'config'),
     CLAUDE_PROJECT_DIR: projectEnv,
   };
+  // A maintainer who exports LABELORE_ATTACH_URL would otherwise POST scratch projects into a real server.
+  delete env.LABELORE_ATTACH_URL;
+  Object.assign(env, options.env);
   try {
     const { stdout, stderr } = await run(process.execPath, [join(stageDir, 'scripts', 'labelore.mjs'), ...args], {
       cwd: stageRoot,
       env,
+      timeout: options.timeoutMs,
     });
-    return { code: 0, stdout, stderr };
+    return { code: 0, stdout, stderr, killed: false };
   } catch (error) {
-    const failure = error as { code?: number; stdout?: string; stderr?: string };
-    return { code: failure.code ?? 1, stdout: failure.stdout ?? '', stderr: failure.stderr ?? '' };
+    return outcomeOf(error);
   }
 }
 
@@ -242,19 +387,25 @@ function stageWithServer(script: string): string {
   return copy;
 }
 
-async function launcher(args: string[], projectEnv: string | null = projectDir): Promise<Outcome> {
+async function launcher(
+  args: string[],
+  projectEnv: string | null = projectDir,
+  options: LaunchOptions = {},
+): Promise<Outcome> {
   const env: NodeJS.ProcessEnv = { ...process.env, LABELORE_STATE_DIR: stateDir };
+  delete env.LABELORE_ATTACH_URL;
   if (projectEnv === null) delete env.CLAUDE_PROJECT_DIR;
   else env.CLAUDE_PROJECT_DIR = projectEnv;
+  Object.assign(env, options.env);
   try {
     const { stdout, stderr } = await run(process.execPath, ['scripts/labelore.mjs', ...args], {
       cwd: REPO_ROOT,
       env,
+      timeout: options.timeoutMs,
     });
-    return { code: 0, stdout, stderr };
+    return { code: 0, stdout, stderr, killed: false };
   } catch (error) {
-    const failure = error as { code?: number; stdout?: string; stderr?: string };
-    return { code: failure.code ?? 1, stdout: failure.stdout ?? '', stderr: failure.stderr ?? '' };
+    return outcomeOf(error);
   }
 }
 
@@ -277,6 +428,7 @@ afterAll(() => {
 
 beforeEach(() => {
   victims = [];
+  stubs = [];
   stageUsed = false;
   stateDir = mkdtempSync(join(tmpdir(), 'labelore-state-'));
   projectDir = mkdtempSync(join(tmpdir(), 'labelore-project-'));
@@ -295,7 +447,10 @@ beforeEach(() => {
 afterEach(async () => {
   await cleanupLaunched();
   for (const victim of victims) victim.kill('SIGKILL');
-  if (server) await new Promise<void>((done) => server?.close(() => done()));
+  for (const listener of [...stubs, ...(server ? [server] : [])]) {
+    listener.closeAllConnections();
+    await new Promise<void>((done) => listener.close(() => done()));
+  }
   rmSync(stateDir, { recursive: true, force: true });
   rmSync(projectDir, { recursive: true, force: true });
 });
@@ -394,6 +549,247 @@ describe('open', () => {
     } finally {
       rmSync(bare, { recursive: true, force: true });
     }
+  });
+});
+
+describe('attach (ATT-02)', () => {
+  it('open attaches: identity first, then the list, then one guarded POST, and prints the attach link', async () => {
+    const stub = await startStub(labeloreAnswers());
+    const result = await launcher(['open', '3'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(stub.requests.map((entry) => `${entry.method} ${entry.url}`).slice(0, 3)).toEqual([
+      'GET /api/identity',
+      'GET /api/projects',
+      'POST /api/projects',
+    ]);
+    expect(stub.requests[0]?.body).toBe('');
+    expect(stub.requests[0]?.url).toBe('/api/identity');
+    const post = stub.requests[2];
+    expect(post?.headers['content-type']).toBe('application/json');
+    expect(post?.headers.origin).toBe(stub.origin);
+    expect(JSON.parse(post?.body ?? '')).toEqual({ target: projectReal });
+    expect(stub.requests.filter((entry) => entry.method === 'POST')).toHaveLength(1);
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}/demo/v1.0/phase-3\n`);
+  });
+
+  it('open reuses a project the attach target already lists, with no POST', async () => {
+    const stub = await startStub(labeloreAnswers({ projects: [{ slug: 'demo', target: projectReal }] }));
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}/demo/\n`);
+    expect(stub.requests.filter((entry) => entry.method === 'POST')).toHaveLength(0);
+  });
+
+  it('open prints the returned slug when the POST answers duplicate', async () => {
+    const stub = await startStub(
+      labeloreAnswers({ postStatus: 200, postBody: { slug: 'other', name: 'other', duplicate: true } }),
+    );
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}/other/\n`);
+  });
+
+  it('open attaches through localhost and sends that origin', async () => {
+    const stub = await startStub(labeloreAnswers());
+    const origin = `http://localhost:${stub.port}`;
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: origin } });
+    expect(result.code).toBe(0);
+    const post = stub.requests.find((entry) => entry.method === 'POST');
+    expect(post?.headers.origin).toBe(origin);
+    expect(result.stdout).toBe(`Labelore URL: ${origin}/demo/\n`);
+  });
+
+  it('the attach path writes nothing: no state dir is created and no server is spawned', async () => {
+    const stub = await startStub(labeloreAnswers());
+    const fresh = join(makeTempDir('labelore-fresh'), 'state');
+    const result = await launcher(['open'], projectDir, {
+      env: { LABELORE_ATTACH_URL: stub.origin, LABELORE_STATE_DIR: fresh },
+    });
+    expect(result.code).toBe(0);
+    expect(existsSync(fresh)).toBe(false);
+    expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
+  });
+});
+
+interface BadConfigRow {
+  label: string;
+  /** 'env' sets LABELORE_ATTACH_URL; 'file' writes attach.json (or makes it a directory when text is null). */
+  via: 'env' | 'file';
+  value: (decoyPort: number) => string | null;
+  problem: string;
+  /** Strings that must not appear in stderr. */
+  hidden?: string[];
+}
+
+const BAD_CONFIG: BadConfigRow[] = [
+  { label: 'not a URL', via: 'env', value: () => 'not-a-url', problem: 'is not a URL' },
+  {
+    label: 'query',
+    via: 'env',
+    value: (p) => `http://127.0.0.1:${p}/?x=1`,
+    problem: 'has a query or fragment',
+  },
+  {
+    label: 'fragment',
+    via: 'env',
+    value: (p) => `http://127.0.0.1:${p}/#top`,
+    problem: 'has a query or fragment',
+  },
+  { label: 'https', via: 'env', value: (p) => `https://127.0.0.1:${p}`, problem: 'must use http://' },
+  {
+    label: 'userinfo',
+    via: 'env',
+    value: (p) => `http://someone:secret@127.0.0.1:${p}`,
+    problem: 'must not hold a username or password',
+    hidden: ['someone', 'secret'],
+  },
+  {
+    label: 'non-loopback host',
+    via: 'env',
+    value: (p) => `http://192.0.2.10:${p}`,
+    problem: 'must name 127.0.0.1, localhost or [::1]',
+  },
+  { label: 'no port', via: 'env', value: () => 'http://127.0.0.1', problem: 'needs an explicit port' },
+  { label: 'port 80', via: 'env', value: () => 'http://127.0.0.1:80', problem: 'needs an explicit port' },
+  {
+    label: 'path',
+    via: 'env',
+    value: (p) => `http://127.0.0.1:${p}/labelore`,
+    problem: 'must not have a path',
+  },
+  {
+    label: 'invalid JSON',
+    via: 'file',
+    value: () => '{ not json',
+    problem: 'is not valid JSON',
+    hidden: ['not json'],
+  },
+  { label: 'array', via: 'file', value: () => '[]', problem: 'has no usable "url"' },
+  { label: 'empty object', via: 'file', value: () => '{}', problem: 'has no usable "url"' },
+  { label: 'empty url', via: 'file', value: () => '{"url": ""}', problem: 'has no usable "url"' },
+  { label: 'unreadable (a directory)', via: 'file', value: () => null, problem: 'cannot be read' },
+];
+
+describe('attach config (ATT-01, D-03)', () => {
+  it('the env var wins over attach.json', async () => {
+    const fromEnv = await startStub(labeloreAnswers());
+    const fromFile = await startStub(labeloreAnswers());
+    writeFileSync(join(stateDir, 'attach.json'), JSON.stringify({ url: fromFile.origin }));
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: fromEnv.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(`Labelore URL: ${fromEnv.origin}/demo/\n`);
+    expect(fromEnv.requests.length).toBeGreaterThan(0);
+    expect(fromFile.requests).toHaveLength(0);
+  });
+
+  for (const blank of ['', '   ']) {
+    it(`an empty or blank env var falls through to attach.json (${JSON.stringify(blank)})`, async () => {
+      const fromFile = await startStub(labeloreAnswers());
+      writeFileSync(join(stateDir, 'attach.json'), JSON.stringify({ url: fromFile.origin }));
+      const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: blank } });
+      expect(result.code).toBe(0);
+      expect(result.stdout).toBe(`Labelore URL: ${fromFile.origin}/demo/\n`);
+      expect(fromFile.requests.length).toBeGreaterThan(0);
+    });
+  }
+
+  it('a blank env var with no attach.json uses the own server', async () => {
+    const decoy = await startStub(labeloreAnswers());
+    const port = await startFake();
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: '  ' } });
+    expect(result.code).toBe(0);
+    expect(result.stdout.trim()).toBe(`Labelore URL: http://127.0.0.1:${port}/demo/`);
+    expect(decoy.requests).toHaveLength(0);
+  });
+
+  it('attach.json alone attaches and is never rewritten', async () => {
+    const stub = await startStub(labeloreAnswers());
+    const file = join(stateDir, 'attach.json');
+    writeFileSync(file, JSON.stringify({ url: stub.origin, note: 'x' }));
+    const before = { bytes: readFileSync(file, 'utf8'), mtime: statSync(file).mtimeMs };
+    const result = await launcher(['open', '3']);
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}/demo/v1.0/phase-3\n`);
+    expect(readFileSync(file, 'utf8')).toBe(before.bytes);
+    expect(statSync(file).mtimeMs).toBe(before.mtime);
+  });
+
+  for (const row of BAD_CONFIG) {
+    it(`open refuses bad attach config: ${row.label}`, async () => {
+      const decoy = await startStub(labeloreAnswers());
+      const file = join(stateDir, 'attach.json');
+      const value = row.value(decoy.port);
+      const options: LaunchOptions = {};
+      if (row.via === 'env') options.env = { LABELORE_ATTACH_URL: value ?? '' };
+      else if (value === null) mkdirSync(file);
+      else writeFileSync(file, value);
+      const result = await launcher(['open'], projectDir, options);
+      expect(result.code).toBe(1);
+      expect(result.stderr).toContain(row.via === 'env' ? 'LABELORE_ATTACH_URL' : file);
+      expect(result.stderr).toContain(row.problem);
+      expect(result.stderr).toContain("To use Labelore's own server instead:");
+      for (const text of row.hidden ?? []) expect(result.stderr).not.toContain(text);
+      expect(decoy.requests).toHaveLength(0);
+      expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
+    });
+  }
+});
+
+describe('own server (LNCH-02, ATT-01)', { timeout: 60_000 }, () => {
+  it('open spawns its own server with --port 0', async () => {
+    const marker = join(stateDir, 'argv.json');
+    const copy = stageWithServer(
+      "import { writeFileSync } from 'node:fs';\nwriteFileSync(process.env.ARGV_MARKER, JSON.stringify(process.argv.slice(2)));\nprocess.exit(0);\n",
+    );
+    await stagedLauncher(['open'], copy, projectDir, { env: { ARGV_MARKER: marker } });
+    expect(JSON.parse(readFileSync(marker, 'utf8'))).toEqual([projectReal, '--port', '0']);
+  });
+
+  it('with no attach config open contacts only its own server, and the decoy gets nothing', async () => {
+    const decoy = await startDecoy();
+    const body = JSON.stringify({ url: decoy.origin });
+    mkdirSync(join(stateDir, 'config'), { recursive: true });
+    writeFileSync(join(projectDir, 'attach.json'), body);
+    writeFileSync(join(projectDir, '.planning', 'attach.json'), body);
+    writeFileSync(join(stateDir, 'config', 'attach.json'), body);
+    const recordFile = join(stateDir, 'connects.log');
+    const inherited = process.env.LABELORE_ATTACH_URL;
+    process.env.LABELORE_ATTACH_URL = decoy.origin;
+    let result: Outcome;
+    try {
+      result = await stagedLauncher(['open'], stage, projectDir, {
+        env: { NODE_OPTIONS: `--import ${pathToFileURL(RECORDER).href}`, CONNECT_RECORD_FILE: recordFile },
+      });
+    } finally {
+      if (inherited === undefined) delete process.env.LABELORE_ATTACH_URL;
+      else process.env.LABELORE_ATTACH_URL = inherited;
+    }
+    expect(result.code).toBe(0);
+    expect(result.stdout).toMatch(URL_LINE);
+    const { port } = readStateFile();
+    const connects = readConnects(recordFile);
+    expect(connects.length).toBeGreaterThan(0);
+    for (const connect of connects) {
+      expect(['127.0.0.1', 'localhost']).toContain(connect.host);
+      expect(connect.port).toBe(port);
+    }
+    expect(decoy.connections()).toBe(0);
+  });
+
+  it('the test helpers strip an inherited LABELORE_ATTACH_URL', async () => {
+    const decoy = await startDecoy();
+    const port = await startFake();
+    const inherited = process.env.LABELORE_ATTACH_URL;
+    process.env.LABELORE_ATTACH_URL = decoy.origin;
+    let result: Outcome;
+    try {
+      result = await launcher(['link']);
+    } finally {
+      if (inherited === undefined) delete process.env.LABELORE_ATTACH_URL;
+      else process.env.LABELORE_ATTACH_URL = inherited;
+    }
+    expect(result.stdout.trim()).toBe(`Labelore URL: http://127.0.0.1:${port}/demo/`);
+    expect(decoy.connections()).toBe(0);
   });
 });
 

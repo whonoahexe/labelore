@@ -664,6 +664,7 @@ function makeRun(ctx, { label, node }) {
     PATH: `${shim}:${dirname(node)}:${process.env.PATH}`,
   };
   delete env.LABELORE_CONFIG_DIR;
+  delete env.LABELORE_ATTACH_URL;
   const pids = new Set();
   const run = {
     home,
