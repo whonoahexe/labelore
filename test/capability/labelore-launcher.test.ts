@@ -891,6 +891,135 @@ describe('identity failures (ATT-03, D-04, D-06)', { timeout: 30_000 }, () => {
   });
 });
 
+describe('refusals from the attach target (ATT-03)', { timeout: 30_000 }, () => {
+  /** A stub that answers the standard Labelore answers except where `override` answers first. */
+  async function stubOverriding(
+    override: (entry: Recorded) => StubAnswer | undefined,
+    over: AnswerOptions = {},
+  ): Promise<Stub> {
+    const base = labeloreAnswers(over);
+    return startStub((entry) => override(entry) ?? base(entry));
+  }
+
+  async function openAgainst(stub: Stub): Promise<Outcome> {
+    return launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+  }
+
+  const hostRefusal = { status: 403, body: { error: 'refused', reason: 'host' } };
+
+  it('open translates a host refusal at the identity', async () => {
+    const stub = await stubOverriding((entry) => (entry.url === '/api/identity' ? hostRefusal : undefined));
+    const result = await openAgainst(stub);
+    const host = `127.0.0.1:${stub.port}`;
+    expectLoudFailure(result, stub.origin);
+    expect(result.stderr).toContain(
+      `refused the host ${host}; use the address that server prints, or add ${host} to its LABELORE_ALLOWED_HOSTS.`,
+    );
+    expectPathOnlyInPost(stub.requests);
+    expect(stub.requests.filter((entry) => entry.method === 'POST')).toHaveLength(0);
+  });
+
+  it('open translates a host refusal at the list', async () => {
+    const stub = await stubOverriding((entry) =>
+      entry.method === 'GET' && entry.url === '/api/projects' ? hostRefusal : undefined,
+    );
+    const result = await openAgainst(stub);
+    const host = `127.0.0.1:${stub.port}`;
+    expectLoudFailure(result, stub.origin);
+    expect(result.stderr).toContain(`refused the host ${host}; use the address that server prints`);
+    expect(result.stderr).toContain(`add ${host} to its LABELORE_ALLOWED_HOSTS.`);
+    expect(stub.requests.filter((entry) => entry.method === 'POST')).toHaveLength(0);
+  });
+
+  it('open translates a cross-site refusal at the POST', async () => {
+    const stub = await stubOverriding(() => undefined, {
+      postStatus: 403,
+      postBody: { error: 'refused', reason: 'cross-site' },
+    });
+    const result = await openAgainst(stub);
+    expectLoudFailure(result, stub.origin);
+    expect(result.stderr).toContain('(set by LABELORE_ATTACH_URL) refused the request as cross-site.');
+  });
+
+  it('open translates a path refusal at the POST', async () => {
+    const stub = await stubOverriding(() => undefined, {
+      postStatus: 422,
+      postBody: { error: 'x-path-refused', status: { pathChecked: '/x/y' } },
+    });
+    const result = await openAgainst(stub);
+    expectLoudFailure(result, stub.origin);
+    expect(result.stderr).toContain('refused this project: x-path-refused (path checked: /x/y).');
+  });
+
+  it('open names an HTTP 500 at the list', async () => {
+    const stub = await stubOverriding((entry) =>
+      entry.method === 'GET' && entry.url === '/api/projects' ? { status: 500, body: {} } : undefined,
+    );
+    const result = await openAgainst(stub);
+    expectLoudFailure(result, stub.origin);
+    expect(result.stderr).toContain('(set by LABELORE_ATTACH_URL) answered HTTP 500.');
+  });
+});
+
+describe('attached-server notes (D-05, D-07)', { timeout: 30_000 }, () => {
+  it('version skew attaches with one note and never signals the attached pid', async () => {
+    const victim = await spawnVictim();
+    const stub = await startStub(labeloreAnswers({ version: '0.0.1-other', pid: victim.pid }));
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}/demo/\n`);
+    expect(result.stderr).toBe(`labelore: attached Labelore is 0.0.1-other, this launcher is ${OWN_VERSION}\n`);
+    expect(alive(victim.pid)).toBe(true);
+  });
+
+  it('the same version prints no skew note', async () => {
+    const stub = await startStub(labeloreAnswers());
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stderr).not.toContain('attached Labelore is');
+  });
+
+  it('a running own server is left alone with one note, and only the attach origin and the own port are contacted', async () => {
+    const ownVictim = await spawnVictim();
+    const attachVictim = await spawnVictim();
+    const ownPort = await startFake({ victim: ownVictim });
+    const stub = await startStub(labeloreAnswers({ pid: attachVictim.pid }));
+    const recordFile = join(stateDir, 'connects.txt');
+    const result = await launcher(['open'], projectDir, {
+      env: {
+        LABELORE_ATTACH_URL: stub.origin,
+        NODE_OPTIONS: `--import ${pathToFileURL(RECORDER).href}`,
+        CONNECT_RECORD_FILE: recordFile,
+      },
+    });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}/demo/\n`);
+    const launcherPath = join(REPO_ROOT, 'scripts', 'labelore.mjs');
+    expect(result.stderr).toBe(
+      `labelore: Labelore's own server is still running (pid ${ownVictim.pid}, port ${ownPort}); stop it with: node "${launcherPath}" stop\n`,
+    );
+    expect(alive(ownVictim.pid)).toBe(true);
+    expect(alive(attachVictim.pid)).toBe(true);
+    const ports = new Set(readConnects(recordFile).map((entry) => entry.port));
+    expect(ports.has(stub.port)).toBe(true);
+    for (const port of ports) expect([stub.port, ownPort]).toContain(port);
+  });
+
+  it('an older own server is not restarted in attach mode', async () => {
+    config.identityVersion = '0.0.1-old';
+    config.stateVersion = '0.0.1-old';
+    const ownVictim = await spawnVictim();
+    await startFake({ victim: ownVictim });
+    const stub = await startStub(labeloreAnswers());
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stderr).toContain("Labelore's own server is still running");
+    for (const line of result.stderr.split('\n')) expect(line.startsWith('Restarted')).toBe(false);
+    expect(result.stderr).not.toContain('Restarted');
+    expect(alive(ownVictim.pid)).toBe(true);
+  });
+});
+
 describe('own server (LNCH-02, ATT-01)', { timeout: 60_000 }, () => {
   it('open spawns its own server with --port 0', async () => {
     const marker = join(stateDir, 'argv.json');
