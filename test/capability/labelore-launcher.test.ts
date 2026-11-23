@@ -558,6 +558,133 @@ describe('link with attach (ATT-04, D-08)', () => {
   });
 });
 
+/** The standard answers with every response held back by `ms`. */
+function slowAnswers(ms: number, over: AnswerOptions = {}): (request: Recorded) => StubAnswer {
+  const answers = labeloreAnswers(over);
+  return (request) => ({ ...answers(request), delayMs: ms });
+}
+
+// ATT-04: a stuck server must never stall a ship. The cap is proved by outcome (the phase link is lost when
+// the answers add up past it, kept when they do not) and by the execFile timeout (the run ends on its own,
+// killed false). Wall-clock numbers are not asserted: test/no-skips.test.ts forbids absolute budgets.
+describe('link gives up after about 3 s (ATT-04)', { timeout: 30_000 }, () => {
+  const PHASE_LINK = '/demo/v1.0/phase-3';
+
+  async function ownStubState(stub: Stub): Promise<ChildProcess> {
+    const victim = await spawnVictim();
+    writeState({ pid: victim.pid as number, port: stub.port, instanceId: FAKE_ID, version: OWN_VERSION });
+    return victim;
+  }
+
+  it('a hanging own server: link exits 0 on its own', async () => {
+    const stub = await startStub(() => ({ hang: true }));
+    await ownStubState(stub);
+    const result = await launcher(['link', '3'], projectDir, { timeoutMs: 15_000 });
+    expect(result.killed).toBe(false);
+    expect(result.code).toBe(0);
+    expect(result.stdout.trimEnd().split('\n')).toHaveLength(1);
+    expect(result.stdout).not.toContain('Labelore URL:');
+  });
+
+  it('a hanging attach target: link exits 0 on its own', async () => {
+    const stub = await startStub(() => ({ hang: true }));
+    const result = await launcher(['link', '3'], projectDir, {
+      env: { LABELORE_ATTACH_URL: stub.origin },
+      timeoutMs: 15_000,
+    });
+    expect(result.killed).toBe(false);
+    expect(result.code).toBe(0);
+    expect(result.stdout.trimEnd().split('\n')).toHaveLength(1);
+    expect(result.stdout).toContain(stub.origin);
+    expect(result.stdout).toContain('did not answer in time');
+  });
+
+  it('a total cap, not per call: three 1.2 s answers from the own server lose the phase link', async () => {
+    const victim = await spawnVictim();
+    const stub = await startStub(
+      slowAnswers(1200, { instanceId: FAKE_ID, pid: victim.pid, projects: [{ slug: 'demo', target: projectReal }] }),
+    );
+    writeState({ pid: victim.pid as number, port: stub.port, instanceId: FAKE_ID, version: OWN_VERSION });
+    const result = await launcher(['link', '3'], projectDir, { timeoutMs: 15_000 });
+    expect(result.killed).toBe(false);
+    expect(result.code).toBe(0);
+    expect(result.stdout.trimEnd().split('\n')).toHaveLength(1);
+    expect(result.stdout).not.toContain(PHASE_LINK);
+  });
+
+  it('a total cap, not per call: three 1.2 s answers from an attach target lose the phase link', async () => {
+    const stub = await startStub(slowAnswers(1200, { projects: [{ slug: 'demo', target: projectReal }] }));
+    const result = await launcher(['link', '3'], projectDir, {
+      env: { LABELORE_ATTACH_URL: stub.origin },
+      timeoutMs: 15_000,
+    });
+    expect(result.killed).toBe(false);
+    expect(result.code).toBe(0);
+    expect(result.stdout.trimEnd().split('\n')).toHaveLength(1);
+    expect(result.stdout).not.toContain(PHASE_LINK);
+  });
+
+  it('under the cap: three quick own-server answers keep the phase link', async () => {
+    const victim = await spawnVictim();
+    const stub = await startStub(
+      slowAnswers(200, { instanceId: FAKE_ID, pid: victim.pid, projects: [{ slug: 'demo', target: projectReal }] }),
+    );
+    writeState({ pid: victim.pid as number, port: stub.port, instanceId: FAKE_ID, version: OWN_VERSION });
+    const result = await launcher(['link', '3'], projectDir, { timeoutMs: 15_000 });
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}${PHASE_LINK}\n`);
+  });
+
+  it('under the cap: three quick attach answers keep the phase link', async () => {
+    const stub = await startStub(slowAnswers(200, { projects: [{ slug: 'demo', target: projectReal }] }));
+    const result = await launcher(['link', '3'], projectDir, {
+      env: { LABELORE_ATTACH_URL: stub.origin },
+      timeoutMs: 15_000,
+    });
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}${PHASE_LINK}\n`);
+  });
+
+  it('link never spawns a server', async () => {
+    const marker = join(stateDir, 'spawned.marker');
+    const copy = stageWithServer(
+      "import { writeFileSync } from 'node:fs';\nwriteFileSync(process.env.ARGV_MARKER, 'spawned');\nprocess.exit(0);\n",
+    );
+    const result = await stagedLauncher(['link', '3'], copy, projectDir, { env: { ARGV_MARKER: marker } });
+    expect(result.code).toBe(0);
+    expect(result.stdout.trimEnd().split('\n')).toHaveLength(1);
+    expect(existsSync(marker)).toBe(false);
+    expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
+  });
+});
+
+describe('stop with attach (ATT-04)', { timeout: 30_000 }, () => {
+  it('stop never contacts the attach target and stops only its own server', async () => {
+    const ownVictim = await spawnVictim();
+    const attachedVictim = await spawnVictim();
+    await startFake({ victim: ownVictim });
+    const stub = await startStub(
+      labeloreAnswers({ pid: attachedVictim.pid, projects: [{ slug: 'demo', target: projectReal }] }),
+    );
+    const result = await launcher(['stop'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain('labelore: stopped Labelore');
+    await exited(ownVictim);
+    expect(alive(ownVictim.pid)).toBe(false);
+    expect(alive(attachedVictim.pid)).toBe(true);
+    expect(stub.requests).toHaveLength(0);
+  });
+
+  it('stop works with a bad attach config', async () => {
+    const ownVictim = await spawnVictim();
+    await startFake({ victim: ownVictim });
+    const result = await launcher(['stop'], projectDir, { env: { LABELORE_ATTACH_URL: 'not-a-url' } });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain('labelore: stopped Labelore');
+    expect(result.stderr).toBe('');
+    await exited(ownVictim);
+    expect(alive(ownVictim.pid)).toBe(false);
+  });
+});
+
 describe('open', () => {
   it('adds the project to its own running server with one guarded POST, then prints the phase link', async () => {
     config.projects = [];
