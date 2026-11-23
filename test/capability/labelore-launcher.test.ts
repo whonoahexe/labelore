@@ -41,6 +41,14 @@ interface Outcome {
   code: number;
   stdout: string;
   stderr: string;
+  /** True when the run was killed for exceeding LaunchOptions.timeoutMs. */
+  killed: boolean;
+}
+
+interface LaunchOptions {
+  /** Extra child env, applied after the LABELORE_ATTACH_URL scrub. */
+  env?: Record<string, string>;
+  timeoutMs?: number;
 }
 
 interface Recorded {
@@ -88,6 +96,7 @@ let victims: ChildProcess[];
 let stageUsed: boolean;
 let stage: string;
 let stageRoot: string;
+let stubs: Server[];
 
 function listing(): string {
   return readdirSync(projectDir, { recursive: true }).join('\n');
@@ -190,11 +199,115 @@ async function startFake(options: FakeOptions = {}): Promise<number> {
   return port;
 }
 
+interface StubAnswer {
+  status?: number;
+  body?: unknown;
+  raw?: string;
+  headers?: Record<string, string>;
+  delayMs?: number;
+  /** Never answer. */
+  hang?: boolean;
+}
+
+interface Stub {
+  port: number;
+  origin: string;
+  requests: Recorded[];
+  server: Server;
+}
+
+/** A loopback server on an OS-assigned port that records every request and answers as the callback says. */
+async function startStub(answer: (request: Recorded) => StubAnswer): Promise<Stub> {
+  const requests: Recorded[] = [];
+  const stub = createServer((request, response) => {
+    const chunks: Buffer[] = [];
+    request.on('data', (chunk: Buffer) => chunks.push(chunk));
+    request.on('end', () => {
+      const recorded: Recorded = {
+        method: request.method ?? '',
+        url: request.url ?? '',
+        headers: request.headers,
+        body: Buffer.concat(chunks).toString('utf8'),
+      };
+      requests.push(recorded);
+      const reply = answer(recorded);
+      if (reply.hang) return;
+      const send = (): void => {
+        response.statusCode = reply.status ?? 200;
+        response.setHeader('content-type', 'application/json');
+        for (const [name, value] of Object.entries(reply.headers ?? {})) response.setHeader(name, value);
+        response.end(reply.raw ?? JSON.stringify(reply.body ?? {}));
+      };
+      if (reply.delayMs) setTimeout(send, reply.delayMs);
+      else send();
+    });
+  });
+  stubs.push(stub);
+  await new Promise<void>((done) => stub.listen(0, '127.0.0.1', done));
+  const { port } = stub.address() as AddressInfo;
+  return { port, origin: `http://127.0.0.1:${port}`, requests, server: stub };
+}
+
+interface AnswerOptions {
+  app?: string;
+  version?: string;
+  instanceId?: string | null;
+  pid?: number;
+  projects?: { slug: string; target: string }[];
+  postStatus?: number;
+  postBody?: unknown;
+}
+
+/** The standard Labelore answers. The pid, when given, belongs to a victim the test spawned. */
+function labeloreAnswers(over: AnswerOptions = {}): (request: Recorded) => StubAnswer {
+  return (request) => {
+    if (request.method === 'GET' && request.url === '/api/identity') {
+      return {
+        body: {
+          app: over.app ?? 'labelore',
+          version: over.version ?? OWN_VERSION,
+          instanceId: over.instanceId ?? null,
+          pid: over.pid,
+        },
+      };
+    }
+    if (request.method === 'GET' && request.url === '/api/projects') {
+      return { body: { projects: over.projects ?? [], notices: [] } };
+    }
+    if (request.method === 'POST' && request.url === '/api/projects') {
+      return {
+        status: over.postStatus ?? 201,
+        body: over.postBody ?? { slug: 'demo', name: 'demo', duplicate: false },
+      };
+    }
+    if (request.method === 'GET' && request.url === '/api/projects/demo/roadmap') {
+      return {
+        body: {
+          active: { phases: [{ number: '3', url: '/v1.0/phase-3' }] },
+          history: [{ phases: [{ number: '2.1', url: '/v0.9/phase-2.1' }] }],
+        },
+      };
+    }
+    return { status: 404, body: {} };
+  };
+}
+
+function outcomeOf(error: unknown): Outcome {
+  const failure = error as { code?: number; stdout?: string; stderr?: string; killed?: boolean };
+  return {
+    code: typeof failure.code === 'number' ? failure.code : 1,
+    stdout: failure.stdout ?? '',
+    stderr: failure.stderr ?? '',
+    killed: failure.killed === true,
+  };
+}
+
 /** Runs the staged release's launcher: its own bundle dir, nothing from the repository. */
 async function stagedLauncher(
   args: string[],
   stageDir: string = stage,
   projectEnv: string = projectDir,
+  options: LaunchOptions = {},
 ): Promise<Outcome> {
   stageUsed = true;
   const env: NodeJS.ProcessEnv = {
@@ -203,15 +316,18 @@ async function stagedLauncher(
     LABELORE_CONFIG_DIR: join(stateDir, 'config'),
     CLAUDE_PROJECT_DIR: projectEnv,
   };
+  // A maintainer who exports LABELORE_ATTACH_URL would otherwise POST scratch projects into a real server.
+  delete env.LABELORE_ATTACH_URL;
+  Object.assign(env, options.env);
   try {
     const { stdout, stderr } = await run(process.execPath, [join(stageDir, 'scripts', 'labelore.mjs'), ...args], {
       cwd: stageRoot,
       env,
+      timeout: options.timeoutMs,
     });
-    return { code: 0, stdout, stderr };
+    return { code: 0, stdout, stderr, killed: false };
   } catch (error) {
-    const failure = error as { code?: number; stdout?: string; stderr?: string };
-    return { code: failure.code ?? 1, stdout: failure.stdout ?? '', stderr: failure.stderr ?? '' };
+    return outcomeOf(error);
   }
 }
 
@@ -242,19 +358,25 @@ function stageWithServer(script: string): string {
   return copy;
 }
 
-async function launcher(args: string[], projectEnv: string | null = projectDir): Promise<Outcome> {
+async function launcher(
+  args: string[],
+  projectEnv: string | null = projectDir,
+  options: LaunchOptions = {},
+): Promise<Outcome> {
   const env: NodeJS.ProcessEnv = { ...process.env, LABELORE_STATE_DIR: stateDir };
+  delete env.LABELORE_ATTACH_URL;
   if (projectEnv === null) delete env.CLAUDE_PROJECT_DIR;
   else env.CLAUDE_PROJECT_DIR = projectEnv;
+  Object.assign(env, options.env);
   try {
     const { stdout, stderr } = await run(process.execPath, ['scripts/labelore.mjs', ...args], {
       cwd: REPO_ROOT,
       env,
+      timeout: options.timeoutMs,
     });
-    return { code: 0, stdout, stderr };
+    return { code: 0, stdout, stderr, killed: false };
   } catch (error) {
-    const failure = error as { code?: number; stdout?: string; stderr?: string };
-    return { code: failure.code ?? 1, stdout: failure.stdout ?? '', stderr: failure.stderr ?? '' };
+    return outcomeOf(error);
   }
 }
 
@@ -277,6 +399,7 @@ afterAll(() => {
 
 beforeEach(() => {
   victims = [];
+  stubs = [];
   stageUsed = false;
   stateDir = mkdtempSync(join(tmpdir(), 'labelore-state-'));
   projectDir = mkdtempSync(join(tmpdir(), 'labelore-project-'));
@@ -295,7 +418,10 @@ beforeEach(() => {
 afterEach(async () => {
   await cleanupLaunched();
   for (const victim of victims) victim.kill('SIGKILL');
-  if (server) await new Promise<void>((done) => server?.close(() => done()));
+  for (const listener of [...stubs, ...(server ? [server] : [])]) {
+    listener.closeAllConnections();
+    await new Promise<void>((done) => listener.close(() => done()));
+  }
   rmSync(stateDir, { recursive: true, force: true });
   rmSync(projectDir, { recursive: true, force: true });
 });
@@ -394,6 +520,65 @@ describe('open', () => {
     } finally {
       rmSync(bare, { recursive: true, force: true });
     }
+  });
+});
+
+describe('attach (ATT-02)', () => {
+  it('open attaches: identity first, then the list, then one guarded POST, and prints the attach link', async () => {
+    const stub = await startStub(labeloreAnswers());
+    const result = await launcher(['open', '3'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(stub.requests.map((entry) => `${entry.method} ${entry.url}`).slice(0, 3)).toEqual([
+      'GET /api/identity',
+      'GET /api/projects',
+      'POST /api/projects',
+    ]);
+    expect(stub.requests[0]?.body).toBe('');
+    expect(stub.requests[0]?.url).toBe('/api/identity');
+    const post = stub.requests[2];
+    expect(post?.headers['content-type']).toBe('application/json');
+    expect(post?.headers.origin).toBe(stub.origin);
+    expect(JSON.parse(post?.body ?? '')).toEqual({ target: projectReal });
+    expect(stub.requests.filter((entry) => entry.method === 'POST')).toHaveLength(1);
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}/demo/v1.0/phase-3\n`);
+  });
+
+  it('open reuses a project the attach target already lists, with no POST', async () => {
+    const stub = await startStub(labeloreAnswers({ projects: [{ slug: 'demo', target: projectReal }] }));
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}/demo/\n`);
+    expect(stub.requests.filter((entry) => entry.method === 'POST')).toHaveLength(0);
+  });
+
+  it('open prints the returned slug when the POST answers duplicate', async () => {
+    const stub = await startStub(
+      labeloreAnswers({ postStatus: 200, postBody: { slug: 'other', name: 'other', duplicate: true } }),
+    );
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}/other/\n`);
+  });
+
+  it('open attaches through localhost and sends that origin', async () => {
+    const stub = await startStub(labeloreAnswers());
+    const origin = `http://localhost:${stub.port}`;
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: origin } });
+    expect(result.code).toBe(0);
+    const post = stub.requests.find((entry) => entry.method === 'POST');
+    expect(post?.headers.origin).toBe(origin);
+    expect(result.stdout).toBe(`Labelore URL: ${origin}/demo/\n`);
+  });
+
+  it('the attach path writes nothing: no state dir is created and no server is spawned', async () => {
+    const stub = await startStub(labeloreAnswers());
+    const fresh = join(makeTempDir('labelore-fresh'), 'state');
+    const result = await launcher(['open'], projectDir, {
+      env: { LABELORE_ATTACH_URL: stub.origin, LABELORE_STATE_DIR: fresh },
+    });
+    expect(result.code).toBe(0);
+    expect(existsSync(fresh)).toBe(false);
+    expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
   });
 });
 

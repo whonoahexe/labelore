@@ -13,6 +13,11 @@
  * only a server whose GET /api/identity answer matches the instanceId and pid it recorded at spawn,
  * never a hand-run or service-run instance.
  *
+ * It signals only its own server. When the user opts in (LABELORE_ATTACH_URL, or attach.json in the
+ * state directory), it talks to the configured Labelore on this machine after a path-free identity
+ * check, to reuse or add the project there, and never signals, starts or stops that server. With
+ * nothing configured it contacts no server but its own.
+ *
  * It uses Node builtins only (plus the global fetch) because a release ships no node_modules.
  */
 import { spawn } from 'node:child_process';
@@ -142,6 +147,11 @@ function isAlive(pid) {
   }
 }
 
+/** The launcher's only fetch: a redirect is never followed, so no answer can move a request elsewhere. */
+function request(url, init = {}) {
+  return fetch(url, { ...init, redirect: 'error' });
+}
+
 /**
  * Asks the recorded port who it is. A match needs app labelore, the recorded instanceId and the
  * recorded pid. Never signals anything.
@@ -149,7 +159,7 @@ function isAlive(pid) {
 async function handshake(state) {
   if (state.instanceId === null) return { kind: 'legacy' };
   try {
-    const response = await fetch(`http://127.0.0.1:${state.port}/api/identity`, {
+    const response = await request(`http://127.0.0.1:${state.port}/api/identity`, {
       signal: AbortSignal.timeout(2000),
     });
     if (!response.ok) return { kind: 'stale', reason: `HTTP ${response.status}` };
@@ -176,7 +186,7 @@ async function ownServer() {
   const base = `http://127.0.0.1:${state.port}`;
   let projects = [];
   try {
-    const response = await fetch(`${base}/api/projects`, { signal: AbortSignal.timeout(2000) });
+    const response = await request(`${base}/api/projects`, { signal: AbortSignal.timeout(2000) });
     if (response.ok) {
       const body = await response.json();
       if (body && Array.isArray(body.projects)) projects = body.projects;
@@ -292,7 +302,7 @@ async function phaseUrl(base, slug, phase) {
   const dashboard = dashboardUrl(base, slug);
   if (phase === undefined || phase === '') return dashboard;
   try {
-    const response = await fetch(`${base}/api/projects/${encodeURIComponent(slug)}/roadmap`, {
+    const response = await request(`${base}/api/projects/${encodeURIComponent(slug)}/roadmap`, {
       signal: AbortSignal.timeout(5000),
     });
     if (!response.ok) return dashboard;
@@ -309,14 +319,27 @@ async function phaseUrl(base, slug, phase) {
   }
 }
 
-/** Adds the project to the launcher's own running server. Never talks to any other Labelore. */
-async function addProject(own, root) {
-  const response = await fetch(`${own.base}/api/projects`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', origin: own.base },
-    body: JSON.stringify({ target: root }),
-    signal: AbortSignal.timeout(10000),
-  });
+/**
+ * POSTs the project to the Labelore at `base`. Never fails by itself: callers format the refusal.
+ * Status 200 is the server's duplicate answer, which covers two opens racing for the same project.
+ */
+async function addProjectTo(base, root) {
+  let response;
+  try {
+    response = await request(`${base}/api/projects`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: base },
+      body: JSON.stringify({ target: root }),
+      signal: AbortSignal.timeout(10000),
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      status: null,
+      answer: null,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
   let answer;
   try {
     answer = await response.json();
@@ -328,11 +351,16 @@ async function addProject(own, root) {
     answer &&
     typeof answer.slug === 'string'
   ) {
-    return answer.slug;
+    return { ok: true, slug: answer.slug };
   }
-  const reason =
-    answer && typeof answer.error === 'string' ? answer.error : `HTTP ${response.status}`;
-  return fail(`labelore: Labelore refused this project: ${reason}`);
+  return { ok: false, status: response.status, answer, error: null };
+}
+
+/** Why a refused or failed POST failed, for a message. */
+function refusalReason(result) {
+  if (result.answer && typeof result.answer.error === 'string') return result.answer.error;
+  if (result.status !== null) return `HTTP ${result.status}`;
+  return result.error ?? 'no answer';
 }
 
 /** Stderr note for a v2.1 server with no identity check that is still running. Never signals it. */
@@ -343,6 +371,129 @@ function noteLegacy(state) {
   );
 }
 
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '[::1]']);
+const SAFE_VERSION = /^[0-9A-Za-z.+-]{1,64}$/;
+
+/**
+ * Checks a configured attach URL offline. Only http to a loopback host with an explicit port and no
+ * path, query, fragment or userinfo passes. The problem text never includes the URL.
+ */
+function parseAttachUrl(raw) {
+  if (raw.includes('?') || raw.includes('#')) return { ok: false, problem: 'has a query or fragment' };
+  let url;
+  try {
+    url = new URL(raw);
+  } catch {
+    return { ok: false, problem: 'is not a URL' };
+  }
+  if (url.protocol !== 'http:') return { ok: false, problem: 'must use http://' };
+  if (url.username || url.password) {
+    return { ok: false, problem: 'must not hold a username or password' };
+  }
+  if (!LOOPBACK_HOSTS.has(url.hostname)) {
+    return { ok: false, problem: 'must name 127.0.0.1, localhost or [::1]' };
+  }
+  if (url.port === '') return { ok: false, problem: 'needs an explicit port' };
+  if (url.pathname !== '/') return { ok: false, problem: 'must not have a path' };
+  return { ok: true, origin: url.origin };
+}
+
+/**
+ * The attach configuration, or null when none is set. The environment variable wins; an empty or
+ * blank one counts as unset and falls through to attach.json in the state directory. The launcher
+ * only reads attach.json: it never writes, creates or deletes it.
+ */
+function readAttachConfig() {
+  const raw = (process.env.LABELORE_ATTACH_URL ?? '').trim();
+  if (raw !== '') {
+    return {
+      ...parseAttachUrl(raw),
+      source: 'LABELORE_ATTACH_URL',
+      unset: 'unset LABELORE_ATTACH_URL',
+    };
+  }
+  return null;
+}
+
+/** The message for a configuration that failed validation. Never includes the URL or file content. */
+function configProblem(config) {
+  return `labelore: ${config.source} ${config.problem}. To use Labelore's own server instead: ${config.unset}`;
+}
+
+/** The message for a valid configuration whose target did not work out. */
+function attachFailure(config, why) {
+  return `labelore: the attach target ${config.origin} (set by ${config.source}) ${why}. To use Labelore's own server instead: ${config.unset}`;
+}
+
+/**
+ * Asks the attach target who it is, with no body and no project path. Only an app labelore with a
+ * safe version passes; instanceId and pid are ignored.
+ */
+async function verifyAttach(origin, signal) {
+  try {
+    const response = await request(`${origin}/api/identity`, { signal });
+    let body = null;
+    if (response.status === 200) {
+      try {
+        body = await response.json();
+      } catch {
+        body = null;
+      }
+    }
+    if (
+      body &&
+      body.app === 'labelore' &&
+      typeof body.version === 'string' &&
+      SAFE_VERSION.test(body.version)
+    ) {
+      return { ok: true, version: body.version };
+    }
+    return { ok: false, why: 'is not a Labelore 2.2 or newer; upgrade that server' };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { ok: false, why: `could not be reached (${message})` };
+  }
+}
+
+/** Identity first, then the project list. Never POSTs, so `link` can share it. */
+async function lookUpAttached(config, signal) {
+  const verified = await verifyAttach(config.origin, signal ?? AbortSignal.timeout(2000));
+  if (!verified.ok) return verified;
+  try {
+    const response = await request(`${config.origin}/api/projects`, {
+      signal: signal ?? AbortSignal.timeout(2000),
+    });
+    if (response.status !== 200) return { ok: false, why: `answered HTTP ${response.status}` };
+    const body = await response.json();
+    if (!body || !Array.isArray(body.projects)) {
+      return { ok: false, why: 'answered HTTP 200 with no project list' };
+    }
+    return { ok: true, base: config.origin, projects: body.projects, version: verified.version };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { ok: false, why: `could not be reached (${message})` };
+  }
+}
+
+/** open against the configured Labelore: reuse the project or add it once, print its link. */
+async function openAttached(config, root, phase) {
+  const found = await lookUpAttached(config);
+  if (!found.ok) return fail(attachFailure(config, found.why));
+  const known = found.projects.find((project) => project.target === root);
+  let slug;
+  if (known) {
+    slug = known.slug;
+  } else {
+    const added = await addProjectTo(found.base, root);
+    if (!added.ok) {
+      return fail(attachFailure(config, `refused this project: ${refusalReason(added)}`));
+    }
+    slug = added.slug;
+  }
+  process.stdout.write(`Labelore URL: ${await phaseUrl(found.base, slug, phase)}\n`);
+  return undefined;
+}
+
 async function open(phase) {
   requireNode();
   const start = startPoint();
@@ -350,12 +501,24 @@ async function open(phase) {
   if (!root) fail(`labelore: no .planning/ directory at or above ${start}`);
   const own = ownVersion();
 
+  const attach = readAttachConfig();
+  if (attach) {
+    if (!attach.ok) return fail(configProblem(attach));
+    return openAttached(attach, root, phase);
+  }
+
   const found = await ownServer();
   let server = found.server;
   let slug;
   if (server && found.state.version === own && server.version === own) {
     const known = server.projects.find((project) => project.target === root);
-    slug = known ? known.slug : await addProject(server, root);
+    if (known) {
+      slug = known.slug;
+    } else {
+      const added = await addProjectTo(server.base, root);
+      if (!added.ok) fail(`labelore: Labelore refused this project: ${refusalReason(added)}`);
+      slug = added.slug;
+    }
   } else {
     let restartedFrom = null;
     if (server) {
