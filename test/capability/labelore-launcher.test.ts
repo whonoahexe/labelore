@@ -24,13 +24,14 @@ import type { IncomingHttpHeaders, Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { buildServerBundle, makeTempDir, stubDist } from '../helpers/server-bundle.ts';
 
 const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const run = promisify(execFile);
+const RECORDER = fileURLToPath(new URL('../helpers/connect-recorder.mjs', import.meta.url));
 const OWN_VERSION = (JSON.parse(readFileSync(join(REPO_ROOT, 'capability.json'), 'utf8')) as { version: string })
   .version;
 const FAKE_ID = 'fake-instance-0001';
@@ -290,6 +291,34 @@ function labeloreAnswers(over: AnswerOptions = {}): (request: Recorded) => StubA
     }
     return { status: 404, body: {} };
   };
+}
+
+/** Parses a connect-recorder file into one entry per outbound connect. */
+function readConnects(file: string): { pid: number; host: string; port: number }[] {
+  if (!existsSync(file)) return [];
+  return readFileSync(file, 'utf8')
+    .split('\n')
+    .filter((line) => line !== '')
+    .map((line) => {
+      const space = line.indexOf(' ');
+      const target = line.slice(space + 1);
+      const colon = target.lastIndexOf(':');
+      return { pid: Number(line.slice(0, space)), host: target.slice(0, colon), port: Number(target.slice(colon + 1)) };
+    });
+}
+
+/** A loopback listener that only counts connections; anything that reaches it is a leak. */
+async function startDecoy(): Promise<{ port: number; origin: string; connections: () => number }> {
+  let count = 0;
+  const decoy = createServer();
+  decoy.on('connection', (socket) => {
+    count += 1;
+    socket.destroy();
+  });
+  stubs.push(decoy);
+  await new Promise<void>((done) => decoy.listen(0, '127.0.0.1', done));
+  const { port } = decoy.address() as AddressInfo;
+  return { port, origin: `http://127.0.0.1:${port}`, connections: () => count };
 }
 
 function outcomeOf(error: unknown): Outcome {
@@ -704,6 +733,64 @@ describe('attach config (ATT-01, D-03)', () => {
       expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
     });
   }
+});
+
+describe('own server (LNCH-02, ATT-01)', { timeout: 60_000 }, () => {
+  it('open spawns its own server with --port 0', async () => {
+    const marker = join(stateDir, 'argv.json');
+    const copy = stageWithServer(
+      "import { writeFileSync } from 'node:fs';\nwriteFileSync(process.env.ARGV_MARKER, JSON.stringify(process.argv.slice(2)));\nprocess.exit(0);\n",
+    );
+    await stagedLauncher(['open'], copy, projectDir, { env: { ARGV_MARKER: marker } });
+    expect(JSON.parse(readFileSync(marker, 'utf8'))).toEqual([projectReal, '--port', '0']);
+  });
+
+  it('with no attach config open contacts only its own server, and the decoy gets nothing', async () => {
+    const decoy = await startDecoy();
+    const body = JSON.stringify({ url: decoy.origin });
+    mkdirSync(join(stateDir, 'config'), { recursive: true });
+    writeFileSync(join(projectDir, 'attach.json'), body);
+    writeFileSync(join(projectDir, '.planning', 'attach.json'), body);
+    writeFileSync(join(stateDir, 'config', 'attach.json'), body);
+    const recordFile = join(stateDir, 'connects.log');
+    const inherited = process.env.LABELORE_ATTACH_URL;
+    process.env.LABELORE_ATTACH_URL = decoy.origin;
+    let result: Outcome;
+    try {
+      result = await stagedLauncher(['open'], stage, projectDir, {
+        env: { NODE_OPTIONS: `--import ${pathToFileURL(RECORDER).href}`, CONNECT_RECORD_FILE: recordFile },
+      });
+    } finally {
+      if (inherited === undefined) delete process.env.LABELORE_ATTACH_URL;
+      else process.env.LABELORE_ATTACH_URL = inherited;
+    }
+    expect(result.code).toBe(0);
+    expect(result.stdout).toMatch(URL_LINE);
+    const { port } = readStateFile();
+    const connects = readConnects(recordFile);
+    expect(connects.length).toBeGreaterThan(0);
+    for (const connect of connects) {
+      expect(['127.0.0.1', 'localhost']).toContain(connect.host);
+      expect(connect.port).toBe(port);
+    }
+    expect(decoy.connections()).toBe(0);
+  });
+
+  it('the test helpers strip an inherited LABELORE_ATTACH_URL', async () => {
+    const decoy = await startDecoy();
+    const port = await startFake();
+    const inherited = process.env.LABELORE_ATTACH_URL;
+    process.env.LABELORE_ATTACH_URL = decoy.origin;
+    let result: Outcome;
+    try {
+      result = await launcher(['link']);
+    } finally {
+      if (inherited === undefined) delete process.env.LABELORE_ATTACH_URL;
+      else process.env.LABELORE_ATTACH_URL = inherited;
+    }
+    expect(result.stdout.trim()).toBe(`Labelore URL: http://127.0.0.1:${port}/demo/`);
+    expect(decoy.connections()).toBe(0);
+  });
 });
 
 describe('stop', () => {
