@@ -114,7 +114,7 @@ async function stageRelease(stage, version) {
   copyInto(stage, 'LICENSE', 'LICENSE');
   copyInto(stage, 'scripts/labelore.mjs', 'scripts/labelore.mjs');
   copyInto(stage, 'skills/labelore/SKILL.md', 'skills/labelore/SKILL.md');
-  copyInto(stage, 'scripts/release-readme.md', 'README.md');
+  copyInto(stage, 'README.md', 'README.md');
   writeFileSync(join(stage, 'package.json'), `${JSON.stringify(stagePackage(version), null, 2)}\n`);
 
   const verified = verifyStage(stage, { version });
