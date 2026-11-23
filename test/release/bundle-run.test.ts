@@ -101,6 +101,32 @@ describe('the server bundle from a foreign directory (BUND-02)', () => {
   }, 60_000);
 });
 
+describe('the bundle picks its own port (LNCH-02)', () => {
+  it('binds an OS-assigned port when started with no --port, and says nothing about a port in use', async () => {
+    const run = await startBundle({
+      bundle: installedBundle,
+      args: [SHAPES_ROOT],
+      cwd: makeTempDir('labelore-cwd'),
+      env: cleanEnv({ LABELORE_DIST_DIR: webDist }),
+    });
+    started.push(run);
+    try {
+      expect(run.port < 4173 || run.port > 4182).toBe(true);
+      expect(run.output()).not.toMatch(/is in use/);
+      const identity = await fetch(`${run.base}/api/identity`);
+      expect(identity.status).toBe(200);
+      expect(((await identity.json()) as { app: string }).app).toBe('labelore');
+    } finally {
+      await stopBundle(run.child);
+    }
+  }, 60_000);
+
+  it('holds no port-shaped fixed port in its text', () => {
+    const source = readFileSync(builtBundle, 'utf8');
+    expect(source.match(/(?<![\w.])4173(?![\w])/g)).toBeNull();
+  });
+});
+
 const PACKAGE_VERSION = (
   JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')) as { version: string }
 ).version;
