@@ -412,7 +412,27 @@ function readAttachConfig() {
       unset: 'unset LABELORE_ATTACH_URL',
     };
   }
-  return null;
+  const file = join(stateDir(), 'attach.json');
+  const where = { source: file, unset: `delete ${file}` };
+  let text;
+  try {
+    text = readFileSync(file, 'utf8');
+  } catch (error) {
+    if (error?.code === 'ENOENT') return null;
+    return { ok: false, problem: 'cannot be read', ...where };
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return { ok: false, problem: 'is not valid JSON', ...where };
+  }
+  const url =
+    parsed && typeof parsed === 'object' && !Array.isArray(parsed) && typeof parsed.url === 'string'
+      ? parsed.url.trim()
+      : '';
+  if (url === '') return { ok: false, problem: 'has no usable "url"', ...where };
+  return { ...parseAttachUrl(url), ...where };
 }
 
 /** The message for a configuration that failed validation. Never includes the URL or file content. */
