@@ -338,6 +338,7 @@ async function addProjectTo(base, root) {
       status: null,
       answer: null,
       error: error instanceof Error ? error.message : String(error),
+      why: describeFetchError(error),
     };
   }
   let answer;
@@ -353,7 +354,7 @@ async function addProjectTo(base, root) {
   ) {
     return { ok: true, slug: answer.slug };
   }
-  return { ok: false, status: response.status, answer, error: null };
+  return { ok: false, status: response.status, answer, error: null, why: null };
 }
 
 /** Why a refused or failed POST failed, for a message. */
@@ -445,6 +446,23 @@ function attachFailure(config, why) {
   return `labelore: the attach target ${config.origin} (set by ${config.source}) ${why}. To use Labelore's own server instead: ${config.unset}`;
 }
 
+/** Drops control characters (C0 and C1) and cuts at 200 characters: server text is never trusted. */
+function clean(text) {
+  // eslint-disable-next-line no-control-regex
+  return String(text).replace(/[\u0000-\u001f\u007f-\u009f]/g, '').slice(0, 200);
+}
+
+/** Why a request to the attach target threw, in the words the failure message uses. */
+function describeFetchError(error) {
+  if (error?.name === 'TimeoutError' || error?.name === 'AbortError') return 'did not answer in time';
+  if (error?.cause?.code === 'ECONNREFUSED') return 'refused the connection';
+  if (error?.cause?.message === 'unexpected redirect') {
+    return 'answered with a redirect, which is never followed';
+  }
+  const message = error?.cause?.message ?? (error instanceof Error ? error.message : String(error));
+  return `could not be reached (${clean(message)})`;
+}
+
 /**
  * Asks the attach target who it is, with no body and no project path. Only an app labelore with a
  * safe version passes; instanceId and pid are ignored.
@@ -470,8 +488,7 @@ async function verifyAttach(origin, signal) {
     }
     return { ok: false, why: 'is not a Labelore 2.2 or newer; upgrade that server' };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return { ok: false, why: `could not be reached (${message})` };
+    return { ok: false, why: describeFetchError(error) };
   }
 }
 
@@ -490,8 +507,7 @@ async function lookUpAttached(config, signal) {
     }
     return { ok: true, base: config.origin, projects: body.projects, version: verified.version };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return { ok: false, why: `could not be reached (${message})` };
+    return { ok: false, why: describeFetchError(error) };
   }
 }
 
@@ -506,7 +522,9 @@ async function openAttached(config, root, phase) {
   } else {
     const added = await addProjectTo(found.base, root);
     if (!added.ok) {
-      return fail(attachFailure(config, `refused this project: ${refusalReason(added)}`));
+      // A thrown POST carries its own why; an answered one keeps the interim wording until describeRefusal.
+      const why = added.status === null ? added.why : `refused this project: ${refusalReason(added)}`;
+      return fail(attachFailure(config, why));
     }
     slug = added.slug;
   }

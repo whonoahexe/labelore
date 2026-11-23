@@ -735,6 +735,51 @@ describe('attach config (ATT-01, D-03)', () => {
   }
 });
 
+/** A loopback port nothing listens on: listen on port 0, read the port, close. */
+async function closedPort(host = '127.0.0.1'): Promise<number> {
+  const closed = createServer();
+  await new Promise<void>((done) => closed.listen(0, host, done));
+  const { port } = closed.address() as AddressInfo;
+  await new Promise<void>((done) => closed.close(() => done()));
+  return port;
+}
+
+/** A configured attach that fails never falls back: exit 1, no link, nothing started or recorded. */
+function expectLoudFailure(result: Outcome, origin: string): void {
+  expect(result.code).toBe(1);
+  expect(result.stdout).not.toContain('Labelore URL:');
+  expect(result.stderr).toContain(`the attach target ${origin} `);
+  expect(result.stderr).toContain("To use Labelore's own server instead: unset LABELORE_ATTACH_URL");
+  expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
+}
+
+describe('a configured attach that fails, fails loudly (ATT-03)', { timeout: 30_000 }, () => {
+  it('open fails loudly when the attach target refuses the connection', async () => {
+    const port = await closedPort();
+    const origin = `http://127.0.0.1:${port}`;
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: origin } });
+    expectLoudFailure(result, origin);
+    expect(result.stdout).toBe('');
+    expect(result.stderr.trim()).toBe(
+      `labelore: the attach target ${origin} (set by LABELORE_ATTACH_URL) refused the connection. To use Labelore's own server instead: unset LABELORE_ATTACH_URL`,
+    );
+  });
+
+  it('open fails loudly through attach.json, naming the file', async () => {
+    const port = await closedPort();
+    const origin = `http://127.0.0.1:${port}`;
+    const file = join(stateDir, 'attach.json');
+    writeFileSync(file, JSON.stringify({ url: origin }));
+    const result = await launcher(['open']);
+    expect(result.code).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(result.stderr.trim()).toBe(
+      `labelore: the attach target ${origin} (set by ${file}) refused the connection. To use Labelore's own server instead: delete ${file}`,
+    );
+    expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
+  });
+});
+
 describe('own server (LNCH-02, ATT-01)', { timeout: 60_000 }, () => {
   it('open spawns its own server with --port 0', async () => {
     const marker = join(stateDir, 'argv.json');
