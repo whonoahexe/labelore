@@ -523,7 +523,7 @@ async function openAttached(config, root, phase) {
     const added = await addProjectTo(found.base, root);
     if (!added.ok) {
       // A thrown POST carries its own why; an answered one keeps the interim wording until describeRefusal.
-      const why = added.status === null ? added.why : `refused this project: ${refusalReason(added)}`;
+      const why = added.status === null ? added.why : `refused this project: ${clean(refusalReason(added))}`;
       return fail(attachFailure(config, why));
     }
     slug = added.slug;
