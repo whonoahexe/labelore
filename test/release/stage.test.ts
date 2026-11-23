@@ -199,6 +199,34 @@ describe('a stage that breaks a gate fails with a named problem (BUND-03)', () =
     });
     expect(problems.join('\n')).toContain('capability.json version');
   });
+
+  it('rejects a fixed port named in the shipped README', () => {
+    const problems = verifyVariant((copy) => {
+      const path = join(copy, 'README.md');
+      writeFileSync(path, `${readFileSync(path, 'utf8')}\nOpen http://127.0.0.1:4173\n`);
+    });
+    expect(problems.join('\n')).toContain('port 4173 is named in the stage: README.md');
+  });
+
+  it('rejects a fixed port default in the bundle', () => {
+    const problems = verifyVariant((copy) => {
+      const path = join(copy, 'server/labelore-server.mjs');
+      writeFileSync(path, `${readFileSync(path, 'utf8')}\nvar DEFAULT_PORT = 4173;\n`);
+    });
+    expect(problems.join('\n')).toContain('port 4173 is named in the stage: server/labelore-server.mjs');
+  });
+
+  it('does not mistake a longer number or name for the fixed port', () => {
+    const copy = copyStage(stage);
+    try {
+      writeFileSync(join(copy, 'dist/assets/planted.js'), 'var a = .7141733; var b = 41730; var c = 14173; var x4173 = 1;\n');
+      const result = verifyStage(copy, { version: VERSION });
+      expect(result.problems).toEqual([]);
+      expect(result.ok).toBe(true);
+    } finally {
+      rmSync(copy, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('the staged bundle starts (BUND-03 version agreement)', () => {
