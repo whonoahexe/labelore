@@ -21,9 +21,10 @@ import { createHostPolicy, parseAllowedHosts } from './request-guard.ts';
 import { FileSettingsStore, MemorySettingsStore, defaultSettingsDir } from './settings-store.ts';
 import type { SettingsStore } from './settings-store.ts';
 
-const DEFAULT_PORT = 4173;
+// The bundle takes an OS-assigned port (build define); a source run keeps its fixed default and auto-port walk.
+const DEFAULT_PORT = process.env.LABELORE_BUNDLE === '1' ? 0 : 4173;
 const HOSTNAME = '127.0.0.1';
-/** How many consecutive ports an auto-port start tries before giving up (4173 → 4182). */
+/** How many consecutive ports an auto-port start tries before giving up. */
 const PORT_ATTEMPTS = 10;
 
 /** The directory of the prebuilt web app: the launcher's absolute LABELORE_DIST_DIR, else ./dist. */
@@ -322,7 +323,7 @@ async function runCli(): Promise<void> {
       'Mode: DEVELOPMENT — serving unbundled modules through Vite. Expect a slow first paint over any network hop; run `npm start` (NODE_ENV=production) after `npm run build` to serve ./dist instead.',
     );
   }
-  if (port !== options.port) console.log(`Port ${options.port} is in use — using ${port} instead`);
+  if (options.port !== 0 && port !== options.port) console.log(`Port ${options.port} is in use — using ${port} instead`);
   console.log(`Open ${baseUrl}`);
 }
 
