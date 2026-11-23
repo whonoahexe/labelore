@@ -735,6 +735,291 @@ describe('attach config (ATT-01, D-03)', () => {
   }
 });
 
+/** A loopback port nothing listens on: listen on port 0, read the port, close. */
+async function closedPort(host = '127.0.0.1'): Promise<number> {
+  const closed = createServer();
+  await new Promise<void>((done) => closed.listen(0, host, done));
+  const { port } = closed.address() as AddressInfo;
+  await new Promise<void>((done) => closed.close(() => done()));
+  return port;
+}
+
+/** A configured attach that fails never falls back: exit 1, no link, nothing started or recorded. */
+function expectLoudFailure(result: Outcome, origin: string): void {
+  expect(result.code).toBe(1);
+  expect(result.stdout).not.toContain('Labelore URL:');
+  expect(result.stderr).toContain(`the attach target ${origin} `);
+  expect(result.stderr).toContain("To use Labelore's own server instead: unset LABELORE_ATTACH_URL");
+  expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
+}
+
+describe('a configured attach that fails, fails loudly (ATT-03)', { timeout: 30_000 }, () => {
+  it('open fails loudly when the attach target refuses the connection', async () => {
+    const port = await closedPort();
+    const origin = `http://127.0.0.1:${port}`;
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: origin } });
+    expectLoudFailure(result, origin);
+    expect(result.stdout).toBe('');
+    expect(result.stderr.trim()).toBe(
+      `labelore: the attach target ${origin} (set by LABELORE_ATTACH_URL) refused the connection. To use Labelore's own server instead: unset LABELORE_ATTACH_URL`,
+    );
+  });
+
+  it('open fails loudly through attach.json, naming the file', async () => {
+    const port = await closedPort();
+    const origin = `http://127.0.0.1:${port}`;
+    const file = join(stateDir, 'attach.json');
+    writeFileSync(file, JSON.stringify({ url: origin }));
+    const result = await launcher(['open']);
+    expect(result.code).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(result.stderr.trim()).toBe(
+      `labelore: the attach target ${origin} (set by ${file}) refused the connection. To use Labelore's own server instead: delete ${file}`,
+    );
+    expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
+  });
+});
+
+/** The project path may travel only in the POST body, and only after identity and list succeeded. */
+function expectPathOnlyInPost(stubRequests: Recorded[]): void {
+  for (const entry of stubRequests) {
+    if (entry.method === 'POST') continue;
+    expect(entry.url).not.toContain(projectReal);
+    expect(entry.body).not.toContain(projectReal);
+  }
+}
+
+const NOT_LABELORE = 'is not a Labelore 2.2 or newer; upgrade that server';
+
+interface IdentityFailure {
+  label: string;
+  why: string;
+  /** What GET /api/identity answers; absent for the closed-port row. */
+  identity?: StubAnswer;
+}
+
+const IDENTITY_FAILURES: IdentityFailure[] = [
+  { label: 'is a closed [::1] port', why: 'refused the connection' },
+  { label: 'never answers', why: 'did not answer in time', identity: { hang: true } },
+  { label: 'answers 404 (a v2.1 server)', why: NOT_LABELORE, identity: { status: 404, body: { error: 'API route not found' } } },
+  { label: 'is another app', why: NOT_LABELORE, identity: { body: { app: 'not-labelore', version: OWN_VERSION } } },
+  { label: 'reports no version', why: NOT_LABELORE, identity: { body: { app: 'labelore' } } },
+  { label: 'reports a numeric version', why: NOT_LABELORE, identity: { body: { app: 'labelore', version: 3 } } },
+  {
+    label: 'reports a version with an escape sequence',
+    why: NOT_LABELORE,
+    identity: { body: { app: 'labelore', version: '2.2.0\u001b[31m' } },
+  },
+  {
+    label: 'reports a 65-character version',
+    why: NOT_LABELORE,
+    identity: { body: { app: 'labelore', version: '1'.repeat(65) } },
+  },
+  { label: 'answers a body that is not JSON', why: NOT_LABELORE, identity: { raw: 'not json' } },
+  { label: 'answers an empty 200 body', why: NOT_LABELORE, identity: { raw: '' } },
+];
+
+describe('identity failures (ATT-03, D-04, D-06)', { timeout: 30_000 }, () => {
+  for (const row of IDENTITY_FAILURES) {
+    it(`open fails loudly when the attach target ${row.label}`, async () => {
+      if (row.identity === undefined) {
+        const port = await closedPort('::1');
+        const origin = `http://[::1]:${port}`;
+        const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: origin } });
+        expectLoudFailure(result, origin);
+        expect(result.stderr).toContain(`(set by LABELORE_ATTACH_URL) ${row.why}.`);
+        expect(result.stderr).not.toContain('must name');
+        return;
+      }
+      const identity = row.identity;
+      const base = labeloreAnswers();
+      const stub = await startStub((entry) =>
+        entry.method === 'GET' && entry.url === '/api/identity' ? identity : base(entry),
+      );
+      const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+      expectLoudFailure(result, stub.origin);
+      expect(result.stderr).toContain(`(set by LABELORE_ATTACH_URL) ${row.why}.`);
+      expect(result.stdout).toBe('');
+      expect(stub.requests.filter((entry) => entry.method === 'POST')).toHaveLength(0);
+      expectPathOnlyInPost(stub.requests);
+    });
+  }
+
+  it('a redirect on the identity reaches nothing else', async () => {
+    const target = await startStub(labeloreAnswers());
+    const first = await startStub((entry) =>
+      entry.method === 'GET' && entry.url === '/api/identity'
+        ? { status: 302, headers: { location: `${target.origin}/api/identity` } }
+        : labeloreAnswers()(entry),
+    );
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: first.origin } });
+    expectLoudFailure(result, first.origin);
+    expect(result.stderr).toContain('answered with a redirect, which is never followed.');
+    expect(target.requests).toHaveLength(0);
+    expect(first.requests.map((entry) => entry.method)).toEqual(['GET']);
+  });
+
+  it('a redirect on the POST reaches nothing else', async () => {
+    const target = await startStub(labeloreAnswers());
+    const base = labeloreAnswers();
+    const first = await startStub((entry) =>
+      entry.method === 'POST'
+        ? { status: 307, headers: { location: `${target.origin}/api/projects` } }
+        : base(entry),
+    );
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: first.origin } });
+    expectLoudFailure(result, first.origin);
+    expect(result.stderr).toContain('answered with a redirect, which is never followed.');
+    expect(target.requests).toHaveLength(0);
+    expect(first.requests.filter((entry) => entry.method === 'POST')).toHaveLength(1);
+  });
+
+  it('server text is cleaned before it is printed', async () => {
+    const stub = await startStub(
+      labeloreAnswers({
+        postStatus: 422,
+        postBody: { error: `\u001b[2J${'A'.repeat(1000)}\u0007` },
+      }),
+    );
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expectLoudFailure(result, stub.origin);
+    expect(result.stderr).not.toContain('\u001b');
+    expect(result.stderr).not.toContain('\u0007');
+    const longest = Math.max(0, ...(result.stderr.match(/A+/g) ?? []).map((run) => run.length));
+    expect(longest).toBeGreaterThan(0);
+    expect(longest).toBeLessThanOrEqual(200);
+  });
+});
+
+describe('refusals from the attach target (ATT-03)', { timeout: 30_000 }, () => {
+  /** A stub that answers the standard Labelore answers except where `override` answers first. */
+  async function stubOverriding(
+    override: (entry: Recorded) => StubAnswer | undefined,
+    over: AnswerOptions = {},
+  ): Promise<Stub> {
+    const base = labeloreAnswers(over);
+    return startStub((entry) => override(entry) ?? base(entry));
+  }
+
+  async function openAgainst(stub: Stub): Promise<Outcome> {
+    return launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+  }
+
+  const hostRefusal = { status: 403, body: { error: 'refused', reason: 'host' } };
+
+  it('open translates a host refusal at the identity', async () => {
+    const stub = await stubOverriding((entry) => (entry.url === '/api/identity' ? hostRefusal : undefined));
+    const result = await openAgainst(stub);
+    const host = `127.0.0.1:${stub.port}`;
+    expectLoudFailure(result, stub.origin);
+    expect(result.stderr).toContain(
+      `refused the host ${host}; use the address that server prints, or add ${host} to its LABELORE_ALLOWED_HOSTS.`,
+    );
+    expectPathOnlyInPost(stub.requests);
+    expect(stub.requests.filter((entry) => entry.method === 'POST')).toHaveLength(0);
+  });
+
+  it('open translates a host refusal at the list', async () => {
+    const stub = await stubOverriding((entry) =>
+      entry.method === 'GET' && entry.url === '/api/projects' ? hostRefusal : undefined,
+    );
+    const result = await openAgainst(stub);
+    const host = `127.0.0.1:${stub.port}`;
+    expectLoudFailure(result, stub.origin);
+    expect(result.stderr).toContain(`refused the host ${host}; use the address that server prints`);
+    expect(result.stderr).toContain(`add ${host} to its LABELORE_ALLOWED_HOSTS.`);
+    expect(stub.requests.filter((entry) => entry.method === 'POST')).toHaveLength(0);
+  });
+
+  it('open translates a cross-site refusal at the POST', async () => {
+    const stub = await stubOverriding(() => undefined, {
+      postStatus: 403,
+      postBody: { error: 'refused', reason: 'cross-site' },
+    });
+    const result = await openAgainst(stub);
+    expectLoudFailure(result, stub.origin);
+    expect(result.stderr).toContain('(set by LABELORE_ATTACH_URL) refused the request as cross-site.');
+  });
+
+  it('open translates a path refusal at the POST', async () => {
+    const stub = await stubOverriding(() => undefined, {
+      postStatus: 422,
+      postBody: { error: 'x-path-refused', status: { pathChecked: '/x/y' } },
+    });
+    const result = await openAgainst(stub);
+    expectLoudFailure(result, stub.origin);
+    expect(result.stderr).toContain('refused this project: x-path-refused (path checked: /x/y).');
+  });
+
+  it('open names an HTTP 500 at the list', async () => {
+    const stub = await stubOverriding((entry) =>
+      entry.method === 'GET' && entry.url === '/api/projects' ? { status: 500, body: {} } : undefined,
+    );
+    const result = await openAgainst(stub);
+    expectLoudFailure(result, stub.origin);
+    expect(result.stderr).toContain('(set by LABELORE_ATTACH_URL) answered HTTP 500.');
+  });
+});
+
+describe('attached-server notes (D-05, D-07)', { timeout: 30_000 }, () => {
+  it('version skew attaches with one note and never signals the attached pid', async () => {
+    const victim = await spawnVictim();
+    const stub = await startStub(labeloreAnswers({ version: '0.0.1-other', pid: victim.pid }));
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}/demo/\n`);
+    expect(result.stderr).toBe(`labelore: attached Labelore is 0.0.1-other, this launcher is ${OWN_VERSION}\n`);
+    expect(alive(victim.pid)).toBe(true);
+  });
+
+  it('the same version prints no skew note', async () => {
+    const stub = await startStub(labeloreAnswers());
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stderr).not.toContain('attached Labelore is');
+  });
+
+  it('a running own server is left alone with one note, and only the attach origin and the own port are contacted', async () => {
+    const ownVictim = await spawnVictim();
+    const attachVictim = await spawnVictim();
+    const ownPort = await startFake({ victim: ownVictim });
+    const stub = await startStub(labeloreAnswers({ pid: attachVictim.pid }));
+    const recordFile = join(stateDir, 'connects.txt');
+    const result = await launcher(['open'], projectDir, {
+      env: {
+        LABELORE_ATTACH_URL: stub.origin,
+        NODE_OPTIONS: `--import ${pathToFileURL(RECORDER).href}`,
+        CONNECT_RECORD_FILE: recordFile,
+      },
+    });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}/demo/\n`);
+    const launcherPath = join(REPO_ROOT, 'scripts', 'labelore.mjs');
+    expect(result.stderr).toBe(
+      `labelore: Labelore's own server is still running (pid ${ownVictim.pid}, port ${ownPort}); stop it with: node "${launcherPath}" stop\n`,
+    );
+    expect(alive(ownVictim.pid)).toBe(true);
+    expect(alive(attachVictim.pid)).toBe(true);
+    const ports = new Set(readConnects(recordFile).map((entry) => entry.port));
+    expect(ports.has(stub.port)).toBe(true);
+    for (const port of ports) expect([stub.port, ownPort]).toContain(port);
+  });
+
+  it('an older own server is not restarted in attach mode', async () => {
+    config.identityVersion = '0.0.1-old';
+    config.stateVersion = '0.0.1-old';
+    const ownVictim = await spawnVictim();
+    await startFake({ victim: ownVictim });
+    const stub = await startStub(labeloreAnswers());
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stderr).toContain("Labelore's own server is still running");
+    for (const line of result.stderr.split('\n')) expect(line.startsWith('Restarted')).toBe(false);
+    expect(result.stderr).not.toContain('Restarted');
+    expect(alive(ownVictim.pid)).toBe(true);
+  });
+});
+
 describe('own server (LNCH-02, ATT-01)', { timeout: 60_000 }, () => {
   it('open spawns its own server with --port 0', async () => {
     const marker = join(stateDir, 'argv.json');

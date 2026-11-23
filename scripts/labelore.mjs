@@ -338,6 +338,7 @@ async function addProjectTo(base, root) {
       status: null,
       answer: null,
       error: error instanceof Error ? error.message : String(error),
+      why: describeFetchError(error),
     };
   }
   let answer;
@@ -353,7 +354,7 @@ async function addProjectTo(base, root) {
   ) {
     return { ok: true, slug: answer.slug };
   }
-  return { ok: false, status: response.status, answer, error: null };
+  return { ok: false, status: response.status, answer, error: null, why: null };
 }
 
 /** Why a refused or failed POST failed, for a message. */
@@ -445,21 +446,63 @@ function attachFailure(config, why) {
   return `labelore: the attach target ${config.origin} (set by ${config.source}) ${why}. To use Labelore's own server instead: ${config.unset}`;
 }
 
+/** Drops control characters (C0 and C1) and cuts at 200 characters: server text is never trusted. */
+function clean(text) {
+  // eslint-disable-next-line no-control-regex
+  return String(text).replace(/[\u0000-\u001f\u007f-\u009f]/g, '').slice(0, 200);
+}
+
+/** Why a request to the attach target threw, in the words the failure message uses. */
+function describeFetchError(error) {
+  if (error?.name === 'TimeoutError' || error?.name === 'AbortError') return 'did not answer in time';
+  if (error?.cause?.code === 'ECONNREFUSED') return 'refused the connection';
+  if (error?.cause?.message === 'unexpected redirect') {
+    return 'answered with a redirect, which is never followed';
+  }
+  const message = error?.cause?.message ?? (error instanceof Error ? error.message : String(error));
+  return `could not be reached (${clean(message)})`;
+}
+
+/**
+ * Why the attach target answered with a refusal or an unexpected status. `host` is the target's
+ * host:port as the server's request guard compares it. Server text goes through clean().
+ */
+function describeRefusal(status, answer, host) {
+  const object = answer && typeof answer === 'object' ? answer : {};
+  if (status === 403 && object.reason === 'host') {
+    return `refused the host ${host}; use the address that server prints, or add ${host} to its LABELORE_ALLOWED_HOSTS`;
+  }
+  if (status === 403 && object.reason === 'cross-site') return 'refused the request as cross-site';
+  if (status === 400 || status === 422) {
+    const error =
+      typeof object.error === 'string' && object.error !== '' ? clean(object.error) : 'no reason given';
+    const checked = object.status?.pathChecked;
+    const where = typeof checked === 'string' ? ` (path checked: ${clean(checked)})` : '';
+    return `refused this project: ${error}${where}`;
+  }
+  return `answered HTTP ${status}`;
+}
+
+/** The JSON body of a response, or null when it is empty or not JSON. */
+async function bodyOf(response) {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Asks the attach target who it is, with no body and no project path. Only an app labelore with a
- * safe version passes; instanceId and pid are ignored.
+ * safe version passes; instanceId and pid are ignored. There is no second check (D-06).
  */
 async function verifyAttach(origin, signal) {
   try {
     const response = await request(`${origin}/api/identity`, { signal });
-    let body = null;
-    if (response.status === 200) {
-      try {
-        body = await response.json();
-      } catch {
-        body = null;
-      }
+    if (response.status === 403) {
+      return { ok: false, why: describeRefusal(403, await bodyOf(response), new URL(origin).host) };
     }
+    const body = response.status === 200 ? await bodyOf(response) : null;
     if (
       body &&
       body.app === 'labelore' &&
@@ -470,8 +513,7 @@ async function verifyAttach(origin, signal) {
     }
     return { ok: false, why: 'is not a Labelore 2.2 or newer; upgrade that server' };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return { ok: false, why: `could not be reached (${message})` };
+    return { ok: false, why: describeFetchError(error) };
   }
 }
 
@@ -483,15 +525,17 @@ async function lookUpAttached(config, signal) {
     const response = await request(`${config.origin}/api/projects`, {
       signal: signal ?? AbortSignal.timeout(2000),
     });
-    if (response.status !== 200) return { ok: false, why: `answered HTTP ${response.status}` };
+    if (response.status !== 200) {
+      const host = new URL(config.origin).host;
+      return { ok: false, why: describeRefusal(response.status, await bodyOf(response), host) };
+    }
     const body = await response.json();
     if (!body || !Array.isArray(body.projects)) {
       return { ok: false, why: 'answered HTTP 200 with no project list' };
     }
     return { ok: true, base: config.origin, projects: body.projects, version: verified.version };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return { ok: false, why: `could not be reached (${message})` };
+    return { ok: false, why: describeFetchError(error) };
   }
 }
 
@@ -499,6 +543,18 @@ async function lookUpAttached(config, signal) {
 async function openAttached(config, root, phase) {
   const found = await lookUpAttached(config);
   if (!found.ok) return fail(attachFailure(config, found.why));
+  const own = ownVersion();
+  if (found.version !== own) {
+    note(`labelore: attached Labelore is ${found.version}, this launcher is ${own}`);
+  }
+  // Attach mode never signals, restarts or stops the launcher's own server, whatever version it
+  // reports: when the handshake matches it only says that the server is still running.
+  const { server } = await ownServer();
+  if (server) {
+    note(
+      `labelore: Labelore's own server is still running (pid ${server.pid}, port ${server.port}); stop it with: node "${LAUNCHER}" stop`,
+    );
+  }
   const known = found.projects.find((project) => project.target === root);
   let slug;
   if (known) {
@@ -506,7 +562,12 @@ async function openAttached(config, root, phase) {
   } else {
     const added = await addProjectTo(found.base, root);
     if (!added.ok) {
-      return fail(attachFailure(config, `refused this project: ${refusalReason(added)}`));
+      // A thrown POST carries its own why; an answered one is translated by describeRefusal.
+      const why =
+        added.status === null
+          ? added.why
+          : describeRefusal(added.status, added.answer, new URL(found.base).host);
+      return fail(attachFailure(config, why));
     }
     slug = added.slug;
   }
