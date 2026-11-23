@@ -582,6 +582,130 @@ describe('attach (ATT-02)', () => {
   });
 });
 
+interface BadConfigRow {
+  label: string;
+  /** 'env' sets LABELORE_ATTACH_URL; 'file' writes attach.json (or makes it a directory when text is null). */
+  via: 'env' | 'file';
+  value: (decoyPort: number) => string | null;
+  problem: string;
+  /** Strings that must not appear in stderr. */
+  hidden?: string[];
+}
+
+const BAD_CONFIG: BadConfigRow[] = [
+  { label: 'not a URL', via: 'env', value: () => 'not-a-url', problem: 'is not a URL' },
+  {
+    label: 'query',
+    via: 'env',
+    value: (p) => `http://127.0.0.1:${p}/?x=1`,
+    problem: 'has a query or fragment',
+  },
+  {
+    label: 'fragment',
+    via: 'env',
+    value: (p) => `http://127.0.0.1:${p}/#top`,
+    problem: 'has a query or fragment',
+  },
+  { label: 'https', via: 'env', value: (p) => `https://127.0.0.1:${p}`, problem: 'must use http://' },
+  {
+    label: 'userinfo',
+    via: 'env',
+    value: (p) => `http://someone:secret@127.0.0.1:${p}`,
+    problem: 'must not hold a username or password',
+    hidden: ['someone', 'secret'],
+  },
+  {
+    label: 'non-loopback host',
+    via: 'env',
+    value: (p) => `http://192.0.2.10:${p}`,
+    problem: 'must name 127.0.0.1, localhost or [::1]',
+  },
+  { label: 'no port', via: 'env', value: () => 'http://127.0.0.1', problem: 'needs an explicit port' },
+  { label: 'port 80', via: 'env', value: () => 'http://127.0.0.1:80', problem: 'needs an explicit port' },
+  {
+    label: 'path',
+    via: 'env',
+    value: (p) => `http://127.0.0.1:${p}/labelore`,
+    problem: 'must not have a path',
+  },
+  {
+    label: 'invalid JSON',
+    via: 'file',
+    value: () => '{ not json',
+    problem: 'is not valid JSON',
+    hidden: ['not json'],
+  },
+  { label: 'array', via: 'file', value: () => '[]', problem: 'has no usable "url"' },
+  { label: 'empty object', via: 'file', value: () => '{}', problem: 'has no usable "url"' },
+  { label: 'empty url', via: 'file', value: () => '{"url": ""}', problem: 'has no usable "url"' },
+  { label: 'unreadable (a directory)', via: 'file', value: () => null, problem: 'cannot be read' },
+];
+
+describe('attach config (ATT-01, D-03)', () => {
+  it('the env var wins over attach.json', async () => {
+    const fromEnv = await startStub(labeloreAnswers());
+    const fromFile = await startStub(labeloreAnswers());
+    writeFileSync(join(stateDir, 'attach.json'), JSON.stringify({ url: fromFile.origin }));
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: fromEnv.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(`Labelore URL: ${fromEnv.origin}/demo/\n`);
+    expect(fromEnv.requests.length).toBeGreaterThan(0);
+    expect(fromFile.requests).toHaveLength(0);
+  });
+
+  for (const blank of ['', '   ']) {
+    it(`an empty or blank env var falls through to attach.json (${JSON.stringify(blank)})`, async () => {
+      const fromFile = await startStub(labeloreAnswers());
+      writeFileSync(join(stateDir, 'attach.json'), JSON.stringify({ url: fromFile.origin }));
+      const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: blank } });
+      expect(result.code).toBe(0);
+      expect(result.stdout).toBe(`Labelore URL: ${fromFile.origin}/demo/\n`);
+      expect(fromFile.requests.length).toBeGreaterThan(0);
+    });
+  }
+
+  it('a blank env var with no attach.json uses the own server', async () => {
+    const decoy = await startStub(labeloreAnswers());
+    const port = await startFake();
+    const result = await launcher(['open'], projectDir, { env: { LABELORE_ATTACH_URL: '  ' } });
+    expect(result.code).toBe(0);
+    expect(result.stdout.trim()).toBe(`Labelore URL: http://127.0.0.1:${port}/demo/`);
+    expect(decoy.requests).toHaveLength(0);
+  });
+
+  it('attach.json alone attaches and is never rewritten', async () => {
+    const stub = await startStub(labeloreAnswers());
+    const file = join(stateDir, 'attach.json');
+    writeFileSync(file, JSON.stringify({ url: stub.origin, note: 'x' }));
+    const before = { bytes: readFileSync(file, 'utf8'), mtime: statSync(file).mtimeMs };
+    const result = await launcher(['open', '3']);
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}/demo/v1.0/phase-3\n`);
+    expect(readFileSync(file, 'utf8')).toBe(before.bytes);
+    expect(statSync(file).mtimeMs).toBe(before.mtime);
+  });
+
+  for (const row of BAD_CONFIG) {
+    it(`open refuses bad attach config: ${row.label}`, async () => {
+      const decoy = await startStub(labeloreAnswers());
+      const file = join(stateDir, 'attach.json');
+      const value = row.value(decoy.port);
+      const options: LaunchOptions = {};
+      if (row.via === 'env') options.env = { LABELORE_ATTACH_URL: value ?? '' };
+      else if (value === null) mkdirSync(file);
+      else writeFileSync(file, value);
+      const result = await launcher(['open'], projectDir, options);
+      expect(result.code).toBe(1);
+      expect(result.stderr).toContain(row.via === 'env' ? 'LABELORE_ATTACH_URL' : file);
+      expect(result.stderr).toContain(row.problem);
+      expect(result.stderr).toContain("To use Labelore's own server instead:");
+      for (const text of row.hidden ?? []) expect(result.stderr).not.toContain(text);
+      expect(decoy.requests).toHaveLength(0);
+      expect(existsSync(join(stateDir, 'server.json'))).toBe(false);
+    });
+  }
+});
+
 describe('stop', () => {
   it('removes a stale state file and reports not running', async () => {
     writeFileSync(join(stateDir, 'server.json'), JSON.stringify({ pid: process.pid, port: 1 }));
