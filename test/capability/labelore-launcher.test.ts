@@ -506,6 +506,58 @@ describe('link', () => {
   });
 });
 
+describe('link with attach (ATT-04, D-08)', () => {
+  it('link prints the attach link with GETs only', async () => {
+    const stub = await startStub(labeloreAnswers({ projects: [{ slug: 'demo', target: projectReal }] }));
+    const fresh = join(makeTempDir('labelore-fresh'), 'state');
+    const result = await launcher(['link', '3'], projectDir, {
+      env: { LABELORE_ATTACH_URL: stub.origin, LABELORE_STATE_DIR: fresh },
+    });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(`Labelore URL: ${stub.origin}/demo/v1.0/phase-3\n`);
+    expect(stub.requests.length).toBeGreaterThan(0);
+    expect(stub.requests.filter((entry) => entry.method !== 'GET')).toHaveLength(0);
+    expect(existsSync(fresh)).toBe(false);
+  });
+
+  it('link names the attach URL when the project is not listed there, and never asks its own server', async () => {
+    await startFake();
+    const stub = await startStub(labeloreAnswers({ projects: [] }));
+    const result = await launcher(['link', '3'], projectDir, { env: { LABELORE_ATTACH_URL: stub.origin } });
+    expect(result.code).toBe(0);
+    expect(result.stdout).toBe(
+      `labelore: this project is not open in the Labelore at ${stub.origin}. Open it with /gsd-labelore (or: node "${join(REPO_ROOT, 'scripts', 'labelore.mjs')}" open)\n`,
+    );
+    expect(requests).toHaveLength(0);
+    expect(stub.requests.filter((entry) => entry.method !== 'GET')).toHaveLength(0);
+  });
+
+  it('link prints the same one line for bad attach config and exits 0', async () => {
+    const result = await launcher(['link', '3'], projectDir, { env: { LABELORE_ATTACH_URL: 'https://127.0.0.1:1' } });
+    expect(result.code).toBe(0);
+    expect(result.stdout.trimEnd().split('\n')).toHaveLength(1);
+    expect(result.stdout).toContain('must use http://');
+    expect(result.stdout.trimEnd().endsWith("To use Labelore's own server instead: unset LABELORE_ATTACH_URL")).toBe(true);
+    const opened = await launcher(['open', '3'], projectDir, { env: { LABELORE_ATTACH_URL: 'https://127.0.0.1:1' } });
+    expect(opened.stderr).toBe(result.stdout);
+  });
+
+  it('link prints one line and exits 0 when the attach target fails', async () => {
+    const closed = createServer();
+    await new Promise<void>((done) => closed.listen(0, '127.0.0.1', done));
+    const { port } = closed.address() as AddressInfo;
+    await new Promise<void>((done) => closed.close(() => done()));
+    const result = await launcher(['link', '3'], projectDir, {
+      env: { LABELORE_ATTACH_URL: `http://127.0.0.1:${port}` },
+    });
+    expect(result.code).toBe(0);
+    const lines = result.stdout.trimEnd().split('\n');
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain('the attach target');
+    expect(lines[0]).toContain('refused the connection');
+  });
+});
+
 describe('open', () => {
   it('adds the project to its own running server with one guarded POST, then prints the phase link', async () => {
     config.projects = [];

@@ -3,7 +3,9 @@
  * Labelore launcher: the command line behind the /gsd-labelore skill.
  *
  *   node labelore.mjs open [phase]   start (or reuse) Labelore on the current GSD project
- *   node labelore.mjs link [phase]   print the dashboard link (read-only; what the ship:post step runs)
+ *   node labelore.mjs link [phase]   print the dashboard link (GETs only, on the attach target when one is
+ *                                    configured, else the own server; never starts or adds anything;
+ *                                    always exits 0; what the ship:post step runs)
  *   node labelore.mjs stop           stop the server this launcher started
  *
  * The launcher is read-only towards the project it opens: its only writes are its own state
@@ -626,7 +628,10 @@ async function open(phase) {
   process.stdout.write(`Labelore URL: ${await phaseUrl(server.base, slug, phase)}\n`);
 }
 
-/** The ship:post path: read-only, never starts, restarts or signals a server, always exits 0. */
+/**
+ * The ship:post path: GETs only, never starts, adds, signals or writes anything, always exits 0.
+ * With an attach target configured the project is looked up there and nowhere else (D-08).
+ */
 async function link(phase) {
   const start = startPoint();
   const root = findProjectRoot(start);
@@ -637,10 +642,35 @@ async function link(phase) {
     return;
   }
   try {
+    const attach = readAttachConfig();
+    if (attach) {
+      if (!attach.ok) {
+        process.stdout.write(`${configProblem(attach)}\n`);
+        return;
+      }
+      const found = await lookUpAttached(attach);
+      if (!found.ok) {
+        process.stdout.write(`${attachFailure(attach, found.why)}\n`);
+        return;
+      }
+      const listed = found.projects.find((project) => project.target === root);
+      if (listed) {
+        process.stdout.write(
+          `Labelore URL: ${await phaseUrl(found.base, listed.slug, phase)}\n`,
+        );
+      } else {
+        process.stdout.write(
+          `labelore: this project is not open in the Labelore at ${attach.origin}. Open it with /gsd-labelore (or: node "${LAUNCHER}" open)\n`,
+        );
+      }
+      return;
+    }
     const { server } = await ownServer();
     const known = server?.projects.find((project) => project.target === root);
     if (server && known) {
-      process.stdout.write(`Labelore URL: ${await phaseUrl(server.base, known.slug, phase)}\n`);
+      process.stdout.write(
+        `Labelore URL: ${await phaseUrl(server.base, known.slug, phase)}\n`,
+      );
       return;
     }
     process.stdout.write(
@@ -648,7 +678,7 @@ async function link(phase) {
     );
   } catch (error) {
     process.stdout.write(
-      `labelore: could not reach Labelore (${error instanceof Error ? error.message : String(error)})\n`,
+      `labelore: could not reach Labelore (${clean(error instanceof Error ? error.message : String(error))})\n`,
     );
   }
 }
