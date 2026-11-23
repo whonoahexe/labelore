@@ -55,3 +55,89 @@ describe('one README ships (DOC-01, D-11)', () => {
     expect(found[1].body).toContain('two');
   });
 });
+
+/** Text that must appear in neither shipped doc: the fixed port, a concrete loopback port, hosting and
+ * tunnel words. Placeholders are the exact uppercase tokens PORT, VERSION and SHA512. */
+const FIXED_PORT = /(?<![\w.])4173(?![\w])/;
+const CONCRETE_LOOPBACK = /(127\.0\.0\.1|localhost):\d/;
+const HOSTING_WORDS = [/tailscale/i, /ts\.net/i, /tunnel/i, /funnel/i];
+
+const GUIDE_ORDER = [
+  'Requirements',
+  'Install',
+  'First launch',
+  'Stop',
+  'Upgrade',
+  'Attach to a running Labelore',
+  'Uninstall',
+  'Read-only',
+  'Develop',
+  'License',
+];
+
+describe('the README is the user guide (DOC-01, D-12, D-14)', () => {
+  const guide = sections(README);
+  const body = (heading: string): string => guide.find((s) => s.heading === heading)?.body ?? '';
+
+  it('the sections run install to uninstall, then Develop and License last', () => {
+    expect(guide.map((s) => s.heading)).toEqual(GUIDE_ORDER);
+  });
+
+  it('every section has a body', () => {
+    for (const section of guide) {
+      expect(section.body.trim().length, section.heading).toBeGreaterThan(0);
+    }
+  });
+
+  it('Install holds the exact install line and where the integrity string comes from', () => {
+    const install = body('Install');
+    expect(install).toContain('gsd capability install npm:labelore@VERSION --integrity SHA512 --scope global');
+    expect(install).toContain('npm view labelore@VERSION dist.integrity');
+  });
+
+  it('Uninstall lists stop, remove, then the state directory, and no rm -rf', () => {
+    const uninstall = body('Uninstall');
+    const stop = uninstall.indexOf('/gsd-labelore stop');
+    const remove = uninstall.indexOf('gsd capability remove labelore');
+    const state = uninstall.indexOf('state directory');
+    expect(stop).toBeGreaterThanOrEqual(0);
+    expect(remove).toBeGreaterThan(stop);
+    expect(state).toBeGreaterThan(remove);
+    expect(uninstall).not.toMatch(/rm\s+-/);
+  });
+
+  it('Upgrade names gsd capability update and First launch says the port changes', () => {
+    expect(body('Upgrade')).toContain('gsd capability update');
+    expect(body('First launch')).toMatch(/the port changes/i);
+    expect(body('First launch')).toMatch(/attach/i);
+  });
+
+  it('Attach names the variable, the file, the url shape and the rules', () => {
+    const attach = body('Attach to a running Labelore');
+    expect(attach).toContain('LABELORE_ATTACH_URL');
+    expect(attach).toContain('attach.json');
+    expect(attach).toContain('"url": "http://127.0.0.1:PORT"');
+    expect(attach).toMatch(/loopback/i);
+    expect(attach).toMatch(/this machine/i);
+    expect(attach).toMatch(/remembered/i);
+    expect(attach).toMatch(/never falls back/i);
+  });
+
+  it('Develop covers npm ci, npm run build, npm start and a printed address', () => {
+    const develop = body('Develop');
+    expect(develop).toContain('npm ci');
+    expect(develop).toContain('npm run build');
+    expect(develop).toContain('npm start');
+    expect(develop).toContain('http://127.0.0.1:PORT');
+  });
+
+  it('the README holds no fixed port, no concrete loopback port, no hosting word and no stale build text', () => {
+    expect(README).not.toMatch(FIXED_PORT);
+    expect(README).not.toMatch(CONCRETE_LOOPBACK);
+    for (const word of HOSTING_WORDS) expect(README).not.toMatch(word);
+    for (const stale of ['ignore-scripts', 'vite build', 'node_modules', '500 MB']) {
+      expect(README).not.toContain(stale);
+    }
+    expect(README).not.toMatch(/first launch builds/i);
+  });
+});
